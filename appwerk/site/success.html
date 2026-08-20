@@ -1,0 +1,115 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment received · Appwerk</title>
+<meta name="description" content="Your payment was received. What happens next: confirmation, account access, and your roadmap kickoff.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="fonts.css">
+
+<link rel="stylesheet" href="styles.css">
+<style>
+  .next-steps { counter-reset: step; margin-top: 2rem; }
+  .next-step { display:flex; gap:18px; padding:18px 0; border-bottom:1px solid var(--border); }
+  .next-step::before { counter-increment: step; content: counter(step, decimal-leading-zero); font-family:var(--font-display); color:var(--accent); font-size:1.1rem; }
+  .next-step h3 { font-size:1.05rem; margin-bottom:2px; }
+  .next-step p { font-size:0.92rem; color:var(--ink-soft); }
+</style>
+</head>
+<body>
+
+<header class="nav" id="top">
+  <div class="wrap nav-inner">
+    <a class="logo" href="index.html">Appwerk<span class="logo-dot">.</span><span class="logo-by" data-i18n="logo_by">by codemenschen.at</span></a>
+    <div class="nav-right">
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">DE</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="hero" style="padding-bottom:40px">
+  <div class="wrap wrap-narrow">
+    <p class="eyebrow" data-i18n="sc_eyebrow">Payment received</p>
+    <h1 data-i18n="sc_h1">Done. The app is yours to back.</h1>
+    <p class="lede" data-i18n="sc_lede">Stripe has confirmed your payment — your receipt and invoice arrive by email from Stripe. Here is exactly what happens next, and when.</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:24px">
+  <div class="wrap wrap-narrow">
+    <div class="next-steps">
+      <div class="next-step"><div><h3 data-i18n="sc_s1_h">Confirmation email (within minutes)</h3><p data-i18n="sc_s1_p">You receive your Stripe receipt and invoice, plus a confirmation from us summarizing your license and the written confirmation that the custom work has started — and that your withdrawal right expired with the start of performance, as the law requires. [COUNSEL REVIEW]</p></div></div>
+      <div class="next-step"><div><h3 data-i18n="sc_s2_h">Account access (within 1 business day)</h3><p data-i18n="sc_s2_p">We set up your buyer account and send you access credentials by email. Your dashboard shows the app's historical data, costs, and roadmap status from day one.</p></div></div>
+      <div class="next-step"><div><h3 data-i18n="sc_s3_h">Custom work starts</h3><p data-i18n="sc_s3_p">Right after payment we begin finishing your one-off: your name, your branding, your roadmap. You'll get a dated confirmation of the start of performance.</p></div></div>
+      <div class="next-step"><div><h3 data-i18n="sc_s4_h">Roadmap kickoff</h3><p data-i18n="sc_s4_p">We propose the first roadmap phase in your dashboard. Nothing starts without your approval — that's contractual, not courtesy. Ad budget, if you chose one (or add one later), also starts only after your explicit go.</p></div></div>
+    </div>
+    <p style="margin-top:2rem;font-size:0.95rem" data-i18n="sc_question">Anything unclear right now? <a href="mailto:appwerk@codemenschen.at" style="color:var(--accent)">appwerk@codemenschen.at</a> — a person answers, usually the same day.</p>
+    <a class="back-link" href="account.html" data-i18n="sc_account">Go to your account →</a>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div>
+      <p class="logo">Appwerk<span class="logo-dot">.</span></p>
+      <p class="footer-small" data-i18n="footer_operated">Operated by codemenschen.at, Vienna, Austria.</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://www.codemenschen.at/impressum" target="_blank" rel="noopener" data-i18n="footer_imprint">Imprint (Impressum)</a>
+      <a href="terms.html" data-i18n="footer_terms">Terms</a>
+      <a href="privacy.html" data-i18n="footer_privacy">Privacy</a>
+      <a href="withdrawal.html" data-i18n="footer_withdrawal">Withdrawal</a>
+    </div>
+  </div>
+  <div class="wrap">
+    <p class="footer-legal" data-i18n="footer_legal">Appwerk sells exclusive software licenses with revenue rights. This is not investment advice, and no returns are promised or implied. Software ventures involve real risk of loss. All financial framing on this site is pending legal review [COUNSEL REVIEW].</p>
+  </div>
+</footer>
+
+<script>
+window.PAGE_DE = {
+  sc_eyebrow: "Zahlung eingegangen",
+  sc_h1: "Geschafft. Die App gehört jetzt zu dir.",
+  sc_lede: "Stripe hat deine Zahlung bestätigt — Beleg und Rechnung kommen per E-Mail von Stripe. Hier steht genau, was als Nächstes passiert, und wann.",
+  sc_s1_h: "Bestätigungs-E-Mail (innerhalb von Minuten)",
+  sc_s1_p: "Du erhältst deinen Stripe-Beleg samt Rechnung sowie eine Bestätigung von uns mit einer Zusammenfassung deiner Lizenz und der schriftlichen Bestätigung, dass die Anfertigung begonnen hat — und dass dein Widerrufsrecht mit Leistungsbeginn erloschen ist, wie es das Gesetz verlangt. [RECHTSPRÜFUNG]",
+  sc_s2_h: "Account-Zugang (innerhalb 1 Werktags)",
+  sc_s2_p: "Wir richten deinen Käufer-Account ein und schicken dir die Zugangsdaten per E-Mail. Dein Dashboard zeigt vom ersten Tag an die historischen Daten, Kosten und den Roadmap-Status der App.",
+  sc_s3_h: "Anfertigung startet",
+  sc_s3_p: "Direkt nach der Zahlung beginnen wir, dein Einzelstück fertigzustellen: dein Name, dein Branding, deine Roadmap. Du bekommst eine datierte Bestätigung des Leistungsbeginns.",
+  sc_s4_h: "Roadmap-Kickoff",
+  sc_s4_p: "Wir schlagen die erste Roadmap-Phase in deinem Dashboard vor. Nichts startet ohne deine Freigabe — das ist vertraglich, nicht Kulanz. Auch das Werbebudget, falls gewählt (oder später dazugeschaltet), startet erst nach deinem ausdrücklichen Go.",
+  sc_question: "Gerade etwas unklar? <a href=\"mailto:appwerk@codemenschen.at\" style=\"color:var(--accent)\">appwerk@codemenschen.at</a> — es antwortet ein Mensch, meist am selben Tag.",
+  sc_account: "Zu deinem Account →"
+};
+</script>
+<script src="app.js"></script>
+<script>
+// Funding contributions (checkout mode=fund) get their own next-steps copy.
+if (new URLSearchParams(location.search).get("mode") === "fund") {
+  const F = {
+    sc_h1: { en: "Done. Your share is committed.", de: "Geschafft. Dein Anteil ist zugesagt." },
+    sc_lede: { en: "Stripe has confirmed your contribution — receipt and invoice arrive by email from Stripe. Your money funds the build only once the goal reaches 100%; if it doesn't within 60 days, you are refunded in full. [COUNSEL REVIEW]", de: "Stripe hat deinen Beitrag bestätigt — Beleg und Rechnung kommen per E-Mail von Stripe. Dein Geld finanziert den Bau erst, wenn das Ziel 100 % erreicht; passiert das nicht binnen 60 Tagen, bekommst du den vollen Betrag zurück. [RECHTSPRÜFUNG]" },
+    sc_s3_h: { en: "Build start at 100% funding", de: "Baustart bei 100 % Finanzierung" },
+    sc_s3_p: { en: "The build and validation start when the funding goal is fully committed. You'll see the funding progress and every build milestone in your dashboard.", de: "Bau und Validierung starten, sobald das Finanzierungsziel voll zugesagt ist. Finanzierungsfortschritt und jeden Bau-Meilenstein siehst du in deinem Dashboard." },
+    sc_s4_h: { en: "Your revenue share", de: "Dein Erlösanteil" },
+    sc_s4_p: { en: "Your share of net revenue equals your share of the funding goal, reported monthly in the dashboard. The retainer is billed pro-rata from activation, and roadmap votes are weighted by share.", de: "Dein Anteil an den Netto-Erlösen entspricht deinem Anteil am Finanzierungsziel und wird monatlich im Dashboard berichtet. Die Pauschale wird ab Aktivierung anteilig verrechnet, Roadmap-Stimmen zählen nach Anteil." }
+  };
+  const apply = () => {
+    const g = currentLang === "de" ? "de" : "en";
+    Object.entries(F).forEach(([k, v]) => {
+      const el = document.querySelector(`[data-i18n="${k}"]`);
+      if (el) el.innerHTML = v[g];
+    });
+  };
+  apply();
+  document.getElementById("langToggle").addEventListener("click", apply);
+}
+</script>
+</body>
+</html>

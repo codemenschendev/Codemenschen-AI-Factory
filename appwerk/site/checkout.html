@@ -1,0 +1,430 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Checkout · Appwerk</title>
+<meta name="description" content="Review your license, choose your withdrawal option, and pay securely via Stripe. The invoice comes from Stripe by email.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="fonts.css">
+
+<link rel="stylesheet" href="styles.css">
+<style>
+  .co-grid { display:grid; grid-template-columns: 1.4fr 1fr; gap:40px; align-items:start; margin-top:2.5rem; }
+  .co-panel { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:28px; }
+  .co-panel h2 { font-size:1.25rem; margin-bottom:1rem; }
+  .co-app { display:flex; gap:16px; align-items:center; padding-bottom:16px; border-bottom:1px solid var(--border); margin-bottom:16px; }
+  .co-app .card-icon { margin:0; }
+  .co-row { display:flex; justify-content:space-between; gap:16px; padding:10px 0; border-bottom:1px solid var(--border); font-size:0.95rem; }
+  .co-row span:last-child { font-weight:600; white-space:nowrap; }
+  .co-row.co-total { border-bottom:none; border-top:2px solid var(--ink); font-weight:600; font-size:1.05rem; padding-top:14px; }
+  .co-sub { font-size:0.8rem; color:var(--ink-soft); font-weight:400; display:block; }
+  .co-opt { border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin:12px 0; cursor:pointer; display:block; }
+  .co-opt:has(input:checked) { border-color:var(--accent); background:#F4F7FE; }
+  .co-opt input { margin-right:10px; }
+  .co-opt strong { font-size:0.98rem; }
+  .co-opt p { font-size:0.85rem; color:var(--ink-soft); margin-top:4px; }
+  .co-waiver { margin:10px 0 0 26px; padding:12px 14px; background:var(--warn-bg); border-radius:8px; font-size:0.85rem; color:var(--warn-ink); display:none; }
+  .co-waiver.visible { display:block; }
+  .co-waiver label { cursor:pointer; display:flex; gap:8px; align-items:flex-start; }
+  .co-check { font-size:0.9rem; margin-top:1.2rem; display:flex; gap:8px; align-items:flex-start; cursor:pointer; }
+  .co-ads-amount { margin:10px 0 0 26px; display:none; }
+  .co-ads-amount.visible { display:block; }
+  .co-ads-amount select { font:inherit; padding:8px 12px; border:1px solid var(--border); border-radius:8px; background:var(--surface); }
+  .co-pay { width:100%; border:none; cursor:pointer; font-family:var(--font-body); margin-top:1.4rem; }
+  .co-pay:disabled { opacity:0.45; cursor:not-allowed; }
+  .co-stripe-note { font-size:0.8rem; color:var(--ink-soft); margin-top:0.9rem; text-align:center; }
+  .co-error { display:none; margin-top:1rem; }
+  .co-error.visible { display:block; }
+  @media (max-width:820px){ .co-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<header class="nav" id="top">
+  <div class="wrap nav-inner">
+    <a class="logo" href="index.html">Appwerk<span class="logo-dot">.</span><span class="logo-by" data-i18n="logo_by">by codemenschen.at</span></a>
+    <nav class="nav-links">
+      <a href="index.html#how" data-i18n="nav_how">How it works</a>
+      <a href="index.html#apps" data-i18n="nav_apps">Apps</a>
+      <a href="index.html#risk" data-i18n="nav_risk">Ownership</a>
+      <a href="faq.html" data-i18n="nav_faq">FAQ</a>
+      <a href="about.html" data-i18n="nav_about">About</a>
+    </nav>
+    <div class="nav-right">
+      <button class="lang-toggle" id="langToggle" aria-label="Switch language">DE</button>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section class="hero" style="padding-bottom:32px">
+  <div class="wrap wrap-narrow">
+    <p class="crumbs" style="font-size:0.85rem;color:var(--ink-soft)"><a href="index.html#apps" style="color:var(--accent);text-decoration:none" data-i18n="crumb_apps">Apps</a> / <a id="coCrumbApp" href="#" style="color:var(--accent);text-decoration:none">…</a> / <span data-i18n="co_crumb">Checkout</span></p>
+    <h1 style="font-size:clamp(2rem,4vw,3rem)" data-i18n="co_h1">Checkout — no surprises.</h1>
+    <p class="lede" data-i18n="co_lede">Review everything below, make your two choices, and pay securely at Stripe. The invoice comes from Stripe by email; your account access follows after payment is confirmed.</p>
+  </div>
+</section>
+
+<section class="section" style="padding-top:16px">
+  <div class="wrap">
+    <div class="co-grid">
+
+      <!-- Left: choices -->
+      <div>
+        <!-- Funding-deal contribution (shown only for mode=fund) -->
+        <div class="co-panel" id="fundPanel" style="display:none">
+          <h2 data-i18n="co_fund_h">1 · Your contribution</h2>
+          <p style="font-size:0.9rem;color:var(--ink-soft)" data-i18n="co_fund_p">Your revenue share equals your share of the funding goal. The build starts only at 100% — until then your money sits with the payment provider, and if the goal isn't reached within 60 days you are refunded in full. [COUNSEL REVIEW]</p>
+          <div class="co-ads-amount visible" style="margin-left:0">
+            <select id="fundAmount" aria-label="Contribution"></select>
+          </div>
+          <p style="font-size:0.85rem;color:var(--ink-soft);margin-top:12px" id="fundShareLine"></p>
+        </div>
+        <div class="co-panel" id="adsPanel">
+          <h2 data-i18n="co_ads_h">1 · Advertising budget (optional)</h2>
+          <p style="font-size:0.9rem;color:var(--ink-soft)" data-i18n="co_ads_p">Promotion is optional and separately billed, so you can change or stop it monthly. €0 is a valid choice — you can switch it on later from your account at any time.</p>
+          <label class="co-opt"><input type="radio" name="ads" value="0" checked><strong data-i18n="co_ads_no">Without ad budget for now</strong><p data-i18n="co_ads_no_p">Start with the license and roadmap only. Add promotion later whenever you decide.</p></label>
+          <label class="co-opt"><input type="radio" name="ads" value="on"><strong data-i18n="co_ads_yes">With monthly ad budget</strong><p data-i18n="co_ads_yes_p">Billed separately, starting after your account is set up. You approve every campaign before it runs, and you can change or stop the budget monthly.</p>
+            <span class="co-ads-amount" id="adsAmountWrap">
+              <select id="adsAmount" aria-label="Ad budget per month">
+                <option value="300">€300 / month</option>
+                <option value="500" selected>€500 / month</option>
+                <option value="1000">€1,000 / month</option>
+                <option value="2000">€2,000 / month</option>
+              </select>
+            </span>
+          </label>
+        </div>
+
+        <div class="co-panel" id="wdPanel" style="margin-top:24px">
+          <h2 data-i18n="co_wd_h">2 · Custom build — start &amp; withdrawal</h2>
+          <p style="font-size:0.9rem;color:var(--ink-soft)" data-i18n="co_wd_p">Your app is finished as a one-off work, customised to you: your name, your branding, your roadmap. This custom work starts right after payment — and with the start of performance your 14-day withdrawal right expires (§ 18 FAGG), which you confirm expressly below. <a href="withdrawal.html" style="color:var(--accent)" data-i18n="co_wd_link">Details →</a> <span class="counsel-inline">[COUNSEL REVIEW]</span></p>
+          <div class="co-waiver visible" id="waiverBox">
+            <label><input type="checkbox" id="waiverCheck"><span data-i18n="co_waiver">I expressly request that Appwerk begins the custom work (license activation, branding setup, roadmap kickoff) immediately after payment, and I acknowledge that my 14-day right of withdrawal expires with the start of performance. I will receive this confirmation by email.</span></label>
+          </div>
+        </div>
+
+        <div class="co-panel" style="margin-top:24px">
+          <h2 data-i18n="co_terms_h">3 · Terms</h2>
+          <label class="co-check"><input type="checkbox" id="termsCheck"><span data-i18n="co_terms">I have read the <a href="terms.html" target="_blank" style="color:var(--accent)">License &amp; Marketplace Terms</a> and the <a href="index.html#risk" target="_blank" style="color:var(--accent)">risks</a>. I understand that I am buying an exclusive license — not the code, IP, or a company — and that no revenue is promised.</span></label>
+        </div>
+      </div>
+
+      <!-- Right: summary -->
+      <div class="co-panel">
+        <h2 data-i18n="co_sum_h">Your order</h2>
+        <div class="co-app">
+          <div class="card-icon" id="coIcon" aria-hidden="true"></div>
+          <div>
+            <h3 id="coName" style="margin:0">…</h3>
+            <p class="card-cat" id="coCat"></p>
+          </div>
+        </div>
+        <div class="co-row"><span data-i18n="co_r_license">Exclusive license (one-time, due now)</span><span id="coPrice">—</span></div>
+        <div class="co-row"><span data-i18n="co_r_retainer">Monthly retainer <span class="co-sub" id="coRetainerSub"></span></span><span id="coRetainer">—</span></div>
+        <div class="co-row"><span data-i18n="co_r_ads">Ad budget <span class="co-sub" data-i18n="co_r_ads_sub">billed separately, changeable monthly</span></span><span id="coAds" data-i18n="co_r_ads_none">none for now</span></div>
+        <div class="co-row co-total"><span data-i18n="co_r_total">Due today at Stripe</span><span id="coTotal">—</span></div>
+        <p style="font-size:0.85rem;color:var(--ink-soft);margin-top:12px" data-i18n="co_r_note">The retainer starts with your license activation (immediately or after 14 days, per your choice above) and funds the roadmap you approve. First-year total incl. retainer: <strong id="coYear"></strong>.</p>
+        <button class="btn btn-primary co-pay" id="payBtn" disabled data-i18n="co_pay">Pay securely at Stripe →</button>
+        <p class="co-stripe-note" data-i18n="co_stripe_note">You'll be redirected to Stripe's secure checkout. Payment, receipt, and invoice are handled by Stripe; afterwards you return here automatically.</p>
+        <p class="placeholder-note co-error" id="stripeMissing" data-i18n="co_stripe_missing">⚠ Stripe is not connected yet for this app (staging). The payment link will be configured before launch — see docs/27-checkout-stripe-setup.md.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <div>
+      <p class="logo">Appwerk<span class="logo-dot">.</span></p>
+      <p class="footer-small" data-i18n="footer_operated">Operated by codemenschen.at, Vienna, Austria.</p>
+    </div>
+    <div class="footer-links">
+      <a href="https://www.codemenschen.at/impressum" target="_blank" rel="noopener" data-i18n="footer_imprint">Imprint (Impressum)</a>
+      <a href="terms.html" data-i18n="footer_terms">Terms</a>
+      <a href="privacy.html" data-i18n="footer_privacy">Privacy</a>
+      <a href="withdrawal.html" data-i18n="footer_withdrawal">Withdrawal</a>
+    </div>
+  </div>
+  <div class="wrap">
+    <p class="footer-legal" data-i18n="footer_legal">Appwerk sells exclusive software licenses with revenue rights. This is not investment advice, and no returns are promised or implied. Software ventures involve real risk of loss. All financial framing on this site is pending legal review [COUNSEL REVIEW].</p>
+  </div>
+</footer>
+
+<script>
+window.PAGE_DE = {
+  nav_about: "Über uns",
+  co_crumb: "Kasse",
+  co_h1: "Kasse — ohne Überraschungen.",
+  co_lede: "Prüfe unten alles, triff deine zwei Entscheidungen und zahle sicher bei Stripe. Die Rechnung kommt von Stripe per E-Mail; dein Account-Zugang folgt nach Zahlungsbestätigung.",
+  co_fund_h: "1 · Dein Beitrag",
+  co_fund_p: "Dein Erlösanteil entspricht deinem Anteil am Finanzierungsziel. Der Bau startet erst bei 100 % — bis dahin liegt dein Geld beim Zahlungsanbieter, und wird das Ziel nicht binnen 60 Tagen erreicht, bekommst du den vollen Betrag zurück. [RECHTSPRÜFUNG]",
+  co_ads_h: "1 · Werbebudget (optional)",
+  co_ads_p: "Promotion ist optional und wird separat abgerechnet, damit du sie monatlich ändern oder stoppen kannst. 0 € ist eine gültige Wahl — du kannst sie später jederzeit im Account dazuschalten.",
+  co_ads_no: "Vorerst ohne Werbebudget",
+  co_ads_no_p: "Starte nur mit Lizenz und Roadmap. Promotion kannst du später dazunehmen, wann immer du willst.",
+  co_ads_yes: "Mit monatlichem Werbebudget",
+  co_ads_yes_p: "Separat abgerechnet, Start nach Einrichtung deines Accounts. Du gibst jede Kampagne frei, bevor sie läuft, und kannst das Budget monatlich ändern oder stoppen.",
+  co_wd_h: "2 · Einzelanfertigung — Start & Widerruf",
+  co_wd_p: "Deine App wird als einmaliges Werk speziell für dich fertiggestellt: dein Name, dein Branding, deine Roadmap. Diese Anfertigung startet direkt nach der Zahlung — mit Leistungsbeginn erlischt dein 14-tägiges Widerrufsrecht (§ 18 FAGG), was du unten ausdrücklich bestätigst. <a href=\"withdrawal.html\" style=\"color:var(--accent)\">Details →</a> <span class=\"counsel-inline\">[RECHTSPRÜFUNG]</span>",
+  co_wd_link: "Details →",
+  co_waiver: "Ich verlange ausdrücklich, dass Appwerk sofort nach der Zahlung mit der Anfertigung beginnt (Lizenzaktivierung, Branding-Einrichtung, Roadmap-Kickoff), und nehme zur Kenntnis, dass mein 14-tägiges Widerrufsrecht mit Leistungsbeginn erlischt. Ich erhalte diese Bestätigung per E-Mail.",
+  co_terms_h: "3 · Bedingungen",
+  co_terms: "Ich habe die <a href=\"terms.html\" target=\"_blank\" style=\"color:var(--accent)\">Lizenz- &amp; Marktplatzbedingungen</a> und die <a href=\"index.html#risk\" target=\"_blank\" style=\"color:var(--accent)\">Risiken</a> gelesen. Ich verstehe, dass ich eine exklusive Lizenz kaufe — nicht den Code, das geistige Eigentum oder ein Unternehmen — und dass kein Umsatz versprochen wird.",
+  co_sum_h: "Deine Bestellung",
+  co_r_license: "Exklusive Lizenz (einmalig, jetzt fällig)",
+  co_r_retainer: "Monatliche Pauschale <span class=\"co-sub\" id=\"coRetainerSub\"></span>",
+  co_r_ads: "Werbebudget <span class=\"co-sub\">separat abgerechnet, monatlich änderbar</span>",
+  co_r_ads_sub: "separat abgerechnet, monatlich änderbar",
+  co_r_ads_none: "vorerst keins",
+  co_r_total: "Heute fällig bei Stripe",
+  co_r_note: "Die Pauschale beginnt mit deiner Lizenzaktivierung (sofort oder nach 14 Tagen, je nach Wahl oben) und finanziert die Roadmap, die du freigibst. Gesamtkosten erstes Jahr inkl. Pauschale: <strong id=\"coYear\"></strong>.",
+  co_pay: "Sicher bei Stripe zahlen →",
+  co_stripe_note: "Du wirst zu Stripes sicherem Checkout weitergeleitet. Zahlung, Beleg und Rechnung übernimmt Stripe; danach kommst du automatisch hierher zurück.",
+  co_stripe_missing: "⚠ Stripe ist für diese App noch nicht verbunden (Staging). Der Payment-Link wird vor dem Launch konfiguriert — siehe docs/27-checkout-stripe-setup.md."
+};
+</script>
+<script src="app.js"></script>
+<script src="catalog.js"></script>
+<script>
+// Pricing + SANDBOX Stripe links come from catalog.js (app.stripe).
+// Replace with live links there before launch — see docs/27-checkout-stripe-setup.md.
+const params = new URLSearchParams(location.search);
+const appId = params.get("app");
+const app = window.CATALOG[appId];
+const MODE = params.get("mode");
+// Custom mode: checkout for a custom-app brief handed over from create.html
+// via sessionStorage (no catalog app behind it).
+const CUSTOM = MODE === "custom";
+let CB = null;
+if (CUSTOM) { try { CB = JSON.parse(sessionStorage.getItem("appwerk-custom")); } catch (e) {} }
+// Deal mode: partial ownership. "fund" on funding-stage apps, "share" on
+// available apps (share of the license price = share of net revenue).
+const FUND = !!(app && ((app.status === "funding" && MODE === "fund") || (app.status === "available" && MODE === "share")));
+const DEAL = FUND ? (app.funding || { goal: app.price, committed: 0, minTicket: Math.max(100, Math.round(app.price / 10 / 50) * 50) }) : null;
+if (app && app.status !== "available" && !FUND) location.replace("index.html#apps");
+const eur = n => currentLang === "de" ? n.toLocaleString("de-AT") + " €" : "€" + n.toLocaleString("en-IE");
+
+/* Fund-mode strings (not data-i18n: these panels are rebuilt by JS) */
+const FL = {
+  terms: {
+    en: 'I have read the <a href="terms.html" target="_blank" style="color:var(--accent)">License &amp; Marketplace Terms</a> and the <a href="index.html#risk" target="_blank" style="color:var(--accent)">risks</a>. I understand that I am contributing to the funding of an app that does not exist yet, that I receive a pro-rata revenue share (an exclusive license only at 100%), that the app may fail validation, and that no revenue is promised. [COUNSEL REVIEW]',
+    de: 'Ich habe die <a href="terms.html" target="_blank" style="color:var(--accent)">Lizenz- &amp; Marktplatzbedingungen</a> und die <a href="index.html#risk" target="_blank" style="color:var(--accent)">Risiken</a> gelesen. Ich verstehe, dass ich die Finanzierung einer noch nicht existierenden App beisteuere, dass ich einen anteiligen Erlösanteil erhalte (eine Exklusivlizenz nur bei 100 %), dass die App an der Validierung scheitern kann und dass kein Umsatz versprochen wird. [RECHTSPRÜFUNG]'
+  },
+  termsShare: {
+    en: 'I have read the <a href="terms.html" target="_blank" style="color:var(--accent)">License &amp; Marketplace Terms</a> and the <a href="index.html#risk" target="_blank" style="color:var(--accent)">ownership models</a>. I understand that I am buying a pro-rata revenue share of this app (an exclusive license only at 100%) and that no revenue is promised. [COUNSEL REVIEW]',
+    de: 'Ich habe die <a href="terms.html" target="_blank" style="color:var(--accent)">Lizenz- &amp; Marktplatzbedingungen</a> und die <a href="index.html#risk" target="_blank" style="color:var(--accent)">Beteiligungsmodelle</a> gelesen. Ich verstehe, dass ich einen anteiligen Erlösanteil an dieser App kaufe (eine Exklusivlizenz nur bei 100 %) und dass kein Umsatz versprochen wird. [RECHTSPRÜFUNG]'
+  },
+  rowContrib: { en: "Contribution (one-time, due now)", de: "Beitrag (einmalig, jetzt fällig)" },
+  rowShare: { en: "Your revenue share", de: "Dein Erlösanteil" },
+  share: { en: "of the app's net revenue is yours", de: "der Netto-Erlöse der App gehören dir" },
+  soleNote: { en: " — sole license", de: " — Alleinlizenz" },
+  termsH: { en: "2 · Terms", de: "2 · Bedingungen" },
+  retSub: { en: "pro rata, from activation", de: "anteilig, ab Aktivierung" }
+};
+
+function fundOptions() {
+  const f = DEAL, open = f.goal - f.committed;
+  const opts = [];
+  for (let v = f.minTicket; v < open; v += f.minTicket) opts.push(v);
+  opts.push(open);
+  return opts.map(v => {
+    const sole = v === open && f.committed + v === f.goal;
+    return { v, pct: Math.round(v / f.goal * 100), sole };
+  });
+}
+
+function applyFundMode() {
+  if (!FUND) return;
+  const de = currentLang === "de";
+  document.getElementById("adsPanel").style.display = "none";
+  // Share purchases on built apps keep the withdrawal choice; funding-stage
+  // deals don't (performance starts at 100% funding, not at payment).
+  document.getElementById("wdPanel").style.display = app.status === "funding" ? "none" : "";
+  document.getElementById("fundPanel").style.display = "block";
+  if (app.status === "available") {
+    document.querySelector('[data-i18n="co_fund_p"]').innerHTML = de
+      ? "Dein Erlösanteil entspricht deinem Anteil am Lizenzpreis. Die Lizenz aktiviert nach den normalen Widerrufsregeln; weitere Anteile bleiben für andere verfügbar, bis 100 % verkauft sind. [RECHTSPRÜFUNG]"
+      : "Your revenue share equals your share of the license price. The license activates under the standard withdrawal rules; further shares stay available to others until 100% is sold. [COUNSEL REVIEW]";
+  }
+  document.querySelector("#termsCheck + span").innerHTML = (app.status === "funding" ? FL.terms : FL.termsShare)[de ? "de" : "en"];
+  // Renumber the terms panel only when the withdrawal panel is hidden too.
+  if (app.status === "funding") document.querySelector('h2[data-i18n="co_terms_h"]').textContent = FL.termsH[de ? "de" : "en"];
+
+  const sel = document.getElementById("fundAmount");
+  const keep = sel.value;
+  sel.innerHTML = fundOptions().map(o =>
+    `<option value="${o.v}">${eur(o.v)} — ${o.pct}%${o.sole ? FL.soleNote[de ? "de" : "en"] : ""}</option>`).join("");
+  sel.value = keep && [...sel.options].some(x => x.value === keep) ? keep
+            : (params.get("full") ? sel.options[sel.options.length - 1].value : sel.options[0].value);
+  refreshFund();
+}
+
+function refreshFund() {
+  if (!FUND) return;
+  const de = currentLang === "de";
+  const v = parseInt(document.getElementById("fundAmount").value, 10);
+  const pct = v / DEAL.goal;
+  document.getElementById("fundShareLine").textContent =
+    Math.round(pct * 100) + "% " + FL.share[de ? "de" : "en"] + " · " +
+    (de ? "Pauschale anteilig: " : "Pro-rata retainer: ") + eur(Math.round(app.retainer * pct)) + (de ? "/Monat" : "/mo");
+  document.querySelector('[data-i18n="co_r_license"]').textContent = FL.rowContrib[de ? "de" : "en"];
+  document.getElementById("coPrice").textContent = eur(v) + " (" + Math.round(pct * 100) + "%)";
+  document.getElementById("coRetainer").textContent = eur(Math.round(app.retainer * pct)) + (de ? "/Monat" : "/mo");
+  document.getElementById("coRetainerSub").textContent = "(" + FL.retSub[de ? "de" : "en"] + ")";
+  document.querySelector('[data-i18n="co_r_ads"]').closest(".co-row").style.display = "none";
+  document.getElementById("coTotal").textContent = eur(v);
+  document.getElementById("coYear").textContent = eur(v + Math.round(app.retainer * pct) * 12);
+}
+
+function fillSummary() {
+  const de = currentLang === "de";
+  document.title = "Checkout — " + app.name + " · Appwerk";
+  document.getElementById("coIcon").textContent = app.icon;
+  document.getElementById("coName").textContent = app.name;
+  document.getElementById("coCat").textContent = de ? app.cat.de : app.cat.en;
+  const crumb = document.getElementById("coCrumbApp");
+  crumb.textContent = app.name;
+  crumb.href = "app.html?id=" + appId;
+  document.getElementById("coPrice").textContent = eur(app.price);
+  document.getElementById("coRetainer").textContent = eur(app.retainer) + (de ? "/Monat" : "/mo");
+  document.getElementById("coRetainerSub").textContent = "(" + app.retainerPct + (de ? " % — Entwicklung, Betrieb, Reporting)" : "% — development, operations, reporting)");
+  document.getElementById("coTotal").textContent = eur(app.price);
+  document.getElementById("coYear").textContent = eur(app.price + app.retainer * 12);
+}
+
+/* Custom-app checkout: summary from the estimator brief; due today is a 50%
+   development deposit, payment is requested (human review), not charged. */
+function fillCustom() {
+  if (!CB || !CB.est) { location.replace("create.html"); return; }
+  const de = currentLang === "de";
+  const e = CB.est;
+  const devMid = Math.round((e.devLo + e.devHi) / 2 / 50) * 50;
+  const dep = Math.round(devMid / 2 / 50) * 50;
+  document.title = "Checkout — Custom App · Appwerk";
+  document.getElementById("adsPanel").style.display = "none";
+  document.getElementById("coIcon").textContent = "🛠️";
+  document.getElementById("coName").textContent = CB.idea.length > 30 ? CB.idea.slice(0, 30) + "…" : (CB.idea || "Custom-App");
+  document.getElementById("coCat").textContent = de ? "Custom-App · nach deinem Brief" : "Custom app · from your brief";
+  const crumb = document.getElementById("coCrumbApp");
+  crumb.textContent = de ? "Eigene App" : "Your own app";
+  crumb.href = "create.html";
+  document.querySelector('[data-i18n="co_r_license"]').textContent = de ? "Anzahlung Entwicklung (50 %, nach Review)" : "Development deposit (50%, after review)";
+  document.getElementById("coPrice").textContent = eur(dep);
+  document.getElementById("coRetainer").textContent = eur(e.retLo) + "–" + eur(e.retHi) + (de ? "/Monat" : "/mo");
+  document.getElementById("coRetainerSub").textContent = "(" + e.pct + (de ? " — ab Listing" : " — from listing") + ")";
+  document.querySelector('[data-i18n="co_r_ads"]').closest(".co-row").style.display = "none";
+  document.getElementById("coTotal").textContent = eur(dep);
+  document.querySelector('[data-i18n="co_r_note"]').innerHTML = de
+    ? "Rest (≈ " + eur(devMid - dep) + ") bei Fertigstellung; Launch-Marketing " + eur(e.valLo) + "–" + eur(e.valHi) + " separat. Zeitplan ≈ " + e.wLo + "–" + e.wHi + " Wochen. Ein Mensch prüft deinen Brief vor jeder Zahlung."
+    : "Balance (≈ " + eur(devMid - dep) + ") on completion; launch marketing " + eur(e.valLo) + "–" + eur(e.valHi) + " billed separately. Timeline ≈ " + e.wLo + "–" + e.wHi + " weeks. A human reviews your brief before any payment.";
+  document.getElementById("payBtn").textContent = de ? "Verbindlich anfragen →" : "Send binding request →";
+  document.querySelector('[data-i18n="co_stripe_note"]').textContent = de
+    ? "Noch keine Zahlung: Wir prüfen deinen Brief und antworten mit einem echten Angebot samt Zahlungslink."
+    : "No payment yet: we review your brief and reply with a real offer including the payment link.";
+}
+
+if (CUSTOM) {
+  fillCustom();
+} else if (!app) {
+  // Unknown or missing app -> back to catalog rather than an empty cart.
+  location.replace("index.html#apps");
+} else {
+  fillSummary();
+  applyFundMode();
+}
+document.getElementById("fundAmount").addEventListener("change", refreshFund);
+
+// ---- Ad budget ----
+const adsAmountWrap = document.getElementById("adsAmountWrap");
+const adsAmount = document.getElementById("adsAmount");
+const coAds = document.getElementById("coAds");
+function refreshAds() {
+  const withAds = document.querySelector('input[name="ads"]:checked').value === "on";
+  adsAmountWrap.classList.toggle("visible", withAds);
+  if (withAds) {
+    coAds.removeAttribute("data-i18n");
+    coAds.textContent = eur(parseInt(adsAmount.value, 10)) + (currentLang === "de" ? "/Monat" : "/mo");
+  } else {
+    coAds.textContent = (currentLang === "de") ? "vorerst keins" : "none for now";
+  }
+}
+document.querySelectorAll('input[name="ads"]').forEach(r => r.addEventListener("change", refreshAds));
+adsAmount.addEventListener("change", refreshAds);
+
+// ---- Custom-work start / expiry of withdrawal right (§ 18 FAGG) ----
+// The app is finished as a one-off work; performance begins right after
+// payment, so the express confirmation below is mandatory. [COUNSEL REVIEW]
+const waiverCheck = document.getElementById("waiverCheck");
+waiverCheck.addEventListener("change", refreshPay);
+
+// ---- Terms + pay button ----
+const termsCheck = document.getElementById("termsCheck");
+const payBtn = document.getElementById("payBtn");
+function refreshPay() {
+  // Funding-stage deals: no custom work starts before 100% funding, so the
+  // fund terms checkbox alone gates payment. Everything else requires the
+  // express custom-work confirmation.
+  const waiverOk = (FUND && app.status === "funding") || waiverCheck.checked;
+  payBtn.disabled = !(termsCheck.checked && waiverOk);
+}
+termsCheck.addEventListener("change", refreshPay);
+
+payBtn.addEventListener("click", () => {
+  if (CUSTOM) {
+    // Binding request: open the mail with brief + checkout confirmations, and
+    // always show an on-page confirmation (mailto can silently do nothing).
+    const de = currentLang === "de";
+    const accept = de
+      ? "\n\nIm Checkout bestätigt: verbindliche Anfrage, ausdrückliches Verlangen auf sofortigen Anfertigungs-Start nach Angebot (§ 18 FAGG), AGB gelesen."
+      : "\n\nConfirmed at checkout: binding request, express request for immediate start of the custom work after offer (§ 18 FAGG), terms read.";
+    const note = document.getElementById("stripeMissing");
+    note.innerHTML = (de
+      ? "✅ Anfrage vorbereitet — dein E-Mail-Fenster sollte sich öffnen. Falls nicht: schick den Brief unten an <strong>appwerk@codemenschen.at</strong>.<br><br>"
+      : "✅ Request prepared — your e-mail window should open. If it doesn't: send the brief below to <strong>appwerk@codemenschen.at</strong>.<br><br>")
+      + "<small style=\"white-space:pre-wrap\">" + CB.brief.replace(/&/g, "&amp;").replace(/</g, "&lt;") + accept + "</small>";
+    note.classList.add("visible");
+    location.href = "mailto:appwerk@codemenschen.at?subject=" + encodeURIComponent(de ? "Verbindliche Custom-App-Anfrage" : "Binding custom-app request") + "&body=" + encodeURIComponent(CB.brief + accept);
+    return;
+  }
+  // Payment links carry a fixed amount — the full-license link must never be
+  // used for a partial share. Per-amount links pending: docs/27.
+  const link = FUND ? "" : app.stripe;
+  if (!link) {
+    document.getElementById("stripeMissing").classList.add("visible");
+    return;
+  }
+  let ref;
+  // "cw" = express custom-work confirmation given (withdrawal right expires
+  // with start of performance); funding deals start only at 100%.
+  if (FUND) {
+    const v = parseInt(document.getElementById("fundAmount").value, 10);
+    const wd = app.status === "funding" ? "at100" : "cw";
+    ref = [appId, MODE, "eur" + v, "pct" + Math.round(v / DEAL.goal * 100), wd, currentLang].join("_");
+  } else {
+    const withAds = document.querySelector('input[name="ads"]:checked').value === "on";
+    const ads = withAds ? adsAmount.value : "0";
+    // client_reference_id shows up on the Stripe checkout session/payment so the
+    // confirmation and ad-budget intent are recorded with the payment itself.
+    ref = [appId, "cw", "ads" + ads, currentLang].join("_");
+  }
+  location.href = link + (link.includes("?") ? "&" : "?") + "client_reference_id=" + encodeURIComponent(ref) + "&locale=" + (currentLang === "de" ? "de" : "en");
+});
+
+// app.js's language toggle rewrites all [data-i18n] innerHTML, wiping the
+// JS-filled summary values — refill after its click handler has run.
+document.getElementById("langToggle").addEventListener("click", () => {
+  if (CUSTOM) { fillCustom(); }
+  else if (app) { fillSummary(); refreshAds(); applyFundMode(); }
+});
+
+refreshAds();
+refreshPay();
+</script>
+</body>
+</html>
