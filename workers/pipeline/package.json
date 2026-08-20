@@ -1,0 +1,16 @@
+{
+  "name": "@ai-factory/pipeline-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node --experimental-strip-types src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.3.237"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.0"
+  }
+}
