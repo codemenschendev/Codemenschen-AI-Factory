@@ -14,6 +14,8 @@ interface Detail {
   builds: { id: number; platform: string; version: string; status: string }[];
   runs: { stage: string; attempt: number; status: string; started_at: string | null; finished_at: string | null }[];
   store_assets?: { id: number; kind: string; locale: string | null; content: string | null; status: string }[];
+  submissions?: { id: number; store: string; status: string; account_ref: string | null }[];
+  packages?: Record<string, boolean>;
   order?: { total_one_time_eur: number };
 }
 
@@ -183,6 +185,80 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               <button className="btn btn-primary btn-block" disabled={busy} onClick={approve}>
                 {d.project.approve}
               </button>
+            </>
+          )}
+
+          {["READY", "PUBLISHING", "PUBLISHED"].includes(p.status) && (
+            <>
+              <hr />
+              <h3 style={{ margin: 0 }}>{d.project.publishing}</h3>
+              {(p.submissions?.length ?? 0) === 0 ? (
+                <>
+                  <p className="small muted" style={{ margin: 0 }}>{d.project.publishingHint}</p>
+                  <button
+                    className="btn btn-primary btn-block"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await api(`/me/projects/${p.id}/publishing/start`, {
+                          method: "POST",
+                          token: token!,
+                          body: JSON.stringify({ stores: ["apple", "google"] }),
+                        });
+                        load();
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {d.project.publishStart}
+                  </button>
+                </>
+              ) : (
+                p.submissions!.map((s) => (
+                  <div key={s.id} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <div className="row">
+                      <strong>{d.project.stores[s.store] ?? s.store}</strong>
+                      <span className="badge badge-type">{d.project.subStatus[s.status] ?? s.status}</span>
+                    </div>
+                    {s.status === "waiting_account" && (
+                      <form
+                        style={{ display: "flex", gap: 6 }}
+                        onSubmit={async (e) => {
+                          e.preventDefault();
+                          const input = (e.currentTarget.elements.namedItem("ref") as HTMLInputElement).value;
+                          setBusy(true);
+                          try {
+                            await api(`/me/projects/${p.id}/publishing/account`, {
+                              method: "POST",
+                              token: token!,
+                              body: JSON.stringify({ store: s.store, account_ref: input }),
+                            });
+                            load();
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        <input
+                          name="ref"
+                          required
+                          placeholder={d.project.accountPh}
+                          style={{
+                            flex: 1, padding: "8px 10px", fontSize: 13,
+                            border: "1px solid var(--border)", borderRadius: "var(--radius)",
+                            background: "var(--paper)", fontFamily: "var(--font-body)",
+                          }}
+                        />
+                        <button className="lang-toggle" disabled={busy} type="submit">
+                          {d.project.accountSave}
+                        </button>
+                      </form>
+                    )}
+                  </div>
+                ))
+              )}
             </>
           )}
         </aside>

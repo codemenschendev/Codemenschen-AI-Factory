@@ -26,6 +26,9 @@ class MeController extends Controller
             'store_assets' => $project->storeAssets()
                 ->where('version', $project->storeAssets()->max('version') ?? 0)
                 ->get(['id', 'kind', 'locale', 'content', 'status']),
+            'submissions' => $project->submissions()
+                ->get(['id', 'store', 'status', 'account_ref', 'notes', 'submitted_at']),
+            'packages' => $project->order->packages,
             'runs' => $project->runs()->latest()->limit(30)
                 ->get(['stage', 'attempt', 'status', 'started_at', 'finished_at']),
             'events' => $project->events()->latest('created_at')->limit(50)
@@ -40,6 +43,30 @@ class MeController extends Controller
         $orchestrator->approveReview($project, 'customer:'.$request->user()->email);
 
         return response()->json(['status' => $project->fresh()->status]);
+    }
+
+    public function startPublishing(Request $request, Project $project, \App\Services\PublishingService $publishing): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        $data = $request->validate([
+            'stores' => 'required|array|min:1',
+            'stores.*' => 'in:apple,google',
+        ]);
+        $publishing->start($project, array_values(array_unique($data['stores'])), 'customer:'.$request->user()->email);
+
+        return response()->json(['status' => $project->fresh()->status]);
+    }
+
+    public function attachStoreAccount(Request $request, Project $project, \App\Services\PublishingService $publishing): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        $data = $request->validate([
+            'store' => 'required|in:apple,google',
+            'account_ref' => 'required|string|max:120',
+        ]);
+        $s = $publishing->attachAccount($project, $data['store'], $data['account_ref'], 'customer:'.$request->user()->email);
+
+        return response()->json(['store' => $s->store, 'status' => $s->status]);
     }
 
     public function downloadBuild(Request $request, Project $project, int $buildId): BinaryFileResponse
