@@ -1,0 +1,102 @@
+# AI Factory — production stack on the codemenschen.at server.
+# Everything binds to 127.0.0.1; Apache terminates TLS and reverse-proxies
+# (see infra/apache/). Host ports chosen to avoid the services already
+# running on this box (3003, 4000, 5001, 6379, 3306, 27017, 18789).
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ai_factory
+      POSTGRES_USER: ai_factory
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in infra/.env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5433:5432"
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redisdata:/data
+    ports:
+      - "127.0.0.1:6380:6379"
+
+  api:
+    build:
+      context: ../apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    restart: unless-stopped
+    env_file: [../apps/api/.env]
+    depends_on: [postgres, redis]
+    ports:
+      - "127.0.0.1:8181:8000"
+    volumes:
+      - artifacts:/artifacts
+
+  horizon:
+    build:
+      context: ../apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    restart: unless-stopped
+    command: ["php", "artisan", "horizon"]
+    env_file: [../apps/api/.env]
+    depends_on: [postgres, redis]
+    volumes:
+      - artifacts:/artifacts
+
+  scheduler:
+    build:
+      context: ../apps/api
+      dockerfile: ../../infra/docker/api.Dockerfile
+    restart: unless-stopped
+    command: ["php", "artisan", "schedule:work"]
+    env_file: [../apps/api/.env]
+    depends_on: [postgres, redis]
+
+  worker:
+    build:
+      context: ..
+      dockerfile: infra/docker/worker.Dockerfile
+    restart: unless-stopped
+    # Non-root: the Claude runtime refuses permission bypass as root, and this
+    # uid matches the host's openclaw user so the ro credentials mount is readable.
+    user: "${WORKER_UID:?set in infra/.env}:${WORKER_GID:?set in infra/.env}"
+    environment:
+      HOME: /home/worker
+      AGENT_MODE: ${AGENT_MODE:-}
+      WORKER_TOKEN: ${WORKER_TOKEN:?set in infra/.env}
+      REPOS_PATH: /repos
+      ARTIFACTS_PATH: /artifacts
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+    volumes:
+      - repos:/repos
+      - artifacts:/artifacts
+      # Writable home for the Claude runtime's own state…
+      - ./worker-home:/home/worker
+      # …and the host's Claude subscription auth dir (same account as the
+      # OpenClaw gateway). Mounted rw so the runtime can refresh the access
+      # token with the long-lived refresh token; same uid as the host user.
+      - /home/openclaw/.claude:/home/worker/.claude
+
+  web:
+    build:
+      context: ..
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        NEXT_PUBLIC_API_BASE_URL: https://api.appwerk.codemenschen.at
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://api:8000
+    depends_on: [api]
+    ports:
+      - "127.0.0.1:3105:3000"
+
+volumes:
+  pgdata:
+  redisdata:
+  repos:
+  artifacts:
