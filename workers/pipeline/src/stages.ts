@@ -49,6 +49,8 @@ const STAGE_PROMPTS: Record<string, string> = {
     "You are the Release Agent. Ensure the app builds cleanly and bump the version in package.json. Do not publish anything.",
   assets:
     "You are the Store-Asset Agent. Read SPEC.md and the app context, then write store-assets.json: a JSON array of {kind, locale, content} with kind in [name, subtitle, description, keywords, release_notes] for BOTH locales 'de' and 'en' (10 entries). Rules: honest, no hype, no unverifiable claims; keywords = comma-separated list ≤100 chars; description ≤ 4000 chars, subtitle ≤ 30 chars, name ≤ 30 chars.",
+  marketing:
+    "You are the Marketing Agent. Read SPEC.md and the app context, then write marketing-plan.json: {campaigns: [{platform: 'google'|'meta', strategy: {audience, angle, funnel, budget_hint}, creatives: [{kind: 'headline'|'ad_copy'|'landing'|'image_prompt', locale: 'de'|'en', content}]}]} — one campaign per platform, ≥3 headlines + 2 ad copies + 1 landing section + 1 image_prompt per campaign and locale. Rules: honest, no earnings promises, no fake urgency, comply with Google/Meta ad policies; German for DACH audience first.",
 };
 
 async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
@@ -174,6 +176,32 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
       ];
       return ok({ assets: [...mk("de"), ...mk("en")] });
     }
+    case "marketing": {
+      const c = job.context;
+      const mkCampaign = (platform: "google" | "meta") => ({
+        platform,
+        strategy: {
+          audience: c.audience === "b2b" ? "DACH small businesses" : "DACH consumers",
+          angle: `[STAGING] One-job tool for: ${c.idea ?? c.name}`,
+          funnel: platform === "google" ? "search intent" : "interest targeting",
+          budget_hint: "start small, scale on CPA",
+        },
+        creatives: (["de", "en"] as const).flatMap((locale) => [
+          { kind: "headline", locale, content: `${c.name} — ${locale === "de" ? "einfach erledigt" : "done simply"}` },
+          {
+            kind: "ad_copy",
+            locale,
+            content:
+              locale === "de"
+                ? `${c.name}: ${c.idea ?? "fokussierte App"}. [STAGING-Platzhalter — echte Copy entsteht im Agent-Modus.]`
+                : `${c.name}: ${c.idea ?? "a focused app"}. [Staging placeholder — real copy is generated in agent mode.]`,
+          },
+          { kind: "landing", locale, content: locale === "de" ? `Warum ${c.name}? Ein Werkzeug, eine Aufgabe, richtig gemacht.` : `Why ${c.name}? One tool, one job, done right.` },
+          { kind: "image_prompt", locale, content: `Clean product shot of a mobile app called ${c.name}, minimal, no text` },
+        ]),
+      });
+      return ok({ campaigns: [mkCampaign("google"), mkCampaign("meta")] });
+    }
   }
 }
 
@@ -212,6 +240,24 @@ async function collectStageOutput(job: StageJob, dir: string): Promise<Record<st
         throw new Error("assets agent produced invalid store-assets.json");
       }
       return { assets };
+    }
+    case "marketing": {
+      const plan = await readJson("marketing-plan.json");
+      const platforms = ["google", "meta"];
+      const kinds = ["headline", "ad_copy", "landing", "image_prompt"];
+      if (
+        !plan ||
+        !Array.isArray(plan.campaigns) ||
+        plan.campaigns.some(
+          (c: { platform: string; creatives?: { kind: string; content?: string }[] }) =>
+            !platforms.includes(c.platform) ||
+            !Array.isArray(c.creatives) ||
+            c.creatives.some((cr) => !kinds.includes(cr.kind) || !cr.content),
+        )
+      ) {
+        throw new Error("marketing agent produced invalid marketing-plan.json");
+      }
+      return { campaigns: plan.campaigns };
     }
     default:
       return {};

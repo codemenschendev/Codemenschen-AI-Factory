@@ -23,6 +23,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
     Route::post('/me/projects/{project}/publishing/start', [MeController::class, 'startPublishing']);
     Route::post('/me/projects/{project}/publishing/account', [MeController::class, 'attachStoreAccount']);
+    Route::post('/me/projects/{project}/marketing/generate', [MeController::class, 'generateMarketing']);
+    Route::post('/me/projects/{project}/campaigns/{campaignId}/decide', [MeController::class, 'decideCampaign']);
     Route::get('/me/projects/{project}/builds/{buildId}/download', [MeController::class, 'downloadBuild']);
 });
 

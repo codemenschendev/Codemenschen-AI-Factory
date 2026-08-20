@@ -48,8 +48,26 @@ class PipelineOrchestrator
             'fix' => $this->afterFix($project),
             'release' => $this->afterRelease($project, $run),
             'assets' => $this->afterAssets($project, $run),
+            'marketing' => $this->afterMarketing($project, $run),
             default => null,
         };
+    }
+
+    /** Customer-triggered creative generation (marketingLaunch package). */
+    public function generateMarketing(Project $project, string $actor): void
+    {
+        abort_unless(
+            in_array($project->status, ['READY', 'PUBLISHING', 'PUBLISHED', 'MARKETING']),
+            409,
+            'App is not ready for marketing',
+        );
+        abort_unless(
+            (bool) ($project->order->packages['marketingLaunch'] ?? false),
+            403,
+            'Marketing package not purchased',
+        );
+        $project->recordEvent('marketing.generation_requested', [], $actor);
+        $this->dispatchStage($project, 'marketing');
     }
 
     public function onStageFailed(PipelineRun $run): void
@@ -154,6 +172,31 @@ class PipelineOrchestrator
             ]);
         }
         $project->recordEvent('assets.generated', ['count' => count($run->output['assets'] ?? []), 'version' => $version]);
+    }
+
+    private function afterMarketing(Project $project, PipelineRun $run): void
+    {
+        $version = ((int) $project->campaigns()->max('version')) + 1;
+        $adBudget = $project->order->ad_budget_monthly_eur;
+        foreach (($run->output['campaigns'] ?? []) as $c) {
+            $campaign = $project->campaigns()->create([
+                'platform' => $c['platform'],
+                'strategy' => $c['strategy'] ?? [],
+                'ad_budget_monthly_eur' => $adBudget,
+                'version' => $version,
+            ]);
+            foreach (($c['creatives'] ?? []) as $cr) {
+                $campaign->creatives()->create([
+                    'kind' => $cr['kind'],
+                    'locale' => $cr['locale'] ?? null,
+                    'content' => $cr['content'],
+                ]);
+            }
+        }
+        $project->recordEvent('marketing.generated', [
+            'campaigns' => count($run->output['campaigns'] ?? []),
+            'version' => $version,
+        ]);
     }
 
     private function afterRelease(Project $project, PipelineRun $run): void

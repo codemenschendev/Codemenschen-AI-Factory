@@ -29,6 +29,10 @@ class MeController extends Controller
             'submissions' => $project->submissions()
                 ->get(['id', 'store', 'status', 'account_ref', 'notes', 'submitted_at']),
             'packages' => $project->order->packages,
+            'campaigns' => $project->campaigns()
+                ->where('version', $project->campaigns()->max('version') ?? 0)
+                ->with('creatives:id,marketing_campaign_id,kind,locale,content')
+                ->get(['id', 'platform', 'strategy', 'status', 'ad_budget_monthly_eur']),
             'runs' => $project->runs()->latest()->limit(30)
                 ->get(['stage', 'attempt', 'status', 'started_at', 'finished_at']),
             'events' => $project->events()->latest('created_at')->limit(50)
@@ -67,6 +71,29 @@ class MeController extends Controller
         $s = $publishing->attachAccount($project, $data['store'], $data['account_ref'], 'customer:'.$request->user()->email);
 
         return response()->json(['store' => $s->store, 'status' => $s->status]);
+    }
+
+    public function generateMarketing(Request $request, Project $project, PipelineOrchestrator $orchestrator): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        $orchestrator->generateMarketing($project, 'customer:'.$request->user()->email);
+
+        return response()->json(['generating' => true]);
+    }
+
+    /** Content sign-off by the customer. Spend approval is a separate operator gate. */
+    public function decideCampaign(Request $request, Project $project, int $campaignId): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        $data = $request->validate(['decision' => 'required|in:approved,rejected']);
+        $campaign = $project->campaigns()->findOrFail($campaignId);
+        abort_unless($campaign->status === 'pending_approval', 409, 'Campaign already decided');
+        $campaign->update(['status' => $data['decision']]);
+        $project->recordEvent('marketing.campaign_decided', [
+            'campaign_id' => $campaign->id, 'decision' => $data['decision'],
+        ], 'customer:'.$request->user()->email);
+
+        return response()->json(['status' => $campaign->status]);
     }
 
     public function downloadBuild(Request $request, Project $project, int $buildId): BinaryFileResponse

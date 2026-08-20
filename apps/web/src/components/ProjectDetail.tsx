@@ -16,6 +16,13 @@ interface Detail {
   store_assets?: { id: number; kind: string; locale: string | null; content: string | null; status: string }[];
   submissions?: { id: number; store: string; status: string; account_ref: string | null }[];
   packages?: Record<string, boolean>;
+  campaigns?: {
+    id: number;
+    platform: string;
+    status: string;
+    strategy: Record<string, string>;
+    creatives: { id: number; kind: string; locale: string | null; content: string }[];
+  }[];
   order?: { total_one_time_eur: number };
 }
 
@@ -142,6 +149,95 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               </div>
             </>
           )}
+
+          {["READY", "PUBLISHING", "PUBLISHED", "MARKETING"].includes(p.status) &&
+            p.packages?.marketingLaunch && (
+              <>
+                <h2 style={{ marginTop: 28 }}>{d.project.marketing}</h2>
+                <p className="muted small">{d.project.marketingHint}</p>
+                {(p.campaigns?.length ?? 0) === 0 ? (
+                  <button
+                    className="btn btn-primary"
+                    disabled={busy}
+                    onClick={async () => {
+                      setBusy(true);
+                      try {
+                        await api(`/me/projects/${p.id}/marketing/generate`, {
+                          method: "POST",
+                          token: token!,
+                        });
+                        load();
+                      } finally {
+                        setBusy(false);
+                      }
+                    }}
+                  >
+                    {busy ? d.project.marketingGenerating : d.project.marketingGenerate}
+                  </button>
+                ) : (
+                  p.campaigns!.map((c) => (
+                    <div className="card" key={c.id} style={{ marginBottom: 14 }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", gap: 10 }}>
+                        <h3 style={{ margin: 0 }}>
+                          {c.platform === "google" ? "Google Ads" : "Meta Ads"}
+                        </h3>
+                        <span className="badge badge-type">
+                          {d.project.campaignStatus[c.status] ?? c.status}
+                        </span>
+                      </div>
+                      <p className="muted small" style={{ margin: 0 }}>
+                        {Object.entries(c.strategy)
+                          .map(([k, v]) => `${k}: ${v}`)
+                          .join(" · ")}
+                      </p>
+                      <div className="tbl-wrap">
+                        <table>
+                          <tbody>
+                            {c.creatives.map((cr) => (
+                              <tr key={cr.id}>
+                                <td>
+                                  {d.project.creativeKinds[cr.kind] ?? cr.kind}
+                                  {cr.locale ? ` · ${cr.locale.toUpperCase()}` : ""}
+                                </td>
+                                <td className="muted" style={{ whiteSpace: "pre-wrap" }}>
+                                  {cr.content}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      {c.status === "pending_approval" && (
+                        <div style={{ display: "flex", gap: 10 }}>
+                          {(["approved", "rejected"] as const).map((decision) => (
+                            <button
+                              key={decision}
+                              className={decision === "approved" ? "btn btn-primary" : "btn btn-ghost"}
+                              disabled={busy}
+                              onClick={async () => {
+                                setBusy(true);
+                                try {
+                                  await api(`/me/projects/${p.id}/campaigns/${c.id}/decide`, {
+                                    method: "POST",
+                                    token: token!,
+                                    body: JSON.stringify({ decision }),
+                                  });
+                                  load();
+                                } finally {
+                                  setBusy(false);
+                                }
+                              }}
+                            >
+                              {decision === "approved" ? d.project.campaignApprove : d.project.campaignReject}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))
+                )}
+              </>
+            )}
 
           <h2 style={{ marginTop: 28 }}>{d.project.criteria}</h2>
           <div className="tbl-wrap">

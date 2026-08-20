@@ -10,7 +10,7 @@ class PipelineRun extends Model
 {
     use HasUuids;
 
-    public const STAGES = ['product', 'uiux', 'coding', 'test', 'fix', 'release', 'assets'];
+    public const STAGES = ['product', 'uiux', 'coding', 'test', 'fix', 'release', 'assets', 'marketing'];
 
     protected $guarded = [];
 

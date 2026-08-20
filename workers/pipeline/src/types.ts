@@ -1,4 +1,12 @@
-export type Stage = "product" | "uiux" | "coding" | "test" | "fix" | "release" | "assets";
+export type Stage =
+  | "product"
+  | "uiux"
+  | "coding"
+  | "test"
+  | "fix"
+  | "release"
+  | "assets"
+  | "marketing";
 
 export interface StageJob {
   run_id: string;

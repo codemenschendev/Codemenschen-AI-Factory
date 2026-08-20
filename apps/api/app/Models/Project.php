@@ -67,6 +67,11 @@ class Project extends Model
         return $this->hasMany(StoreSubmission::class);
     }
 
+    public function campaigns(): HasMany
+    {
+        return $this->hasMany(MarketingCampaign::class);
+    }
+
     public function recordEvent(string $type, array $payload = [], string $actor = 'system'): void
     {
         $this->events()->create(['type' => $type, 'payload' => $payload, 'actor' => $actor]);
