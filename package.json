@@ -1,0 +1,18 @@
+{
+  "name": "ai-factory",
+  "private": true,
+  "workspaces": [
+    "apps/web",
+    "packages/*",
+    "workers/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace apps/web",
+    "build:web": "npm run build --workspace apps/web",
+    "test:pricing": "npm test --workspace packages/pricing",
+    "typecheck": "npm run typecheck --workspaces --if-present"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
