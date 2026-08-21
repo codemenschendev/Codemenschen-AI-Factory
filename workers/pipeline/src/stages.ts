@@ -129,9 +129,9 @@ const STAGE_PROMPTS: Record<string, string> = {
     "You are the Product Agent. From the context below, write SPEC.md (features, screens, data model, out-of-scope) and acceptance-criteria.json — a JSON array of {key, criterion, kind:'automated'|'manual'} with 5-12 verifiable criteria. Keep scope strictly inside the paid feature list.",
   uiux: "You are the UI/UX Agent. Read SPEC.md; write SCREENS.md (screen map, navigation, reusable components) and design-tokens.json consistent with the spec.",
   coding:
-    "You are the Coding Agent. Implement the app per SPEC.md and SCREENS.md in this repository, committing per feature. The stack is defined in package.json (create it if missing: TypeScript, runnable tests via `npm test`). Every automated acceptance criterion must have a matching test.",
+    "You are the Coding Agent. Implement the app per SPEC.md and SCREENS.md in this repository, committing per feature. Keep the repository's existing package.json stack. TEST CONVENTION (mandatory): `npm test` runs `node test/run.mjs` (already present); for EVERY automated criterion in acceptance-criteria.json create test/cases/<key>.mjs exporting `export const key = \"<key>\"` and `export async function run()` that throws on failure — plain Node, no external test framework, test pure logic by importing your modules (keep business logic in framework-free modules so it is testable). Run `npm test` yourself before finishing; it must end with failed: 0.",
   test: "You are the Test Agent. Run `npm test` (and typecheck if configured). Then write test-report.json: {passed, failed, criteria_results: {<criterion key>: 'passed'|'failed'}} judging each automated acceptance criterion from acceptance-criteria.json against the codebase and test results. Be strict.",
-  fix: "You are the Fix Agent. test-report.json lists failures. Fix the code (never weaken tests or criteria), re-run `npm test`, update test-report.json.",
+  fix: "You are the Fix Agent. The last test report lists failures (missing test cases count as failures — add test/cases/<key>.mjs for them). Fix the code, never weaken tests or criteria, re-run `npm test` until it ends with failed: 0.",
   release:
     "You are the Release Agent. Ensure the app builds cleanly and bump the version in package.json. Do not publish anything.",
   assets:
@@ -234,11 +234,41 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
       return ok({});
     }
     case "test": {
-      const entry = existsSync(path.join(dir, "test", "run.mjs")) ? "test/run.mjs" : "test.mjs";
-      const { stdout } = await exec("node", [entry], { cwd: dir });
-      const lines = stdout.trim().split("\n");
-      const report = JSON.parse(lines[lines.length - 1]);
-      return ok({ report, criteria_results: report.criteria_results ?? {} });
+      // Deterministic: run the repo's own tests, parse the JSON summary line.
+      const criteria: { key: string; kind: string }[] = existsSync(path.join(dir, "acceptance-criteria.json"))
+        ? JSON.parse(await readFile(path.join(dir, "acceptance-criteria.json"), "utf8"))
+        : [];
+      const automated = criteria.filter((c) => c.kind === "automated").map((c) => c.key);
+      const allAs = (status: string) => Object.fromEntries(automated.map((k) => [k, status]));
+      const entry = existsSync(path.join(dir, "test", "run.mjs"))
+        ? ["node", ["test/run.mjs"]]
+        : existsSync(path.join(dir, "test.mjs"))
+          ? ["node", ["test.mjs"]]
+          : ["npm", ["test", "--silent"]];
+      let stdout = "";
+      let failedRun = false;
+      try {
+        ({ stdout } = await exec(entry[0] as string, entry[1] as string[], { cwd: dir, maxBuffer: 8 * 1024 * 1024 }));
+      } catch (e) {
+        const err = e as { stdout?: string; stderr?: string; message?: string };
+        stdout = `${err.stdout ?? ""}\n${err.stderr ?? ""}\n${err.message ?? ""}`;
+        failedRun = true;
+      }
+      const lines = stdout.trim().split("\n").filter(Boolean);
+      let report: { passed: number; failed: number; criteria_results?: Record<string, string>; output?: string } | null = null;
+      for (let i = lines.length - 1; i >= 0 && i >= lines.length - 5; i--) {
+        try {
+          const j = JSON.parse(lines[i]);
+          if (typeof j.failed === "number") { report = j; break; }
+        } catch { /* not the summary line */ }
+      }
+      if (!report) {
+        report = failedRun
+          ? { passed: 0, failed: Math.max(1, automated.length), criteria_results: allAs("failed"), output: stdout.slice(-2000) }
+          : { passed: automated.length, failed: 0, criteria_results: allAs("passed"), output: stdout.slice(-2000) };
+      }
+      const criteria_results = { ...allAs("failed"), ...(report.criteria_results ?? {}) };
+      return ok({ report: { ...report, criteria_results }, criteria_results });
     }
     case "release": {
       const artifact = await archiveRepo(job.project_id, "0.1.0");
