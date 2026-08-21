@@ -47,8 +47,8 @@ export async function runStage(job: StageJob): Promise<StageResult> {
 
 const GATEWAY_SCHEMAS: Record<string, string> = {
   product:
-    'Respond with ONLY a JSON object: {"spec_markdown": "<full SPEC.md content>", "criteria": [{"key": "kebab-case", "criterion": "...", "kind": "automated"|"manual"}]} (5-12 criteria).',
-  uiux: 'Respond with ONLY a JSON object: {"screens_markdown": "<full SCREENS.md content>", "design_tokens": {...}}.',
+    "Respond in EXACTLY this layout and nothing else:\n===SPEC===\n<full SPEC.md markdown>\n===CRITERIA===\n<JSON array of {\"key\": \"kebab-case\", \"criterion\": \"...\", \"kind\": \"automated\"|\"manual\"} with 5-12 entries>",
+  uiux: "Respond in EXACTLY this layout and nothing else:\n===SCREENS===\n<full SCREENS.md markdown>\n===TOKENS===\n<JSON object of design tokens>",
   assets: 'Respond with ONLY a JSON array of {kind, locale, content} as specified.',
   marketing: 'Respond with ONLY the JSON object {campaigns: [...]} as specified.',
   coding:
@@ -68,32 +68,51 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const res = isCode
     ? await relayAgent(`${system}\n\n${user}`, `factory:${job.project_id}`, 1200)
     : await gatewayComplete(system, user);
-  const data = extractJson(res.text) as Record<string, unknown> & unknown[];
+  const section = (text: string, a: string, b?: string): string => {
+    const i = text.indexOf(a);
+    if (i < 0) throw new Error(`gateway ${job.stage}: missing ${a} — reply starts: ${text.slice(0, 160)}`);
+    const from = i + a.length;
+    const j = b ? text.indexOf(b, from) : -1;
+    return (j >= 0 ? text.slice(from, j) : text.slice(from)).trim();
+  };
+  const parse = (text: string): unknown => {
+    try {
+      return extractJson(text);
+    } catch (e) {
+      throw new Error(`gateway ${job.stage}: ${String(e)} — reply starts: ${text.slice(0, 160)}`);
+    }
+  };
 
   switch (job.stage) {
     case "product": {
-      const d = data as { spec_markdown?: string; criteria?: unknown[] };
-      if (!d.spec_markdown || !Array.isArray(d.criteria)) throw new Error("gateway product output invalid");
-      await writeRepoFile(dir, "SPEC.md", d.spec_markdown);
-      await writeRepoFile(dir, "acceptance-criteria.json", JSON.stringify(d.criteria, null, 2));
+      const spec = section(res.text, "===SPEC===", "===CRITERIA===");
+      const criteria = parse(section(res.text, "===CRITERIA==="));
+      if (!spec || !Array.isArray(criteria)) throw new Error("gateway product output invalid");
+      await writeRepoFile(dir, "SPEC.md", spec);
+      await writeRepoFile(dir, "acceptance-criteria.json", JSON.stringify(criteria, null, 2));
       break;
     }
     case "uiux": {
-      const d = data as { screens_markdown?: string; design_tokens?: unknown };
-      if (!d.screens_markdown) throw new Error("gateway uiux output invalid");
-      await writeRepoFile(dir, "SCREENS.md", d.screens_markdown);
-      if (d.design_tokens) await writeRepoFile(dir, "design-tokens.json", JSON.stringify(d.design_tokens, null, 2));
+      const screens = section(res.text, "===SCREENS===", "===TOKENS===");
+      if (!screens) throw new Error("gateway uiux output invalid");
+      await writeRepoFile(dir, "SCREENS.md", screens);
+      try {
+        const tokens = parse(section(res.text, "===TOKENS==="));
+        await writeRepoFile(dir, "design-tokens.json", JSON.stringify(tokens, null, 2));
+      } catch {
+        /* tokens are optional */
+      }
       break;
     }
     case "assets":
-      await writeRepoFile(dir, "store-assets.json", JSON.stringify(data, null, 2));
+      await writeRepoFile(dir, "store-assets.json", JSON.stringify(parse(res.text), null, 2));
       break;
     case "marketing":
-      await writeRepoFile(dir, "marketing-plan.json", JSON.stringify(data, null, 2));
+      await writeRepoFile(dir, "marketing-plan.json", JSON.stringify(parse(res.text), null, 2));
       break;
     case "coding":
     case "fix": {
-      const d = data as { done?: boolean };
+      const d = parse(res.text) as { done?: boolean };
       if (!d.done) throw new Error(`gateway ${job.stage}: agent did not report done`);
       break;
     }
