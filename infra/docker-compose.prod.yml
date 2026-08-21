@@ -71,13 +71,16 @@ services:
       OPENCLAW_GATEWAY_URL: ${OPENCLAW_GATEWAY_URL:-http://172.17.0.1:18790}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
       OPENCLAW_GATEWAY_MODEL: ${OPENCLAW_GATEWAY_MODEL:-openclaw/main}
+      REPOS_HOST_PATH: /var/www/ai-factory/infra/repos
       WORKER_TOKEN: ${WORKER_TOKEN:?set in infra/.env}
       REPOS_PATH: /repos
       ARTIFACTS_PATH: /artifacts
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
     volumes:
-      - repos:/repos
+      # Host bind (not a named volume): OpenClaw's agent works on these repos
+      # directly on the host with its own tools — same uid (openclaw).
+      - ./repos:/repos
       - artifacts:/artifacts
       # Writable home for the Claude runtime's own state…
       - ./worker-home:/home/worker

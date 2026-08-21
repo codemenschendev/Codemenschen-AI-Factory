@@ -11,7 +11,12 @@ export const GATEWAY_MODEL = process.env.OPENCLAW_GATEWAY_MODEL ?? "openclaw/mai
 
 export const GATEWAY_MODE = !!(GATEWAY_URL && GATEWAY_TOKEN);
 
-export const GATEWAY_STAGES = new Set(["product", "uiux", "assets", "marketing"]);
+/** Stages OpenClaw handles end-to-end. `test` and `release` are deterministic
+    (run tests / archive) and never need a model. */
+export const GATEWAY_STAGES = new Set(["product", "uiux", "coding", "fix", "assets", "marketing"]);
+
+/** Where the repos live ON THE HOST — OpenClaw's tools run there, not in this container. */
+export const REPOS_HOST_PATH = process.env.REPOS_HOST_PATH ?? "/var/www/ai-factory/infra/repos";
 
 export interface GatewayResult {
   text: string;

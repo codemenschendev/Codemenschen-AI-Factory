@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { StageJob, StageResult } from "./types.ts";
 import { archiveRepo, commitAll, ensureRepo, writeRepoFile } from "./repo.ts";
-import { GATEWAY_MODE, GATEWAY_STAGES, extractJson, gatewayComplete } from "./gateway.ts";
+import { GATEWAY_MODE, GATEWAY_STAGES, REPOS_HOST_PATH, extractJson, gatewayComplete } from "./gateway.ts";
 
 const exec = promisify(execFile);
 
@@ -34,6 +34,8 @@ export async function runStage(job: StageJob): Promise<StageResult> {
   const dir = await ensureRepo(job.project_id, job.context.stack);
   // Text stages prefer the OpenClaw gateway (one shared subscription session);
   // code stages need the SDK sandbox; everything falls back to stubs.
+  // test/release are deterministic — always the local implementation.
+  if (job.stage === "test" || job.stage === "release") return stubStage(job, dir);
   if (GATEWAY_MODE && GATEWAY_STAGES.has(job.stage)) return gatewayStage(job, dir);
   const fn = AGENT_MODE ? agentStage : stubStage;
   return fn(job, dir);
@@ -47,12 +49,18 @@ const GATEWAY_SCHEMAS: Record<string, string> = {
   uiux: 'Respond with ONLY a JSON object: {"screens_markdown": "<full SCREENS.md content>", "design_tokens": {...}}.',
   assets: 'Respond with ONLY a JSON array of {kind, locale, content} as specified.',
   marketing: 'Respond with ONLY the JSON object {campaigns: [...]} as specified.',
+  coding:
+    'Use your file and shell tools to do the work DIRECTLY in the repository directory given below (it is on this machine). When finished, respond with ONLY {"done": true, "summary": "<what you implemented>", "files": ["..."]}.',
+  fix: 'Use your file and shell tools to fix the code DIRECTLY in the repository directory given below. Never weaken tests or criteria. Re-run `npm test` there. Respond with ONLY {"done": true, "summary": "<what you fixed>"}.',
 };
 
 async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const spec = existsSync(path.join(dir, "SPEC.md")) ? await readFile(path.join(dir, "SPEC.md"), "utf8") : "";
+  const hostDir = `${REPOS_HOST_PATH}/${job.project_id}`;
+  const isCode = job.stage === "coding" || job.stage === "fix";
   const system = `${STAGE_PROMPTS[job.stage]}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
-  const user = `Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}`;
+  const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
+  const user = `${isCode ? `Repository directory on this machine: ${hostDir}\n\n` : ""}Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}${isCode ? lastReport : ""}`;
   const res = await gatewayComplete(system, user);
   const data = extractJson(res.text) as Record<string, unknown> & unknown[];
 
@@ -77,6 +85,12 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
     case "marketing":
       await writeRepoFile(dir, "marketing-plan.json", JSON.stringify(data, null, 2));
       break;
+    case "coding":
+    case "fix": {
+      const d = data as { done?: boolean };
+      if (!d.done) throw new Error(`gateway ${job.stage}: agent did not report done`);
+      break;
+    }
   }
   await commitAll(dir, `${job.stage}: gateway pass ${job.attempt}`);
   const output = await collectStageOutput(job, dir);
