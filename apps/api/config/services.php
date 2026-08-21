@@ -42,6 +42,8 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
+    'admin_email' => env('ADMIN_EMAIL'),
+
     'worker' => [
         'url' => env('WORKER_URL', 'http://worker:8300'),
         'token' => env('WORKER_TOKEN'),
