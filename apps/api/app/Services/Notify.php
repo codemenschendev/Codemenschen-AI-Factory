@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Project;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 /**
  * Ops cockpit notifications via the OpenClaw gateway hooks API
@@ -13,8 +14,19 @@ use Illuminate\Support\Facades\Log;
  */
 class Notify
 {
+    /** Transitions that deserve a human's attention by e-mail. */
+    private const MAIL_WORTHY = ['REVIEW', 'READY', 'FAILED', 'PUBLISHING', 'PUBLISHED'];
+
     public function projectStatus(Project $project, string $from, string $to): void
     {
+        if (in_array($to, self::MAIL_WORTHY, true)) {
+            $this->mailAdmin(
+                "[AI Factory] {$project->name}: {$from} → {$to}",
+                "Project {$project->id}\nCustomer: {$project->customer?->email}\nStatus: {$from} → {$to}"
+                .($project->failed_reason ? "\nReason: {$project->failed_reason}" : '')
+                ."\n\nPortal: ".rtrim(config('services.frontend_url'), '/')."/de/account/{$project->id}",
+            );
+        }
         $this->send(sprintf(
             'Project %s (%s) %s → %s%s',
             substr($project->id, 0, 8),
@@ -23,6 +35,19 @@ class Notify
             $to,
             $to === 'REVIEW' ? ' — preview ready, approval needed' : ($to === 'FAILED' ? " — {$project->failed_reason}" : ''),
         ));
+    }
+
+    private function mailAdmin(string $subject, string $body): void
+    {
+        $to = config('services.admin_email');
+        if (! $to) {
+            return;
+        }
+        try {
+            Mail::raw($body, fn ($m) => $m->to($to)->subject($subject));
+        } catch (\Throwable $e) {
+            Log::warning('notify.admin_mail_failed', ['error' => $e->getMessage()]);
+        }
     }
 
     private function send(string $message): void
