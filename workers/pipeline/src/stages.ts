@@ -5,6 +5,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { StageJob, StageResult } from "./types.ts";
 import { archiveRepo, commitAll, ensureRepo, writeRepoFile } from "./repo.ts";
+import { GATEWAY_MODE, GATEWAY_STAGES, extractJson, gatewayComplete } from "./gateway.ts";
 
 const exec = promisify(execFile);
 
@@ -31,8 +32,55 @@ export const AGENT_MODE =
  */
 export async function runStage(job: StageJob): Promise<StageResult> {
   const dir = await ensureRepo(job.project_id, job.context.stack);
+  // Text stages prefer the OpenClaw gateway (one shared subscription session);
+  // code stages need the SDK sandbox; everything falls back to stubs.
+  if (GATEWAY_MODE && GATEWAY_STAGES.has(job.stage)) return gatewayStage(job, dir);
   const fn = AGENT_MODE ? agentStage : stubStage;
   return fn(job, dir);
+}
+
+/* ---------------- gateway mode (OpenClaw /v1/chat/completions) ---------------- */
+
+const GATEWAY_SCHEMAS: Record<string, string> = {
+  product:
+    'Respond with ONLY a JSON object: {"spec_markdown": "<full SPEC.md content>", "criteria": [{"key": "kebab-case", "criterion": "...", "kind": "automated"|"manual"}]} (5-12 criteria).',
+  uiux: 'Respond with ONLY a JSON object: {"screens_markdown": "<full SCREENS.md content>", "design_tokens": {...}}.',
+  assets: 'Respond with ONLY a JSON array of {kind, locale, content} as specified.',
+  marketing: 'Respond with ONLY the JSON object {campaigns: [...]} as specified.',
+};
+
+async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
+  const spec = existsSync(path.join(dir, "SPEC.md")) ? await readFile(path.join(dir, "SPEC.md"), "utf8") : "";
+  const system = `${STAGE_PROMPTS[job.stage]}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
+  const user = `Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}`;
+  const res = await gatewayComplete(system, user);
+  const data = extractJson(res.text) as Record<string, unknown> & unknown[];
+
+  switch (job.stage) {
+    case "product": {
+      const d = data as { spec_markdown?: string; criteria?: unknown[] };
+      if (!d.spec_markdown || !Array.isArray(d.criteria)) throw new Error("gateway product output invalid");
+      await writeRepoFile(dir, "SPEC.md", d.spec_markdown);
+      await writeRepoFile(dir, "acceptance-criteria.json", JSON.stringify(d.criteria, null, 2));
+      break;
+    }
+    case "uiux": {
+      const d = data as { screens_markdown?: string; design_tokens?: unknown };
+      if (!d.screens_markdown) throw new Error("gateway uiux output invalid");
+      await writeRepoFile(dir, "SCREENS.md", d.screens_markdown);
+      if (d.design_tokens) await writeRepoFile(dir, "design-tokens.json", JSON.stringify(d.design_tokens, null, 2));
+      break;
+    }
+    case "assets":
+      await writeRepoFile(dir, "store-assets.json", JSON.stringify(data, null, 2));
+      break;
+    case "marketing":
+      await writeRepoFile(dir, "marketing-plan.json", JSON.stringify(data, null, 2));
+      break;
+  }
+  await commitAll(dir, `${job.stage}: gateway pass ${job.attempt}`);
+  const output = await collectStageOutput(job, dir);
+  return { status: "succeeded", output, tokens_in: res.tokens_in, tokens_out: res.tokens_out };
 }
 
 /* ---------------- agent mode ---------------- */

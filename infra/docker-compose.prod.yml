@@ -67,6 +67,10 @@ services:
     environment:
       HOME: /home/worker
       AGENT_MODE: ${AGENT_MODE:-}
+      # OpenClaw gateway (docker-bridge listener) — text stages reuse its session
+      OPENCLAW_GATEWAY_URL: ${OPENCLAW_GATEWAY_URL:-http://172.17.0.1:18790}
+      OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
+      OPENCLAW_GATEWAY_MODEL: ${OPENCLAW_GATEWAY_MODEL:-openclaw/main}
       WORKER_TOKEN: ${WORKER_TOKEN:?set in infra/.env}
       REPOS_PATH: /repos
       ARTIFACTS_PATH: /artifacts
