@@ -22,13 +22,14 @@ export async function ensureRepo(projectId: string, stack = "expo"): Promise<str
   if (!existsSync(path.join(dir, ".git"))) {
     await mkdir(dir, { recursive: true });
     const template = path.join(TEMPLATES_PATH, `${stack}-app`);
-    if (existsSync(template)) {
+    const seeded = existsSync(template);
+    if (seeded) {
       await exec("cp", ["-R", `${template}/.`, dir]);
     }
     await exec("git", ["init", "-b", "main"], { cwd: dir });
     await exec("git", ["config", "user.email", "factory@codemenschen.at"], { cwd: dir });
     await exec("git", ["config", "user.name", "AI Factory"], { cwd: dir });
-    await commitAll(dir, `chore: seed from ${stack} golden template`);
+    if (seeded) await commitAll(dir, `chore: seed from ${stack} golden template`);
   }
   return dir;
 }
@@ -38,7 +39,10 @@ export async function commitAll(dir: string, message: string): Promise<void> {
   try {
     await exec("git", ["commit", "-m", message], { cwd: dir });
   } catch (e) {
-    if (!String(e).includes("nothing to commit")) throw e;
+    // git reports "nothing to commit" on stdout, not in the error message
+    const err = e as { stdout?: string; stderr?: string; message?: string };
+    const all = `${err.message ?? ""}${err.stdout ?? ""}${err.stderr ?? ""}`;
+    if (!all.includes("nothing to commit")) throw e;
   }
 }
 
