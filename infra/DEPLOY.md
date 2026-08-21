@@ -49,3 +49,23 @@ in place), and issues a per-host certbot cert. No DNS changes needed per app.
   loopback-only; the Factory API talks to it via hook token (PLAN.md §6).
 - Disk cleaned to 41 % on 2026-08-20; watch Docker build cache growth
   (`docker system df`).
+
+## Host relay (OpenClaw agent bridge)
+
+Code stages (coding/fix) run through the full OpenClaw agent on the host,
+not through the gateway's tool-less completions endpoint. The relay runs as
+the `openclaw` user (user-level systemd, like the manager's portal-worker):
+
+```bash
+install -o openclaw -g openclaw -m 600 /dev/null /home/openclaw/.config/ai-factory-relay.env
+cat > /home/openclaw/.config/ai-factory-relay.env <<EOT
+RELAY_TOKEN=<same as OPENCLAW_RELAY_TOKEN in infra/.env>
+OPENCLAW_BIN=/home/openclaw/.nvm/versions/node/v22.23.1/bin/openclaw
+PATH=/home/openclaw/.nvm/versions/node/v22.23.1/bin:/usr/local/bin:/usr/bin:/bin
+EOT
+cp infra/host-relay/ai-factory-relay.service /home/openclaw/.config/systemd/user/
+loginctl enable-linger openclaw
+sudo -u openclaw XDG_RUNTIME_DIR=/run/user/1006 systemctl --user daemon-reload
+sudo -u openclaw XDG_RUNTIME_DIR=/run/user/1006 systemctl --user enable --now ai-factory-relay
+curl -s http://127.0.0.1:8310/healthz
+```

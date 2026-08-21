@@ -5,7 +5,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import type { StageJob, StageResult } from "./types.ts";
 import { archiveRepo, commitAll, ensureRepo, writeRepoFile } from "./repo.ts";
-import { GATEWAY_MODE, GATEWAY_STAGES, REPOS_HOST_PATH, extractJson, gatewayComplete } from "./gateway.ts";
+import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson, gatewayComplete, relayAgent } from "./gateway.ts";
 
 const exec = promisify(execFile);
 
@@ -36,7 +36,9 @@ export async function runStage(job: StageJob): Promise<StageResult> {
   // code stages need the SDK sandbox; everything falls back to stubs.
   // test/release are deterministic — always the local implementation.
   if (job.stage === "test" || job.stage === "release") return stubStage(job, dir);
-  if (GATEWAY_MODE && GATEWAY_STAGES.has(job.stage)) return gatewayStage(job, dir);
+  const isCode = job.stage === "coding" || job.stage === "fix";
+  if (isCode && RELAY_MODE) return gatewayStage(job, dir);
+  if (!isCode && GATEWAY_MODE && GATEWAY_STAGES.has(job.stage)) return gatewayStage(job, dir);
   const fn = AGENT_MODE ? agentStage : stubStage;
   return fn(job, dir);
 }
@@ -61,7 +63,11 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const system = `${STAGE_PROMPTS[job.stage]}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const user = `${isCode ? `Repository directory on this machine: ${hostDir}\n\n` : ""}Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}${isCode ? lastReport : ""}`;
-  const res = await gatewayComplete(system, user);
+  // Code stages go through the host relay (full agent with shell/file tools);
+  // text stages through the completions endpoint (faster, no tools needed).
+  const res = isCode
+    ? await relayAgent(`${system}\n\n${user}`, `factory:${job.project_id}`, 1200)
+    : await gatewayComplete(system, user);
   const data = extractJson(res.text) as Record<string, unknown> & unknown[];
 
   switch (job.stage) {

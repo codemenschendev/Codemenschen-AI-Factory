@@ -1,0 +1,15 @@
+# systemd USER unit for the `openclaw` account:
+#   ~/.config/systemd/user/ai-factory-relay.service
+# Install (as root): see infra/DEPLOY.md "Host relay".
+[Unit]
+Description=AI Factory host relay (openclaw agent bridge)
+After=network.target
+
+[Service]
+EnvironmentFile=%h/.config/ai-factory-relay.env
+ExecStart=/home/openclaw/.nvm/versions/node/v22.23.1/bin/node /var/www/ai-factory/infra/host-relay/relay.mjs
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

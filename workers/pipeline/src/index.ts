@@ -5,7 +5,7 @@
  */
 import { createServer } from "node:http";
 import { AGENT_MODE, runStage } from "./stages.ts";
-import { GATEWAY_MODE } from "./gateway.ts";
+import { GATEWAY_MODE, RELAY_MODE } from "./gateway.ts";
 import type { StageJob, StageResult } from "./types.ts";
 
 const PORT = Number(process.env.PORT ?? 8300);
@@ -91,5 +91,5 @@ createServer((req, res) => {
     void execute(job);
   });
 }).listen(PORT, BIND, () =>
-  console.log(`pipeline worker on ${BIND}:${PORT} (agent mode: ${AGENT_MODE}, gateway mode: ${GATEWAY_MODE})`),
+  console.log(`pipeline worker on ${BIND}:${PORT} (agent mode: ${AGENT_MODE}, gateway mode: ${GATEWAY_MODE}, relay mode: ${RELAY_MODE})`),
 );

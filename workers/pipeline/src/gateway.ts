@@ -75,3 +75,37 @@ export function extractJson(text: string): unknown {
   }
   throw new Error("unparseable JSON in gateway response");
 }
+
+/* ---------------- host relay (openclaw agent CLI with tools) ---------------- */
+
+export const RELAY_URL = process.env.OPENCLAW_RELAY_URL ?? "";
+export const RELAY_TOKEN = process.env.OPENCLAW_RELAY_TOKEN ?? "";
+export const RELAY_MODE = !!(RELAY_URL && RELAY_TOKEN);
+
+export interface RelayResult {
+  text: string;
+  status: string;
+  tokens_in: number;
+  tokens_out: number;
+}
+
+/** Full OpenClaw agent turn (coding tool profile) via the host relay. */
+export async function relayAgent(message: string, sessionKey: string, timeoutS = 900): Promise<RelayResult> {
+  const res = await fetch(`${RELAY_URL.replace(/\/$/, "")}/agent`, {
+    method: "POST",
+    headers: { authorization: `Bearer ${RELAY_TOKEN}`, "content-type": "application/json" },
+    body: JSON.stringify({ message, session_key: sessionKey, timeout_s: timeoutS }),
+    signal: AbortSignal.timeout((timeoutS + 60) * 1000),
+  });
+  const data = (await res.json().catch(() => ({}))) as {
+    text?: string; status?: string; error?: string;
+    usage?: { input?: number; output?: number; inputTokens?: number; outputTokens?: number };
+  };
+  if (!res.ok) throw new Error(`relay HTTP ${res.status}: ${data.error ?? ""}`);
+  return {
+    text: data.text ?? "",
+    status: data.status ?? "unknown",
+    tokens_in: data.usage?.input ?? data.usage?.inputTokens ?? 0,
+    tokens_out: data.usage?.output ?? data.usage?.outputTokens ?? 0,
+  };
+}

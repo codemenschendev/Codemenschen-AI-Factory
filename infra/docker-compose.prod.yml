@@ -77,6 +77,9 @@ services:
       OPENCLAW_GATEWAY_URL: ${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:18789}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
       OPENCLAW_GATEWAY_MODEL: ${OPENCLAW_GATEWAY_MODEL:-openclaw/main}
+      # Host relay → `openclaw agent` with tools (coding/fix). Loopback, host network.
+      OPENCLAW_RELAY_URL: ${OPENCLAW_RELAY_URL:-http://127.0.0.1:8310}
+      OPENCLAW_RELAY_TOKEN: ${OPENCLAW_RELAY_TOKEN:-}
       REPOS_HOST_PATH: /var/www/ai-factory/infra/repos
       WORKER_TOKEN: ${WORKER_TOKEN:?set in infra/.env}
       REPOS_PATH: /repos
