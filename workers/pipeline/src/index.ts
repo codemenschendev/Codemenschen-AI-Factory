@@ -9,6 +9,7 @@ import { GATEWAY_MODE } from "./gateway.ts";
 import type { StageJob, StageResult } from "./types.ts";
 
 const PORT = Number(process.env.PORT ?? 8300);
+const BIND = process.env.BIND ?? "0.0.0.0";
 const TOKEN = process.env.WORKER_TOKEN ?? "";
 
 const busyProjects = new Set<string>();
@@ -89,4 +90,6 @@ createServer((req, res) => {
     reply(202, { accepted: job.run_id });
     void execute(job);
   });
-}).listen(PORT, () => console.log(`pipeline worker on :${PORT} (agent mode: ${AGENT_MODE}, gateway mode: ${GATEWAY_MODE})`));
+}).listen(PORT, BIND, () =>
+  console.log(`pipeline worker on ${BIND}:${PORT} (agent mode: ${AGENT_MODE}, gateway mode: ${GATEWAY_MODE})`),
+);

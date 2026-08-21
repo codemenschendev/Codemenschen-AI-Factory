@@ -61,14 +61,19 @@ services:
       context: ..
       dockerfile: infra/docker/worker.Dockerfile
     restart: unless-stopped
-    # Non-root: the Claude runtime refuses permission bypass as root, and this
-    # uid matches the host's openclaw user so the ro credentials mount is readable.
+    # Host network: the OpenClaw gateway listens on the host loopback only
+    # (127.0.0.1:18789). The worker binds to the docker-bridge IP so only
+    # containers (api/horizon) can reach it, never the internet.
+    network_mode: host
+    # Non-root: same uid as the host's openclaw user (shared repos + auth dir).
     user: "${WORKER_UID:?set in infra/.env}:${WORKER_GID:?set in infra/.env}"
     environment:
       HOME: /home/worker
+      BIND: 172.17.0.1
+      PORT: 8300
       AGENT_MODE: ${AGENT_MODE:-}
-      # OpenClaw gateway (docker-bridge listener) — text stages reuse its session
-      OPENCLAW_GATEWAY_URL: ${OPENCLAW_GATEWAY_URL:-http://172.17.0.1:18790}
+      # OpenClaw gateway on the host loopback — all AI stages reuse its session
+      OPENCLAW_GATEWAY_URL: ${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:18789}
       OPENCLAW_GATEWAY_TOKEN: ${OPENCLAW_GATEWAY_TOKEN:-}
       OPENCLAW_GATEWAY_MODEL: ${OPENCLAW_GATEWAY_MODEL:-openclaw/main}
       REPOS_HOST_PATH: /var/www/ai-factory/infra/repos
