@@ -69,7 +69,8 @@ services:
     user: "${WORKER_UID:?set in infra/.env}:${WORKER_GID:?set in infra/.env}"
     environment:
       HOME: /home/worker
-      BIND: 172.17.0.1
+      # Gateway IP of the compose network (infra_default) — only api/horizon reach it
+      BIND: ${WORKER_BIND:-172.28.0.1}
       PORT: 8300
       AGENT_MODE: ${AGENT_MODE:-}
       # OpenClaw gateway on the host loopback — all AI stages reuse its session
