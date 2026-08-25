@@ -6,6 +6,7 @@ import path from "node:path";
 import type { StageJob, StageResult } from "./types.ts";
 import { archiveRepo, commitAll, ensureRepo, writeRepoFile } from "./repo.ts";
 import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson, gatewayComplete, relayAgent } from "./gateway.ts";
+import { EAS_MODE, easBuildAndroid } from "./eas.ts";
 
 const exec = promisify(execFile);
 
@@ -27,6 +28,8 @@ export const AGENT_MODE =
  *   product → { criteria: [{key, criterion, kind}] }        + SPEC.md in repo
  *   test    → { report: {passed, failed, …}, criteria_results: {key: status} }
  *   release → { builds: [{platform, version, artifact_path}] }
+ *             always a "bundle" (source tar.gz); plus an installable
+ *             "android" .apk via EAS Build when EXPO_TOKEN is set (Expo stack)
  * Agent mode drives the Claude Agent SDK inside the repo; stub mode produces
  * deterministic artifacts so the whole factory can run without an API key.
  */
@@ -168,6 +171,29 @@ async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
   return { status: "succeeded", output, tokens_in: tokensIn, tokens_out: tokensOut };
 }
 
+/* ---------------- release (deterministic, shared by every mode) ---------------- */
+
+/**
+ * Source bundle always; installable Android .apk through EAS Build when the
+ * worker has an Expo token and the project is an Expo app. A failed EAS build
+ * fails the stage (the orchestrator retries) rather than silently shipping
+ * source only — the customer paid for an installable app.
+ */
+async function releaseStage(job: StageJob, dir: string): Promise<Record<string, unknown>> {
+  let version = "0.1.0";
+  try {
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    if (typeof pkg.version === "string" && pkg.version) version = pkg.version;
+  } catch { /* keep default */ }
+  const builds: Record<string, unknown>[] = [];
+  const artifact = await archiveRepo(job.project_id, version);
+  builds.push({ platform: "bundle", version, artifact_path: artifact });
+  if (EAS_MODE && job.context.stack === "expo") {
+    builds.push({ ...(await easBuildAndroid(dir, job.project_id, job.context.name, version)) });
+  }
+  return { builds, eas: EAS_MODE && job.context.stack === "expo" };
+}
+
 /* ---------------- stub mode (no API key: deterministic dry run) ---------------- */
 
 async function stubStage(job: StageJob, dir: string): Promise<StageResult> {
@@ -270,10 +296,8 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
       const criteria_results = { ...allAs("failed"), ...(report.criteria_results ?? {}) };
       return ok({ report: { ...report, criteria_results }, criteria_results });
     }
-    case "release": {
-      const artifact = await archiveRepo(job.project_id, "0.1.0");
-      return ok({ builds: [{ platform: "bundle", version: "0.1.0", artifact_path: artifact }] });
-    }
+    case "release":
+      return ok(await releaseStage(job, dir));
     case "assets": {
       const c = job.context;
       const name = c.name.slice(0, 30);
@@ -345,11 +369,8 @@ async function collectStageOutput(job: StageJob, dir: string): Promise<Record<st
       }
       return { report, criteria_results: report.criteria_results ?? {} };
     }
-    case "release": {
-      const pkg = await readJson("package.json");
-      const artifact = await archiveRepo(job.project_id, pkg?.version ?? "0.1.0");
-      return { builds: [{ platform: "bundle", version: pkg?.version ?? "0.1.0", artifact_path: artifact }] };
-    }
+    case "release":
+      return releaseStage(job, dir);
     case "assets": {
       const assets = await readJson("store-assets.json");
       const kinds = ["name", "subtitle", "description", "keywords", "release_notes"];

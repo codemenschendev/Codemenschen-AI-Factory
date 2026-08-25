@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "Factory App",
-    "slug": "factory-app",
+    "name": "Appwerk App",
+    "slug": "appwerk-app",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
-    "ios": { "supportsTablet": false, "bundleIdentifier": "at.codemenschen.factory.PLACEHOLDER" },
-    "android": { "package": "at.codemenschen.factory.PLACEHOLDER" }
+    "ios": { "supportsTablet": false, "bundleIdentifier": "at.codemenschen.appwerk.PLACEHOLDER" },
+    "android": { "package": "at.codemenschen.appwerk.PLACEHOLDER" }
   }
 }

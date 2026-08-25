@@ -62,7 +62,8 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
     );
   if (!p) return <p className="est-empty">…</p>;
 
-  const download = async (buildId: number) => {
+  const ext: Record<string, string> = { android: "apk", ios: "ipa", bundle: "tar.gz" };
+  const download = async (buildId: number, platform: string) => {
     setBusy(true);
     try {
       const res = await fetch(`${API_BASE}/api/me/projects/${p.id}/builds/${buildId}/download`, {
@@ -71,7 +72,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
       const blob = await res.blob();
       const a = document.createElement("a");
       a.href = URL.createObjectURL(blob);
-      a.download = `${p.name}-build-${buildId}.tar.gz`;
+      a.download = `${p.name}-${platform}-${buildId}.${ext[platform] ?? "bin"}`;
       a.click();
       URL.revokeObjectURL(a.href);
     } finally {
@@ -269,7 +270,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               <span className="muted">
                 {b.platform} v{b.version}
               </span>
-              <button className="lang-toggle" disabled={busy} onClick={() => download(b.id)}>
+              <button className="lang-toggle" disabled={busy} onClick={() => download(b.id, b.platform)}>
                 {d.project.download}
               </button>
             </div>

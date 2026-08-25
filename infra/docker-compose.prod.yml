@@ -86,6 +86,10 @@ services:
       ARTIFACTS_PATH: /artifacts
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      # EAS Build (Expo stack): unset → release ships the source bundle only
+      EXPO_TOKEN: ${EXPO_TOKEN:-}
+      EXPO_OWNER: ${EXPO_OWNER:-}
+      EAS_PROFILE: ${EAS_PROFILE:-preview}
     volumes:
       # Host bind (not a named volume): OpenClaw's agent works on these repos
       # directly on the host with its own tools — same uid (openclaw).

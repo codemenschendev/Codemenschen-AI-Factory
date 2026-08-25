@@ -1,5 +1,5 @@
 {
-  "name": "factory-app",
+  "name": "appwerk-app",
   "version": "0.1.0",
   "private": true,
   "main": "expo/AppEntry.js",
