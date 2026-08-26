@@ -30,4 +30,5 @@ php artisan serve           # http://localhost:8000
 ## Deploy
 
 See [infra/DEPLOY.md](infra/DEPLOY.md). Production host: codemenschen.at server
-(Apache reverse-proxy → Docker services on loopback ports).
+(Apache reverse-proxy → Docker services on loopback ports). Push to `main`, then
+`server-deploy.sh ai-factory` on the host (or `infra/deploy-server.sh` inside the checkout).

@@ -28,3 +28,10 @@ apps/api/bootstrap/cache/*
 *.log
 .idea/
 .vscode/
+
+# runtime state on the server (never in git)
+infra/repos/
+infra/worker-home/
+infra/artifacts/
+server-deploy.sh
+infra/server-deploy.sh

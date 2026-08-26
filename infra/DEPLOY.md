@@ -31,11 +31,21 @@ certbot --apache -d appwerk.codemenschen.at -d api.appwerk.codemenschen.at -d ad
 
 ## Update deploy
 
+`/var/www/ai-factory` is a git checkout of `origin/main` (since 2026-08-26; before
+that the tree was rsynced from a workstation). Commit, push, then on the host:
+
 ```bash
-cd /var/www/ai-factory && git pull
-cd infra && docker compose -f docker-compose.prod.yml up -d --build
-docker compose exec api php artisan migrate --force
+server-deploy.sh ai-factory              # host-wide script → infra/deploy-server.sh
+# or, in /var/www/ai-factory:
+infra/deploy-server.sh                   # git sync + rebuild all services + migrate
+infra/deploy-server.sh api horizon       # only these services
+infra/deploy-server.sh --force worker    # rebuild even while a stage is running
 ```
+
+`deploy-server.sh` refuses to rebuild while pipeline runs are queued/running,
+because recreating the worker kills the stage inside it. `infra/deploy.sh`
+(rsync from the workstation) still works for hot-fixes but bypasses git — the
+next `deploy-server.sh` resets the tree to `origin/main`.
 
 ## Customer app backends (Type B, MVP 1 Phase 3+)
 
