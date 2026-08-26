@@ -28,8 +28,15 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
       localStorage.setItem("aifactory-token", fromHash);
       history.replaceState(null, "", window.location.pathname);
     }
-    setToken(localStorage.getItem("aifactory-token"));
-  }, []);
+    const stored = localStorage.getItem("aifactory-token");
+    setToken(stored);
+    // A project page sent the visitor here to sign in: go back once a token exists.
+    const next = localStorage.getItem("aifactory-next");
+    if (stored && next && next.startsWith(`/${locale}/account/`)) {
+      localStorage.removeItem("aifactory-next");
+      window.location.replace(next);
+    }
+  }, [locale]);
 
   useEffect(() => {
     if (!token) return;

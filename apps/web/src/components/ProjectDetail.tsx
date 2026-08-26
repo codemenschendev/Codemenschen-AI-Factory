@@ -37,7 +37,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
   const [token] = useState<string | null>(() =>
     typeof window === "undefined" ? null : localStorage.getItem("aifactory-token"),
   );
-  const [p, setP] = useState<Detail | null>(null);
+  const [p, setP] = useState<Detail | null | undefined>(undefined);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -56,9 +56,26 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
 
   if (!token)
     return (
-      <p className="note">
+      <div className="note" style={{ display: "grid", gap: 12 }}>
+        <p style={{ margin: 0 }}>{d.project.signInNeeded}</p>
+        <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap" }}>
+          <Link
+            className="btn btn-primary"
+            href={`/${locale}/account`}
+            onClick={() => localStorage.setItem("aifactory-next", `/${locale}/account/${projectId}`)}
+          >
+            {d.project.signIn}
+          </Link>
+          <Link href={`/${locale}/account`}>{d.project.back}</Link>
+        </div>
+      </div>
+    );
+  if (p === null)
+    return (
+      <div className="note" style={{ display: "grid", gap: 12 }}>
+        <p style={{ margin: 0 }}>{d.project.notFound}</p>
         <Link href={`/${locale}/account`}>{d.project.back}</Link>
-      </p>
+      </div>
     );
   if (!p) return <p className="est-empty">…</p>;
 
