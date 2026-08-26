@@ -91,3 +91,18 @@ the artifacts volume next to the source bundle. Free plan: ~30 builds/month,
 queue times up to ~30 min — the worker heartbeats while it waits. iOS device
 builds need an Apple Developer account and stay disabled. Optional:
 `EXPO_OWNER=<org>` to own the apps under an organization, `EAS_PROFILE`.
+
+## OpenClaw agent for the text stages
+
+Text stages (product, uiux, assets, marketing) run through the gateway agent named in
+`OPENCLAW_GATEWAY_MODEL` (infra/.env). Since 2026-08-26 that is **`openclaw/factory`**:
+a dedicated agent (`~openclaw/.openclaw/workspace-factory`, backend `claude-cli-chat`,
+model `claude-cli-chat/claude-sonnet-4-6`, no tools, no channels, `skills: []`) whose
+SOUL.md tells it to answer in exactly the layout the stage prompt dictates. Before that
+the stages shared the operator's `main` agent, whose session also serves Telegram and
+the portal — a busy session answered "No response from OpenClaw." and the stage failed.
+Recreate the agent with `openclaw agents add factory --non-interactive --workspace
+~/.openclaw/workspace-factory --model claude-cli-chat/claude-sonnet-4-6` as user
+`openclaw`, then set `skills: []` and `tools.profile: messaging` on its `agents.list`
+entry (the gateway hot-reloads). Coding/fix still go through the host relay (full agent
+with tools).
