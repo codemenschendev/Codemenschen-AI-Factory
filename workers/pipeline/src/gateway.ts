@@ -5,6 +5,9 @@
  * login needed. Code-executing stages (coding/test/fix) still need the SDK
  * sandbox and therefore their own session.
  */
+import http from "node:http";
+import https from "node:https";
+
 export const GATEWAY_URL = process.env.OPENCLAW_GATEWAY_URL ?? "";
 export const GATEWAY_TOKEN = process.env.OPENCLAW_GATEWAY_TOKEN ?? "";
 export const GATEWAY_MODEL = process.env.OPENCLAW_GATEWAY_MODEL ?? "openclaw/main";
@@ -121,21 +124,46 @@ export interface RelayResult {
 
 /** Full OpenClaw agent turn (coding tool profile) via the host relay. */
 export async function relayAgent(message: string, sessionKey: string, timeoutS = 900): Promise<RelayResult> {
-  const res = await fetch(`${RELAY_URL.replace(/\/$/, "")}/agent`, {
-    method: "POST",
-    headers: { authorization: `Bearer ${RELAY_TOKEN}`, "content-type": "application/json" },
-    body: JSON.stringify({ message, session_key: sessionKey, timeout_s: timeoutS }),
-    signal: AbortSignal.timeout((timeoutS + 60) * 1000),
-  });
-  const data = (await res.json().catch(() => ({}))) as {
+  // node:http instead of fetch(): undici's fetch aborts with a bare
+  // "fetch failed" once the response headers take longer than 300 s, and a
+  // coding stage routinely runs 5–15 min before the relay answers. (Formpilot
+  // 26.08.2026: coding #1 and #2 died at exactly five minutes.)
+  const { status, body } = await postJson(`${RELAY_URL.replace(/\/$/, "")}/agent`, {
+    authorization: `Bearer ${RELAY_TOKEN}`,
+  }, { message, session_key: sessionKey, timeout_s: timeoutS }, (timeoutS + 60) * 1000);
+  let data: {
     text?: string; status?: string; error?: string;
     usage?: { input?: number; output?: number; inputTokens?: number; outputTokens?: number };
-  };
-  if (!res.ok) throw new Error(`relay HTTP ${res.status}: ${data.error ?? ""}`);
+  } = {};
+  try { data = JSON.parse(body); } catch { /* keep {} */ }
+  if (status < 200 || status >= 300) throw new Error(`relay HTTP ${status}: ${data.error ?? body.slice(0, 200)}`);
   return {
     text: data.text ?? "",
     status: data.status ?? "unknown",
     tokens_in: data.usage?.input ?? data.usage?.inputTokens ?? 0,
     tokens_out: data.usage?.output ?? data.usage?.outputTokens ?? 0,
   };
+}
+
+/** Minimal JSON POST on node:http with a single overall timeout and no header timeout. */
+function postJson(url: string, headers: Record<string, string>, payload: unknown, timeoutMs: number): Promise<{ status: number; body: string }> {
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const lib = target.protocol === "https:" ? https : http;
+    const data = JSON.stringify(payload);
+    const req = lib.request(
+      target,
+      { method: "POST", headers: { ...headers, "content-type": "application/json", "content-length": Buffer.byteLength(data) } },
+      (res) => {
+        let body = "";
+        res.setEncoding("utf8");
+        res.on("data", (chunk) => { body += chunk; });
+        res.on("end", () => resolve({ status: res.statusCode ?? 0, body }));
+        res.on("error", reject);
+      },
+    );
+    req.setTimeout(timeoutMs, () => req.destroy(new Error(`relay timed out after ${Math.round(timeoutMs / 1000)}s`)));
+    req.on("error", reject);
+    req.end(data);
+  });
 }
