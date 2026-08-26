@@ -60,6 +60,9 @@ services:
     build:
       context: ..
       dockerfile: infra/docker/worker.Dockerfile
+      args:
+        WORKER_UID: ${WORKER_UID:?set in infra/.env}
+        WORKER_GID: ${WORKER_GID:?set in infra/.env}
     restart: unless-stopped
     # Host network: the OpenClaw gateway listens on the host loopback only
     # (127.0.0.1:18789). The worker binds to the docker-bridge IP so only
