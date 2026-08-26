@@ -24,7 +24,36 @@ export interface GatewayResult {
   tokens_out: number;
 }
 
+/** Replies the gateway sends when the agent produced nothing — worth a retry, not a failure. */
+const NO_RESPONSE = /^\s*no response from openclaw/i;
+const RETRY_DELAYS_MS = [15_000, 45_000];
+
+const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
+
+/**
+ * One completion, retried on transient conditions: network errors, HTTP
+ * 429/5xx, an empty completion, or the gateway's "No response from OpenClaw"
+ * text (the agent session was busy or aborted). Each retry waits longer so a
+ * short outage at the gateway does not burn the stage's attempts.
+ */
 export async function gatewayComplete(system: string, user: string): Promise<GatewayResult> {
+  let lastError: unknown;
+  for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
+    try {
+      return await gatewayCompleteOnce(system, user);
+    } catch (e) {
+      lastError = e;
+      const message = e instanceof Error ? e.message : String(e);
+      const transient = /gateway HTTP (429|5\d\d)|empty completion|no response from openclaw|fetch failed|timeout|ECONN|socket/i.test(message);
+      if (!transient || attempt === RETRY_DELAYS_MS.length) break;
+      console.warn(`gateway attempt ${attempt + 1} failed (${message.slice(0, 120)}); retrying in ${RETRY_DELAYS_MS[attempt] / 1000}s`);
+      await sleep(RETRY_DELAYS_MS[attempt]);
+    }
+  }
+  throw lastError instanceof Error ? lastError : new Error(String(lastError));
+}
+
+async function gatewayCompleteOnce(system: string, user: string): Promise<GatewayResult> {
   const res = await fetch(`${GATEWAY_URL.replace(/\/$/, "")}/v1/chat/completions`, {
     method: "POST",
     headers: {
@@ -49,6 +78,7 @@ export async function gatewayComplete(system: string, user: string): Promise<Gat
   };
   const text = data.choices?.[0]?.message?.content ?? "";
   if (!text) throw new Error("gateway returned empty completion");
+  if (NO_RESPONSE.test(text)) throw new Error("gateway said: no response from openclaw");
   return {
     text,
     tokens_in: data.usage?.prompt_tokens ?? 0,

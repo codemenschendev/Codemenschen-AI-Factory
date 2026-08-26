@@ -19,7 +19,18 @@ class PipelineOrchestrator
 {
     public const MAX_FIX_ATTEMPTS = 3;
 
-    public const MAX_STAGE_ATTEMPTS = 2;
+    /**
+     * A stage that errors (not a test failure) is retried with growing delays.
+     * Most stage errors are transient upstream hiccups — the OpenClaw gateway
+     * answering "No response", a busy relay, an EAS queue timeout — and an
+     * immediate second try lands in exactly the same condition (Formpilot,
+     * 26.08.2026: both attempts 6 s apart). Waiting a minute and then three
+     * turns those into successes without a human.
+     */
+    public const MAX_STAGE_ATTEMPTS = 3;
+
+    /** Seconds to wait before attempt 2, 3, … */
+    public const RETRY_DELAYS = [60, 180];
 
     public function __construct(private Notify $notify) {}
 
@@ -78,7 +89,8 @@ class PipelineOrchestrator
         ]);
 
         if ($run->attempt < self::MAX_STAGE_ATTEMPTS) {
-            $this->dispatchStage($project, $run->stage, $run->attempt + 1);
+            $delay = self::RETRY_DELAYS[$run->attempt - 1] ?? end(self::RETRY_DELAYS);
+            $this->dispatchStage($project, $run->stage, $run->attempt + 1, 'system', $delay);
 
             return;
         }
@@ -212,7 +224,16 @@ class PipelineOrchestrator
         $this->transition($project, 'REVIEW');
     }
 
-    private function dispatchStage(Project $project, string $stage, int $attempt = 1): void
+    /** Operator lane (artisan factory:stage): one stage, outside the automatic flow. */
+    public function dispatch(Project $project, string $stage, string $actor): PipelineRun
+    {
+        $allowed = ['product', 'uiux', 'coding', 'test', 'fix', 'release', 'assets', 'marketing'];
+        abort_unless(in_array($stage, $allowed, true), 422, 'unknown stage');
+
+        return $this->dispatchStage($project, $stage, 1, $actor);
+    }
+
+    private function dispatchStage(Project $project, string $stage, int $attempt = 1, string $actor = 'system', int $delaySeconds = 0): PipelineRun
     {
         $run = DB::transaction(fn () => PipelineRun::create([
             'project_id' => $project->id,
@@ -220,8 +241,13 @@ class PipelineOrchestrator
             'attempt' => $attempt,
             'callback_token' => bin2hex(random_bytes(24)),
         ]));
-        $project->recordEvent('stage.dispatched', ['stage' => $stage, 'attempt' => $attempt]);
-        DispatchStageJob::dispatch($run->id);
+        $project->recordEvent('stage.dispatched', ['stage' => $stage, 'attempt' => $attempt, 'delay_s' => $delaySeconds], $actor);
+        $job = DispatchStageJob::dispatch($run->id);
+        if ($delaySeconds > 0) {
+            $job->delay(now()->addSeconds($delaySeconds));
+        }
+
+        return $run;
     }
 
     private function transition(Project $project, string $to, string $actor = 'system'): void

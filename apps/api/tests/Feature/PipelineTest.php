@@ -140,15 +140,23 @@ class PipelineTest extends TestCase
         app(PipelineOrchestrator::class)->approveReview($project, 'test');
     }
 
-    public function test_stage_failure_retries_then_fails_project(): void
+    public function test_stage_failure_retries_with_backoff_then_fails_project(): void
     {
         $project = $this->paidProject();
         $this->completeStage($project, 'product', [], 'failed');
         $this->assertSame('SPECIFICATION', $project->fresh()->status);
         $this->assertSame(2, $project->runs()->where('stage', 'product')->max('attempt'));
+        // The retry is deferred, not fired 6 s later into the same outage.
+        $this->assertSame(60, $project->events()->where('type', 'stage.dispatched')->latest('id')->first()->payload['delay_s']);
+
+        $this->completeStage($project, 'product', [], 'failed');
+        $this->assertSame('SPECIFICATION', $project->fresh()->status);
+        $this->assertSame(3, $project->runs()->where('stage', 'product')->max('attempt'));
+        $this->assertSame(180, $project->events()->where('type', 'stage.dispatched')->latest('id')->first()->payload['delay_s']);
 
         $this->completeStage($project, 'product', [], 'failed');
         $this->assertSame('FAILED', $project->fresh()->status);
+        $this->assertStringContainsString('after 3 attempts', $project->fresh()->failed_reason);
     }
 
     public function test_callback_requires_valid_token(): void
