@@ -35,6 +35,9 @@ class Estimator
     /** One paid change-request round (after the free REVIEW rounds / once released). Patrick's call. */
     public const REVISION_PRICE_EUR = 39;
 
+    /** Appwerk Care: unlimited change rounds per app, monthly, cancel any time. */
+    public const CARE_MONTHLY_EUR = 9;
+
     /** Development price clamp (EUR). */
     public const PRICE_MIN = 149;
 

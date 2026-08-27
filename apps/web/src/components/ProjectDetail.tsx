@@ -18,8 +18,11 @@ interface Detail {
   revision_rounds?: number;
   max_revision_rounds?: number;
   free_rounds_left?: number;
-  change_request_mode?: "free" | "paid" | "none";
+  change_request_mode?: "free" | "paid" | "care" | "none";
   revision_price_eur?: number;
+  care_monthly_eur?: number;
+  care_status?: "none" | "active" | "past_due" | "canceled";
+  care_ends_at?: string | null;
   change_requests?: {
     id: number;
     round: number;
@@ -89,6 +92,9 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
   const [crRefineError, setCrRefineError] = useState<string | null>(null);
   const [crAnswers, setCrAnswers] = useState<Record<number, string>>({});
   const [crRounds, setCrRounds] = useState(0);
+  // Appwerk Care (€/month, unlimited change rounds): own express-start consent, never pre-ticked.
+  const [careWaiver, setCareWaiver] = useState(false);
+  const [careNotice, setCareNotice] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("app");
 
   const load = useCallback(() => {
@@ -193,6 +199,35 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
       setCrRefineError(e instanceof ApiError && e.status === 429 ? d.project.crRefineLimit : d.project.crRefineUnavailable);
     } finally {
       setCrRefining(false);
+    }
+  };
+
+  const startCare = async () => {
+    if (!p) return;
+    setBusy(true);
+    setCareNotice(null);
+    try {
+      const res = await api<{ checkout_url: string }>(`/me/projects/${p.id}/care/checkout`, {
+        method: "POST",
+        token,
+        body: JSON.stringify({ fagg_waiver: careWaiver }),
+      });
+      window.location.href = res.checkout_url;
+    } catch (e) {
+      setCareNotice(e instanceof ApiError && e.status === 503 ? d.checkout.staging : d.checkout.errors.generic);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelCare = async () => {
+    if (!p || !window.confirm(d.project.careCancelConfirm)) return;
+    setBusy(true);
+    try {
+      await api(`/me/projects/${p.id}/care/cancel`, { method: "POST", token });
+      load();
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -309,12 +344,21 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
           {canChange && (
             <div className="card">
               <h3>{d.project.changesTitle}</h3>
+              {p.change_request_mode === "care" && (
+                <p className="note" style={{ margin: 0, background: "#E8F4EE", color: "var(--valid)" }}>
+                  <strong>{d.project.careTitle}</strong> · {d.project.careActiveHint}
+                  {p.care_ends_at && ` ${d.project.careEndsOn.replace("{date}", new Date(p.care_ends_at).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB"))}`}
+                </p>
+              )}
+              {p.care_status === "past_due" && <p className="note" style={{ margin: 0 }}>{d.project.carePastDue}</p>}
               <p className="small muted" style={{ margin: 0 }}>
-                {p.change_request_mode === "free"
-                  ? d.project.changesHint
-                      .replace("{left}", String(p.free_rounds_left ?? 0))
-                      .replace("{max}", String(p.max_revision_rounds ?? 0))
-                  : d.project.changesPaidHint.replace("{price}", eur(p.revision_price_eur ?? 0, locale))}
+                {p.change_request_mode === "care"
+                  ? d.project.changesCareHint
+                  : p.change_request_mode === "free"
+                    ? d.project.changesHint
+                        .replace("{left}", String(p.free_rounds_left ?? 0))
+                        .replace("{max}", String(p.max_revision_rounds ?? 0))
+                    : d.project.changesPaidHint.replace("{price}", eur(p.revision_price_eur ?? 0, locale))}
               </p>
               <textarea
                 value={crText}
@@ -403,6 +447,28 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                   : d.project.changesSend}
               </button>
               {crNotice && <p className="note">{crNotice}</p>}
+              {p.change_request_mode === "care" && !p.care_ends_at && (
+                <p className="small muted" style={{ margin: 0 }}>
+                  <a href="#" onClick={(e) => { e.preventDefault(); cancelCare(); }}>{d.project.careCancel}</a>
+                </p>
+              )}
+              {p.change_request_mode === "paid" && p.care_status !== "active" && (
+                <div className="card" style={{ gap: 10, padding: 16, background: "var(--paper)" }}>
+                  <span className="cat">{d.project.careTitle}</span>
+                  <p style={{ margin: 0 }}>{d.project.careOffer.replace("{price}", eur(p.care_monthly_eur ?? 0, locale))}</p>
+                  <ul className="aud-list" style={{ margin: 0, fontSize: 14 }}>
+                    {d.project.careBenefits.map((b) => <li key={b}>✓ {b}</li>)}
+                  </ul>
+                  <label className="choice" style={{ alignItems: "flex-start" }}>
+                    <input type="checkbox" checked={careWaiver} onChange={(e) => setCareWaiver(e.target.checked)} style={{ marginTop: 4 }} />
+                    <span className="small">{d.checkout.waiverLabel}</span>
+                  </label>
+                  <button className="btn btn-primary btn-block" disabled={busy || !careWaiver} onClick={startCare}>
+                    {d.project.careStart.replace("{price}", eur(p.care_monthly_eur ?? 0, locale))}
+                  </button>
+                  {careNotice && <p className="note">{careNotice}</p>}
+                </div>
+              )}
             </div>
           )}
         </div>

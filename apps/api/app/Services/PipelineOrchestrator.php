@@ -139,8 +139,12 @@ class PipelineOrchestrator
         $mode = $this->changeRequestMode($project);
         abort_if($mode === 'none', 409, 'Project cannot take change requests right now');
 
-        if ($mode === 'free') {
-            $cr = $project->changeRequests()->create(['round' => $project->revision_rounds + 1, 'text' => $text]);
+        if ($mode === 'free' || $mode === 'care') {
+            $cr = $project->changeRequests()->create([
+                'round' => $project->revision_rounds + 1,
+                'text' => $text,
+                'covered_by' => $mode === 'care' ? 'care' : null,
+            ]);
             $this->startRevision($project, $cr, $actor);
 
             return $cr;
@@ -223,11 +227,14 @@ class PipelineOrchestrator
         $this->dispatchStage($project, 'assets');
     }
 
-    /** What a new change request costs right now: free | paid | none. */
+    /** What a new change request costs right now: care (subscription) | free | paid | none. */
     public function changeRequestMode(Project $project): string
     {
         if (! in_array($project->status, self::REVISABLE_STATUSES, true)) {
             return 'none';
+        }
+        if ($project->care_status === 'active') {
+            return 'care';
         }
 
         return $project->status === 'REVIEW' && $this->freeRoundsLeft($project) > 0 ? 'free' : 'paid';
@@ -235,7 +242,8 @@ class PipelineOrchestrator
 
     public function freeRoundsLeft(Project $project): int
     {
-        $used = $project->changeRequests()->where('price_eur', 0)->count();
+        // Care-covered rounds never eat into the free ones.
+        $used = $project->changeRequests()->where('price_eur', 0)->whereNull('covered_by')->count();
 
         return max(0, self::MAX_REVISION_ROUNDS - $used);
     }

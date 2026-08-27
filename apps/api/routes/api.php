@@ -28,6 +28,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
     Route::post('/me/projects/{project}/change-requests', [MeController::class, 'requestChanges']);
     Route::post('/me/projects/{project}/change-requests/refine', [MeController::class, 'refineChangeRequest'])->middleware('throttle:5,1');
+    Route::post('/me/projects/{project}/care/checkout', [MeController::class, 'startCare']);
+    Route::post('/me/projects/{project}/care/cancel', [MeController::class, 'cancelCare']);
     Route::post('/me/projects/{project}/publishing/start', [MeController::class, 'startPublishing']);
     Route::post('/me/projects/{project}/publishing/account', [MeController::class, 'attachStoreAccount']);
     Route::post('/me/projects/{project}/marketing/generate', [MeController::class, 'generateMarketing']);

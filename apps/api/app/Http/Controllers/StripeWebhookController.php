@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ChangeRequest;
 use App\Models\Order;
+use App\Models\Project;
+use App\Services\CareService;
 use App\Services\OrderFulfillment;
 use App\Services\RevisionService;
 use Illuminate\Http\Request;
@@ -36,6 +38,17 @@ class StripeWebhookController extends Controller
         if ($event->type === 'checkout.session.completed') {
             $session = $event->data->object;
             $ref = (string) $session->client_reference_id;
+            if (str_starts_with($ref, 'care:')) {
+                $project = Project::find(substr($ref, 5));
+                if ($project === null) {
+                    Log::error('stripe.webhook.unknown_care_project', ['session' => $session->id]);
+
+                    return response('ignored', 200);
+                }
+                app(CareService::class)->activate($project, $session->subscription ? (string) $session->subscription : null, $event->toArray());
+
+                return response('ok', 200);
+            }
             if (str_starts_with($ref, 'cr:')) {
                 $cr = ChangeRequest::find(substr($ref, 3));
                 if ($cr === null) {
@@ -58,6 +71,11 @@ class StripeWebhookController extends Controller
                 app(OrderFulfillment::class)
                     ->markPaid($order, $session->payment_intent, (int) ($session->amount_total / 100), $event->toArray());
             }
+        }
+
+        if (in_array($event->type, ['customer.subscription.updated', 'customer.subscription.deleted'], true)) {
+            $sub = $event->data->object;
+            app(CareService::class)->onSubscriptionEvent((string) $sub->id, (string) $sub->status, $event->type === 'customer.subscription.deleted');
         }
 
         return response('ok', 200);

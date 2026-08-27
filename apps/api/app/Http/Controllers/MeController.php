@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Pricing\Estimator;
 use App\Models\Project;
 use App\Services\PipelineOrchestrator;
+use App\Services\CareService;
 use App\Services\Refiner;
 use App\Services\PublishingService;
 use Illuminate\Http\JsonResponse;
@@ -36,6 +37,9 @@ class MeController extends Controller
             'free_rounds_left' => $orchestrator->freeRoundsLeft($project),
             'change_request_mode' => $orchestrator->changeRequestMode($project),
             'revision_price_eur' => Estimator::REVISION_PRICE_EUR,
+            'care_monthly_eur' => Estimator::CARE_MONTHLY_EUR,
+            'care_status' => $project->care_status ?? 'none',
+            'care_ends_at' => $project->care_ends_at?->toIso8601String(),
             'change_requests' => $project->changeRequests()->latest('id')
                 ->get(['id', 'round', 'text', 'status', 'agent_summary', 'price_eur', 'checkout_url', 'created_at']),
             'failed_reason' => $project->failed_reason,
@@ -62,6 +66,37 @@ class MeController extends Controller
             'events' => $project->events()->latest('created_at')->limit(50)
                 ->get(['type', 'payload', 'actor', 'created_at']),
         ]);
+    }
+
+    /** Start Appwerk Care (€/month, unlimited change rounds): Stripe subscription checkout. */
+    public function startCare(Request $request, Project $project, CareService $care): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        // Service starts with the first change round, so the FAGG § 18 express
+        // start consent is an explicit choice here too (never pre-ticked).
+        $request->validate(['fagg_waiver' => 'required|accepted']);
+        abort_if(($project->care_status ?? 'none') === 'active', 409, 'Care is already active');
+        abort_unless(in_array($project->status, PipelineOrchestrator::REVISABLE_STATUSES, true), 409, 'App is not ready for Care yet');
+
+        $project->recordEvent('care.checkout_requested', ['fagg_waiver_at' => now()->toIso8601String(), 'ip' => $request->ip()], 'customer:'.$request->user()->email);
+        $url = $care->createCheckout($project);
+        if (! $url) {
+            return response()->json(['payment' => 'unconfigured', 'message' => 'Stripe is not configured yet (staging).'], 503);
+        }
+
+        return response()->json(['checkout_url' => $url]);
+    }
+
+    /** Cancel Care — stays active until the end of the paid month. */
+    public function cancelCare(Request $request, Project $project, CareService $care): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        abort_unless(($project->care_status ?? 'none') === 'active', 409, 'Care is not active');
+        abort_if((bool) $project->care_ends_at, 409, 'Care is already cancelled');
+        $care->cancel($project, 'customer:'.$request->user()->email);
+        $project = $project->fresh();
+
+        return response()->json(['care_status' => $project->care_status, 'care_ends_at' => $project->care_ends_at?->toIso8601String()]);
     }
 
     /** Customer approves the preview build: REVIEW → READY (guarded). */
