@@ -190,7 +190,7 @@ POST /api/auth/magic-link | /api/auth/verify
 GET  /api/me/projects
 GET  /api/me/projects/{id}              status timeline, builds, test summary
 GET  /api/me/projects/{id}/artifacts    download build / assets
-POST /api/me/projects/{id}/feedback     REVIEW-stage change requests (scoped)
+POST /api/me/projects/{id}/change-requests  REVIEW-stage change requests (scoped, 3 free rounds → revise stage)
 ```
 
 **Internal (worker + admin, token-scoped):**

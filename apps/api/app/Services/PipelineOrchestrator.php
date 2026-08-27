@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Jobs\DispatchStageJob;
+use App\Models\ChangeRequest;
 use App\Models\PipelineRun;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
@@ -13,11 +14,15 @@ use Illuminate\Support\Facades\DB;
  *
  * PAID → SPECIFICATION (product → uiux) → BUILDING (coding) → TESTING (test)
  *   ⇄ FIXING (fix, max 3) → release (preview build) → REVIEW —approve→ READY.
+ * REVIEW —change request→ FIXING (revise) → TESTING → … → REVIEW, max 3 rounds.
  * Any exhausted stage → FAILED + human escalation.
  */
 class PipelineOrchestrator
 {
     public const MAX_FIX_ATTEMPTS = 3;
+
+    /** Free change-request rounds a customer gets while the app is in REVIEW. */
+    public const MAX_REVISION_ROUNDS = 3;
 
     /**
      * A stage that errors (not a test failure) is retried with growing delays.
@@ -57,6 +62,7 @@ class PipelineOrchestrator
             'coding' => $this->afterCoding($project),
             'test' => $this->afterTest($project, $run),
             'fix' => $this->afterFix($project),
+            'revise' => $this->afterRevise($project, $run),
             'release' => $this->afterRelease($project, $run),
             'assets' => $this->afterAssets($project, $run),
             'marketing' => $this->afterMarketing($project, $run),
@@ -94,7 +100,40 @@ class PipelineOrchestrator
 
             return;
         }
+        if ($run->stage === 'revise') {
+            // A change request that cannot be implemented must not sink an app
+            // that already passed review: hand it back to the customer + operator.
+            $this->closeChangeRequest($project, 'failed', mb_substr((string) $run->error, 0, 500));
+            $this->transition($project, 'REVIEW');
+
+            return;
+        }
         $this->fail($project, "stage {$run->stage} failed after {$run->attempt} attempts");
+    }
+
+    /**
+     * REVIEW → FIXING (revise). The customer describes a change; the revise
+     * agent implements it inside the paid scope, then the normal test → release
+     * chain produces a fresh preview and the project returns to REVIEW.
+     */
+    public function requestChanges(Project $project, string $text, string $actor): ChangeRequest
+    {
+        abort_unless($project->status === 'REVIEW', 409, 'Project is not awaiting review');
+        abort_if($project->revision_rounds >= self::MAX_REVISION_ROUNDS, 409, 'Free revision rounds used up');
+
+        $project->increment('revision_rounds');
+        // Each round gets the full fix budget again for its own test failures.
+        $project->update(['fix_attempts' => 0]);
+        $cr = $project->changeRequests()->create([
+            'round' => $project->revision_rounds,
+            'text' => $text,
+        ]);
+        $project->recordEvent('changes.requested', ['change_request_id' => $cr->id, 'round' => $cr->round], $actor);
+        $this->transition($project->fresh(), 'FIXING', $actor);
+        $this->dispatchStage($project, 'revise', 1, $actor);
+        $this->notify->changeRequested($project, $cr);
+
+        return $cr;
     }
 
     /** REVIEW → READY. Guarded: never READY with failing required tests. */
@@ -172,6 +211,31 @@ class PipelineOrchestrator
         $this->dispatchStage($project, 'test');
     }
 
+    private function afterRevise(Project $project, PipelineRun $run): void
+    {
+        $declined = trim((string) ($run->output['declined'] ?? ''));
+        if ($declined !== '') {
+            // Outside the paid feature list — nothing changed, no rebuild needed.
+            $this->closeChangeRequest($project, 'out_of_scope', $declined);
+            $this->transition($project, 'REVIEW');
+
+            return;
+        }
+        $this->closeChangeRequest($project, 'done', (string) ($run->output['summary'] ?? ''));
+        $this->transition($project, 'TESTING');
+        $this->dispatchStage($project, 'test');
+    }
+
+    private function closeChangeRequest(Project $project, string $status, string $summary): void
+    {
+        $cr = $project->changeRequests()->where('status', 'in_progress')->latest('id')->first();
+        if (! $cr) {
+            return;
+        }
+        $cr->update(['status' => $status, 'agent_summary' => $summary ?: null]);
+        $project->recordEvent('changes.'.$status, ['change_request_id' => $cr->id, 'round' => $cr->round]);
+    }
+
     private function afterAssets(Project $project, PipelineRun $run): void
     {
         $version = ((int) $project->storeAssets()->max('version')) + 1;
@@ -232,7 +296,7 @@ class PipelineOrchestrator
     /** Operator lane (artisan factory:stage): one stage, outside the automatic flow. */
     public function dispatch(Project $project, string $stage, string $actor): PipelineRun
     {
-        $allowed = ['product', 'uiux', 'coding', 'test', 'fix', 'release', 'assets', 'marketing'];
+        $allowed = ['product', 'uiux', 'coding', 'test', 'fix', 'revise', 'release', 'assets', 'marketing'];
         abort_unless(in_array($stage, $allowed, true), 422, 'unknown stage');
 
         return $this->dispatchStage($project, $stage, 1, $actor);

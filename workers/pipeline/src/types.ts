@@ -4,6 +4,7 @@ export type Stage =
   | "coding"
   | "test"
   | "fix"
+  | "revise"
   | "release"
   | "assets"
   | "marketing";
@@ -27,6 +28,10 @@ export interface StageJob {
     /** Store-listing languages ordered at checkout, e.g. ["de", "en"]. */
     store_locales: string[];
     fix_attempt: number;
+    /** Change-request round (REVIEW → revise), 0 while the first build is in progress. */
+    revision_round: number;
+    /** The customer's change request being worked on by the revise stage, else null. */
+    change_request: string | null;
     criteria: { key: string; criterion: string; kind: string; status: string }[];
     last_test_report: Record<string, unknown> | null;
   };

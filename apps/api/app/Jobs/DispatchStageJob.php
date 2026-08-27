@@ -51,6 +51,8 @@ class DispatchStageJob implements ShouldQueue
                 'app_type' => $quote->app_type,
                 'store_locales' => $project->order->storeLocales(),
                 'fix_attempt' => $project->fix_attempts,
+                'revision_round' => $project->revision_rounds,
+                'change_request' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->value('text'),
                 'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status'])->toArray(),
                 'last_test_report' => $project->testReports()->latest()->first()?->report,
             ],

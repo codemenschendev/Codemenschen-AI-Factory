@@ -29,6 +29,10 @@ class MeController extends Controller
             'name' => $project->name,
             'status' => $project->status,
             'fix_attempts' => $project->fix_attempts,
+            'revision_rounds' => $project->revision_rounds,
+            'max_revision_rounds' => PipelineOrchestrator::MAX_REVISION_ROUNDS,
+            'change_requests' => $project->changeRequests()->latest('id')
+                ->get(['id', 'round', 'text', 'status', 'agent_summary', 'created_at']),
             'failed_reason' => $project->failed_reason,
             'build_starts_at' => $project->build_starts_at?->toIso8601String(),
             'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status']),
@@ -61,6 +65,16 @@ class MeController extends Controller
         $orchestrator->approveReview($project, 'customer:'.$request->user()->email);
 
         return response()->json(['status' => $project->fresh()->status]);
+    }
+
+    /** Customer asks for changes to the preview build: REVIEW → FIXING (revise). */
+    public function requestChanges(Request $request, Project $project, PipelineOrchestrator $orchestrator): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        $data = $request->validate(['text' => 'required|string|min:10|max:4000']);
+        $cr = $orchestrator->requestChanges($project, trim($data['text']), 'customer:'.$request->user()->email);
+
+        return response()->json(['status' => $project->fresh()->status, 'round' => $cr->round], 201);
     }
 
     public function startPublishing(Request $request, Project $project, PublishingService $publishing): JsonResponse

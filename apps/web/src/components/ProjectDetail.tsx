@@ -14,6 +14,9 @@ interface Detail {
   builds: { id: number; platform: string; version: string; status: string }[];
   runs: { stage: string; attempt: number; status: string; started_at: string | null; finished_at: string | null }[];
   store_assets?: { id: number; kind: string; locale: string | null; content: string | null; status: string }[];
+  revision_rounds?: number;
+  max_revision_rounds?: number;
+  change_requests?: { id: number; round: number; text: string; status: string; agent_summary: string | null; created_at: string }[];
   submissions?: { id: number; store: string; status: string; account_ref: string | null }[];
   packages?: Record<string, boolean>;
   campaigns?: {
@@ -38,6 +41,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
     typeof window === "undefined" ? null : localStorage.getItem("aifactory-token"),
   );
   const [p, setP] = useState<Detail | null | undefined>(undefined);
+  const [crText, setCrText] = useState(""); // change-request draft (REVIEW)
   // Store assets are grouped per listing language; start on the portal language.
   const [assetLocale, setAssetLocale] = useState<string | null>(null);
   const assetLocales = useMemo(
@@ -109,6 +113,18 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
     }
   };
 
+  const requestChanges = async () => {
+    if (!p) return;
+    setBusy(true);
+    try {
+      await api(`/me/projects/${p.id}/change-requests`, { method: "POST", token, body: JSON.stringify({ text: crText }) });
+      setCrText("");
+      load();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const approve = async () => {
     setBusy(true);
     try {
@@ -136,6 +152,9 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
 
       {p.status === "FAILED" && <p className="note">{d.project.failed}</p>}
       {p.status === "READY" && <p className="note" style={{ background: "#E8F4EE", color: "var(--valid)" }}>{d.project.approved}</p>}
+      {p.change_requests?.some((c) => c.status === "in_progress") && (
+        <p className="note">{d.project.changesInProgress}</p>
+      )}
 
       <div className="wizard-cols" style={{ marginTop: 24 }}>
         <div>
@@ -285,6 +304,37 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               </>
             )}
 
+          {(p.change_requests?.length ?? 0) > 0 && (
+            <>
+              <h2 style={{ marginTop: 28 }}>{d.project.changesHistory}</h2>
+              <div className="tbl-wrap">
+                <table>
+                  <tbody>
+                    {p.change_requests!.map((c) => (
+                      <tr key={c.id}>
+                        <td style={{ whiteSpace: "nowrap", verticalAlign: "top" }}>
+                          {d.project.changesRound} {c.round}
+                          <br />
+                          <span className="badge" style={c.status === "done" ? { color: "var(--valid)", borderColor: "currentColor" } : c.status === "failed" ? { color: "#B3261E", borderColor: "currentColor" } : {}}>
+                            {d.project.crStatus[c.status] ?? c.status}
+                          </span>
+                        </td>
+                        <td style={{ whiteSpace: "pre-wrap" }}>
+                          {c.text}
+                          {c.agent_summary && (
+                            <p className="muted small" style={{ margin: "8px 0 0" }}>
+                              → {c.agent_summary}
+                            </p>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+
           <h2 style={{ marginTop: 28 }}>{d.project.criteria}</h2>
           <div className="tbl-wrap">
             <table>
@@ -327,6 +377,38 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               <button className="btn btn-primary btn-block" disabled={busy} onClick={approve}>
                 {d.project.approve}
               </button>
+              <hr />
+              <h3 style={{ margin: 0 }}>{d.project.changesTitle}</h3>
+              {(p.revision_rounds ?? 0) >= (p.max_revision_rounds ?? 0) ? (
+                <p className="small muted" style={{ margin: 0 }}>{d.project.changesNone}</p>
+              ) : (
+                <>
+                  <p className="small muted" style={{ margin: 0 }}>
+                    {d.project.changesHint
+                      .replace("{left}", String((p.max_revision_rounds ?? 0) - (p.revision_rounds ?? 0)))
+                      .replace("{max}", String(p.max_revision_rounds ?? 0))}
+                  </p>
+                  <textarea
+                    value={crText}
+                    onChange={(e) => setCrText(e.target.value)}
+                    placeholder={d.project.changesPh}
+                    rows={4}
+                    style={{
+                      width: "100%",
+                      padding: 12,
+                      fontSize: 14.5,
+                      border: "1px solid var(--border)",
+                      borderRadius: "var(--radius)",
+                      background: "var(--surface)",
+                      fontFamily: "var(--font-body)",
+                      resize: "vertical",
+                    }}
+                  />
+                  <button className="btn btn-ghost btn-block" disabled={busy || crText.trim().length < 10} onClick={requestChanges}>
+                    {d.project.changesSend}
+                  </button>
+                </>
+              )}
             </>
           )}
 

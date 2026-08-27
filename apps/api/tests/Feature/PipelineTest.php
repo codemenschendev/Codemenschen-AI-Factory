@@ -133,6 +133,93 @@ class PipelineTest extends TestCase
         $this->assertStringContainsString('fix attempts', $project->failed_reason);
     }
 
+    /** Put a paid project straight into REVIEW with a green build. */
+    private function reviewedProject(): Project
+    {
+        $project = $this->paidProject();
+        $project->update(['status' => 'REVIEW']);
+        $project->criteria()->create(['key' => 'boots', 'criterion' => 'app boots', 'kind' => 'automated', 'status' => 'passed']);
+        $project->builds()->create(['platform' => 'bundle', 'version' => '0.1.0']);
+
+        return $project->fresh();
+    }
+
+    public function test_change_request_revises_retests_and_returns_to_review(): void
+    {
+        $project = $this->reviewedProject();
+        $token = $project->customer->createToken('portal')->plainTextToken;
+
+        $this->withHeader('Authorization', "Bearer $token")
+            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'short'])
+            ->assertUnprocessable();
+        $this->withHeader('Authorization', "Bearer $token")
+            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'Please make the primary button green.'])
+            ->assertCreated()
+            ->assertJsonPath('status', 'FIXING')
+            ->assertJsonPath('round', 1);
+
+        $project = $project->fresh();
+        $this->assertSame(1, $project->revision_rounds);
+        $this->assertSame('in_progress', $project->changeRequests()->first()->status);
+        $this->assertSame('running', $project->runs()->where('stage', 'revise')->first()->status);
+
+        $this->completeStage($project, 'revise', ['done' => true, 'summary' => 'Primary button is green now.']);
+        $this->assertSame('TESTING', $project->fresh()->status);
+        $this->assertSame('done', $project->changeRequests()->first()->status);
+        $this->assertSame('Primary button is green now.', $project->changeRequests()->first()->agent_summary);
+
+        $this->completeStage($project, 'test', ['report' => ['passed' => 1, 'failed' => 0], 'criteria_results' => ['boots' => 'passed']]);
+        $this->completeStage($project, 'release', ['builds' => [['platform' => 'bundle', 'version' => '0.1.1', 'artifact_path' => 'x/b.tar.gz']]]);
+        $project = $project->fresh();
+        $this->assertSame('REVIEW', $project->status);
+        $this->assertCount(2, $project->builds);
+
+        // Portal payload carries the rounds + history.
+        $this->withHeader('Authorization', "Bearer $token")
+            ->getJson("/api/me/projects/{$project->id}")
+            ->assertOk()
+            ->assertJsonPath('revision_rounds', 1)
+            ->assertJsonPath('max_revision_rounds', PipelineOrchestrator::MAX_REVISION_ROUNDS)
+            ->assertJsonPath('change_requests.0.status', 'done');
+    }
+
+    public function test_out_of_scope_change_request_returns_to_review_without_rebuild(): void
+    {
+        $project = $this->reviewedProject();
+        app(PipelineOrchestrator::class)->requestChanges($project, 'Add a full chat system with video calls.', 'test');
+        $this->completeStage($project, 'revise', ['done' => true, 'declined' => 'A chat system is a new feature outside the ordered scope.']);
+
+        $project = $project->fresh();
+        $this->assertSame('REVIEW', $project->status);
+        $this->assertSame('out_of_scope', $project->changeRequests()->first()->status);
+        $this->assertFalse($project->runs()->where('stage', 'test')->exists());
+    }
+
+    public function test_change_requests_are_capped_at_three_rounds(): void
+    {
+        $project = $this->reviewedProject();
+        for ($i = 1; $i <= PipelineOrchestrator::MAX_REVISION_ROUNDS; $i++) {
+            app(PipelineOrchestrator::class)->requestChanges($project->fresh(), "Change number $i please.", 'test');
+            $this->completeStage($project, 'revise', ['done' => true, 'declined' => 'no']);
+            $this->assertSame('REVIEW', $project->fresh()->status);
+        }
+        $this->expectExceptionMessage('Free revision rounds used up');
+        app(PipelineOrchestrator::class)->requestChanges($project->fresh(), 'One more change please.', 'test');
+    }
+
+    public function test_failed_revise_stage_hands_the_project_back_to_review(): void
+    {
+        $project = $this->reviewedProject();
+        app(PipelineOrchestrator::class)->requestChanges($project, 'Rename the app title everywhere.', 'test');
+        for ($i = 1; $i <= PipelineOrchestrator::MAX_STAGE_ATTEMPTS; $i++) {
+            $this->completeStage($project, 'revise', [], 'failed');
+        }
+        $project = $project->fresh();
+        $this->assertSame('REVIEW', $project->status);
+        $this->assertNull($project->failed_reason);
+        $this->assertSame('failed', $project->changeRequests()->first()->status);
+    }
+
     public function test_ready_is_blocked_while_criteria_fail(): void
     {
         $project = $this->paidProject();

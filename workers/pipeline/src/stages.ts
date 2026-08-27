@@ -39,7 +39,7 @@ export async function runStage(job: StageJob): Promise<StageResult> {
   // code stages need the SDK sandbox; everything falls back to stubs.
   // test/release are deterministic — always the local implementation.
   if (job.stage === "test" || job.stage === "release") return stubStage(job, dir);
-  const isCode = job.stage === "coding" || job.stage === "fix";
+  const isCode = job.stage === "coding" || job.stage === "fix" || job.stage === "revise";
   if (isCode && RELAY_MODE) return gatewayStage(job, dir);
   if (!isCode && GATEWAY_MODE && GATEWAY_STAGES.has(job.stage)) return gatewayStage(job, dir);
   const fn = AGENT_MODE ? agentStage : stubStage;
@@ -57,15 +57,20 @@ const GATEWAY_SCHEMAS: Record<string, string> = {
   coding:
     'Use your file and shell tools to do the work DIRECTLY in the repository directory given below (it is on this machine). When finished, respond with ONLY {"done": true, "summary": "<what you implemented>", "files": ["..."]}.',
   fix: 'Use your file and shell tools to fix the code DIRECTLY in the repository directory given below. Never weaken tests or criteria. Re-run `npm test` there. Respond with ONLY {"done": true, "summary": "<what you fixed>"}.',
+  revise:
+    'Use your file and shell tools to implement the change DIRECTLY in the repository directory given below. Respond with ONLY {"done": true, "summary": "<what you changed, addressed to the customer>"} — or, if the request is outside the paid scope, change nothing and respond with ONLY {"done": true, "declined": "<one sentence why, addressed to the customer>"}.',
 };
 
 async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const spec = existsSync(path.join(dir, "SPEC.md")) ? await readFile(path.join(dir, "SPEC.md"), "utf8") : "";
   const hostDir = `${REPOS_HOST_PATH}/${job.project_id}`;
-  const isCode = job.stage === "coding" || job.stage === "fix";
+  const isCode = job.stage === "coding" || job.stage === "fix" || job.stage === "revise";
   const system = `${STAGE_PROMPTS[job.stage]}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
-  const user = `${isCode ? `Repository directory on this machine: ${hostDir}\n\n` : ""}Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}${isCode ? lastReport : ""}`;
+  const changeRequest = job.context.change_request
+    ? `\n\nCustomer change request (round ${job.context.revision_round}):\n${job.context.change_request}`
+    : "";
+  const user = `${isCode ? `Repository directory on this machine: ${hostDir}\n\n` : ""}Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}${isCode ? lastReport : ""}${job.stage === "revise" ? changeRequest : ""}`;
   // Code stages go through the host relay (full agent with shell/file tools);
   // text stages through the completions endpoint (faster, no tools needed).
   const res = isCode
@@ -86,6 +91,7 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
     }
   };
 
+  let extra: Record<string, unknown> = {};
   switch (job.stage) {
     case "product": {
       const spec = section(res.text, "===SPEC===", "===CRITERIA===");
@@ -119,9 +125,15 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
       if (!d.done) throw new Error(`gateway ${job.stage}: agent did not report done`);
       break;
     }
+    case "revise": {
+      const d = parse(res.text) as { done?: boolean; summary?: string; declined?: string };
+      if (!d.done) throw new Error(`gateway ${job.stage}: agent did not report done`);
+      extra = { summary: d.summary ?? "", declined: d.declined ?? "" };
+      break;
+    }
   }
   await commitAll(dir, `${job.stage}: gateway pass ${job.attempt}`);
-  const output = await collectStageOutput(job, dir);
+  const output = { ...(await collectStageOutput(job, dir)), ...extra };
   return { status: "succeeded", output, tokens_in: res.tokens_in, tokens_out: res.tokens_out };
 }
 
@@ -135,6 +147,8 @@ const STAGE_PROMPTS: Record<string, string> = {
     "You are the Coding Agent. Implement the app per SPEC.md and SCREENS.md in this repository, committing per feature. Keep the repository's existing package.json stack. TEST CONVENTION (mandatory): `npm test` runs `node test/run.mjs` (already present); for EVERY automated criterion in acceptance-criteria.json create test/cases/<key>.mjs exporting `export const key = \"<key>\"` and `export async function run()` that throws on failure — plain Node, no external test framework, test pure logic by importing your modules (keep business logic in framework-free modules so it is testable). Run `npm test` yourself before finishing; it must end with failed: 0.",
   test: "You are the Test Agent. Run `npm test` (and typecheck if configured). Then write test-report.json: {passed, failed, criteria_results: {<criterion key>: 'passed'|'failed'}} judging each automated acceptance criterion from acceptance-criteria.json against the codebase and test results. Be strict.",
   fix: "You are the Fix Agent. The last test report lists failures (missing test cases count as failures — add test/cases/<key>.mjs for them). Fix the code, never weaken tests or criteria, re-run `npm test` until it ends with failed: 0.",
+  revise:
+    "You are the Revision Agent. The customer reviewed the preview build and asked for the change quoted below (change_request). Implement it in this repository if it stays within SPEC.md and the paid feature list — bug fixes and small UX/text/layout/behaviour adjustments are in scope, new features or integrations are not. Keep every acceptance criterion green, add a test/cases/<key>.mjs case if the change adds testable behaviour, update SPEC.md if described behaviour changes, and run `npm test` before finishing (it must end with failed: 0).",
   release:
     "You are the Release Agent. Ensure the app builds cleanly and bump the version in package.json. Do not publish anything.",
   assets:
@@ -223,6 +237,8 @@ async function stubStage(job: StageJob, dir: string): Promise<StageResult> {
       await commitAll(dir, "uiux: screen map (stub)");
       return ok({});
     }
+    case "revise":
+      return ok({ done: true, summary: `[stub] change request round ${c.revision_round} applied` });
     case "coding":
     case "fix": {
       // Template repos ship test/run.mjs; add one always-passing case per
@@ -371,6 +387,8 @@ async function collectStageOutput(job: StageJob, dir: string): Promise<Record<st
     }
     case "release":
       return releaseStage(job, dir);
+    case "revise":
+      return {}; // summary/declined come from the agent's reply (gatewayStage merges them)
     case "assets": {
       const assets = await readJson("store-assets.json");
       const kinds = ["name", "subtitle", "description", "keywords", "release_notes"];

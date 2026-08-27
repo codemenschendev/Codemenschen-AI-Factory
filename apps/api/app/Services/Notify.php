@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\ChangeRequest;
 use App\Models\Project;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -34,6 +35,18 @@ class Notify
             $from,
             $to,
             $to === 'REVIEW' ? ' — preview ready, approval needed' : ($to === 'FAILED' ? " — {$project->failed_reason}" : ''),
+        ));
+    }
+
+    public function changeRequested(Project $project, ChangeRequest $cr): void
+    {
+        $this->send(sprintf(
+            'Project %s (%s) change request round %d/%d: %s',
+            substr($project->id, 0, 8),
+            $project->name,
+            $cr->round,
+            PipelineOrchestrator::MAX_REVISION_ROUNDS,
+            mb_substr($cr->text, 0, 300),
         ));
     }
 
