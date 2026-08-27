@@ -117,6 +117,27 @@ class PipelineTest extends TestCase
         $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'build.ready']);
     }
 
+    public function test_release_rerun_on_a_ready_app_adds_the_preview_without_leaving_ready(): void
+    {
+        $project = $this->paidProject();
+        $project->update(['status' => 'READY']);
+        $project->builds()->create(['platform' => 'bundle', 'version' => '0.1.0', 'artifact_path' => 'x/old.tar.gz', 'status' => 'preview']);
+        $project->builds()->create(['platform' => 'android', 'version' => '0.1.0', 'artifact_path' => 'x/app.apk', 'status' => 'release']);
+
+        app(PipelineOrchestrator::class)->dispatch($project, 'release', 'operator');
+        $this->completeStage($project, 'release', ['builds' => [
+            ['platform' => 'bundle', 'version' => '0.1.0', 'artifact_path' => 'x/new.tar.gz'],
+            ['platform' => 'web', 'version' => '0.1.0', 'artifact_path' => 'x/web'],
+        ]]);
+
+        $project = $project->fresh();
+        $this->assertSame('READY', $project->status);
+        $this->assertSame(['bundle', 'android', 'web'], $project->builds()->orderBy('id')->pluck('platform')->all());
+        $this->assertSame('x/new.tar.gz', $project->builds()->where('platform', 'bundle')->value('artifact_path'));
+        $this->assertNotNull($project->previewUrl());
+        $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'release.refreshed']);
+    }
+
     public function test_failed_installable_build_keeps_the_approved_app_ready(): void
     {
         $project = $this->paidProject();

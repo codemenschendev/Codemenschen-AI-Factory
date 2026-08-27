@@ -151,7 +151,7 @@ export const de = {
     sourceHint: "Der Quellcode gehört dir — jederzeit herunterladen. Hilfe beim Umzug in deine eigenen Accounts gibt es mit dem Developer-Account-Paket.",
     approve: "Preview freigeben → App bauen",
     approveHint: "Du bist mit der Web-Preview zufrieden — das Projekt wird READY, die Store-Texte entstehen und der Android-Build (.apk) startet. Änderungen davor sind günstiger: jeder Build kostet Zeit und Kontingent.",
-    approved: "Freigegeben — das Projekt ist READY, der Android-Build läuft.",
+    approved: "Freigegeben — das Projekt ist READY.",
     failed: "Die Pipeline konnte nicht abschließen. Unsere Entwickler wurden benachrichtigt und übernehmen.",
     changesTitle: "Änderungen anfordern",
     changesHint: "Noch nicht ganz richtig? Beschreib, was geändert werden soll — die App wird angepasst, neu getestet und ein neuer Preview gebaut. Noch {left} von {max} kostenlosen Runden.",

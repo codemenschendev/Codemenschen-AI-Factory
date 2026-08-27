@@ -358,14 +358,7 @@ class PipelineOrchestrator
     private function afterBuild(Project $project, PipelineRun $run): void
     {
         $builds = $run->output['builds'] ?? [];
-        foreach ($builds as $b) {
-            $project->builds()->create([
-                'platform' => $b['platform'],
-                'version' => $b['version'] ?? '0.1.0',
-                'artifact_path' => $b['artifact_path'] ?? null,
-                'status' => 'release',
-            ]);
-        }
+        $this->recordBuilds($project, $builds, 'release');
         if ($builds !== []) {
             $project->recordEvent('build.ready', ['platforms' => array_column($builds, 'platform')]);
             $this->notify->note($project, 'Android build ready (.apk in the portal)');
@@ -397,17 +390,32 @@ class PipelineOrchestrator
         ]);
     }
 
+    /** Statuses from which a finished release means "the customer looks at it next". */
+    private const PRE_REVIEW = ['BUILDING', 'TESTING', 'FIXING'];
+
     private function afterRelease(Project $project, PipelineRun $run): void
     {
-        foreach (($run->output['builds'] ?? []) as $b) {
-            $project->builds()->create([
-                'platform' => $b['platform'],
-                'version' => $b['version'] ?? '0.1.0',
-                'artifact_path' => $b['artifact_path'] ?? null,
-                'status' => 'preview',
-            ]);
+        $this->recordBuilds($project, $run->output['builds'] ?? [], 'preview');
+        if (in_array($project->status, self::PRE_REVIEW, true)) {
+            $this->transition($project, 'REVIEW');
+
+            return;
         }
-        $this->transition($project, 'REVIEW');
+        // Operator re-run on an already reviewed/released app (e.g. to add the
+        // browser preview to builds from before it existed): artifacts refresh,
+        // the status stays.
+        $project->recordEvent('release.refreshed', ['platforms' => array_column($run->output['builds'] ?? [], 'platform')]);
+    }
+
+    /** One artifact per platform and version — a re-run replaces, never duplicates. */
+    private function recordBuilds(Project $project, array $builds, string $status): void
+    {
+        foreach ($builds as $b) {
+            $project->builds()->updateOrCreate(
+                ['platform' => $b['platform'], 'version' => $b['version'] ?? '0.1.0'],
+                ['artifact_path' => $b['artifact_path'] ?? null, 'status' => $status],
+            );
+        }
     }
 
     /** Operator lane (artisan factory:stage): one stage, outside the automatic flow. */

@@ -151,7 +151,7 @@ export const en = {
     sourceHint: "The source code is yours — download it any time. Need help moving it into your own accounts? That's the developer-account setup package.",
     approve: "Approve preview → build app",
     approveHint: "You're happy with the web preview — the project becomes READY, store texts are written and the Android build (.apk) starts. Changes are cheaper before this step: every build costs time and quota.",
-    approved: "Approved — the project is READY, the Android build is running.",
+    approved: "Approved — the project is READY.",
     failed: "The pipeline could not finish. Our developers have been notified and will take over.",
     changesTitle: "Request changes",
     changesHint: "Not quite right? Describe what to change — the app is adjusted, re-tested and a new preview is built. {left} of {max} free rounds left.",
