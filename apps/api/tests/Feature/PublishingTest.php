@@ -37,6 +37,28 @@ class PublishingTest extends TestCase
         $this->token = $order->customer->createToken('portal')->plainTextToken;
     }
 
+    public function test_store_assets_are_listed_in_store_listing_order(): void
+    {
+        // The assets stage persists rows in the order the model emitted them —
+        // the portal must still show name → subtitle → description → keywords → release notes.
+        foreach ([
+            ['description', 'en'], ['keywords', 'de'], ['keywords', 'en'], ['name', 'de'],
+            ['release_notes', 'en'], ['subtitle', 'en'], ['subtitle', 'de'], ['name', 'en'],
+        ] as [$kind, $locale]) {
+            $this->project->storeAssets()->create(['kind' => $kind, 'locale' => $locale, 'content' => "$kind $locale", 'version' => 1]);
+        }
+
+        $assets = $this->withHeader('Authorization', "Bearer {$this->token}")
+            ->getJson("/api/me/projects/{$this->project->id}")
+            ->assertOk()
+            ->json('store_assets');
+
+        $this->assertSame([
+            'name de', 'name en', 'subtitle de', 'subtitle en', 'description en',
+            'keywords de', 'keywords en', 'release_notes en',
+        ], array_column($assets, 'content'));
+    }
+
     public function test_customer_starts_publishing_and_attaches_accounts(): void
     {
         $this->withHeader('Authorization', "Bearer {$this->token}")

@@ -10,6 +10,15 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class MeController extends Controller
 {
+    private const ASSET_KIND_ORDER = ['name', 'subtitle', 'description', 'keywords', 'release_notes', 'icon', 'screenshot', 'promo'];
+
+    private static function assetRank(string $kind): int
+    {
+        $i = array_search($kind, self::ASSET_KIND_ORDER, true);
+
+        return $i === false ? 99 : $i;
+    }
+
     public function project(Request $request, Project $project): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
@@ -25,7 +34,11 @@ class MeController extends Controller
             'builds' => $project->builds()->latest()->get(['id', 'platform', 'version', 'status', 'created_at']),
             'store_assets' => $project->storeAssets()
                 ->where('version', $project->storeAssets()->max('version') ?? 0)
-                ->get(['id', 'kind', 'locale', 'content', 'status']),
+                ->get(['id', 'kind', 'locale', 'content', 'status'])
+                // The assets stage stores rows in whatever order the model emitted them;
+                // present them in store-listing order (name, subtitle, ...) per locale.
+                ->sortBy(fn ($a) => sprintf('%02d-%s', self::assetRank($a->kind), $a->locale ?? ''))
+                ->values(),
             'submissions' => $project->submissions()
                 ->get(['id', 'store', 'status', 'account_ref', 'notes', 'submitted_at']),
             'packages' => $project->order->packages,
