@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Services\OrderFulfillment;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -39,7 +40,7 @@ class StripeWebhookController extends Controller
                 return response('ignored', 200);
             }
             if ($order->status !== 'paid') {
-                app(\App\Services\OrderFulfillment::class)
+                app(OrderFulfillment::class)
                     ->markPaid($order, $session->payment_intent, (int) ($session->amount_total / 100), $event->toArray());
             }
         }

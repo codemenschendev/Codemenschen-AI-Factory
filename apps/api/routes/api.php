@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\InternalRunController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\StripeWebhookController;
@@ -29,7 +30,7 @@ Route::middleware('auth:sanctum')->group(function () {
 });
 
 // Worker callbacks — authenticated by the per-run callback token.
-Route::post('/internal/runs/{run}/heartbeat', [App\Http\Controllers\InternalRunController::class, 'heartbeat']);
-Route::post('/internal/runs/{run}/complete', [App\Http\Controllers\InternalRunController::class, 'complete']);
+Route::post('/internal/runs/{run}/heartbeat', [InternalRunController::class, 'heartbeat']);
+Route::post('/internal/runs/{run}/complete', [InternalRunController::class, 'complete']);
 
 Route::get('/health', fn () => response()->json(['ok' => true]));

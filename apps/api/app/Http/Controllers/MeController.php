@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Project;
 use App\Services\PipelineOrchestrator;
+use App\Services\PublishingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -62,7 +63,7 @@ class MeController extends Controller
         return response()->json(['status' => $project->fresh()->status]);
     }
 
-    public function startPublishing(Request $request, Project $project, \App\Services\PublishingService $publishing): JsonResponse
+    public function startPublishing(Request $request, Project $project, PublishingService $publishing): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
         $data = $request->validate([
@@ -74,7 +75,7 @@ class MeController extends Controller
         return response()->json(['status' => $project->fresh()->status]);
     }
 
-    public function attachStoreAccount(Request $request, Project $project, \App\Services\PublishingService $publishing): JsonResponse
+    public function attachStoreAccount(Request $request, Project $project, PublishingService $publishing): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
         $data = $request->validate([

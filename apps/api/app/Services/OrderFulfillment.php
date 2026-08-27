@@ -47,7 +47,7 @@ class OrderFulfillment
             // Immediate-start orders enter the pipeline right away; deferred
             // ones are picked up by pipeline:tick when the FAGG period ends.
             if (! $project->build_starts_at->isFuture()) {
-                app(\App\Services\PipelineOrchestrator::class)->start($project);
+                app(PipelineOrchestrator::class)->start($project);
             }
 
             return $project;
