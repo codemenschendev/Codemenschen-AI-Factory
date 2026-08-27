@@ -4,24 +4,24 @@ import { estimate, quoteTotals, classifyAppType } from "./estimate.ts";
 
 test("web consumer app with no features matches prototype floor", () => {
   const e = estimate({ audience: "consumer", platform: "web", features: [] });
-  // dev = 700; license = clamp(round((700 + 650) * 1.2, 100)) = 1600
-  assert.equal(e.devLo, 600); // round(595, 50)
-  assert.equal(e.devHi, 900); // round(910, 50)
-  assert.equal(e.price, 1600);
+  // dev = 400; price = clamp(round(400 * 1.2, 50)) = 500
+  assert.equal(e.devLo, 350); // round(340, 50)
+  assert.equal(e.devHi, 500); // round(520, 50)
+  assert.equal(e.price, 500);
   assert.equal(e.retainerPctLabel, "5–6%");
   assert.equal(e.weeksLo, 3);
   assert.equal(e.weeksHi, 6);
   assert.equal(e.appType, "A");
 });
 
-test("mobile b2b app with many features hits the 5000 cap", () => {
+test("mobile b2b app with many features stays under the 3000 cap", () => {
   const e = estimate({
     audience: "b2b",
     platform: "both",
     features: ["auth", "pay", "dash", "ai", "notif", "api"],
   });
-  // dev = (1800 + 1750) * 1.15 = 4082.5 → license capped at 5000
-  assert.equal(e.price, 5000);
+  // dev = (900 + 600) * 1.15 = 1725 → * 1.2 = 2070 → 2050
+  assert.equal(e.price, 2050);
   assert.equal(e.retainerPctLabel, "8–10%");
   assert.equal(e.weeksHi, 6 + 6 + 2);
   assert.equal(e.appType, "B");
@@ -41,7 +41,7 @@ test("quote totals keep ad budget out of fees (doc 05 rule)", () => {
     marketingLaunch: true,
     adBudgetMonthly: 500,
   });
-  assert.equal(t.oneTime, e.price + 300 + 500);
+  assert.equal(t.oneTime, e.price + 149 + 249);
   assert.equal(t.monthlyHosting, 19); // Type B
   assert.equal(t.firstYearTotal, t.oneTime + 19 * 12);
   assert.equal(t.adBudgetMonthly, 500); // separate, never inside firstYearTotal

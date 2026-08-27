@@ -9,26 +9,36 @@ namespace App\Domain\Pricing;
  */
 class Estimator
 {
-    /** Feature catalog: cost in EUR + whether it forces a hosted backend. */
+    /**
+     * Feature catalog: cost in EUR + whether it forces a hosted backend.
+     * Price sheet lowered 2026-08-27 (Patrick): the factory competes with
+     * AI-builder subscriptions, so an add-on is priced like a few hours, not
+     * a sprint. Base prices per platform live in estimate().
+     */
     public const FEATURES = [
-        'auth' => ['cost' => 250, 'needsBackend' => true],
-        'pay' => ['cost' => 300, 'needsBackend' => true],
-        'dash' => ['cost' => 300, 'needsBackend' => false],
-        'ai' => ['cost' => 500, 'needsBackend' => true],
-        'notif' => ['cost' => 150, 'needsBackend' => true],
-        'api' => ['cost' => 250, 'needsBackend' => true],
-        'offline' => ['cost' => 250, 'needsBackend' => false],
-        'i18n' => ['cost' => 150, 'needsBackend' => false],
+        'auth' => ['cost' => 90, 'needsBackend' => true],
+        'pay' => ['cost' => 120, 'needsBackend' => true],
+        'dash' => ['cost' => 90, 'needsBackend' => false],
+        'ai' => ['cost' => 150, 'needsBackend' => true],
+        'notif' => ['cost' => 60, 'needsBackend' => true],
+        'api' => ['cost' => 90, 'needsBackend' => true],
+        'offline' => ['cost' => 60, 'needsBackend' => false],
+        'i18n' => ['cost' => 40, 'needsBackend' => false],
     ];
 
     public const PACKAGE_PRICES = [
-        'storePublishing' => 300,
-        'transferAssist' => 150,
-        'marketingLaunch' => 500,
+        'storePublishing' => 149,
+        'transferAssist' => 99,
+        'marketingLaunch' => 249,
     ];
 
     /** One paid change-request round (after the free REVIEW rounds / once released). Patrick's call. */
-    public const REVISION_PRICE_EUR = 149;
+    public const REVISION_PRICE_EUR = 79;
+
+    /** Development price clamp (EUR). */
+    public const PRICE_MIN = 300;
+
+    public const PRICE_MAX = 3000;
 
     /** Monthly hosting & maintenance per app type. Bands: Patrick's call. */
     public const HOSTING_MONTHLY = ['A' => 0, 'B' => 19];
@@ -60,7 +70,7 @@ class Estimator
      */
     public static function estimate(string $audience, string $platform, array $features): array
     {
-        $base = $platform === 'mobile' ? 1200 : ($platform === 'both' ? 1800 : 700);
+        $base = $platform === 'mobile' ? 600 : ($platform === 'both' ? 900 : 400);
         $dev = $base;
         foreach ($features as $f) {
             $dev += self::FEATURES[$f]['cost'];
@@ -72,9 +82,10 @@ class Estimator
             $dev *= 1.1;
         }
 
-        $marketingLo = $audience === 'consumer' ? 400 : 500;
-        $marketingHi = $audience === 'consumer' ? 900 : 1200;
-        $price = min(5000, max(300, self::rnd(($dev + ($marketingLo + $marketingHi) / 2) * 1.2, 100)));
+        // Suggested launch ad budget — informational, never part of the price.
+        $marketingLo = $audience === 'consumer' ? 200 : 300;
+        $marketingHi = $audience === 'consumer' ? 500 : 800;
+        $price = min(self::PRICE_MAX, max(self::PRICE_MIN, self::rnd($dev * 1.2, 50)));
         $nf = count($features);
         $appType = self::appType($features);
 

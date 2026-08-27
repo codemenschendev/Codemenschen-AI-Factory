@@ -42,7 +42,7 @@ class CommerceFlowTest extends TestCase
             'features' => [],
         ]);
         $res->assertCreated()
-            ->assertJsonPath('price_eur', 1600)
+            ->assertJsonPath('price_eur', 500)
             ->assertJsonPath('app_type', 'A')
             ->assertJsonPath('hosting_monthly_eur', 0);
     }
@@ -78,8 +78,8 @@ class CommerceFlowTest extends TestCase
         $this->assertSame('pending', $order->status);
         $this->assertFalse($order->fagg_waiver);
         $this->assertNull($order->fagg_waiver_at);
-        // b2b mobile with auth+notif: (1200+400)*1.15=1840 → price 3200 + 300 package
-        $this->assertSame(3500, $order->total_one_time_eur);
+        // b2b mobile with auth+notif: (600+150)*1.15=862.5 → *1.2 = 1035 → 1050 + 149 package
+        $this->assertSame(1199, $order->total_one_time_eur);
         $this->assertSame(19, $order->hosting_monthly_eur);
     }
 
