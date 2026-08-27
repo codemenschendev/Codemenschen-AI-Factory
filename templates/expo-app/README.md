@@ -10,6 +10,8 @@ Conventions the pipeline relies on:
   automated criterion under `test/cases/` exporting `{ key, run() }`
 - `npm test` prints `{passed, failed, criteria_results}` as its last line
 - `app.json` PLACEHOLDER bundle ids are replaced at release
+- `metro.config.js` keeps `wasm` an asset extension so expo-sqlite's web
+  build (the browser preview) bundles; the release stage re-adds it if lost
 - Type A apps use `expo-sqlite` locally; Type B apps add the PocketBase client
   with an env-driven backend URL (MVP 2)
 

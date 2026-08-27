@@ -66,6 +66,9 @@ class PreviewTest extends TestCase
         $served = fn (string $url) => basename($this->get($url)->assertOk()->baseResponse->getFile()->getPathname());
         $this->assertSame('index.html', $served("/api/preview/$id/"));
         $this->get("/api/preview/$id/")->assertHeader('Content-Type', 'text/html; charset=utf-8');
+        $this->get("/api/preview/$id/")
+            ->assertHeader('Cross-Origin-Opener-Policy', 'same-origin')
+            ->assertHeader('Cross-Origin-Embedder-Policy', 'credentialless');
         $this->assertSame('app.js', $served("/api/preview/$id/_expo/static/app.js"));
         $this->get("/api/preview/$id/_expo/static/app.js")->assertHeader('Content-Type', 'application/javascript; charset=utf-8');
         $this->assertSame('index.html', $served("/api/preview/$id/settings/profile")); // client-side route

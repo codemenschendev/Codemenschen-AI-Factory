@@ -64,6 +64,46 @@ async function ensureIgnore(dir: string, lines: string[]): Promise<void> {
   if (missing.length) await writeFile(file, `${have.trimEnd()}\n${missing.join("\n")}\n`.trimStart());
 }
 
+const METRO_CONFIG = `// Metro config (factory-managed). expo-sqlite ships wa-sqlite.wasm for the web
+// build; Metro only bundles it when "wasm" is an asset extension.
+const { getDefaultConfig } = require("expo/metro-config");
+const config = getDefaultConfig(__dirname);
+if (!config.resolver.assetExts.includes("wasm")) config.resolver.assetExts.push("wasm");
+module.exports = config;
+`;
+
+const METRO_WASM_PATCH = `
+// appwerk web preview: expo-sqlite ships wa-sqlite.wasm, which Metro only bundles as an asset.
+if (module.exports && module.exports.resolver && !module.exports.resolver.assetExts.includes("wasm")) {
+  module.exports.resolver.assetExts.push("wasm");
+}
+`;
+
+/** Metro must treat .wasm as an asset or `expo export --platform web` dies in expo-sqlite. */
+async function ensureMetroWasm(dir: string): Promise<void> {
+  const file = path.join(dir, "metro.config.js");
+  if (!existsSync(file)) {
+    await writeFile(file, METRO_CONFIG);
+  } else {
+    const have = await readFile(file, "utf8");
+    if (/["']wasm["']/.test(have)) return;
+    await writeFile(file, `${have.trimEnd()}\n${METRO_WASM_PATCH}`);
+  }
+  await commitAll(dir, "release: bundle wasm assets for the web preview");
+}
+
+/**
+ * Pins every Expo-managed dependency to the SDK's expected version. The coding
+ * agent adds navigation/screens packages with plain npm and gets releases the
+ * SDK's codegen cannot bundle (react-native-screens 4.27 on SDK 54 broke both
+ * the web export and the EAS Android build).
+ */
+export async function alignExpoDeps(dir: string): Promise<void> {
+  await ensureDeps(dir);
+  await run("npx", ["expo", "install", "--fix"], dir);
+  await commitAll(dir, "release: align dependencies with the Expo SDK");
+}
+
 async function exportExpo(dir: string, base: string): Promise<string> {
   await ensureDeps(dir);
   await ensureIgnore(dir, ["node_modules/", ".expo/", "dist/"]);
@@ -83,6 +123,7 @@ async function exportExpo(dir: string, base: string): Promise<string> {
     await writeFile(file, JSON.stringify(json, null, 2) + "\n");
     await commitAll(dir, "release: web preview base url");
   }
+  await ensureMetroWasm(dir);
   await rm(path.join(dir, "dist"), { recursive: true, force: true });
   await run("npx", ["expo", "export", "--platform", "web", "--output-dir", "dist"], dir);
   return path.join(dir, "dist");

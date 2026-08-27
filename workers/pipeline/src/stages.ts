@@ -7,7 +7,7 @@ import type { StageJob, StageResult } from "./types.ts";
 import { archiveRepo, commitAll, ensureRepo, writeRepoFile } from "./repo.ts";
 import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson, gatewayComplete, relayAgent } from "./gateway.ts";
 import { EAS_MODE, easBuildAndroid } from "./eas.ts";
-import { exportWebPreview } from "./web.ts";
+import { alignExpoDeps, exportWebPreview } from "./web.ts";
 
 const exec = promisify(execFile);
 
@@ -200,6 +200,8 @@ async function releaseStage(job: StageJob, dir: string): Promise<Record<string, 
     const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
     if (typeof pkg.version === "string" && pkg.version) version = pkg.version;
   } catch { /* keep default */ }
+  // SDK-compatible versions before anything is archived, exported or built.
+  if (job.context.stack === "expo") await alignExpoDeps(dir);
   const builds: Record<string, unknown>[] = [];
   const artifact = await archiveRepo(job.project_id, version);
   builds.push({ platform: "bundle", version, artifact_path: artifact });
