@@ -91,14 +91,18 @@ class PipelineTest extends TestCase
         $project = $project->fresh();
         $this->assertSame('READY', $project->status);
 
-        // READY kicks off store-asset generation (MVP 2)
+        // READY kicks off store-asset generation (MVP 2); only the ordered
+        // store-listing languages are kept even if the model emits more.
+        $project->order->update(['store_locales' => ['de']]);
         $this->completeStage($project, 'assets', ['assets' => [
             ['kind' => 'name', 'locale' => 'de', 'content' => 'ClubApp'],
+            ['kind' => 'subtitle', 'locale' => 'de', 'content' => 'Für Vereine'],
             ['kind' => 'description', 'locale' => 'en', 'content' => 'An honest description.'],
         ]]);
         $this->assertSame('READY', $project->fresh()->status);
-        $this->assertSame(2, $project->storeAssets()->count());
+        $this->assertSame(['de', 'de'], $project->storeAssets()->pluck('locale')->all());
         $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'assets.generated']);
+        $this->assertSame(2, $project->events()->where('type', 'assets.generated')->first()->payload['count']);
     }
 
     public function test_failing_tests_enter_fix_loop_and_fail_after_three_attempts(): void

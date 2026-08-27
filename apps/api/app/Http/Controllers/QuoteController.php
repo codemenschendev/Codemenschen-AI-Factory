@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Catalog\Listings;
 use App\Domain\Pricing\Estimator;
+use App\Models\Order;
 use App\Models\Quote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -79,6 +80,7 @@ class QuoteController extends Controller
             'breakdown' => $quote->breakdown,
             'packages' => Estimator::PACKAGE_PRICES,
             'ad_budget_options' => Estimator::AD_BUDGET_OPTIONS,
+            'store_locales' => Order::SUPPORTED_STORE_LOCALES,
             'valid_until' => $quote->valid_until->toIso8601String(),
             'status' => $quote->status,
         ];

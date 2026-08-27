@@ -49,6 +49,7 @@ class DispatchStageJob implements ShouldQueue
                 'platform' => $quote->platform,
                 'features' => $quote->features,
                 'app_type' => $quote->app_type,
+                'store_locales' => $project->order->storeLocales(),
                 'fix_attempt' => $project->fix_attempts,
                 'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status'])->toArray(),
                 'last_test_report' => $project->testReports()->latest()->first()?->report,

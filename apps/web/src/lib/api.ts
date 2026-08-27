@@ -38,5 +38,7 @@ export interface QuoteResponse {
   breakdown: { weeksLo: number; weeksHi: number; [k: string]: unknown };
   packages: Record<string, number>;
   ad_budget_options: number[];
+  /** Store-listing languages the factory can produce (customer picks a subset). */
+  store_locales: string[];
   status: string;
 }

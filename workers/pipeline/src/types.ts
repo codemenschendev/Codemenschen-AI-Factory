@@ -24,6 +24,8 @@ export interface StageJob {
     platform: string | null;
     features: string[] | null;
     app_type: "A" | "B";
+    /** Store-listing languages ordered at checkout, e.g. ["de", "en"]. */
+    store_locales: string[];
     fix_attempt: number;
     criteria: { key: string; criterion: string; kind: string; status: string }[];
     last_test_report: Record<string, unknown> | null;

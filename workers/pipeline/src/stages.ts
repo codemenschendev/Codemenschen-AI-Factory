@@ -138,7 +138,7 @@ const STAGE_PROMPTS: Record<string, string> = {
   release:
     "You are the Release Agent. Ensure the app builds cleanly and bump the version in package.json. Do not publish anything.",
   assets:
-    "You are the Store-Asset Agent. Read SPEC.md and the app context, then write store-assets.json: a JSON array of {kind, locale, content} with kind in [name, subtitle, description, keywords, release_notes] for BOTH locales 'de' and 'en' (10 entries). Rules: honest, no hype, no unverifiable claims; keywords = comma-separated list ≤100 chars; description ≤ 4000 chars, subtitle ≤ 30 chars, name ≤ 30 chars.",
+    "You are the Store-Asset Agent. Read SPEC.md and the app context, then write store-assets.json: a JSON array of {kind, locale, content} with kind in [name, subtitle, description, keywords, release_notes] for EACH locale listed in the context's store_locales (one entry per kind and locale, nothing for other languages). Rules: honest, no hype, no unverifiable claims; keywords = comma-separated list ≤100 chars; description ≤ 4000 chars, subtitle ≤ 30 chars, name ≤ 30 chars.",
   marketing:
     "You are the Marketing Agent. Read SPEC.md and the app context, then write marketing-plan.json: {campaigns: [{platform: 'google'|'meta', strategy: {audience, angle, funnel, budget_hint}, creatives: [{kind: 'headline'|'ad_copy'|'landing'|'image_prompt', locale: 'de'|'en', content}]}]} — one campaign per platform, ≥3 headlines + 2 ad copies + 1 landing section + 1 image_prompt per campaign and locale. Rules: honest, no earnings promises, no fake urgency, comply with Google/Meta ad policies; German for DACH audience first.",
 };
@@ -301,7 +301,7 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
     case "assets": {
       const c = job.context;
       const name = c.name.slice(0, 30);
-      const mk = (locale: "de" | "en") => [
+      const mk = (locale: string) => [
         { kind: "name", locale, content: name },
         { kind: "subtitle", locale, content: locale === "de" ? "Einfach. Fokussiert." : "Simple. Focused." },
         {
@@ -315,7 +315,7 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
         { kind: "keywords", locale, content: (c.features ?? []).concat([c.audience ?? ""]).filter(Boolean).join(",").slice(0, 100) },
         { kind: "release_notes", locale, content: locale === "de" ? "Erstes Release." : "Initial release." },
       ];
-      return ok({ assets: [...mk("de"), ...mk("en")] });
+      return ok({ assets: (c.store_locales?.length ? c.store_locales : ["de", "en"]).flatMap(mk) });
     }
     case "marketing": {
       const c = job.context;

@@ -141,6 +141,8 @@ class CommerceFlowTest extends TestCase
             'quote_id' => $quoteId, 'email' => 'p3@example.com', 'fagg_waiver' => true,
         ]);
         $order = Order::firstOrFail();
+        // No explicit choice → every supported store-listing language.
+        $this->assertSame(Order::SUPPORTED_STORE_LOCALES, $order->store_locales);
         app(OrderFulfillment::class)->markPaid($order, 'pi_y', 2900, []);
 
         $token = $order->customer->createToken('portal')->plainTextToken;
@@ -150,5 +152,23 @@ class CommerceFlowTest extends TestCase
             ->assertJsonPath('email', 'p3@example.com')
             // waiver=true → the pipeline starts immediately after payment
             ->assertJsonPath('projects.0.status', 'SPECIFICATION');
+    }
+
+    public function test_checkout_stores_the_chosen_store_listing_languages(): void
+    {
+        config(['services.stripe.secret' => null]);
+        $quote = fn () => $this->postJson('/api/quotes', ['listing_slug' => 'countbee', 'locale' => 'de'])->json('id');
+
+        $this->postJson('/api/checkout', [
+            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'store_locales' => ['de', 'de'],
+        ])->assertStatus(503);
+        $this->assertSame(['de'], Order::latest('created_at')->firstOrFail()->store_locales);
+
+        $this->postJson('/api/checkout', [
+            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'store_locales' => ['fr'],
+        ])->assertUnprocessable();
+        $this->postJson('/api/checkout', [
+            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'store_locales' => [],
+        ])->assertUnprocessable();
     }
 }

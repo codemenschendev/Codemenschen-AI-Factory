@@ -175,7 +175,12 @@ class PipelineOrchestrator
     private function afterAssets(Project $project, PipelineRun $run): void
     {
         $version = ((int) $project->storeAssets()->max('version')) + 1;
+        $locales = $project->order->storeLocales();
         foreach (($run->output['assets'] ?? []) as $a) {
+            // Keep only the languages the customer ordered (the model may emit more).
+            if (isset($a['locale']) && ! in_array($a['locale'], $locales, true)) {
+                continue;
+            }
             $project->storeAssets()->create([
                 'kind' => $a['kind'],
                 'locale' => $a['locale'] ?? null,
@@ -183,7 +188,7 @@ class PipelineOrchestrator
                 'version' => $version,
             ]);
         }
-        $project->recordEvent('assets.generated', ['count' => count($run->output['assets'] ?? []), 'version' => $version]);
+        $project->recordEvent('assets.generated', ['count' => $project->storeAssets()->where('version', $version)->count(), 'version' => $version]);
     }
 
     private function afterMarketing(Project $project, PipelineRun $run): void

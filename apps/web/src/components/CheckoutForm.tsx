@@ -14,6 +14,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
   const [failed, setFailed] = useState(false);
   const [packages, setPackages] = useState<Packages>({});
   const [adBudget, setAdBudget] = useState(0);
+  const [storeLocales, setStoreLocales] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [waiver, setWaiver] = useState(false); // never pre-ticked (FAGG § 18)
   const [busy, setBusy] = useState(false);
@@ -23,12 +24,17 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
   useEffect(() => {
     const existing = params.get("quote");
     const app = params.get("app");
+    // Every supported store-listing language is on by default (the customer unticks).
+    const load = (q: QuoteResponse) => {
+      setQuote(q);
+      setStoreLocales(q.store_locales ?? []);
+    };
     const run = async () => {
       try {
         if (existing) {
-          setQuote(await api<QuoteResponse>(`/quotes/${existing}`));
+          load(await api<QuoteResponse>(`/quotes/${existing}`));
         } else if (app) {
-          setQuote(
+          load(
             await api<QuoteResponse>("/quotes", {
               method: "POST",
               body: JSON.stringify({ listing_slug: app, locale }),
@@ -38,7 +44,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
           const raw = sessionStorage.getItem("aifactory-custom");
           if (!raw) return setFailed(true);
           const c = JSON.parse(raw);
-          setQuote(
+          load(
             await api<QuoteResponse>("/quotes", {
               method: "POST",
               body: JSON.stringify({
@@ -91,6 +97,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
           email,
           packages,
           ad_budget_monthly_eur: adBudget,
+          store_locales: storeLocales,
           fagg_waiver: waiver,
           locale,
         }),
@@ -127,6 +134,34 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
             ))}
           </div>
         </div>
+
+        {(quote.store_locales?.length ?? 0) > 0 && (
+          <div className="field">
+            <span className="field-label">{c.storeLocalesTitle}</span>
+            <div className="choices">
+              {quote.store_locales.map((code) => {
+                const on = storeLocales.includes(code);
+                return (
+                  <label className="choice" key={code}>
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      // at least one language stays selected
+                      disabled={on && storeLocales.length === 1}
+                      onChange={() =>
+                        setStoreLocales((s) =>
+                          on ? s.filter((x) => x !== code) : [...s, code],
+                        )
+                      }
+                    />
+                    {c.localeNames[code] ?? code.toUpperCase()}
+                  </label>
+                );
+              })}
+            </div>
+            <p className="small muted">{c.storeLocalesNote}</p>
+          </div>
+        )}
 
         <div className="field">
           <label htmlFor="ads">{c.adBudget}</label>

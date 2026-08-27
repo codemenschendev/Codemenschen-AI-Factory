@@ -12,10 +12,17 @@ class Order extends Model
 {
     use HasUuids;
 
+    /**
+     * Store-listing languages the assets stage can produce. Adding a language
+     * here is all the backend needs; the web dictionaries need a label for it.
+     */
+    public const SUPPORTED_STORE_LOCALES = ['de', 'en'];
+
     protected $guarded = [];
 
     protected $casts = [
         'packages' => 'array',
+        'store_locales' => 'array',
         'fagg_waiver' => 'boolean',
         'fagg_waiver_at' => 'datetime',
     ];
@@ -38,5 +45,11 @@ class Order extends Model
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    /** @return string[] */
+    public function storeLocales(): array
+    {
+        return $this->store_locales ?: self::SUPPORTED_STORE_LOCALES;
     }
 }

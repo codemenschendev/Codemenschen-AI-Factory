@@ -114,6 +114,9 @@ export const en = {
       transferAssist: "Developer-account setup help",
       marketingLaunch: "Launch marketing package",
     } as Record<string, string>,
+    storeLocalesTitle: "Store-listing languages",
+    storeLocalesNote: "App name, subtitle, description, keywords and release notes are generated for each language you tick.",
+    localeNames: { de: "German", en: "English" } as Record<string, string>,
     adBudget: "Monthly ad budget (optional)",
     adBudgetNote: "Billed separately after campaign approval, spent 1:1 on ads — never part of today's payment.",
     adNone: "No ads for now",
@@ -150,7 +153,7 @@ export const en = {
     notFound: "This project could not be loaded — it belongs to another account, or your session has expired. Please sign in again.",
     open: "Details",
     assets: "Store assets",
-    assetsHint: "Generated automatically for both store listings — review before publishing.",
+    assetsHint: "Generated automatically in the store-listing languages you ordered — review before publishing.",
     kinds: {
       name: "App name",
       subtitle: "Subtitle",

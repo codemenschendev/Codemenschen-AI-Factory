@@ -114,6 +114,9 @@ export const de = {
       transferAssist: "Developer-Account-Einrichtung",
       marketingLaunch: "Launch-Marketing-Paket",
     } as Record<string, string>,
+    storeLocalesTitle: "Sprachen des Store-Listings",
+    storeLocalesNote: "App-Name, Untertitel, Beschreibung, Keywords und Release Notes werden für jede angehakte Sprache erzeugt.",
+    localeNames: { de: "Deutsch", en: "Englisch" } as Record<string, string>,
     adBudget: "Monatliches Werbebudget (optional)",
     adBudgetNote: "Separat abgerechnet nach Kampagnen-Freigabe, fließt 1:1 in Anzeigen — nie Teil der heutigen Zahlung.",
     adNone: "Vorerst keine Anzeigen",
@@ -150,7 +153,7 @@ export const de = {
     notFound: "Dieses Projekt konnte nicht geladen werden — es gehört zu einem anderen Konto, oder deine Sitzung ist abgelaufen. Melde dich erneut an.",
     open: "Details",
     assets: "Store-Assets",
-    assetsHint: "Automatisch für beide Store-Listings erzeugt — vor dem Publishing prüfen.",
+    assetsHint: "Automatisch in den bestellten Store-Listing-Sprachen erzeugt — vor dem Publishing prüfen.",
     kinds: {
       name: "App-Name",
       subtitle: "Untertitel",

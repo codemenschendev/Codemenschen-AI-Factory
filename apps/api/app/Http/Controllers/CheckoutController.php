@@ -31,6 +31,9 @@ class CheckoutController extends Controller
             // FAGG § 18 express waiver — must be an explicit choice, never defaulted.
             'fagg_waiver' => 'required|boolean',
             'locale' => 'nullable|in:de,en',
+            // Store-listing languages; defaults to every supported one.
+            'store_locales' => 'nullable|array|min:1',
+            'store_locales.*' => 'string|in:'.implode(',', Order::SUPPORTED_STORE_LOCALES),
         ]);
 
         $quote = Quote::findOrFail($data['quote_id']);
@@ -56,6 +59,7 @@ class CheckoutController extends Controller
             'fagg_waiver_at' => $data['fagg_waiver'] ? now() : null,
             'fagg_waiver_ip' => $data['fagg_waiver'] ? $request->ip() : null,
             'locale' => $data['locale'] ?? $quote->locale,
+            'store_locales' => array_values(array_unique($data['store_locales'] ?? Order::SUPPORTED_STORE_LOCALES)),
         ]);
 
         $secret = config('services.stripe.secret');
