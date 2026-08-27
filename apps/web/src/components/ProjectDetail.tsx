@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, API_BASE } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
@@ -38,6 +38,18 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
     typeof window === "undefined" ? null : localStorage.getItem("aifactory-token"),
   );
   const [p, setP] = useState<Detail | null | undefined>(undefined);
+  // Store assets are grouped per listing language; start on the portal language.
+  const [assetLocale, setAssetLocale] = useState<string | null>(null);
+  const assetLocales = useMemo(
+    () => Array.from(new Set((p?.store_assets ?? []).map((a) => a.locale).filter((l): l is string => !!l))),
+    [p?.store_assets],
+  );
+  const shownLocale =
+    assetLocale && assetLocales.includes(assetLocale)
+      ? assetLocale
+      : assetLocales.includes(locale)
+        ? locale
+        : (assetLocales[0] ?? null);
   const [busy, setBusy] = useState(false);
 
   const load = useCallback(() => {
@@ -148,20 +160,36 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
             <>
               <h2 style={{ marginTop: 28 }}>{d.project.assets}</h2>
               <p className="muted small">{d.project.assetsHint}</p>
+              {assetLocales.length > 1 && (
+                <div className="choices" style={{ marginBottom: 12 }} role="tablist">
+                  {assetLocales.map((code) => (
+                    <label className="choice" key={code}>
+                      <input
+                        type="radio"
+                        name="asset-locale"
+                        checked={shownLocale === code}
+                        onChange={() => setAssetLocale(code)}
+                      />
+                      {d.checkout.localeNames[code] ?? code.toUpperCase()}
+                    </label>
+                  ))}
+                </div>
+              )}
               <div className="tbl-wrap">
                 <table>
                   <tbody>
-                    {p.store_assets!.map((a) => (
-                      <tr key={a.id}>
-                        <td>
-                          {d.project.kinds[a.kind] ?? a.kind}
-                          {a.locale ? ` · ${a.locale.toUpperCase()}` : ""}
-                        </td>
-                        <td className="muted" style={{ whiteSpace: "pre-wrap" }}>
-                          {a.content}
-                        </td>
-                      </tr>
-                    ))}
+                    {p.store_assets!
+                      .filter((a) => !a.locale || a.locale === shownLocale)
+                      .map((a) => (
+                        <tr key={a.id}>
+                          <td style={{ whiteSpace: "nowrap", verticalAlign: "top" }}>
+                            {d.project.kinds[a.kind] ?? a.kind}
+                          </td>
+                          <td className="muted" style={{ whiteSpace: "pre-wrap" }}>
+                            {a.content}
+                          </td>
+                        </tr>
+                      ))}
                   </tbody>
                 </table>
               </div>
