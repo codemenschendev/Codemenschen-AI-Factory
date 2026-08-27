@@ -81,7 +81,7 @@ createServer((req, res) => {
     // Wizard idea refinement: synchronous, one short gateway completion.
     req.on("end", () => {
       if (!REFINE_AVAILABLE) return reply(503, { error: "gateway unavailable" });
-      let input: { text?: unknown; locale?: unknown; answers?: unknown };
+      let input: { mode?: unknown; text?: unknown; locale?: unknown; answers?: unknown; project_id?: unknown; features?: unknown };
       try {
         input = JSON.parse(raw);
       } catch {
@@ -90,7 +90,10 @@ createServer((req, res) => {
       if (typeof input.text !== "string" || input.text.trim().length < 10) return reply(422, { error: "text too short" });
       const locale = input.locale === "en" ? "en" : "de";
       const answers = Array.isArray(input.answers) ? input.answers.filter((a): a is string => typeof a === "string").slice(0, 6) : [];
-      refineIdea({ text: input.text, locale, answers })
+      const mode = input.mode === "change" ? "change" : "idea";
+      const project_id = typeof input.project_id === "string" && /^[0-9a-f-]{36}$/.test(input.project_id) ? input.project_id : undefined;
+      const features = Array.isArray(input.features) ? input.features.filter((f): f is string => typeof f === "string").slice(0, 12) : [];
+      refineIdea({ mode, text: input.text, locale, answers, project_id, features })
         .then((out) => reply(200, out))
         .catch((e) => {
           console.error("refine failed:", e);

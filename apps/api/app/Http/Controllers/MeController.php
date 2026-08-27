@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Pricing\Estimator;
 use App\Models\Project;
 use App\Services\PipelineOrchestrator;
+use App\Services\Refiner;
 use App\Services\PublishingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -70,6 +71,31 @@ class MeController extends Controller
         $orchestrator->approveReview($project, 'customer:'.$request->user()->email);
 
         return response()->json(['status' => $project->fresh()->status]);
+    }
+
+    /**
+     * "Sharpen my change request": the draft comes back precise and testable,
+     * with the scope verdict BEFORE the customer pays a round. Limits: Refiner.
+     */
+    public function refineChangeRequest(Request $request, Project $project, Refiner $refiner): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        $data = $request->validate([
+            'text' => 'required|string|min:10|max:800',
+            'locale' => 'nullable|in:de,en',
+            'answers' => 'array|max:6',
+            'answers.*' => 'string|max:200',
+        ]);
+        $res = $refiner->run([
+            'mode' => 'change',
+            'text' => $data['text'],
+            'locale' => $data['locale'] ?? 'de',
+            'answers' => array_values($data['answers'] ?? []),
+            'project_id' => $project->id,
+            'features' => array_values((array) ($project->order?->quote?->features ?? [])),
+        ], $request->user(), (string) $request->ip());
+
+        return response()->json($res['body'], $res['status']);
     }
 
     /** Customer asks for changes to the preview build: REVIEW → FIXING (revise). */

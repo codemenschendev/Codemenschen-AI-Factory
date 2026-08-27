@@ -2,7 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Http\Controllers\QuoteRefineController;
+use App\Models\Order;
+use App\Services\OrderFulfillment;
+use App\Services\Refiner;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -50,13 +52,13 @@ class QuoteRefineTest extends TestCase
     public function test_anonymous_visitor_gets_three_rounds_a_day(): void
     {
         $this->fakeWorker();
-        for ($i = 1; $i <= QuoteRefineController::ANON_DAILY; $i++) {
+        for ($i = 1; $i <= Refiner::ANON_DAILY; $i++) {
             $this->postJson('/api/quotes/refine', ['text' => self::DRAFT." Variation $i."])->assertOk();
         }
         $this->postJson('/api/quotes/refine', ['text' => self::DRAFT.' One more.'])
             ->assertStatus(429)
             ->assertJsonPath('signed_in', false);
-        Http::assertSentCount(QuoteRefineController::ANON_DAILY);
+        Http::assertSentCount(Refiner::ANON_DAILY);
     }
 
     public function test_short_or_missing_drafts_never_reach_the_worker(): void
@@ -65,6 +67,36 @@ class QuoteRefineTest extends TestCase
         $this->postJson('/api/quotes/refine', ['text' => 'an app'])->assertStatus(422);
         $this->postJson('/api/quotes/refine', [])->assertStatus(422);
         Http::assertNothingSent();
+    }
+
+    public function test_change_request_refine_sends_project_scope_and_returns_the_verdict(): void
+    {
+        Http::fake([
+            'worker.test/run' => Http::response(['accepted' => 'run'], 202), // paying dispatches the first stage
+            'worker.test/refine' => Http::response([
+                'off_topic' => false, 'in_scope' => false,
+                'scope_note' => 'Calendar sync is a new integration, not a change round.',
+                'description' => 'Sync every booking to Google Calendar.',
+                'questions' => [], 'suggested_features' => [],
+            ]),
+        ]);
+        $quote = $this->postJson('/api/quotes', ['idea' => 'salon booking', 'audience' => 'b2b', 'platform' => 'mobile', 'features' => ['auth']])->json('id');
+        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => true]);
+        $project = app(OrderFulfillment::class)->markPaid(Order::latest('created_at')->firstOrFail(), 'pi', 100, [])->fresh();
+        $token = $project->customer->createToken('portal')->plainTextToken;
+
+        // Without the customer's token: unauthenticated, nothing sent to /refine.
+        $this->postJson("/api/me/projects/{$project->id}/change-requests/refine", ['text' => 'sync bookings to my google calendar please'])
+            ->assertStatus(401);
+        Http::assertSentCount(1); // only the /run dispatched at payment
+
+        $this->withHeader('Authorization', "Bearer $token")
+            ->postJson("/api/me/projects/{$project->id}/change-requests/refine", ['text' => 'sync bookings to my google calendar please', 'locale' => 'en'])
+            ->assertOk()
+            ->assertJsonPath('in_scope', false)
+            ->assertJsonPath('scope_note', 'Calendar sync is a new integration, not a change round.');
+        Http::assertSent(fn ($req) => $req->url() === 'http://worker.test/refine' && $req['mode'] === 'change' && $req['project_id'] === $project->id);
+        Http::assertSent(fn ($req) => $req->url() === 'http://worker.test/refine' && $req['features'] === ['auth']);
     }
 
     public function test_worker_outage_is_a_503_and_costs_no_round(): void

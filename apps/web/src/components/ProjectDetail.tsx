@@ -44,6 +44,16 @@ interface Detail {
 
 type TabKey = "app" | "store" | "marketing" | "activity";
 
+interface CrRefinement {
+  off_topic: boolean;
+  in_scope?: boolean;
+  scope_note?: string;
+  description: string;
+  questions: { q: string; options: string[] }[];
+}
+
+const MAX_CR_REFINE_ROUNDS = 3;
+
 const runDot: Record<string, string> = {
   succeeded: "var(--valid)",
   failed: "#B3261E",
@@ -72,6 +82,13 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
         ? locale
         : (assetLocales[0] ?? null);
   const [busy, setBusy] = useState(false);
+  // "Sharpen my change request": OpenClaw rewrites the draft and says whether
+  // it fits a change round — before the customer pays for one.
+  const [crRefine, setCrRefine] = useState<CrRefinement | null>(null);
+  const [crRefining, setCrRefining] = useState(false);
+  const [crRefineError, setCrRefineError] = useState<string | null>(null);
+  const [crAnswers, setCrAnswers] = useState<Record<number, string>>({});
+  const [crRounds, setCrRounds] = useState(0);
   const [tab, setTab] = useState<TabKey>("app");
 
   const load = useCallback(() => {
@@ -153,6 +170,29 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
       load();
     } finally {
       setBusy(false);
+    }
+  };
+
+  const refineChange = async (withAnswers: boolean) => {
+    if (!p) return;
+    setCrRefining(true);
+    setCrRefineError(null);
+    try {
+      const answerList = withAnswers && crRefine
+        ? crRefine.questions.map((q, i) => (crAnswers[i] ? `${q.q}: ${crAnswers[i]}` : null)).filter((a): a is string => !!a)
+        : [];
+      const res = await api<CrRefinement>(`/me/projects/${p.id}/change-requests/refine`, {
+        method: "POST",
+        token,
+        body: JSON.stringify({ text: crText.trim().slice(0, 800), locale, answers: answerList }),
+      });
+      setCrRefine(res);
+      setCrAnswers({});
+      setCrRounds((r) => r + 1);
+    } catch (e) {
+      setCrRefineError(e instanceof ApiError && e.status === 429 ? d.project.crRefineLimit : d.project.crRefineUnavailable);
+    } finally {
+      setCrRefining(false);
     }
   };
 
@@ -278,11 +318,75 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               </p>
               <textarea
                 value={crText}
-                onChange={(e) => setCrText(e.target.value)}
+                onChange={(e) => { setCrText(e.target.value); }}
                 placeholder={d.project.changesPh}
                 rows={4}
                 style={{ ...inputStyle, background: "var(--surface)", resize: "vertical" }}
               />
+              <p className="small muted" style={{ margin: 0 }}>{d.project.crHint}</p>
+              <div className="idea-tools" style={{ marginTop: 0 }}>
+                <button
+                  type="button"
+                  className="btn btn-ghost"
+                  disabled={crText.trim().length < 10 || crRefining || crRounds >= MAX_CR_REFINE_ROUNDS}
+                  onClick={() => refineChange(false)}
+                >
+                  {crRefining ? d.project.crRefining : d.project.crRefine}
+                </button>
+                <span className="small muted">{d.project.crRefineNote}</span>
+              </div>
+              {crRefineError && <p className="note">{crRefineError}</p>}
+              {crRefine && (
+                <div className="card" style={{ gap: 10, padding: 16, background: "var(--paper)" }}>
+                  {crRefine.off_topic ? (
+                    <p className="small muted" style={{ margin: 0 }}>{d.project.crRefineOffTopic}</p>
+                  ) : (
+                    <>
+                      {crRefine.in_scope === false ? (
+                        <p className="note" style={{ margin: 0 }}>
+                          <strong>{d.project.crRefineOutOfScope}</strong> {crRefine.scope_note}
+                        </p>
+                      ) : (
+                        crRefine.scope_note && <p className="small muted" style={{ margin: 0 }}>{crRefine.scope_note}</p>
+                      )}
+                      <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{crRefine.description}</p>
+                      <div className="idea-tools" style={{ marginTop: 0 }}>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          disabled={crText === crRefine.description}
+                          onClick={() => setCrText(crRefine.description)}
+                        >
+                          {crText === crRefine.description ? d.project.crRefineAccepted : d.project.crRefineAccept}
+                        </button>
+                      </div>
+                      {crRefine.questions.length > 0 && (
+                        <>
+                          <span className="small muted">{d.project.crRefineQuestions}</span>
+                          {crRefine.questions.map((q, i) => (
+                            <div key={i}>
+                              <p className="small" style={{ margin: "0 0 6px", fontWeight: 600 }}>{q.q}</p>
+                              <div className="choices">
+                                {q.options.map((o) => (
+                                  <label className="choice" key={o} style={{ padding: "6px 12px", fontSize: 14 }}>
+                                    <input type="radio" name={`crq${i}`} checked={crAnswers[i] === o} onChange={() => setCrAnswers((a) => ({ ...a, [i]: o }))} />
+                                    {o}
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+                          ))}
+                          {Object.keys(crAnswers).length > 0 && crRounds < MAX_CR_REFINE_ROUNDS && (
+                            <button type="button" className="btn btn-ghost" disabled={crRefining} onClick={() => refineChange(true)}>
+                              {crRefining ? d.project.crRefining : d.project.crRefineAgain}
+                            </button>
+                          )}
+                        </>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
               {p.change_request_mode === "paid" && (
                 <label className="choice" style={{ alignItems: "flex-start" }}>
                   <input type="checkbox" checked={crWaiver} onChange={(e) => setCrWaiver(e.target.checked)} style={{ marginTop: 4 }} />
