@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { api, API_BASE } from "@/lib/api";
+import { api, API_BASE, ApiError } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 
 interface Detail {
@@ -16,7 +16,19 @@ interface Detail {
   store_assets?: { id: number; kind: string; locale: string | null; content: string | null; status: string }[];
   revision_rounds?: number;
   max_revision_rounds?: number;
-  change_requests?: { id: number; round: number; text: string; status: string; agent_summary: string | null; created_at: string }[];
+  free_rounds_left?: number;
+  change_request_mode?: "free" | "paid" | "none";
+  revision_price_eur?: number;
+  change_requests?: {
+    id: number;
+    round: number;
+    text: string;
+    status: string;
+    agent_summary: string | null;
+    price_eur: number;
+    checkout_url: string | null;
+    created_at: string;
+  }[];
   submissions?: { id: number; store: string; status: string; account_ref: string | null }[];
   packages?: Record<string, boolean>;
   campaigns?: {
@@ -41,7 +53,9 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
     typeof window === "undefined" ? null : localStorage.getItem("aifactory-token"),
   );
   const [p, setP] = useState<Detail | null | undefined>(undefined);
-  const [crText, setCrText] = useState(""); // change-request draft (REVIEW)
+  const [crText, setCrText] = useState(""); // change-request draft
+  const [crWaiver, setCrWaiver] = useState(false); // paid rounds: FAGG § 18, never pre-ticked
+  const [crNotice, setCrNotice] = useState<string | null>(null);
   // Store assets are grouped per listing language; start on the portal language.
   const [assetLocale, setAssetLocale] = useState<string | null>(null);
   const assetLocales = useMemo(
@@ -116,9 +130,22 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
   const requestChanges = async () => {
     if (!p) return;
     setBusy(true);
+    setCrNotice(null);
     try {
-      await api(`/me/projects/${p.id}/change-requests`, { method: "POST", token, body: JSON.stringify({ text: crText }) });
+      const res = await api<{ checkout_url?: string }>(`/me/projects/${p.id}/change-requests`, {
+        method: "POST",
+        token,
+        body: JSON.stringify({ text: crText, fagg_waiver: crWaiver }),
+      });
+      if (res.checkout_url) {
+        window.location.href = res.checkout_url; // Stripe Checkout for a paid round
+        return;
+      }
       setCrText("");
+      setCrWaiver(false);
+      load();
+    } catch (e) {
+      setCrNotice(e instanceof ApiError && e.status === 503 ? d.checkout.staging : d.checkout.errors.generic);
       load();
     } finally {
       setBusy(false);
@@ -321,6 +348,12 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                         </td>
                         <td style={{ whiteSpace: "pre-wrap" }}>
                           {c.text}
+                          {c.price_eur > 0 && <span className="muted small"> · {eur(c.price_eur, locale)}</span>}
+                          {c.status === "awaiting_payment" && c.checkout_url && (
+                            <p style={{ margin: "8px 0 0" }}>
+                              <a href={c.checkout_url}>{d.project.changesPayLink}</a>
+                            </p>
+                          )}
                           {c.agent_summary && (
                             <p className="muted small" style={{ margin: "8px 0 0" }}>
                               → {c.agent_summary}
@@ -363,13 +396,16 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
           {p.builds.map((b) => (
             <div className="row" key={b.id}>
               <span className="muted">
-                {b.platform} v{b.version}
+                {d.project.platformNames[b.platform] ?? b.platform} v{b.version}
               </span>
               <button className="lang-toggle" disabled={busy} onClick={() => download(b.id, b.platform)}>
                 {d.project.download}
               </button>
             </div>
           ))}
+          {p.builds.some((b) => b.platform === "bundle") && (
+            <p className="small muted" style={{ margin: 0 }}>{d.project.sourceHint}</p>
+          )}
           {p.status === "REVIEW" && (
             <>
               <hr />
@@ -377,16 +413,18 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               <button className="btn btn-primary btn-block" disabled={busy} onClick={approve}>
                 {d.project.approve}
               </button>
+            </>
+          )}
+          {(p.change_request_mode ?? "none") !== "none" && (
+            <>
               <hr />
               <h3 style={{ margin: 0 }}>{d.project.changesTitle}</h3>
-              {(p.revision_rounds ?? 0) >= (p.max_revision_rounds ?? 0) ? (
-                <p className="small muted" style={{ margin: 0 }}>{d.project.changesNone}</p>
-              ) : (
-                <>
                   <p className="small muted" style={{ margin: 0 }}>
-                    {d.project.changesHint
-                      .replace("{left}", String((p.max_revision_rounds ?? 0) - (p.revision_rounds ?? 0)))
-                      .replace("{max}", String(p.max_revision_rounds ?? 0))}
+                    {p.change_request_mode === "free"
+                      ? d.project.changesHint
+                          .replace("{left}", String(p.free_rounds_left ?? 0))
+                          .replace("{max}", String(p.max_revision_rounds ?? 0))
+                      : d.project.changesPaidHint.replace("{price}", eur(p.revision_price_eur ?? 0, locale))}
                   </p>
                   <textarea
                     value={crText}
@@ -404,11 +442,22 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                       resize: "vertical",
                     }}
                   />
-                  <button className="btn btn-ghost btn-block" disabled={busy || crText.trim().length < 10} onClick={requestChanges}>
-                    {d.project.changesSend}
+                  {p.change_request_mode === "paid" && (
+                    <label className="choice" style={{ alignItems: "flex-start" }}>
+                      <input type="checkbox" checked={crWaiver} onChange={(e) => setCrWaiver(e.target.checked)} style={{ marginTop: 4 }} />
+                      <span className="small">{d.checkout.waiverLabel}</span>
+                    </label>
+                  )}
+                  <button
+                    className="btn btn-ghost btn-block"
+                    disabled={busy || crText.trim().length < 10 || (p.change_request_mode === "paid" && !crWaiver)}
+                    onClick={requestChanges}
+                  >
+                    {p.change_request_mode === "paid"
+                      ? d.project.changesPay.replace("{price}", eur(p.revision_price_eur ?? 0, locale))
+                      : d.project.changesSend}
                   </button>
-                </>
-              )}
+                  {crNotice && <p className="note">{crNotice}</p>}
             </>
           )}
 

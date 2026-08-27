@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Pricing\Estimator;
 use App\Jobs\DispatchStageJob;
 use App\Models\ChangeRequest;
 use App\Models\PipelineRun;
@@ -14,7 +15,9 @@ use Illuminate\Support\Facades\DB;
  *
  * PAID → SPECIFICATION (product → uiux) → BUILDING (coding) → TESTING (test)
  *   ⇄ FIXING (fix, max 3) → release (preview build) → REVIEW —approve→ READY.
- * REVIEW —change request→ FIXING (revise) → TESTING → … → REVIEW, max 3 rounds.
+ * REVIEW —change request→ FIXING (revise) → TESTING → … → REVIEW; three free
+ * rounds, afterwards (and once the app is READY/PUBLISHED) a paid round that
+ * returns the app to the status it had before the revision.
  * Any exhausted stage → FAILED + human escalation.
  */
 class PipelineOrchestrator
@@ -23,6 +26,9 @@ class PipelineOrchestrator
 
     /** Free change-request rounds a customer gets while the app is in REVIEW. */
     public const MAX_REVISION_ROUNDS = 3;
+
+    /** Statuses in which a customer may file a change request. */
+    public const REVISABLE_STATUSES = ['REVIEW', 'READY', 'PUBLISHING', 'PUBLISHED', 'MARKETING', 'COMPLETED'];
 
     /**
      * A stage that errors (not a test failure) is retried with growing delays.
@@ -37,7 +43,7 @@ class PipelineOrchestrator
     /** Seconds to wait before attempt 2, 3, … */
     public const RETRY_DELAYS = [60, 180];
 
-    public function __construct(private Notify $notify) {}
+    public function __construct(private Notify $notify, private RevisionService $revisions) {}
 
     /** Entry point: called at payment (or when a deferred build comes due). */
     public function start(Project $project): void
@@ -104,7 +110,7 @@ class PipelineOrchestrator
             // A change request that cannot be implemented must not sink an app
             // that already passed review: hand it back to the customer + operator.
             $this->closeChangeRequest($project, 'failed', mb_substr((string) $run->error, 0, 500));
-            $this->transition($project, 'REVIEW');
+            $this->backFromRevision($project);
 
             return;
         }
@@ -116,24 +122,75 @@ class PipelineOrchestrator
      * agent implements it inside the paid scope, then the normal test → release
      * chain produces a fresh preview and the project returns to REVIEW.
      */
-    public function requestChanges(Project $project, string $text, string $actor): ChangeRequest
+    public function requestChanges(Project $project, string $text, string $actor, bool $faggWaiver = false, ?string $ip = null): ChangeRequest
     {
-        abort_unless($project->status === 'REVIEW', 409, 'Project is not awaiting review');
-        abort_if($project->revision_rounds >= self::MAX_REVISION_ROUNDS, 409, 'Free revision rounds used up');
+        $mode = $this->changeRequestMode($project);
+        abort_if($mode === 'none', 409, 'Project cannot take change requests right now');
 
-        $project->increment('revision_rounds');
-        // Each round gets the full fix budget again for its own test failures.
-        $project->update(['fix_attempts' => 0]);
+        if ($mode === 'free') {
+            $cr = $project->changeRequests()->create(['round' => $project->revision_rounds + 1, 'text' => $text]);
+            $this->startRevision($project, $cr, $actor);
+
+            return $cr;
+        }
+
+        // Paid round: work starts right after payment, so the FAGG § 18 express
+        // start consent must be an explicit choice again (same as at checkout).
+        abort_unless($faggWaiver, 422, 'Express start consent (FAGG § 18) is required for a paid revision');
         $cr = $project->changeRequests()->create([
-            'round' => $project->revision_rounds,
+            'round' => $project->revision_rounds + 1,
             'text' => $text,
+            'status' => 'awaiting_payment',
+            'price_eur' => Estimator::REVISION_PRICE_EUR,
+            'fagg_waiver_at' => now(),
+            'fagg_waiver_ip' => $ip,
         ]);
-        $project->recordEvent('changes.requested', ['change_request_id' => $cr->id, 'round' => $cr->round], $actor);
+        $project->recordEvent('changes.quoted', ['change_request_id' => $cr->id, 'price_eur' => $cr->price_eur], $actor);
+        $this->revisions->createCheckout($cr);
+
+        return $cr->fresh();
+    }
+
+    /** Stripe confirmed a paid change request. */
+    public function onRevisionPaid(ChangeRequest $cr): void
+    {
+        if ($cr->status !== 'awaiting_payment') {
+            return;
+        }
+        $project = $cr->project;
+        if (! in_array($project->status, self::REVISABLE_STATUSES, true)) {
+            // Another revision is running: park it, the operator starts it by hand.
+            $cr->update(['status' => 'paid']);
+            $this->notify->changeRequestNote($project, "paid change request #{$cr->id} is waiting — project is {$project->status}");
+
+            return;
+        }
+        $this->startRevision($project, $cr, 'system:stripe');
+    }
+
+    private function startRevision(Project $project, ChangeRequest $cr, string $actor): void
+    {
+        $project->increment('revision_rounds');
+        $project->update([
+            // Each round gets the full fix budget again for its own test failures.
+            'fix_attempts' => 0,
+            'resume_status' => $project->status === 'REVIEW' ? null : $project->status,
+        ]);
+        $cr->update(['status' => 'in_progress', 'round' => $project->revision_rounds]);
+        $project->recordEvent('changes.requested', [
+            'change_request_id' => $cr->id, 'round' => $cr->round, 'price_eur' => $cr->price_eur,
+        ], $actor);
         $this->transition($project->fresh(), 'FIXING', $actor);
         $this->dispatchStage($project, 'revise', 1, $actor);
         $this->notify->changeRequested($project, $cr);
+    }
 
-        return $cr;
+    /** After a revision that produced nothing: back to REVIEW, or to the pre-revision status. */
+    private function backFromRevision(Project $project): void
+    {
+        $to = $project->resume_status ?: 'REVIEW';
+        $project->update(['resume_status' => null]);
+        $this->transition($project->fresh(), $to);
     }
 
     /** REVIEW → READY. Guarded: never READY with failing required tests. */
@@ -145,9 +202,29 @@ class PipelineOrchestrator
         abort_if($openCriteria > 0, 409, 'Automated acceptance criteria not green');
         abort_if(! $project->builds()->exists(), 409, 'No build artifact');
 
-        $this->transition($project, 'READY', $actor);
-        // MVP 2: store assets are generated as soon as the app is READY.
+        // A revision of an already released app goes back where it came from.
+        $to = $project->resume_status ?: 'READY';
+        $project->update(['resume_status' => null]);
+        $this->transition($project->fresh(), $to, $actor);
+        // MVP 2: store assets are (re)generated as soon as the app is READY.
         $this->dispatchStage($project, 'assets');
+    }
+
+    /** What a new change request costs right now: free | paid | none. */
+    public function changeRequestMode(Project $project): string
+    {
+        if (! in_array($project->status, self::REVISABLE_STATUSES, true)) {
+            return 'none';
+        }
+
+        return $project->status === 'REVIEW' && $this->freeRoundsLeft($project) > 0 ? 'free' : 'paid';
+    }
+
+    public function freeRoundsLeft(Project $project): int
+    {
+        $used = $project->changeRequests()->where('price_eur', 0)->count();
+
+        return max(0, self::MAX_REVISION_ROUNDS - $used);
     }
 
     private function afterProduct(Project $project, PipelineRun $run): void
@@ -217,7 +294,7 @@ class PipelineOrchestrator
         if ($declined !== '') {
             // Outside the paid feature list — nothing changed, no rebuild needed.
             $this->closeChangeRequest($project, 'out_of_scope', $declined);
-            $this->transition($project, 'REVIEW');
+            $this->backFromRevision($project);
 
             return;
         }
@@ -234,6 +311,11 @@ class PipelineOrchestrator
         }
         $cr->update(['status' => $status, 'agent_summary' => $summary ?: null]);
         $project->recordEvent('changes.'.$status, ['change_request_id' => $cr->id, 'round' => $cr->round]);
+        if ($status !== 'done' && $cr->price_eur > 0) {
+            // The customer paid for a round that produced nothing: refund by hand.
+            $project->recordEvent('changes.refund_needed', ['change_request_id' => $cr->id, 'price_eur' => $cr->price_eur]);
+            $this->notify->changeRequestNote($project, "paid change request #{$cr->id} ended {$status} — refund €{$cr->price_eur}");
+        }
     }
 
     private function afterAssets(Project $project, PipelineRun $run): void

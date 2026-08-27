@@ -27,6 +27,9 @@ class Estimator
         'marketingLaunch' => 500,
     ];
 
+    /** One paid change-request round (after the free REVIEW rounds / once released). Patrick's call. */
+    public const REVISION_PRICE_EUR = 149;
+
     /** Monthly hosting & maintenance per app type. Bands: Patrick's call. */
     public const HOSTING_MONTHLY = ['A' => 0, 'B' => 19];
 

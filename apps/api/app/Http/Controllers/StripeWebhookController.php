@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ChangeRequest;
 use App\Models\Order;
 use App\Services\OrderFulfillment;
+use App\Services\RevisionService;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +35,20 @@ class StripeWebhookController extends Controller
 
         if ($event->type === 'checkout.session.completed') {
             $session = $event->data->object;
-            $order = Order::find($session->client_reference_id);
+            $ref = (string) $session->client_reference_id;
+            if (str_starts_with($ref, 'cr:')) {
+                $cr = ChangeRequest::find(substr($ref, 3));
+                if ($cr === null) {
+                    Log::error('stripe.webhook.unknown_change_request', ['session' => $session->id]);
+
+                    return response('ignored', 200);
+                }
+                app(RevisionService::class)
+                    ->markPaid($cr, $session->payment_intent, (int) ($session->amount_total / 100), $event->toArray());
+
+                return response('ok', 200);
+            }
+            $order = Order::find($ref);
             if ($order === null) {
                 Log::error('stripe.webhook.unknown_order', ['session' => $session->id]);
 

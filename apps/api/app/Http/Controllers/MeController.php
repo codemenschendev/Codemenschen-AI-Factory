@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Pricing\Estimator;
 use App\Models\Project;
 use App\Services\PipelineOrchestrator;
 use App\Services\PublishingService;
@@ -20,7 +21,7 @@ class MeController extends Controller
         return $i === false ? 99 : $i;
     }
 
-    public function project(Request $request, Project $project): JsonResponse
+    public function project(Request $request, Project $project, PipelineOrchestrator $orchestrator): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
 
@@ -31,8 +32,11 @@ class MeController extends Controller
             'fix_attempts' => $project->fix_attempts,
             'revision_rounds' => $project->revision_rounds,
             'max_revision_rounds' => PipelineOrchestrator::MAX_REVISION_ROUNDS,
+            'free_rounds_left' => $orchestrator->freeRoundsLeft($project),
+            'change_request_mode' => $orchestrator->changeRequestMode($project),
+            'revision_price_eur' => Estimator::REVISION_PRICE_EUR,
             'change_requests' => $project->changeRequests()->latest('id')
-                ->get(['id', 'round', 'text', 'status', 'agent_summary', 'created_at']),
+                ->get(['id', 'round', 'text', 'status', 'agent_summary', 'price_eur', 'checkout_url', 'created_at']),
             'failed_reason' => $project->failed_reason,
             'build_starts_at' => $project->build_starts_at?->toIso8601String(),
             'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status']),
@@ -71,8 +75,27 @@ class MeController extends Controller
     public function requestChanges(Request $request, Project $project, PipelineOrchestrator $orchestrator): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
-        $data = $request->validate(['text' => 'required|string|min:10|max:4000']);
-        $cr = $orchestrator->requestChanges($project, trim($data['text']), 'customer:'.$request->user()->email);
+        $data = $request->validate([
+            'text' => 'required|string|min:10|max:4000',
+            'fagg_waiver' => 'nullable|boolean', // paid rounds only; never defaulted
+        ]);
+        $cr = $orchestrator->requestChanges(
+            $project, trim($data['text']), 'customer:'.$request->user()->email,
+            (bool) ($data['fagg_waiver'] ?? false), $request->ip(),
+        );
+
+        if ($cr->status === 'awaiting_payment') {
+            if (! $cr->checkout_url) {
+                return response()->json([
+                    'change_request_id' => $cr->id, 'payment' => 'unconfigured',
+                    'message' => 'Stripe is not configured yet (staging).',
+                ], 503);
+            }
+
+            return response()->json([
+                'change_request_id' => $cr->id, 'price_eur' => $cr->price_eur, 'checkout_url' => $cr->checkout_url,
+            ], 201);
+        }
 
         return response()->json(['status' => $project->fresh()->status, 'round' => $cr->round], 201);
     }

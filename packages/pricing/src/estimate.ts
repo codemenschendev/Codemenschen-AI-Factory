@@ -115,6 +115,9 @@ export const PACKAGE_PRICES = {
   marketingLaunch: 500,
 } as const;
 
+/** One paid change-request round (mirror of Estimator::REVISION_PRICE_EUR). */
+export const REVISION_PRICE_EUR = 149;
+
 /** Monthly hosting & maintenance for Type B apps. Bands pending Patrick's final call. */
 export const HOSTING_MONTHLY: Record<AppType, number> = {
   A: 0,

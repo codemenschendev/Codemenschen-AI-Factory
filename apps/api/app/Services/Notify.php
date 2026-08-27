@@ -50,6 +50,12 @@ class Notify
         ));
     }
 
+    public function changeRequestNote(Project $project, string $note): void
+    {
+        $this->mailAdmin("[AI Factory] {$project->name}: {$note}", "Project {$project->id}\n{$note}");
+        $this->send(sprintf('Project %s (%s) %s', substr($project->id, 0, 8), $project->name, $note));
+    }
+
     private function mailAdmin(string $subject, string $body): void
     {
         $to = config('services.admin_email');

@@ -9,6 +9,8 @@ class ChangeRequest extends Model
 {
     protected $guarded = [];
 
+    protected $casts = ['paid_at' => 'datetime', 'fagg_waiver_at' => 'datetime'];
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);

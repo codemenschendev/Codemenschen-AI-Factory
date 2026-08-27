@@ -2,11 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Pricing\Estimator;
 use App\Models\Order;
 use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Services\OrderFulfillment;
 use App\Services\PipelineOrchestrator;
+use App\Services\RevisionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -195,16 +197,72 @@ class PipelineTest extends TestCase
         $this->assertFalse($project->runs()->where('stage', 'test')->exists());
     }
 
-    public function test_change_requests_are_capped_at_three_rounds(): void
+    public function test_free_change_requests_are_capped_then_become_paid(): void
     {
         $project = $this->reviewedProject();
+        $o = app(PipelineOrchestrator::class);
         for ($i = 1; $i <= PipelineOrchestrator::MAX_REVISION_ROUNDS; $i++) {
-            app(PipelineOrchestrator::class)->requestChanges($project->fresh(), "Change number $i please.", 'test');
+            $this->assertSame('free', $o->changeRequestMode($project->fresh()));
+            $o->requestChanges($project->fresh(), "Change number $i please.", 'test');
             $this->completeStage($project, 'revise', ['done' => true, 'declined' => 'no']);
             $this->assertSame('REVIEW', $project->fresh()->status);
         }
-        $this->expectExceptionMessage('Free revision rounds used up');
-        app(PipelineOrchestrator::class)->requestChanges($project->fresh(), 'One more change please.', 'test');
+        $this->assertSame(0, $o->freeRoundsLeft($project->fresh()));
+        $this->assertSame('paid', $o->changeRequestMode($project->fresh()));
+        $this->expectExceptionMessage('Express start consent');
+        $o->requestChanges($project->fresh(), 'One more change please.', 'test'); // no waiver
+    }
+
+    public function test_paid_change_request_on_a_published_app_returns_it_to_published(): void
+    {
+        $project = $this->reviewedProject();
+        $project->update(['status' => 'PUBLISHED']);
+        $token = $project->customer->createToken('portal')->plainTextToken;
+
+        // Stripe is not configured in tests → quoted, but payment "unconfigured".
+        $this->withHeader('Authorization', "Bearer $token")
+            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'Make the header blue please.', 'fagg_waiver' => true])
+            ->assertStatus(503)
+            ->assertJsonPath('payment', 'unconfigured');
+        $cr = $project->changeRequests()->first();
+        $this->assertSame('awaiting_payment', $cr->status);
+        $this->assertSame(Estimator::REVISION_PRICE_EUR, $cr->price_eur);
+        $this->assertNotNull($cr->fagg_waiver_at);
+        $this->assertSame('PUBLISHED', $project->fresh()->status);
+
+        app(RevisionService::class)->markPaid($cr, 'pi_rev', $cr->price_eur, ['id' => 'evt_1']);
+        app(RevisionService::class)->markPaid($cr->fresh(), 'pi_rev', $cr->price_eur, ['id' => 'evt_1']); // idempotent
+        $project = $project->fresh();
+        $this->assertSame('FIXING', $project->status);
+        $this->assertSame('PUBLISHED', $project->resume_status);
+        $this->assertSame(1, $project->revision_rounds);
+        $this->assertSame(PipelineOrchestrator::MAX_REVISION_ROUNDS, app(PipelineOrchestrator::class)->freeRoundsLeft($project));
+        $this->assertSame(1, $project->runs()->where('stage', 'revise')->count());
+
+        $this->completeStage($project, 'revise', ['done' => true, 'summary' => 'Header is blue.']);
+        $this->completeStage($project, 'test', ['report' => ['passed' => 1, 'failed' => 0], 'criteria_results' => ['boots' => 'passed']]);
+        $this->completeStage($project, 'release', ['builds' => [['platform' => 'bundle', 'version' => '0.1.1', 'artifact_path' => 'x/b.tar.gz']]]);
+        $this->assertSame('REVIEW', $project->fresh()->status);
+
+        app(PipelineOrchestrator::class)->approveReview($project->fresh(), 'test');
+        $project = $project->fresh();
+        $this->assertSame('PUBLISHED', $project->status);
+        $this->assertNull($project->resume_status);
+        $this->assertTrue($project->runs()->where('stage', 'assets')->exists());
+    }
+
+    public function test_declined_paid_revision_restores_status_and_flags_refund(): void
+    {
+        $project = $this->reviewedProject();
+        $project->update(['status' => 'READY']);
+        $cr = app(PipelineOrchestrator::class)->requestChanges($project, 'Add a whole CRM module.', 'test', true, '127.0.0.1');
+        app(RevisionService::class)->markPaid($cr, 'pi', $cr->price_eur, []);
+        $this->completeStage($project, 'revise', ['done' => true, 'declined' => 'A CRM module is a new feature.']);
+
+        $project = $project->fresh();
+        $this->assertSame('READY', $project->status);
+        $this->assertSame('out_of_scope', $cr->fresh()->status);
+        $this->assertTrue($project->events()->where('type', 'changes.refund_needed')->exists());
     }
 
     public function test_failed_revise_stage_hands_the_project_back_to_review(): void
