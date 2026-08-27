@@ -16,7 +16,10 @@ interface ProjectRow {
 }
 
 export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
-  const [token, setToken] = useState<string | null>(null);
+  // undefined = not looked at localStorage yet (server render + first paint):
+  // render a quiet placeholder then, never the sign-in form — otherwise every
+  // reload flashes "enter your e-mail" before the projects appear.
+  const [token, setToken] = useState<string | null | undefined>(undefined);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [me, setMe] = useState<{ email: string; projects: ProjectRow[] } | null>(null);
@@ -50,7 +53,11 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   const a = d.account;
 
-  if (!token || !me) {
+  if (token === undefined) {
+    return <p className="est-empty">…</p>;
+  }
+
+  if (!token) {
     return (
       <div style={{ maxWidth: 480 }}>
         <p className="muted">{a.emailPrompt}</p>
@@ -90,6 +97,10 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   }
 
   const monthUnit = locale === "de" ? "Monat" : "month";
+
+  if (!me) {
+    return <p className="est-empty">…</p>;
+  }
 
   return (
     <div>
