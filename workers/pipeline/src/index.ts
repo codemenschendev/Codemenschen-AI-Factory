@@ -6,6 +6,7 @@
 import { createServer } from "node:http";
 import { AGENT_MODE, runStage } from "./stages.ts";
 import { GATEWAY_MODE, RELAY_MODE } from "./gateway.ts";
+import { REFINE_AVAILABLE, refineIdea } from "./refine.ts";
 import type { StageJob, StageResult } from "./types.ts";
 
 const PORT = Number(process.env.PORT ?? 8300);
@@ -68,13 +69,37 @@ createServer((req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/healthz") return reply(200, { ok: true });
-  if (req.method !== "POST" || req.url !== "/run") return reply(404, { error: "not found" });
+  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine")) return reply(404, { error: "not found" });
   if (!TOKEN || req.headers.authorization !== `Bearer ${TOKEN}`) {
     return reply(403, { error: "forbidden" });
   }
 
   let raw = "";
   req.on("data", (c) => (raw += c));
+
+  if (req.url === "/refine") {
+    // Wizard idea refinement: synchronous, one short gateway completion.
+    req.on("end", () => {
+      if (!REFINE_AVAILABLE) return reply(503, { error: "gateway unavailable" });
+      let input: { text?: unknown; locale?: unknown; answers?: unknown };
+      try {
+        input = JSON.parse(raw);
+      } catch {
+        return reply(422, { error: "invalid payload" });
+      }
+      if (typeof input.text !== "string" || input.text.trim().length < 10) return reply(422, { error: "text too short" });
+      const locale = input.locale === "en" ? "en" : "de";
+      const answers = Array.isArray(input.answers) ? input.answers.filter((a): a is string => typeof a === "string").slice(0, 6) : [];
+      refineIdea({ text: input.text, locale, answers })
+        .then((out) => reply(200, out))
+        .catch((e) => {
+          console.error("refine failed:", e);
+          reply(502, { error: e instanceof Error ? e.message : String(e) });
+        });
+    });
+    return;
+  }
+
   req.on("end", () => {
     let job: StageJob;
     try {

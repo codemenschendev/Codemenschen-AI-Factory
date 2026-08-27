@@ -6,10 +6,13 @@ use App\Http\Controllers\InternalRunController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\QuoteController;
+use App\Http\Controllers\QuoteRefineController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/quotes', [QuoteController::class, 'store']);
+// Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
+Route::post('/quotes/refine', QuoteRefineController::class)->middleware('throttle:5,1');
 Route::get('/quotes/{quote}', [QuoteController::class, 'show']);
 Route::post('/checkout', [CheckoutController::class, 'store']);
 Route::post('/webhooks/stripe', StripeWebhookController::class);

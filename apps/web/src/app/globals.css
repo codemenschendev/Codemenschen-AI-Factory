@@ -153,3 +153,9 @@ footer.site a { color: var(--ink-soft); }
 .detail-stack { display: grid; gap: 18px; max-width: 680px; }
 .detail-stack .card { gap: 10px; }
 .detail-stack .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; font-size: 14.5px; }
+
+/* Wizard: example chips + "sharpen my idea" row */
+.idea-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+.idea-tools .lang-toggle { cursor: pointer; }
+.idea-tools .btn { padding: 8px 14px; font-size: 14px; }
+.lang-toggle.hint { border-color: var(--accent); color: var(--accent-hover); background: #eef3ff; }
