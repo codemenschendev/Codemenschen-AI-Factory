@@ -1,5 +1,5 @@
 export const en = {
-  nav: { ideas: "App ideas", create: "Your own idea", how: "How it works" },
+  nav: { ideas: "App ideas", create: "Your own idea", how: "How it works", account: "My projects", login: "Sign in" },
   hero: {
     title: "Your app. We build it — you own it.",
     lede: "Pick a ready-made app idea or describe your own. You see a fixed price up front, pay online, and our AI factory builds, tests and delivers your app — code and all rights included.",

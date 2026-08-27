@@ -62,6 +62,7 @@ section { padding: 72px 0; }
 .nav { display: flex; align-items: center; gap: 20px; padding: 18px 24px; max-width: 1080px; margin: 0 auto; }
 .nav-logo { font-family: var(--font-display); font-weight: 600; font-size: 20px; color: var(--ink); text-decoration: none; }
 .nav-links { display: flex; gap: 18px; margin-left: auto; }
+.nav-account { margin-left: 18px; margin-right: 8px; }
 .nav-links a { color: var(--ink-soft); text-decoration: none; font-size: 14.5px; font-weight: 500; }
 .nav-links a:hover { color: var(--ink); }
 .lang-toggle { font-size: 13px; font-weight: 600; border: 1px solid var(--border); border-radius: 99px; padding: 4px 12px; color: var(--ink-soft); text-decoration: none; background: var(--surface); }

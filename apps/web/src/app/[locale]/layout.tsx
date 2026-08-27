@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LOCALES, getDict, isLocale, type Locale } from "@/lib/i18n";
+import { AccountLink } from "@/components/AccountLink";
 import { LangSwitch } from "@/components/LangSwitch";
 import "../globals.css";
 
@@ -37,6 +38,7 @@ export default async function LocaleLayout({
             <Link href={`/${locale}/create`}>{dict.nav.create}</Link>
             <Link href={`/${locale}#how`}>{dict.nav.how}</Link>
           </div>
+          <AccountLink locale={locale as Locale} labels={{ account: dict.nav.account, login: dict.nav.login }} />
           <LangSwitch current={locale as Locale} />
         </nav>
         {children}
