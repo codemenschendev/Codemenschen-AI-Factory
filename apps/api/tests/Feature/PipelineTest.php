@@ -105,6 +105,29 @@ class PipelineTest extends TestCase
         $this->assertSame(['de', 'de'], $project->storeAssets()->pluck('locale')->all());
         $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'assets.generated']);
         $this->assertSame(2, $project->events()->where('type', 'assets.generated')->first()->payload['count']);
+
+        // Only now the installable build: EAS costs quota and queue time, so it
+        // runs after the customer approved the web preview, never per change round.
+        $this->assertTrue($project->runs()->where('stage', 'build')->exists());
+        $this->completeStage($project, 'build', ['builds' => [
+            ['platform' => 'android', 'version' => '0.1.0', 'artifact_path' => 'x/app-0.1.0.apk'],
+        ]]);
+        $this->assertSame('READY', $project->fresh()->status);
+        $this->assertSame(['bundle', 'android'], $project->builds()->orderBy('id')->pluck('platform')->all());
+        $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'build.ready']);
+    }
+
+    public function test_failed_installable_build_keeps_the_approved_app_ready(): void
+    {
+        $project = $this->paidProject();
+        $project->update(['status' => 'READY']);
+        app(PipelineOrchestrator::class)->dispatch($project, 'build', 'test');
+        for ($i = 1; $i <= PipelineOrchestrator::MAX_STAGE_ATTEMPTS; $i++) {
+            $this->completeStage($project, 'build', [], 'failed');
+        }
+        $this->assertSame(PipelineOrchestrator::MAX_STAGE_ATTEMPTS, $project->runs()->where('stage', 'build')->count());
+        $this->assertSame('READY', $project->fresh()->status);
+        $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'build.failed']);
     }
 
     public function test_failing_tests_enter_fix_loop_and_fail_after_three_attempts(): void

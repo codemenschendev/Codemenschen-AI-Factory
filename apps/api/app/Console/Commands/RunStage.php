@@ -8,13 +8,13 @@ use Illuminate\Console\Command;
 
 /**
  * Operator lane: re-dispatch a single pipeline stage for a project, e.g.
- * `factory:stage <project> release` after enabling EAS builds, or `fix`
+ * `factory:stage <project> build` after an EAS failure, or `fix`
  * after a human rescued a FAILED repo. The normal transitions run when the
  * stage completes, exactly as in the automatic flow.
  */
 class RunStage extends Command
 {
-    protected $signature = 'factory:stage {project} {stage : product|uiux|coding|test|fix|release|assets|marketing}';
+    protected $signature = 'factory:stage {project} {stage : product|uiux|coding|test|fix|revise|release|build|assets|marketing}';
 
     protected $description = 'OPERATOR: dispatch one pipeline stage for a project';
 

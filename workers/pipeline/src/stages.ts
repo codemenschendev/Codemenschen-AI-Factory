@@ -39,7 +39,7 @@ export async function runStage(job: StageJob): Promise<StageResult> {
   // Text stages prefer the OpenClaw gateway (one shared subscription session);
   // code stages need the SDK sandbox; everything falls back to stubs.
   // test/release are deterministic — always the local implementation.
-  if (job.stage === "test" || job.stage === "release") return stubStage(job, dir);
+  if (job.stage === "test" || job.stage === "release" || job.stage === "build") return stubStage(job, dir);
   const isCode = job.stage === "coding" || job.stage === "fix" || job.stage === "revise";
   if (isCode && RELAY_MODE) return gatewayStage(job, dir);
   if (!isCode && GATEWAY_MODE && GATEWAY_STAGES.has(job.stage)) return gatewayStage(job, dir);
@@ -189,33 +189,47 @@ async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
 /* ---------------- release (deterministic, shared by every mode) ---------------- */
 
 /**
- * Source bundle always; installable Android .apk through EAS Build when the
- * worker has an Expo token and the project is an Expo app. A failed EAS build
- * fails the stage (the orchestrator retries) rather than silently shipping
- * source only — the customer paid for an installable app.
+ * `release` stage: source bundle always, plus the browser preview (best
+ * effort). The installable .apk is deliberately NOT built here — see
+ * buildStage: EAS builds are spent only on an approved preview.
  */
 async function releaseStage(job: StageJob, dir: string): Promise<Record<string, unknown>> {
-  let version = "0.1.0";
-  try {
-    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
-    if (typeof pkg.version === "string" && pkg.version) version = pkg.version;
-  } catch { /* keep default */ }
+  const version = await packageVersion(dir);
   // SDK-compatible versions before anything is archived, exported or built.
   if (job.context.stack === "expo") await alignExpoDeps(dir);
   const builds: Record<string, unknown>[] = [];
   const artifact = await archiveRepo(job.project_id, version);
   builds.push({ platform: "bundle", version, artifact_path: artifact });
-  // Browser preview first (minutes), the cloud .apk after (can queue ~30 min).
+  // Browser preview only (minutes). The cloud .apk is the `build` stage, which
+  // the orchestrator dispatches after the customer approved this preview —
+  // EAS builds cost quota and queue time, change rounds must not burn them.
   let preview_error: string | undefined;
   try {
     builds.push({ ...(await exportWebPreview(dir, job.project_id, job.context.stack, version)) });
   } catch (e) {
     preview_error = String((e as Error).message ?? e).slice(0, 600);
   }
-  if (EAS_MODE && job.context.stack === "expo") {
-    builds.push({ ...(await easBuildAndroid(dir, job.project_id, job.context.name, version)) });
-  }
-  return { builds, eas: EAS_MODE && job.context.stack === "expo", preview_error };
+  return { builds, preview_error };
+}
+
+/**
+ * `build` stage: the installable Android .apk via EAS. Runs only after the
+ * customer approved the web preview (orchestrator: approve → assets → build).
+ * Non-Expo stacks and hosts without EXPO_TOKEN produce no build, not an error.
+ */
+async function buildStage(job: StageJob, dir: string): Promise<Record<string, unknown>> {
+  if (job.context.stack !== "expo" || !EAS_MODE) return { builds: [], eas: false };
+  const version = await packageVersion(dir);
+  const build = await easBuildAndroid(dir, job.project_id, job.context.name, version);
+  return { builds: [build], eas: true };
+}
+
+async function packageVersion(dir: string): Promise<string> {
+  try {
+    const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+    if (typeof pkg.version === "string" && pkg.version) return pkg.version;
+  } catch { /* keep default */ }
+  return "0.1.0";
 }
 
 /* ---------------- stub mode (no API key: deterministic dry run) ---------------- */
@@ -324,6 +338,8 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
     }
     case "release":
       return ok(await releaseStage(job, dir));
+    case "build":
+      return ok(await buildStage(job, dir));
     case "assets": {
       const c = job.context;
       const name = c.name.slice(0, 30);
@@ -397,6 +413,8 @@ async function collectStageOutput(job: StageJob, dir: string): Promise<Record<st
     }
     case "release":
       return releaseStage(job, dir);
+    case "build":
+      return buildStage(job, dir);
     case "revise":
       return {}; // summary/declined come from the agent's reply (gatewayStage merges them)
     case "assets": {

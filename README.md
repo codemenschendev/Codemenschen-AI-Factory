@@ -10,7 +10,7 @@ for the full architecture and roadmap.
 | `apps/web` | Next.js storefront + customer portal (appwerk.codemenschen.at) |
 | `apps/api` | Laravel Factory API — orders, projects, pipeline orchestrator (api.appwerk.codemenschen.at) |
 | `packages/pricing` | Shared deterministic pricing engine (ported from the appwerk prototype) |
-| `workers/pipeline` | Claude Agent SDK stage worker (product / uiux / coding / test / fix / release) |
+| `workers/pipeline` | Claude Agent SDK stage worker (product / uiux / coding / test / fix / revise / release / build / assets / marketing) |
 | `templates/expo-app` | Golden template forked per customer project |
 | `infra/` | docker-compose for the production server + Apache vhosts |
 | `appwerk/` | Original static prototype + strategy docs (reference; being ported) |

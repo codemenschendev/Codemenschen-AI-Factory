@@ -215,7 +215,8 @@ The orchestrator is deterministic code (Laravel state machine). Agents are Claud
 | BUILDING | Coding Agent | spec + template fork → implemented app, per-feature commits | build compiles |
 | TESTING | Test Agent | repo → typecheck, lint, unit, e2e smoke (Maestro/Playwright), acceptance checks | all acceptance criteria automated-pass |
 | FIXING | Fix Agent | failing report → patches | re-enter TESTING; max **3 attempts** then FAILED + human escalation |
-| REVIEW | — human gate — | customer preview (Expo preview build / web staging) | customer approval or 7-day auto-advance (policy TBD) |
+| REVIEW | — human gate — | customer preview: source bundle + **web preview in the browser** (`release` stage; no cloud build yet) | customer approval or 7-day auto-advance (policy TBD) |
+| READY | `assets` → `build` | store texts, then the installable Android .apk via EAS — only after the customer approved the web preview (EAS quota + queue are not spent on change rounds) | build failure keeps READY + operator note |
 | READY→PUBLISHING | Release Agent | repo → versioned production build via EAS, release artifacts | **human approval gate (always, initially)** |
 | PUBLISHING | Publish workflow | assets + builds → store submissions | store review passes |
 | MARKETING | Marketing Agent | app + audience → strategy, creatives, campaign drafts | **human approval gate before any spend** |

@@ -412,6 +412,14 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                 </button>
               </div>
             ))}
+          {p.runs.some((r) => r.stage === "build" && (r.status === "running" || r.status === "queued")) && (
+            <p className="small muted" style={{ margin: 0 }}>{d.project.buildRunning}</p>
+          )}
+          {!p.builds.some((b) => b.platform === "android") &&
+            p.runs.some((r) => r.stage === "build" && r.status === "failed") &&
+            !p.runs.some((r) => r.stage === "build" && (r.status === "running" || r.status === "queued")) && (
+              <p className="small muted" style={{ margin: 0 }}>{d.project.buildFailed}</p>
+            )}
           {p.builds.some((b) => b.platform === "bundle") && (
             <p className="small muted" style={{ margin: 0 }}>{d.project.sourceHint}</p>
           )}

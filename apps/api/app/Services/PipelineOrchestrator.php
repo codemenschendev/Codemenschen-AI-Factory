@@ -14,7 +14,10 @@ use Illuminate\Support\Facades\DB;
  * every transition decision lives HERE, in code — never in a prompt.
  *
  * PAID → SPECIFICATION (product → uiux) → BUILDING (coding) → TESTING (test)
- *   ⇄ FIXING (fix, max 3) → release (preview build) → REVIEW —approve→ READY.
+ *   ⇄ FIXING (fix, max 3) → release (web preview) → REVIEW —approve→ READY
+ *   → assets → build (EAS .apk). The installable build runs only after the
+ *   customer approved the browser preview: cloud builds cost quota and up to
+ *   30 min of queue, and every change round would otherwise burn one.
  * REVIEW —change request→ FIXING (revise) → TESTING → … → REVIEW; three free
  * rounds, afterwards (and once the app is READY/PUBLISHED) a paid round that
  * returns the app to the status it had before the revision.
@@ -70,6 +73,7 @@ class PipelineOrchestrator
             'fix' => $this->afterFix($project),
             'revise' => $this->afterRevise($project, $run),
             'release' => $this->afterRelease($project, $run),
+            'build' => $this->afterBuild($project, $run),
             'assets' => $this->afterAssets($project, $run),
             'marketing' => $this->afterMarketing($project, $run),
             default => null,
@@ -103,6 +107,14 @@ class PipelineOrchestrator
         if ($run->attempt < self::MAX_STAGE_ATTEMPTS) {
             $delay = self::RETRY_DELAYS[$run->attempt - 1] ?? end(self::RETRY_DELAYS);
             $this->dispatchStage($project, $run->stage, $run->attempt + 1, 'system', $delay);
+
+            return;
+        }
+        if ($run->stage === 'build') {
+            // The customer already approved this app; a failed installable build
+            // must not sink it. Operator retries with `factory:stage <id> build`.
+            $project->recordEvent('build.failed', ['error' => mb_substr((string) $run->error, 0, 500)]);
+            $this->notify->note($project, "Android build failed after {$run->attempt} attempts — ".mb_substr((string) $run->error, 0, 200));
 
             return;
         }
@@ -206,7 +218,8 @@ class PipelineOrchestrator
         $to = $project->resume_status ?: 'READY';
         $project->update(['resume_status' => null]);
         $this->transition($project->fresh(), $to, $actor);
-        // MVP 2: store assets are (re)generated as soon as the app is READY.
+        // MVP 2: store assets are (re)generated as soon as the app is READY;
+        // the installable build follows them (afterAssets → build).
         $this->dispatchStage($project, 'assets');
     }
 
@@ -335,6 +348,28 @@ class PipelineOrchestrator
             ]);
         }
         $project->recordEvent('assets.generated', ['count' => $project->storeAssets()->where('version', $version)->count(), 'version' => $version]);
+        // Installable build only now — the customer approved the web preview.
+        if ($project->stack === 'expo') {
+            $this->dispatchStage($project, 'build');
+        }
+    }
+
+    /** The EAS .apk landed (or nothing to build): record it, tell the operator. */
+    private function afterBuild(Project $project, PipelineRun $run): void
+    {
+        $builds = $run->output['builds'] ?? [];
+        foreach ($builds as $b) {
+            $project->builds()->create([
+                'platform' => $b['platform'],
+                'version' => $b['version'] ?? '0.1.0',
+                'artifact_path' => $b['artifact_path'] ?? null,
+                'status' => 'release',
+            ]);
+        }
+        if ($builds !== []) {
+            $project->recordEvent('build.ready', ['platforms' => array_column($builds, 'platform')]);
+            $this->notify->note($project, 'Android build ready (.apk in the portal)');
+        }
     }
 
     private function afterMarketing(Project $project, PipelineRun $run): void
@@ -378,7 +413,7 @@ class PipelineOrchestrator
     /** Operator lane (artisan factory:stage): one stage, outside the automatic flow. */
     public function dispatch(Project $project, string $stage, string $actor): PipelineRun
     {
-        $allowed = ['product', 'uiux', 'coding', 'test', 'fix', 'revise', 'release', 'assets', 'marketing'];
+        $allowed = ['product', 'uiux', 'coding', 'test', 'fix', 'revise', 'release', 'build', 'assets', 'marketing'];
         abort_unless(in_array($stage, $allowed, true), 422, 'unknown stage');
 
         return $this->dispatchStage($project, $stage, 1, $actor);

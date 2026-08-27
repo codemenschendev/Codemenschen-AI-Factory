@@ -53,6 +53,12 @@ class Notify
 
     public function changeRequestNote(Project $project, string $note): void
     {
+        $this->note($project, $note);
+    }
+
+    /** One-line operator note (mail + chat) for events that are not status transitions. */
+    public function note(Project $project, string $note): void
+    {
         $this->mailAdmin("[AI Factory] {$project->name}: {$note}", "Project {$project->id}\n{$note}");
         $this->send(sprintf('Project %s (%s) %s', substr($project->id, 0, 8), $project->name, $note));
     }

@@ -6,6 +6,7 @@ export type Stage =
   | "fix"
   | "revise"
   | "release"
+  | "build"
   | "assets"
   | "marketing";
 

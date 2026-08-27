@@ -82,7 +82,9 @@ curl -s http://127.0.0.1:8310/healthz
 
 ## EAS Build (installable Android .apk)
 
-The release stage builds Expo projects in the cloud when `EXPO_TOKEN` is set
+The `build` stage (dispatched after the customer approved the web preview and
+the store assets exist — never per change round) builds Expo projects in the
+cloud when `EXPO_TOKEN` is set
 in `infra/.env` (expo.dev → Account settings → Access tokens). Each project
 gets a unique slug/package (`appwerk-<uuid>`, `at.codemenschen.appwerk.p<uuid>`),
 is linked with `eas init`, built with the template's `preview` profile
