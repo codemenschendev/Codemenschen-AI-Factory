@@ -143,6 +143,14 @@ module.exports = {
 async function exportNext(dir: string, base: string): Promise<string> {
   await ensureDeps(dir);
   await ensureIgnore(dir, ["node_modules/", ".next/", "out/"]);
+  // `next build` refuses a TypeScript project without @types/node; repos
+  // seeded from the pre-preview template lack it.
+  const pkg = JSON.parse(await readFile(path.join(dir, "package.json"), "utf8"));
+  const types = ["@types/node", "@types/react-dom"].filter((d) => !pkg.devDependencies?.[d] && !pkg.dependencies?.[d]);
+  if (types.length) {
+    await run("npm", ["install", "--save-dev", "--no-audit", "--no-fund", "--loglevel=error", ...types], dir);
+    await commitAll(dir, "release: type packages next build requires");
+  }
   // Repos seeded from the pre-preview template have a fixed standalone config.
   const cfg = path.join(dir, "next.config.js");
   if (!existsSync(cfg) || (await readFile(cfg, "utf8")).includes('module.exports = { output: "standalone" };')) {
