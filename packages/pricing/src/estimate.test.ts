@@ -20,8 +20,8 @@ test("mobile b2b app with many features stays under the 1500 cap", () => {
     platform: "both",
     features: ["auth", "pay", "dash", "ai", "notif", "api"],
   });
-  // dev = (450 + 290) * 1.15 = 851 → * 1.2 = 1021 → 1000
-  assert.equal(e.price, 1000);
+  // dev = (450 + 75) * 1.15 = 603.75 → * 1.2 = 724.5 → 700
+  assert.equal(e.price, 700);
   assert.equal(e.retainerPctLabel, "8–10%");
   assert.equal(e.weeksHi, 6 + 6 + 2);
   assert.equal(e.appType, "B");

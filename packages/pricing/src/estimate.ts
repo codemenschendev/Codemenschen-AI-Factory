@@ -11,18 +11,18 @@ export type Platform = "web" | "mobile" | "both";
 
 /**
  * Feature catalog. Price sheet lowered 2026-08-27: the factory competes with
- * AI-builder subscriptions, so an add-on is priced like a few hours, not a
- * sprint. Mirror of Estimator::FEATURES (PHP) — keep in sync.
+ * AI-builder subscriptions and every add-on is template work for the agent,
+ * so an add-on costs a coffee, not a sprint. Mirror of Estimator::FEATURES (PHP) — keep in sync.
  */
 export const FEATURES = {
-  auth: { cost: 40, label: "User accounts / login", needsBackend: true },
-  pay: { cost: 60, label: "Payments", needsBackend: true },
-  dash: { cost: 40, label: "Dashboard / statistics", needsBackend: false },
-  ai: { cost: 80, label: "AI features", needsBackend: true },
-  notif: { cost: 30, label: "Push notifications", needsBackend: true },
-  api: { cost: 40, label: "External integrations / API", needsBackend: true },
-  offline: { cost: 30, label: "Offline capability", needsBackend: false },
-  i18n: { cost: 20, label: "Multi-language", needsBackend: false },
+  auth: { cost: 10, label: "User accounts / login", needsBackend: true },
+  pay: { cost: 15, label: "Payments", needsBackend: true },
+  dash: { cost: 10, label: "Dashboard / statistics", needsBackend: false },
+  ai: { cost: 20, label: "AI features", needsBackend: true },
+  notif: { cost: 10, label: "Push notifications", needsBackend: true },
+  api: { cost: 10, label: "External integrations / API", needsBackend: true },
+  offline: { cost: 10, label: "Offline capability", needsBackend: false },
+  i18n: { cost: 5, label: "Multi-language", needsBackend: false },
 } as const;
 
 /** Development price clamp (EUR), mirror of Estimator::PRICE_MIN/MAX. */

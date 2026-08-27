@@ -78,8 +78,8 @@ class CommerceFlowTest extends TestCase
         $this->assertSame('pending', $order->status);
         $this->assertFalse($order->fagg_waiver);
         $this->assertNull($order->fagg_waiver_at);
-        // b2b mobile with auth+notif: (300+70)*1.15=425.5 → *1.2 = 510.6 → 500 + 79 package
-        $this->assertSame(579, $order->total_one_time_eur);
+        // b2b mobile with auth+notif: (300+20)*1.15=368 → *1.2 = 441.6 → 450 + 79 package
+        $this->assertSame(529, $order->total_one_time_eur);
         $this->assertSame(19, $order->hosting_monthly_eur);
     }
 

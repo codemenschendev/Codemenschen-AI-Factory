@@ -12,18 +12,18 @@ class Estimator
     /**
      * Feature catalog: cost in EUR + whether it forces a hosted backend.
      * Price sheet lowered 2026-08-27 (Patrick): the factory competes with
-     * AI-builder subscriptions, so an add-on is priced like a few hours, not
-     * a sprint. Base prices per platform live in estimate().
+     * AI-builder subscriptions and every add-on is template work for the
+     * agent, so an add-on costs a coffee, not a sprint. Base prices per platform live in estimate().
      */
     public const FEATURES = [
-        'auth' => ['cost' => 40, 'needsBackend' => true],
-        'pay' => ['cost' => 60, 'needsBackend' => true],
-        'dash' => ['cost' => 40, 'needsBackend' => false],
-        'ai' => ['cost' => 80, 'needsBackend' => true],
-        'notif' => ['cost' => 30, 'needsBackend' => true],
-        'api' => ['cost' => 40, 'needsBackend' => true],
-        'offline' => ['cost' => 30, 'needsBackend' => false],
-        'i18n' => ['cost' => 20, 'needsBackend' => false],
+        'auth' => ['cost' => 10, 'needsBackend' => true],
+        'pay' => ['cost' => 15, 'needsBackend' => true],
+        'dash' => ['cost' => 10, 'needsBackend' => false],
+        'ai' => ['cost' => 20, 'needsBackend' => true],
+        'notif' => ['cost' => 10, 'needsBackend' => true],
+        'api' => ['cost' => 10, 'needsBackend' => true],
+        'offline' => ['cost' => 10, 'needsBackend' => false],
+        'i18n' => ['cost' => 5, 'needsBackend' => false],
     ];
 
     public const PACKAGE_PRICES = [

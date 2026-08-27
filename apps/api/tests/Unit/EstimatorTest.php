@@ -23,8 +23,8 @@ class EstimatorTest extends TestCase
     public function test_loaded_b2b_both_platform_stays_under_cap(): void
     {
         $e = Estimator::estimate('b2b', 'both', ['auth', 'pay', 'dash', 'ai', 'notif', 'api']);
-        // (450 + 290) * 1.15 = 851 → * 1.2 = 1021 → 1000; cap is 1500
-        $this->assertSame(1000, $e['price']);
+        // (450 + 75) * 1.15 = 603.75 → * 1.2 = 724.5 → 700; cap is 1500
+        $this->assertSame(700, $e['price']);
         $this->assertSame(14, $e['weeksHi']);
         $this->assertSame('B', $e['appType']);
         $this->assertSame(19, $e['hostingMonthly']);
