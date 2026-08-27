@@ -16,29 +16,29 @@ class Estimator
      * a sprint. Base prices per platform live in estimate().
      */
     public const FEATURES = [
-        'auth' => ['cost' => 90, 'needsBackend' => true],
-        'pay' => ['cost' => 120, 'needsBackend' => true],
-        'dash' => ['cost' => 90, 'needsBackend' => false],
-        'ai' => ['cost' => 150, 'needsBackend' => true],
-        'notif' => ['cost' => 60, 'needsBackend' => true],
-        'api' => ['cost' => 90, 'needsBackend' => true],
-        'offline' => ['cost' => 60, 'needsBackend' => false],
-        'i18n' => ['cost' => 40, 'needsBackend' => false],
+        'auth' => ['cost' => 40, 'needsBackend' => true],
+        'pay' => ['cost' => 60, 'needsBackend' => true],
+        'dash' => ['cost' => 40, 'needsBackend' => false],
+        'ai' => ['cost' => 80, 'needsBackend' => true],
+        'notif' => ['cost' => 30, 'needsBackend' => true],
+        'api' => ['cost' => 40, 'needsBackend' => true],
+        'offline' => ['cost' => 30, 'needsBackend' => false],
+        'i18n' => ['cost' => 20, 'needsBackend' => false],
     ];
 
     public const PACKAGE_PRICES = [
-        'storePublishing' => 149,
-        'transferAssist' => 99,
-        'marketingLaunch' => 249,
+        'storePublishing' => 79,
+        'transferAssist' => 49,
+        'marketingLaunch' => 129,
     ];
 
     /** One paid change-request round (after the free REVIEW rounds / once released). Patrick's call. */
-    public const REVISION_PRICE_EUR = 79;
+    public const REVISION_PRICE_EUR = 39;
 
     /** Development price clamp (EUR). */
-    public const PRICE_MIN = 300;
+    public const PRICE_MIN = 149;
 
-    public const PRICE_MAX = 3000;
+    public const PRICE_MAX = 1500;
 
     /** Monthly hosting & maintenance per app type. Bands: Patrick's call. */
     public const HOSTING_MONTHLY = ['A' => 0, 'B' => 19];
@@ -70,7 +70,7 @@ class Estimator
      */
     public static function estimate(string $audience, string $platform, array $features): array
     {
-        $base = $platform === 'mobile' ? 600 : ($platform === 'both' ? 900 : 400);
+        $base = $platform === 'mobile' ? 300 : ($platform === 'both' ? 450 : 200);
         $dev = $base;
         foreach ($features as $f) {
             $dev += self::FEATURES[$f]['cost'];

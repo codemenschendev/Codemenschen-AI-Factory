@@ -11,9 +11,9 @@ class EstimatorTest extends TestCase
     public function test_web_consumer_floor_matches_ts_engine(): void
     {
         $e = Estimator::estimate('consumer', 'web', []);
-        $this->assertSame(350, $e['devLo']);
-        $this->assertSame(500, $e['devHi']);
-        $this->assertSame(500, $e['price']); // 400 * 1.2 = 480 → rounded to 50
+        $this->assertSame(150, $e['devLo']);
+        $this->assertSame(250, $e['devHi']);
+        $this->assertSame(250, $e['price']); // 200 * 1.2 = 240 → rounded to 50
         $this->assertSame(3, $e['weeksLo']);
         $this->assertSame(6, $e['weeksHi']);
         $this->assertSame('A', $e['appType']);
@@ -23,8 +23,8 @@ class EstimatorTest extends TestCase
     public function test_loaded_b2b_both_platform_stays_under_cap(): void
     {
         $e = Estimator::estimate('b2b', 'both', ['auth', 'pay', 'dash', 'ai', 'notif', 'api']);
-        // (900 + 600) * 1.15 = 1725 → * 1.2 = 2070 → 2050; cap is 3000
-        $this->assertSame(2050, $e['price']);
+        // (450 + 290) * 1.15 = 851 → * 1.2 = 1021 → 1000; cap is 1500
+        $this->assertSame(1000, $e['price']);
         $this->assertSame(14, $e['weeksHi']);
         $this->assertSame('B', $e['appType']);
         $this->assertSame(19, $e['hostingMonthly']);
@@ -38,7 +38,7 @@ class EstimatorTest extends TestCase
 
     public function test_one_time_total_adds_selected_packages_only(): void
     {
-        $total = Estimator::oneTimeTotal(500, ['storePublishing' => true, 'marketingLaunch' => true]);
-        $this->assertSame(500 + 149 + 249, $total);
+        $total = Estimator::oneTimeTotal(250, ['storePublishing' => true, 'marketingLaunch' => true]);
+        $this->assertSame(250 + 79 + 129, $total);
     }
 }

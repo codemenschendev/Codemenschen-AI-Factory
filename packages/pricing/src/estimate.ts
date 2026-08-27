@@ -15,19 +15,19 @@ export type Platform = "web" | "mobile" | "both";
  * sprint. Mirror of Estimator::FEATURES (PHP) — keep in sync.
  */
 export const FEATURES = {
-  auth: { cost: 90, label: "User accounts / login", needsBackend: true },
-  pay: { cost: 120, label: "Payments", needsBackend: true },
-  dash: { cost: 90, label: "Dashboard / statistics", needsBackend: false },
-  ai: { cost: 150, label: "AI features", needsBackend: true },
-  notif: { cost: 60, label: "Push notifications", needsBackend: true },
-  api: { cost: 90, label: "External integrations / API", needsBackend: true },
-  offline: { cost: 60, label: "Offline capability", needsBackend: false },
-  i18n: { cost: 40, label: "Multi-language", needsBackend: false },
+  auth: { cost: 40, label: "User accounts / login", needsBackend: true },
+  pay: { cost: 60, label: "Payments", needsBackend: true },
+  dash: { cost: 40, label: "Dashboard / statistics", needsBackend: false },
+  ai: { cost: 80, label: "AI features", needsBackend: true },
+  notif: { cost: 30, label: "Push notifications", needsBackend: true },
+  api: { cost: 40, label: "External integrations / API", needsBackend: true },
+  offline: { cost: 30, label: "Offline capability", needsBackend: false },
+  i18n: { cost: 20, label: "Multi-language", needsBackend: false },
 } as const;
 
 /** Development price clamp (EUR), mirror of Estimator::PRICE_MIN/MAX. */
-export const PRICE_MIN = 300;
-export const PRICE_MAX = 3000;
+export const PRICE_MIN = 149;
+export const PRICE_MAX = 1500;
 
 export type FeatureKey = keyof typeof FEATURES;
 
@@ -70,7 +70,7 @@ export function classifyAppType(features: FeatureKey[]): {
 export function estimate(input: EstimateInput): Estimate {
   const { audience, platform, features } = input;
 
-  const base = platform === "mobile" ? 600 : platform === "both" ? 900 : 400;
+  const base = platform === "mobile" ? 300 : platform === "both" ? 450 : 200;
   let dev = base + features.reduce((s, f) => s + FEATURES[f].cost, 0);
   if (audience === "b2b") dev *= 1.15;
   if (audience === "both") dev *= 1.1;
@@ -116,13 +116,13 @@ export interface PackageSelection {
 }
 
 export const PACKAGE_PRICES = {
-  storePublishing: 149,
-  transferAssist: 99,
-  marketingLaunch: 249,
+  storePublishing: 79,
+  transferAssist: 49,
+  marketingLaunch: 129,
 } as const;
 
 /** One paid change-request round (mirror of Estimator::REVISION_PRICE_EUR). */
-export const REVISION_PRICE_EUR = 79;
+export const REVISION_PRICE_EUR = 39;
 
 /** Monthly hosting & maintenance for Type B apps. Bands pending Patrick's final call. */
 export const HOSTING_MONTHLY: Record<AppType, number> = {
