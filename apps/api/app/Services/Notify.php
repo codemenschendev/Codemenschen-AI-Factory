@@ -25,6 +25,7 @@ class Notify
                 "[AI Factory] {$project->name}: {$from} → {$to}",
                 "Project {$project->id}\nCustomer: {$project->customer?->email}\nStatus: {$from} → {$to}"
                 .($project->failed_reason ? "\nReason: {$project->failed_reason}" : '')
+                .($project->previewUrl() ? "\nPreview: {$project->previewUrl()}" : '')
                 ."\n\nPortal: ".rtrim(config('services.frontend_url'), '/')."/de/account/{$project->id}",
             );
         }
@@ -34,7 +35,7 @@ class Notify
             $project->name,
             $from,
             $to,
-            $to === 'REVIEW' ? ' — preview ready, approval needed' : ($to === 'FAILED' ? " — {$project->failed_reason}" : ''),
+            $to === 'REVIEW' ? ' — preview ready, approval needed'.($project->previewUrl() ? " {$project->previewUrl()}" : '') : ($to === 'FAILED' ? " — {$project->failed_reason}" : ''),
         ));
     }
 

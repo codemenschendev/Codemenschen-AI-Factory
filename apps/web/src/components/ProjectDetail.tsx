@@ -12,6 +12,7 @@ interface Detail {
   failed_reason: string | null;
   criteria: { key: string; criterion: string; kind: string; status: string }[];
   builds: { id: number; platform: string; version: string; status: string }[];
+  preview_url?: string | null;
   runs: { stage: string; attempt: number; status: string; started_at: string | null; finished_at: string | null }[];
   store_assets?: { id: number; kind: string; locale: string | null; content: string | null; status: string }[];
   revision_rounds?: number;
@@ -393,16 +394,24 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
         <aside className="est-panel">
           <h3 style={{ margin: 0 }}>{d.project.builds}</h3>
           {p.builds.length === 0 && <p className="est-empty">—</p>}
-          {p.builds.map((b) => (
-            <div className="row" key={b.id}>
-              <span className="muted">
-                {d.project.platformNames[b.platform] ?? b.platform} v{b.version}
-              </span>
-              <button className="lang-toggle" disabled={busy} onClick={() => download(b.id, b.platform)}>
-                {d.project.download}
-              </button>
-            </div>
-          ))}
+          {p.preview_url && (
+            <a className="btn btn-primary btn-block" href={p.preview_url} target="_blank" rel="noopener noreferrer">
+              {d.project.openPreview}
+            </a>
+          )}
+          {p.preview_url && <p className="small muted" style={{ margin: 0 }}>{d.project.previewHint}</p>}
+          {p.builds
+            .filter((b) => b.platform !== "web")
+            .map((b) => (
+              <div className="row" key={b.id}>
+                <span className="muted">
+                  {d.project.platformNames[b.platform] ?? b.platform} v{b.version}
+                </span>
+                <button className="lang-toggle" disabled={busy} onClick={() => download(b.id, b.platform)}>
+                  {d.project.download}
+                </button>
+              </div>
+            ))}
           {p.builds.some((b) => b.platform === "bundle") && (
             <p className="small muted" style={{ margin: 0 }}>{d.project.sourceHint}</p>
           )}

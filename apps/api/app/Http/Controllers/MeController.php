@@ -41,6 +41,7 @@ class MeController extends Controller
             'build_starts_at' => $project->build_starts_at?->toIso8601String(),
             'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status']),
             'builds' => $project->builds()->latest()->get(['id', 'platform', 'version', 'status', 'created_at']),
+            'preview_url' => $project->previewUrl(),
             'store_assets' => $project->storeAssets()
                 ->where('version', $project->storeAssets()->max('version') ?? 0)
                 ->get(['id', 'kind', 'locale', 'content', 'status'])

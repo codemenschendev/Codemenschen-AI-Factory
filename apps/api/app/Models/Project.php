@@ -77,6 +77,16 @@ class Project extends Model
         return $this->hasMany(ChangeRequest::class);
     }
 
+    /** Browser preview of the latest build, when the release stage exported one. */
+    public function previewUrl(): ?string
+    {
+        if (! $this->builds()->where('platform', 'web')->exists()) {
+            return null;
+        }
+
+        return rtrim(config('app.url'), '/')."/api/preview/{$this->id}/";
+    }
+
     public function recordEvent(string $type, array $payload = [], string $actor = 'system'): void
     {
         $this->events()->create(['type' => $type, 'payload' => $payload, 'actor' => $actor]);

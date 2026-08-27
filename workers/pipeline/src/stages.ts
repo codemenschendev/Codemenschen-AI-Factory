@@ -7,6 +7,7 @@ import type { StageJob, StageResult } from "./types.ts";
 import { archiveRepo, commitAll, ensureRepo, writeRepoFile } from "./repo.ts";
 import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson, gatewayComplete, relayAgent } from "./gateway.ts";
 import { EAS_MODE, easBuildAndroid } from "./eas.ts";
+import { exportWebPreview } from "./web.ts";
 
 const exec = promisify(execFile);
 
@@ -202,10 +203,17 @@ async function releaseStage(job: StageJob, dir: string): Promise<Record<string, 
   const builds: Record<string, unknown>[] = [];
   const artifact = await archiveRepo(job.project_id, version);
   builds.push({ platform: "bundle", version, artifact_path: artifact });
+  // Browser preview first (minutes), the cloud .apk after (can queue ~30 min).
+  let preview_error: string | undefined;
+  try {
+    builds.push({ ...(await exportWebPreview(dir, job.project_id, job.context.stack, version)) });
+  } catch (e) {
+    preview_error = String((e as Error).message ?? e).slice(0, 600);
+  }
   if (EAS_MODE && job.context.stack === "expo") {
     builds.push({ ...(await easBuildAndroid(dir, job.project_id, job.context.name, version)) });
   }
-  return { builds, eas: EAS_MODE && job.context.stack === "expo" };
+  return { builds, eas: EAS_MODE && job.context.stack === "expo", preview_error };
 }
 
 /* ---------------- stub mode (no API key: deterministic dry run) ---------------- */

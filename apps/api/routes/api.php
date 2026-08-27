@@ -4,6 +4,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\InternalRunController;
 use App\Http\Controllers\MeController;
+use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -29,6 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/campaigns/{campaignId}/decide', [MeController::class, 'decideCampaign']);
     Route::get('/me/projects/{project}/builds/{buildId}/download', [MeController::class, 'downloadBuild']);
 });
+
+// Static web preview of a built app (release stage export); unguessable URL, no login.
+Route::get('/preview/{project}/{path?}', PreviewController::class)->where('path', '.*');
 
 // Worker callbacks — authenticated by the per-run callback token.
 Route::post('/internal/runs/{run}/heartbeat', [InternalRunController::class, 'heartbeat']);
