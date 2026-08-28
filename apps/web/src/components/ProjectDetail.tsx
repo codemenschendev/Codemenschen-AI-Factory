@@ -298,6 +298,8 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
 
       {/* ---------------- App: preview, downloads, approval, change requests ---------------- */}
       {active === "app" && (
+        <div className="detail-layout">
+        <PhonePreview url={p.preview_url ?? null} version={p.builds.find((b) => b.platform === "web")?.version ?? null} d={d} />
         <div className="detail-stack">
           <div className="card">
             <h3>{d.project.builds}</h3>
@@ -471,6 +473,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               )}
             </div>
           )}
+        </div>
         </div>
       )}
 
@@ -727,5 +730,57 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
         </div>
       )}
     </div>
+  );
+}
+
+/**
+ * The web preview shown the way the customer will meet it: inside a phone.
+ * Sticky beside the cards on wide screens, hidden on narrow ones (the
+ * "Open in browser" button stays). The iframe renders at a real iPhone
+ * viewport (390×844) and is scaled down to the frame, so the app lays out
+ * exactly as on a device instead of as a wide desktop page.
+ */
+function PhonePreview({ url, version, d }: { url: string | null; version: string | null; d: Dict }) {
+  const [nonce, setNonce] = useState(0); // bump = reload the iframe
+  return (
+    <aside className="phone-aside" aria-label={d.project.previewTitle}>
+      <div className="phone">
+        <div className="phone-island" aria-hidden="true" />
+        <div className="phone-screen">
+          {url ? (
+            <iframe
+              key={nonce}
+              className="phone-iframe"
+              src={url}
+              title={d.project.previewTitle}
+              loading="lazy"
+              allow="clipboard-write; camera; microphone; geolocation"
+            />
+          ) : (
+            <div className="phone-empty">
+              <span className="phone-empty-dot" aria-hidden="true" />
+              <p>{d.project.previewEmpty}</p>
+            </div>
+          )}
+        </div>
+        <div className="phone-home" aria-hidden="true" />
+      </div>
+      <div className="phone-caption">
+        <span className="small muted">
+          {d.project.previewTitle}
+          {version ? ` · v${version}` : ""}
+        </span>
+        {url && (
+          <span className="phone-actions">
+            <button type="button" className="lang-toggle" onClick={() => setNonce((n) => n + 1)}>
+              {d.project.previewReload}
+            </button>
+            <a className="lang-toggle" href={url} target="_blank" rel="noopener noreferrer">
+              {d.project.previewOpen}
+            </a>
+          </span>
+        )}
+      </div>
+    </aside>
   );
 }

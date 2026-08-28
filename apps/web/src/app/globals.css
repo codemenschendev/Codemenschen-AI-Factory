@@ -160,3 +160,22 @@ footer.site a { color: var(--ink-soft); }
 .idea-tools .lang-toggle { cursor: pointer; }
 .idea-tools .btn { padding: 8px 14px; font-size: 14px; }
 .lang-toggle.hint { border-color: var(--accent); color: var(--accent-hover); background: #eef3ff; }
+
+/* ---- Project page: cards on the left, live preview in a phone on the right ---- */
+.detail-layout { display: grid; grid-template-columns: minmax(0, 680px) minmax(300px, 1fr); gap: 32px; align-items: start; }
+.phone-aside { order: 2; position: sticky; top: 24px; display: grid; gap: 12px; justify-items: center; }
+/* 390×844 logical points scaled to a 318 px wide screen → 0.815 */
+.phone { --phone-scale: 0.815; position: relative; width: 342px; height: 728px; background: var(--ink); border-radius: 46px;
+  padding: 12px; box-shadow: 0 30px 60px -20px rgba(11, 14, 20, 0.45), inset 0 0 0 2px #2a2f3a; }
+.phone-screen { position: relative; width: 318px; height: 688px; overflow: hidden; border-radius: 36px; background: #fff; }
+.phone-iframe { width: 390px; height: 844px; border: 0; transform: scale(var(--phone-scale)); transform-origin: top left; display: block; background: #fff; }
+.phone-island { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 100px; height: 28px; border-radius: 99px; background: var(--ink); z-index: 2; }
+.phone-home { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); width: 120px; height: 5px; border-radius: 99px; background: rgba(11, 14, 20, 0.35); z-index: 2; }
+.phone-empty { height: 100%; display: grid; place-items: center; align-content: center; gap: 14px; padding: 32px; text-align: center; color: var(--ink-soft); font-size: 14px; background: var(--paper); }
+.phone-empty p { margin: 0; max-width: 22ch; }
+.phone-empty-dot { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); animation: phone-pulse 1.6s ease-in-out infinite; }
+@keyframes phone-pulse { 0%, 100% { opacity: 0.35; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
+.phone-caption { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 342px; }
+.phone-actions { display: flex; gap: 6px; }
+.phone-actions .lang-toggle { cursor: pointer; }
+@media (max-width: 1040px) { .detail-layout { grid-template-columns: 1fr; } .phone-aside { display: none; } }
