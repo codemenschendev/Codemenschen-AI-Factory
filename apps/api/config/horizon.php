@@ -207,7 +207,10 @@ return [
             'maxJobs' => 0,
             'memory' => 128,
             'tries' => 1,
-            'timeout' => 60,
+            // AI jobs (prototype build, ad render) run for minutes. This must stay below the
+            // connection's retry_after (REDIS_QUEUE_RETRY_AFTER) or a slow job is picked up twice
+            // and dies with MaxAttemptsExceeded outside the job's own try/catch.
+            'timeout' => 600,
             'nice' => 0,
         ],
     ],

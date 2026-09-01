@@ -177,4 +177,11 @@ class RenderProjectAd implements ShouldQueue
 
         return $w === $h ? '1024x1024' : ($w > $h ? '1536x1024' : '1024x1536');
     }
+    /** A worker timeout throws MaxAttemptsExceeded OUTSIDE handle(), so record it here or the row
+        stays stuck in its in-progress state forever. */
+    public function failed(\Throwable $e): void
+    {
+        \App\Models\ProjectAd::whereKey($this->adId)->where('status', '!=', 'ready')
+            ->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
+    }
 }

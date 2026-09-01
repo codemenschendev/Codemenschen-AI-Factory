@@ -37,4 +37,11 @@ class BuildPrototype implements ShouldQueue
             $proto->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
         }
     }
+    /** A worker timeout throws MaxAttemptsExceeded OUTSIDE handle(), so record it here or the row
+        stays stuck in its in-progress state forever. */
+    public function failed(\Throwable $e): void
+    {
+        \App\Models\Prototype::whereKey($this->prototypeId)->where('status', '!=', 'ready')
+            ->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
+    }
 }
