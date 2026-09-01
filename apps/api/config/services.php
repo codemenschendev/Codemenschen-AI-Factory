@@ -67,6 +67,27 @@ return [
         'chat_backend_model' => env('AI_CHAT_BACKEND_MODEL', ''),
     ],
 
+    // Ad platforms. Campaigns run on Codemenschen's OWN ad accounts (one token set, no per-client
+    // OAuth), but the CUSTOMER pays: the monthly ad budget they bought is the hard spend cap set
+    // on the platform campaign. Empty token => that platform is simply unavailable, not an error.
+    'ads' => [
+        'meta' => [
+            'token' => env('META_ADS_TOKEN'),            // long-lived System User token
+            'ad_account_id' => env('META_ADS_ACCOUNT_ID'), // act_1234567890
+            'page_id' => env('META_ADS_PAGE_ID'),
+            'api_version' => env('META_ADS_API_VERSION', 'v21.0'),
+        ],
+        'google' => [
+            'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'), // Google approves this by hand
+            'customer_id' => env('GOOGLE_ADS_CUSTOMER_ID'),         // 10 digits, no dashes
+            'login_customer_id' => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
+            'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
+            'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
+            'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
+            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v18'),
+        ],
+    ],
+
     'media' => [
         // Marketing clips rendered by ops/make-video.py. Served only to signed-in customers.
         'videos_path' => env('MEDIA_VIDEOS_PATH', '/media/videos'),   // container path; host side is /var/appwerk-media/videos

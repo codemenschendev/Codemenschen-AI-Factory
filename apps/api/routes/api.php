@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\InternalRunController;
+use App\Http\Controllers\AdsController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PreviewController;
@@ -41,6 +42,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/ads', [MediaController::class, 'index']);
     Route::post('/me/projects/{project}/ads', [MediaController::class, 'store'])->middleware('throttle:10,60');
     Route::get('/me/ads/{ad}/download', [MediaController::class, 'download']);
+
+    // Running campaigns on Codemenschen's ad accounts. publish creates them PAUSED; activate is
+    // the one action that starts spend and is only ever called by a person.
+    Route::get('/me/campaigns', [AdsController::class, 'index']);
+    Route::post('/me/campaigns/{campaign}/publish', [AdsController::class, 'publish']);
+    Route::post('/me/campaigns/{campaign}/activate', [AdsController::class, 'activate']);
+    Route::post('/me/campaigns/{campaign}/pause', [AdsController::class, 'pause']);
 });
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.
