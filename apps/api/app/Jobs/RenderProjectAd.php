@@ -125,16 +125,27 @@ class RenderProjectAd implements ShouldQueue
     private function context(ProjectAd $ad, SiteBrief $sites): array
     {
         $project = $ad->project;
-        $context = array_filter([
-            'product' => (string) $project->name,
-            'platform' => (string) $project->stack,
-        ]);
+        $site = $sites->forPrompt((string) $ad->prompt);
 
-        foreach ($sites->forPrompt((string) $ad->prompt) ?? [] as $k => $v) {
-            $context['site_'.$k] = $v;
+        // When the brief names a page, THAT is what the ad is for. The project is only where the
+        // ad is filed: asking for an ad for codemenschen.at while sitting in a hair salon project
+        // used to produce an ad for the hair salon, because the project came first in the list.
+        if ($site) {
+            $context = ['subject' => $site['url']];
+            foreach (['title', 'description', 'headings', 'brand_color'] as $k) {
+                if (isset($site[$k])) {
+                    $context['subject_'.$k] = $site[$k];
+                }
+            }
+            $context['filed_under_project'] = mb_substr((string) $project->name, 0, 120);
+
+            return $context;
         }
 
-        return $context;
+        return array_filter([
+            'subject' => (string) $project->name,
+            'subject_platform' => (string) $project->stack,
+        ]);
     }
 
     /** The sidecar only accepts sizes OpenAI supports, so map the canvas onto the nearest one. */

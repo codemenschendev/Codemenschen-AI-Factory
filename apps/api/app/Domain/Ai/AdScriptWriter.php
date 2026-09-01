@@ -63,10 +63,11 @@ class AdScriptWriter
             foreach ($context as $k => $v) {
                 $lines[] = ucfirst(str_replace('_', ' ', $k)).': '.$v;
             }
-            $prompt = "What is being advertised:\n".implode("\n", $lines)."\n\nBrief: ".$prompt
-                ."\n\nWrite about THIS product. Use its own words and its own subject matter; do not"
-                .' fall back on generic technology phrasing, and let the picture show what this'
-                .' product is actually for.';
+            $prompt = "What this ad is for:\n".implode("\n", $lines)."\n\nBrief: ".$prompt
+                ."\n\nWrite about the SUBJECT above and nothing else. `Filed under project` is only"
+                .' where the ad is stored; never write about that instead. Use the subject\'s own'
+                .' words and its own field of work, do not fall back on generic technology'
+                .' phrasing, and let the picture show what the subject is actually for.';
         }
 
         // Two attempts: the agent occasionally answers conversationally on the first go, and a
@@ -105,7 +106,7 @@ class AdScriptWriter
                 ['role' => 'system', 'content' => $system],
                 [
                     'role' => 'user',
-                    'content' => "Language: {$language}\n\nBrief: {$brief}\n\n"
+                    'content' => "Write every title and text in this language: {$language}.\n\n{$brief}\n\n"
                         .'Answer with the JSON object described above, nothing else.',
                 ],
             ],
