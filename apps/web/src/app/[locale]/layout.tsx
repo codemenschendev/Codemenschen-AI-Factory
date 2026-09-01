@@ -37,6 +37,7 @@ export default async function LocaleLayout({
             <Link href={`/${locale}#apps`}>{dict.nav.ideas}</Link>
             <Link href={`/${locale}/create`}>{dict.nav.create}</Link>
             <Link href={`/${locale}#how`}>{dict.nav.how}</Link>
+            <Link href={`/${locale}/prototype`}>{dict.proto.navLink}</Link>
           </div>
           <AccountLink locale={locale as Locale} labels={{ account: dict.nav.account, login: dict.nav.login }} />
           <LangSwitch current={locale as Locale} />

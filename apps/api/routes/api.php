@@ -7,10 +7,16 @@ use App\Http\Controllers\AdsController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PreviewController;
+use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\QuoteRefineController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
+
+// Public prompt-to-prototype (lead magnet): no auth. Throttle on top of the per-IP daily cap.
+Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60');
+Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
+Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);
 
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
