@@ -50,9 +50,23 @@ return [
         'artifacts_path' => env('ARTIFACTS_PATH', '/artifacts'),
     ],
 
+    // Image sidecar (manager.codemenschen.at/openclaw-worker/image-service.mjs), running as the
+    // `openclaw` user on the host. The OpenClaw gateway has no images/generations endpoint, so
+    // the sidecar wraps `openclaw infer image generate` as HTTP. Same service the giftcard and
+    // CookCam stacks already use — Codemenschen pays OpenAI for the renders, so `quality` is a
+    // real cost lever: keep it at medium unless someone asks for better.
+    'ai_image' => [
+        'base_url' => env('AI_IMAGE_SERVICE_BASE_URL', 'http://172.17.0.1:18790'),
+        'token' => env('AI_IMAGE_SERVICE_TOKEN'),
+        'timeout' => (int) env('AI_IMAGE_SERVICE_TIMEOUT', 180),
+        'quality' => env('AI_IMAGE_QUALITY', 'medium'),
+        'model' => env('AI_IMAGE_MODEL'),
+    ],
+
     'media' => [
         // Marketing clips rendered by ops/make-video.py. Served only to signed-in customers.
         'videos_path' => env('MEDIA_VIDEOS_PATH', '/media/videos'),   // container path; host side is /var/appwerk-media/videos
+        'uploads_path' => env('MEDIA_UPLOADS_PATH', '/media/uploads'), // images the customer uploads, and render scratch
     ],
 
     'openclaw' => [

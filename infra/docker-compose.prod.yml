@@ -35,9 +35,10 @@ services:
       - "127.0.0.1:8181:8000"
     volumes:
       - artifacts:/artifacts
-      # Marketing clips written by ops/make-video.py on the host. Read-only: the API only
-      # serves them, and nothing inside the container has any business changing them.
+      # Marketing clips. The API only serves them, so read-only here; horizon renders and
+      # therefore mounts the same directory writable.
       - /var/appwerk-media/videos:/media/videos:ro
+      - /var/appwerk-media/uploads:/media/uploads
 
   horizon:
     build:
@@ -49,6 +50,9 @@ services:
     depends_on: [postgres, redis]
     volumes:
       - artifacts:/artifacts
+      # RenderProjectVideo runs here: it writes the finished clip and needs the scratch dir.
+      - /var/appwerk-media/videos:/media/videos
+      - /var/appwerk-media/uploads:/media/uploads
 
   scheduler:
     build:

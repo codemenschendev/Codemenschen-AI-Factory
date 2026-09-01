@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\RenderProjectVideo;
+use App\Models\Project;
 use App\Models\ProjectVideo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +28,8 @@ class MediaController extends Controller
             ->map(fn (ProjectVideo $v) => [
                 'id' => $v->id,
                 'name' => $v->name,
+                'status' => $v->status,
+                'error' => $v->error,
                 'bytes' => (int) $v->bytes,
                 'duration_seconds' => $v->duration_seconds,
                 'created_at' => $v->created_at->toIso8601String(),
@@ -33,6 +37,41 @@ class MediaController extends Controller
             ]);
 
         return response()->json(['videos' => $videos]);
+    }
+
+    /** Prompt in, queued clip out. The render itself happens on the queue (RenderProjectVideo). */
+    public function store(Request $request, Project $project): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+
+        $data = $request->validate([
+            'prompt' => 'required|string|min:10|max:2000',
+            'format' => 'nullable|in:vertical,square,landscape',
+            'language' => 'nullable|in:de,en',
+        ]);
+
+        // One render at a time per project: images are paid for per scene, and a customer
+        // hammering the button would otherwise queue a bill.
+        $busy = $project->videos()->whereIn('status', ['queued', 'rendering'])->exists();
+        abort_if($busy, 409, 'Đang dựng một video cho project này, đợi xong đã.');
+
+        $size = match ($data['format'] ?? 'vertical') {
+            'square' => '1080x1080',
+            'landscape' => '1920x1080',
+            default => '1080x1920',
+        };
+
+        $video = $project->videos()->create([
+            'name' => mb_substr(trim($data['prompt']), 0, 60),
+            'status' => 'queued',
+            'source' => 'ai',
+            'prompt' => $data['prompt'],
+            'spec' => ['size' => $size, 'language' => $data['language'] ?? 'de'],
+        ]);
+
+        RenderProjectVideo::dispatch($video->id);
+
+        return response()->json(['id' => $video->id, 'status' => $video->status], 202);
     }
 
     public function download(Request $request, ProjectVideo $video): BinaryFileResponse

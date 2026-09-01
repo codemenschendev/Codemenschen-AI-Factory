@@ -39,6 +39,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Marketing clips, scoped to the customer's own projects.
     Route::get('/me/videos', [MediaController::class, 'index']);
+    Route::post('/me/projects/{project}/videos', [MediaController::class, 'store'])->middleware('throttle:10,60');
     Route::get('/me/videos/{video}/download', [MediaController::class, 'download']);
 });
 

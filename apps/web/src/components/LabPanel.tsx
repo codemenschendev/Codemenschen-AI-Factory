@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
@@ -8,49 +8,106 @@ import type { Dict, Locale } from "@/lib/i18n";
 interface VideoRow {
   id: number;
   name: string;
+  status: "queued" | "rendering" | "ready" | "failed";
+  error: string | null;
   bytes: number;
   duration_seconds: number | null;
   created_at: string;
   project: { id: string; name: string };
 }
 
+interface ProjectRow {
+  id: string;
+  name: string;
+}
+
 const mb = (n: number) => `${(n / 1e6).toFixed(1)} MB`;
 
 /**
- * Hidden preview of the marketing clips rendered on the server. Not linked from the nav yet.
+ * Hidden preview of the marketing clips. Not linked from the nav yet.
  *
- * A <video src> cannot carry an Authorization header, so a clip is fetched with the bearer
- * token and played from a blob URL. Fine for clips of a few hundred KB; if these ever grow to
- * tens of MB this should become a short-lived signed URL instead of holding the file in memory.
+ * A <video src> cannot carry an Authorization header, so a clip is fetched with the bearer token
+ * and played from a blob URL. Fine at a few hundred KB; tens of MB would call for a short-lived
+ * signed URL instead of holding the file in memory.
  */
 export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // undefined = localStorage not read yet (server render + first paint). Same convention as
   // AccountPanel: never flash the sign-in prompt at a visitor who is already signed in.
   const [token, setToken] = useState<string | null | undefined>(undefined);
   const [videos, setVideos] = useState<VideoRow[] | null>(null);
+  const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [playing, setPlaying] = useState<{ id: number; url: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState("");
+  const [projectId, setProjectId] = useState("");
+  const [format, setFormat] = useState("vertical");
+  const [sending, setSending] = useState(false);
+  const playingRef = useRef<{ id: number; url: string } | null>(null);
+
+  const l = d.lab;
 
   useEffect(() => {
     setToken(localStorage.getItem("aifactory-token"));
   }, []);
 
-  useEffect(() => {
+  const load = useCallback(async () => {
     if (!token) return;
-    api<{ videos: VideoRow[] }>("/me/videos", { token })
-      .then((r) => setVideos(r.videos))
-      .catch(() => {
-        localStorage.removeItem("aifactory-token");
-        setToken(null);
-      });
+    const r = await api<{ videos: VideoRow[] }>("/me/videos", { token });
+    setVideos(r.videos);
+    return r.videos;
   }, [token]);
 
-  // A blob URL stays allocated until it is revoked, so drop the previous one on every switch.
-  useEffect(() => () => {
-    if (playing) URL.revokeObjectURL(playing.url);
-  }, [playing]);
+  useEffect(() => {
+    if (!token) return;
+    load().catch(() => {
+      localStorage.removeItem("aifactory-token");
+      setToken(null);
+    });
+    api<{ projects: ProjectRow[] }>("/me/projects", { token })
+      .then((r) => {
+        setProjects(r.projects);
+        setProjectId((cur) => cur || r.projects[0]?.id || "");
+      })
+      .catch(() => setProjects([]));
+  }, [token, load]);
 
-  const l = d.lab;
+  // While something is rendering, keep asking: the queue has no way to push to this page.
+  useEffect(() => {
+    if (!videos?.some((v) => v.status === "queued" || v.status === "rendering")) return;
+    const t = setInterval(() => void load().catch(() => {}), 5000);
+    return () => clearInterval(t);
+  }, [videos, load]);
+
+  // A blob URL stays allocated until it is revoked; drop the previous one on every switch.
+  useEffect(() => {
+    playingRef.current = playing;
+  }, [playing]);
+  useEffect(
+    () => () => {
+      if (playingRef.current) URL.revokeObjectURL(playingRef.current.url);
+    },
+    [],
+  );
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!projectId || prompt.trim().length < 10) return;
+    setSending(true);
+    setError(null);
+    try {
+      await api(`/me/projects/${projectId}/videos`, {
+        token: token ?? undefined,
+        method: "POST",
+        body: JSON.stringify({ prompt, format, language: locale }),
+      });
+      setPrompt("");
+      await load();
+    } catch {
+      setError(l.busy);
+    } finally {
+      setSending(false);
+    }
+  }
 
   async function play(v: VideoRow) {
     setError(null);
@@ -79,12 +136,56 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
     );
   }
 
-  if (!videos) return <p className="est-empty">{l.loading}</p>;
-  if (videos.length === 0) return <p className="est-empty">{l.empty}</p>;
+  const label = (v: VideoRow) =>
+    v.status === "ready"
+      ? `${new Date(v.created_at).toLocaleString(locale)} · ${mb(v.bytes)}`
+      : v.status === "failed"
+        ? `${l.failedState}: ${v.error ?? ""}`
+        : v.status === "queued"
+          ? l.queued
+          : l.rendering;
 
   return (
     <div>
       <p className="est-empty">{l.intro}</p>
+
+      <form onSubmit={submit} style={{ margin: "24px 0 32px", display: "grid", gap: 12 }}>
+        <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{l.createTitle}</h2>
+        <label>
+          {l.promptLabel}
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            rows={3}
+            placeholder={l.promptHint}
+            style={{ width: "100%", marginTop: 6 }}
+          />
+        </label>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <label>
+            {l.project}{" "}
+            <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name.slice(0, 40)}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {l.format}{" "}
+            <select value={format} onChange={(e) => setFormat(e.target.value)}>
+              <option value="vertical">{l.vertical}</option>
+              <option value="square">{l.square}</option>
+              <option value="landscape">{l.landscape}</option>
+            </select>
+          </label>
+          <button type="submit" disabled={sending || !projectId || prompt.trim().length < 10}>
+            {l.create}
+          </button>
+        </div>
+      </form>
+
       {playing && (
         <video
           key={playing.id}
@@ -95,33 +196,41 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
         />
       )}
       {error && <p className="est-empty">{error}</p>}
-      <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-        {videos.map((v) => (
-          <li
-            key={v.id}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              gap: 16,
-              padding: "12px 0",
-              borderTop: "1px solid rgba(255,255,255,.12)",
-            }}
-          >
-            <span>
-              {v.name}
-              <br />
-              <small>
-                {v.project.name} · {new Date(v.created_at).toLocaleString(locale)} · {mb(v.bytes)}
-                {v.duration_seconds ? ` · ${v.duration_seconds}s` : ""}
-              </small>
-            </span>
-            <button type="button" onClick={() => play(v)}>
-              {l.play}
-            </button>
-          </li>
-        ))}
-      </ul>
+
+      {!videos ? (
+        <p className="est-empty">{l.loading}</p>
+      ) : videos.length === 0 ? (
+        <p className="est-empty">{l.empty}</p>
+      ) : (
+        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+          {videos.map((v) => (
+            <li
+              key={v.id}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 16,
+                padding: "12px 0",
+                borderTop: "1px solid rgba(255,255,255,.12)",
+              }}
+            >
+              <span>
+                {v.name}
+                <br />
+                <small>
+                  {v.project.name.slice(0, 30)} · {label(v)}
+                </small>
+              </span>
+              {v.status === "ready" && (
+                <button type="button" onClick={() => play(v)}>
+                  {l.play}
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

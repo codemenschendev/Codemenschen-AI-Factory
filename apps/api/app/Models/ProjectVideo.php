@@ -9,6 +9,8 @@ class ProjectVideo extends Model
 {
     protected $guarded = [];
 
+    protected $casts = ['spec' => 'array'];
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
