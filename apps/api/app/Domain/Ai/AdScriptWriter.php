@@ -49,10 +49,25 @@ class AdScriptWriter
         - send seconds and zoom anyway; they are ignored for this kind.
         TXT;
 
-    /** @return array<int,array<string,mixed>> */
-    public function write(string $prompt, string $language = 'de', string $kind = 'video'): array
+    /**
+     * @param  array<string,string>  $context  What is actually being advertised: the project it
+     *                                         belongs to, and the real page if the brief named one.
+     * @return array<int,array<string,mixed>>
+     */
+    public function write(string $prompt, string $language = 'de', string $kind = 'video', array $context = []): array
     {
         $system = ($kind === 'image' ? self::STILL : self::VIDEO)."\n\n".self::COMMON;
+
+        if ($context !== []) {
+            $lines = [];
+            foreach ($context as $k => $v) {
+                $lines[] = ucfirst(str_replace('_', ' ', $k)).': '.$v;
+            }
+            $prompt = "What is being advertised:\n".implode("\n", $lines)."\n\nBrief: ".$prompt
+                ."\n\nWrite about THIS product. Use its own words and its own subject matter; do not"
+                .' fall back on generic technology phrasing, and let the picture show what this'
+                .' product is actually for.';
+        }
 
         // Two attempts: the agent occasionally answers conversationally on the first go, and a
         // blunter reminder is cheaper than failing the whole render.

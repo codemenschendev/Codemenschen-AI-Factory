@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Ai\ImageService;
+use App\Domain\Ai\SiteBrief;
 use App\Domain\Ai\AdScriptWriter;
 use App\Models\ProjectAd;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,7 +29,7 @@ class RenderProjectAd implements ShouldQueue
 
     public function __construct(public int $adId) {}
 
-    public function handle(AdScriptWriter $writer, ImageService $images): void
+    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites): void
     {
         $ad = ProjectAd::find($this->adId);
         if (! $ad || $ad->status === 'ready') {
@@ -38,14 +39,14 @@ class RenderProjectAd implements ShouldQueue
         $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($ad, $writer, $images);
+            $this->render($ad, $writer, $images, $sites);
         } catch (Throwable $e) {
             Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
             $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
         }
     }
 
-    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images): void
+    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites): void
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
@@ -58,7 +59,12 @@ class RenderProjectAd implements ShouldQueue
 
         // AI source: the prompt has not been turned into scenes yet.
         if ($ad->source === 'ai' && ! $scenes) {
-            $scenes = $writer->write((string) $ad->prompt, (string) ($spec['language'] ?? 'de'), $ad->kind);
+            $scenes = $writer->write(
+                (string) $ad->prompt,
+                (string) ($spec['language'] ?? 'de'),
+                $ad->kind,
+                $this->context($ad, $sites),
+            );
         }
 
         // An image ad is one picture. Anything the model sent beyond the first scene would be
@@ -107,6 +113,28 @@ class RenderProjectAd implements ShouldQueue
             'bytes' => filesize($dest) ?: 0,
             'status' => 'ready',
         ]);
+    }
+
+    /**
+     * What the ad is actually about. Without this the copywriter only sees the customer's one
+     * sentence: ask it for "an ad for codemenschen.at" and it writes something that would fit any
+     * software company, because nothing told it what that is.
+     *
+     * @return array<string,string>
+     */
+    private function context(ProjectAd $ad, SiteBrief $sites): array
+    {
+        $project = $ad->project;
+        $context = array_filter([
+            'product' => (string) $project->name,
+            'platform' => (string) $project->stack,
+        ]);
+
+        foreach ($sites->forPrompt((string) $ad->prompt) ?? [] as $k => $v) {
+            $context['site_'.$k] = $v;
+        }
+
+        return $context;
     }
 
     /** The sidecar only accepts sizes OpenAI supports, so map the canvas onto the nearest one. */
