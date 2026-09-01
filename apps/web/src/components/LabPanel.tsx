@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
+import { CampaignsPanel } from "@/components/CampaignsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface AdRow {
@@ -261,6 +262,8 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
           ))}
         </ul>
       )}
+
+      <CampaignsPanel locale={locale} d={d} token={token} />
     </div>
   );
 }
