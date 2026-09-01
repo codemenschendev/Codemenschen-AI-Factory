@@ -37,9 +37,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/campaigns/{campaignId}/decide', [MeController::class, 'decideCampaign']);
     Route::get('/me/projects/{project}/builds/{buildId}/download', [MeController::class, 'downloadBuild']);
 
-    // Marketing clips. Hidden preview page for now, so no per-project ownership check yet.
+    // Marketing clips, scoped to the customer's own projects.
     Route::get('/me/videos', [MediaController::class, 'index']);
-    Route::get('/me/videos/{id}/download', [MediaController::class, 'download']);
+    Route::get('/me/videos/{video}/download', [MediaController::class, 'download']);
 });
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.

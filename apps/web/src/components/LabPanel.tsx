@@ -6,10 +6,12 @@ import { API_BASE, api } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface VideoRow {
-  id: string;
+  id: number;
   name: string;
   bytes: number;
+  duration_seconds: number | null;
   created_at: string;
+  project: { id: string; name: string };
 }
 
 const mb = (n: number) => `${(n / 1e6).toFixed(1)} MB`;
@@ -26,7 +28,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // AccountPanel: never flash the sign-in prompt at a visitor who is already signed in.
   const [token, setToken] = useState<string | null | undefined>(undefined);
   const [videos, setVideos] = useState<VideoRow[] | null>(null);
-  const [playing, setPlaying] = useState<{ id: string; url: string } | null>(null);
+  const [playing, setPlaying] = useState<{ id: number; url: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -53,7 +55,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   async function play(v: VideoRow) {
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/me/videos/${encodeURIComponent(v.id)}/download`, {
+      const res = await fetch(`${API_BASE}/api/me/videos/${v.id}/download`, {
         headers: { authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(String(res.status));
@@ -110,7 +112,8 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               {v.name}
               <br />
               <small>
-                {new Date(v.created_at).toLocaleString(locale)} · {mb(v.bytes)}
+                {v.project.name} · {new Date(v.created_at).toLocaleString(locale)} · {mb(v.bytes)}
+                {v.duration_seconds ? ` · ${v.duration_seconds}s` : ""}
               </small>
             </span>
             <button type="button" onClick={() => play(v)}>

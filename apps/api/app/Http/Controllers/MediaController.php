@@ -2,61 +2,48 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ProjectVideo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * Marketing clips rendered by ops/make-video.py and dropped into services.media.videos_path.
+ * Marketing clips, scoped to the customer's own projects.
  *
- * There is no videos table yet: the directory listing IS the index, which keeps the first
- * version free of a migration. Every clip is visible to every signed-in customer, on purpose
- * for now — the page behind this is a hidden preview that will be made public later.
+ * Files are rendered by ops/make-video.py and registered with `php artisan video:register`;
+ * project_videos is what ties a file to a project. Ownership is checked the same way as
+ * MeController::downloadBuild — the customer id on the project, not on the video.
  */
 class MediaController extends Controller
 {
-    /** Only these characters may appear in an id, so a name can never climb out of the base dir. */
-    private const ID = '/^[A-Za-z0-9][A-Za-z0-9._-]{0,120}$/';
-
-    private function baseDir(): string
-    {
-        return rtrim((string) config('services.media.videos_path'), '/');
-    }
-
     public function index(Request $request): JsonResponse
     {
-        $base = $this->baseDir();
-        $rows = [];
+        $videos = ProjectVideo::query()
+            ->whereIn('project_id', $request->user()->projects()->select('id'))
+            ->with('project:id,name')
+            ->latest()
+            ->get()
+            ->map(fn (ProjectVideo $v) => [
+                'id' => $v->id,
+                'name' => $v->name,
+                'bytes' => (int) $v->bytes,
+                'duration_seconds' => $v->duration_seconds,
+                'created_at' => $v->created_at->toIso8601String(),
+                'project' => ['id' => $v->project->id, 'name' => $v->project->name],
+            ]);
 
-        foreach (glob($base.'/*.mp4') ?: [] as $path) {
-            if (! is_file($path)) {
-                continue;
-            }
-            $rows[] = [
-                'id' => pathinfo($path, PATHINFO_FILENAME),
-                'name' => basename($path),
-                'bytes' => filesize($path) ?: 0,
-                'created_at' => date('c', filemtime($path) ?: time()),
-            ];
-        }
-
-        usort($rows, fn ($a, $b) => strcmp($b['created_at'], $a['created_at']));
-
-        return response()->json(['videos' => $rows]);
+        return response()->json(['videos' => $videos]);
     }
 
-    public function download(Request $request, string $id): BinaryFileResponse
+    public function download(Request $request, ProjectVideo $video): BinaryFileResponse
     {
-        abort_unless(preg_match(self::ID, $id) === 1, 404);
+        abort_unless($video->project->customer_id === $request->user()->id, 404);
 
-        $base = $this->baseDir();
-        $path = $base.'/'.$id.'.mp4';
-
-        // Resolve before trusting: a symlink inside the directory could still point elsewhere.
-        $real = realpath($path);
-        $realBase = realpath($base);
-        abort_unless($real && $realBase && str_starts_with($real, $realBase.'/'), 404);
-        abort_unless(is_file($real), 404);
+        // Resolve before trusting: `path` comes from the register command, and a symlink placed
+        // in the media directory could otherwise point anywhere on the box.
+        $real = realpath($video->absolutePath());
+        $base = realpath(rtrim((string) config('services.media.videos_path'), '/'));
+        abort_unless($real && $base && str_starts_with($real, $base.'/') && is_file($real), 404);
 
         return response()->file($real, ['Content-Type' => 'video/mp4']);
     }
