@@ -68,7 +68,7 @@ class RenderProjectAd implements ShouldQueue
         }
 
         foreach ($scenes as $i => &$scene) {
-            $prompt = trim((string) ($scene['image_prompt'] ?? ''));
+            $prompt = trim((string) ($scene['picture'] ?? $scene['image_prompt'] ?? ''));
             // Closing scenes carry no image on purpose: make-ad.py paints them on the
             // background colour, which also saves one paid render per clip.
             if ($prompt === '' || isset($scene['image'])) {

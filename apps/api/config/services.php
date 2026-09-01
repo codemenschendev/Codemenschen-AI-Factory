@@ -61,6 +61,10 @@ return [
         'timeout' => (int) env('AI_IMAGE_SERVICE_TIMEOUT', 180),
         'quality' => env('AI_IMAGE_QUALITY', 'medium'),
         'model' => env('AI_IMAGE_MODEL'),
+        // `chat_model` is the agent target; `chat_backend_model` pins the LLM behind it via the
+        // x-openclaw-model header. Leave the second empty to use whatever the agent is set to.
+        'chat_model' => env('AI_CHAT_TARGET', 'openclaw/main'),
+        'chat_backend_model' => env('AI_CHAT_BACKEND_MODEL', ''),
     ],
 
     'media' => [
