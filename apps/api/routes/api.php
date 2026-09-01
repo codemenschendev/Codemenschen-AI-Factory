@@ -3,6 +3,7 @@
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\InternalRunController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\QuoteController;
@@ -35,6 +36,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/marketing/generate', [MeController::class, 'generateMarketing']);
     Route::post('/me/projects/{project}/campaigns/{campaignId}/decide', [MeController::class, 'decideCampaign']);
     Route::get('/me/projects/{project}/builds/{buildId}/download', [MeController::class, 'downloadBuild']);
+
+    // Marketing clips. Hidden preview page for now, so no per-project ownership check yet.
+    Route::get('/me/videos', [MediaController::class, 'index']);
+    Route::get('/me/videos/{id}/download', [MediaController::class, 'download']);
 });
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.

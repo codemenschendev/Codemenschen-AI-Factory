@@ -35,6 +35,9 @@ services:
       - "127.0.0.1:8181:8000"
     volumes:
       - artifacts:/artifacts
+      # Marketing clips written by ops/make-video.py on the host. Read-only: the API only
+      # serves them, and nothing inside the container has any business changing them.
+      - /var/appwerk-media/videos:/media/videos:ro
 
   horizon:
     build:

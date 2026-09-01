@@ -275,6 +275,16 @@ export const de = {
       image_prompt: "Bild-Briefing",
     } as Record<string, string>,
   },
+  lab: {
+    title: "Video-Vorschau",
+    intro: "Clips, die auf dem Server gerendert wurden. Noch nicht öffentlich.",
+    signIn: "Melde dich an, um die Clips zu sehen.",
+    goSignIn: "Zur Anmeldung",
+    empty: "Noch keine Clips vorhanden.",
+    loading: "Lädt…",
+    failed: "Clip konnte nicht geladen werden.",
+    play: "Abspielen",
+  },
   account: {
     title: "Deine Projekte",
     emailPrompt: "Gib die E-Mail an, mit der du bestellt hast — wir schicken dir einen Anmelde-Link.",

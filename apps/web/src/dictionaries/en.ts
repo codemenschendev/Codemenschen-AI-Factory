@@ -275,6 +275,16 @@ export const en = {
       image_prompt: "Image brief",
     } as Record<string, string>,
   },
+  lab: {
+    title: "Video preview",
+    intro: "Clips rendered on the server. Not public yet.",
+    signIn: "Sign in to see the clips.",
+    goSignIn: "Go to sign-in",
+    empty: "No clips yet.",
+    loading: "Loading…",
+    failed: "Could not load the clip.",
+    play: "Play",
+  },
   account: {
     title: "Your projects",
     emailPrompt: "Enter the e-mail you ordered with — we'll send you a sign-in link.",

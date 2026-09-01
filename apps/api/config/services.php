@@ -50,6 +50,11 @@ return [
         'artifacts_path' => env('ARTIFACTS_PATH', '/artifacts'),
     ],
 
+    'media' => [
+        // Marketing clips rendered by ops/make-video.py. Served only to signed-in customers.
+        'videos_path' => env('MEDIA_VIDEOS_PATH', '/media/videos'),   // container path; host side is /var/appwerk-media/videos
+    ],
+
     'openclaw' => [
         'hook_url' => env('OPENCLAW_HOOK_URL'),
         'hook_token' => env('OPENCLAW_HOOK_TOKEN'),
