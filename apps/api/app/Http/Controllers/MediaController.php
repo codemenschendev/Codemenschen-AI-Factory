@@ -51,6 +51,9 @@ class MediaController extends Controller
             'kind' => 'nullable|in:video,image',
             'format' => 'nullable|in:vertical,square,landscape',
             'language' => 'nullable|in:de,en',
+            // background: auto = screenshot the page if the brief names one, else an AI photo;
+            // site = insist on the screenshot; photo = always an AI photo, never the screenshot.
+            'background' => 'nullable|in:auto,site,photo',
         ]);
 
         // One render at a time per project: pictures are paid for per scene, and a customer
@@ -70,7 +73,11 @@ class MediaController extends Controller
             'status' => 'queued',
             'source' => 'ai',
             'prompt' => $data['prompt'],
-            'spec' => ['size' => $size, 'language' => $data['language'] ?? 'de'],
+            'spec' => [
+                'size' => $size,
+                'language' => $data['language'] ?? 'de',
+                'background' => $data['background'] ?? 'auto',
+            ],
         ]);
 
         RenderProjectAd::dispatch($ad->id);

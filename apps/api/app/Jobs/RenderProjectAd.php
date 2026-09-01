@@ -58,16 +58,20 @@ class RenderProjectAd implements ShouldQueue
         $size = (string) ($spec['size'] ?? '1080x1920');
         $scenes = $spec['scenes'] ?? [];
 
-        // Fetch the named page once; both the copy and the screenshot below build on it.
-        $site = $sites->forPrompt((string) $ad->prompt);
+        // Fetch the named page once; both the copy and the screenshot below build on it. The
+        // customer's background choice decides whether the screenshot is used: 'photo' skips it.
+        $wantShot = ($spec['background'] ?? 'auto') !== 'photo';
+        $site = $wantShot ? $sites->forPrompt((string) $ad->prompt) : null;
 
-        // AI source: the prompt has not been turned into scenes yet.
+        // AI source: the prompt has not been turned into scenes yet. Copy is grounded on the
+        // page even when its screenshot is not wanted, so fetch it for context if we skipped it.
         if ($ad->source === 'ai' && ! $scenes) {
+            $forCopy = $site ?? $sites->forPrompt((string) $ad->prompt);
             $scenes = $writer->write(
                 (string) $ad->prompt,
                 (string) ($spec['language'] ?? 'de'),
                 $ad->kind,
-                $this->context($ad, $site),
+                $this->context($ad, $forCopy),
             );
         }
 

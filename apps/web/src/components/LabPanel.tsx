@@ -43,6 +43,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [projectId, setProjectId] = useState("");
   const [format, setFormat] = useState("vertical");
   const [kind, setKind] = useState<"video" | "image">("video");
+  const [background, setBackground] = useState<"auto" | "site" | "photo">("auto");
   const [sending, setSending] = useState(false);
   const playingRef = useRef<{ id: number; url: string; kind: string } | null>(null);
 
@@ -100,7 +101,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
       await api(`/me/projects/${projectId}/ads`, {
         token: token ?? undefined,
         method: "POST",
-        body: JSON.stringify({ prompt, kind, format, language: locale }),
+        body: JSON.stringify({ prompt, kind, format, background, language: locale }),
       });
       setPrompt("");
       await load();
@@ -179,6 +180,17 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
             <select value={kind} onChange={(e) => setKind(e.target.value as "video" | "image")}>
               <option value="video">{l.kindVideo}</option>
               <option value="image">{l.kindImage}</option>
+            </select>
+          </label>
+          <label>
+            {l.background}{" "}
+            <select
+              value={background}
+              onChange={(e) => setBackground(e.target.value as "auto" | "site" | "photo")}
+            >
+              <option value="auto">{l.bgAuto}</option>
+              <option value="site">{l.bgSite}</option>
+              <option value="photo">{l.bgPhoto}</option>
             </select>
           </label>
           <label>
