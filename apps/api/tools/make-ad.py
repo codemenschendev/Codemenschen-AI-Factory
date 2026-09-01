@@ -40,6 +40,10 @@ def _font(*names):
             p = os.path.join(root, n)
             if os.path.exists(p):
                 return p
+    # macOS (local runs): no DejaVu, but Arial Unicode covers Vietnamese and German too.
+    for mac in ("/Library/Fonts/Arial Unicode.ttf", "/System/Library/Fonts/Supplemental/Arial Unicode.ttf"):
+        if os.path.exists(mac):
+            return mac
     sys.exit("LỖI: không tìm thấy font %s. Cài gói font DejaVu." % (names,))
 
 
@@ -96,21 +100,49 @@ def text_layer(scene, W, H, work, idx):
     return out
 
 
-def render_still(scene, W, H, bg, base, work, out):
-    """One scene as a PNG: the same background crop and the same text layer the video uses."""
-    overlay = text_layer(scene, W, H, work, 0)
+def inset_frame(scene, W, H, bg, base, work, idx):
+    """A screenshot framed on the background colour: the shape of a product ad, not a photo ad.
+    The picture keeps its aspect ratio inside ~86% of the width, gets a soft shadow, and sits in
+    the upper part so the text layer's bottom scrim never covers it."""
+    src = scene["image"] if os.path.isabs(scene["image"]) else os.path.join(base, scene["image"])
+    if not os.path.exists(src):
+        sys.exit("LỖI: không thấy ảnh %s" % src)
+    out = os.path.join(work, "inset%03d.png" % idx)
+    iw = int(W * 0.86)
+    ih = int(H * 0.52)
+    top = int(H * 0.08)
+    run(["convert", "-size", "%dx%d" % (W, H), "xc:%s" % bg,
+         "(", src, "-resize", "%dx%d" % (iw, ih),
+              "-bordercolor", "white", "-border", "2",
+              "(", "+clone", "-background", "black", "-shadow", "55x14+0+10", ")",
+              "+swap", "-background", "none", "-layers", "merge", "+repage", ")",
+         "-gravity", "North", "-geometry", "+0+%d" % top, "-composite", out])
+    return out
+
+
+def scene_canvas(scene, W, H, bg, base, work, idx):
+    """The finished background of one scene, before the text layer goes on."""
+    if scene.get("inset") and scene.get("image"):
+        return inset_frame(scene, W, H, bg, base, work, idx)
     img = scene.get("image")
-    cmd = ["convert"]
+    out = os.path.join(work, "canvas%03d.png" % idx)
     if img:
         src = img if os.path.isabs(img) else os.path.join(base, img)
         if not os.path.exists(src):
             sys.exit("LỖI: không thấy ảnh %s" % src)
         # ^ then -extent: fill the canvas and crop the overflow, never squash the picture
-        cmd += [src, "-resize", "%dx%d^" % (W, H), "-gravity", "center", "-extent", "%dx%d" % (W, H)]
+        run(["convert", src, "-resize", "%dx%d^" % (W, H),
+             "-gravity", "center", "-extent", "%dx%d" % (W, H), out])
     else:
-        cmd += ["-size", "%dx%d" % (W, H), "xc:%s" % bg]
-    cmd += [overlay, "-composite", out]
-    run(cmd)
+        run(["convert", "-size", "%dx%d" % (W, H), "xc:%s" % bg, out])
+    return out
+
+
+def render_still(scene, W, H, bg, base, work, out):
+    """One scene as a PNG: the same canvas rules and the same text layer the video uses."""
+    canvas = scene_canvas(scene, W, H, bg, base, work, 0)
+    overlay = text_layer(scene, W, H, work, 0)
+    run(["convert", canvas, overlay, "-composite", out])
 
 
 def scene_clip(scene, i, W, H, fps, bg, base, work):
@@ -120,7 +152,12 @@ def scene_clip(scene, i, W, H, fps, bg, base, work):
     out = os.path.join(work, "clip%03d.mp4" % i)
     img = scene.get("image")
 
-    if img:
+    if scene.get("inset") and img:
+        # A framed screenshot does not zoom: the frame edges would swim. Static, with fades.
+        canvas = inset_frame(scene, W, H, bg, base, work, i)
+        vf = "null"
+        inputs = ["-loop", "1", "-t", "%.3f" % dur, "-i", canvas]
+    elif img:
         src = img if os.path.isabs(img) else os.path.join(base, img)
         if not os.path.exists(src):
             sys.exit("LỖI: không thấy ảnh %s (cảnh %d)" % (src, i + 1))
@@ -165,7 +202,9 @@ def main(argv):
     W, H = int(m.group(1)), int(m.group(2))
     W, H = W - W % 2, H - H % 2                      # libx264 needs even dimensions
     fps = int(spec.get("fps") or 30)
-    bg = spec.get("bg") or "#0b1220"
+    bg = str(spec.get("bg") or "#0b1220")
+    if not re.match(r"^#[0-9a-fA-F]{3,8}$", bg):
+        bg = "#0b1220"     # bg lands inside ffmpeg/IM arguments; anything but a hex colour is dropped
     scenes = spec.get("scenes") or []
     if not scenes:
         sys.exit('LỖI: "scenes" trống')

@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Ai\ImageService;
+use App\Domain\Ai\ScreenshotService;
 use App\Domain\Ai\SiteBrief;
 use App\Domain\Ai\AdScriptWriter;
 use App\Models\ProjectAd;
@@ -29,7 +30,7 @@ class RenderProjectAd implements ShouldQueue
 
     public function __construct(public int $adId) {}
 
-    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites): void
+    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots): void
     {
         $ad = ProjectAd::find($this->adId);
         if (! $ad || $ad->status === 'ready') {
@@ -39,14 +40,14 @@ class RenderProjectAd implements ShouldQueue
         $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($ad, $writer, $images, $sites);
+            $this->render($ad, $writer, $images, $sites, $shots);
         } catch (Throwable $e) {
             Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
             $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
         }
     }
 
-    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites): void
+    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots): void
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
@@ -57,13 +58,16 @@ class RenderProjectAd implements ShouldQueue
         $size = (string) ($spec['size'] ?? '1080x1920');
         $scenes = $spec['scenes'] ?? [];
 
+        // Fetch the named page once; both the copy and the screenshot below build on it.
+        $site = $sites->forPrompt((string) $ad->prompt);
+
         // AI source: the prompt has not been turned into scenes yet.
         if ($ad->source === 'ai' && ! $scenes) {
             $scenes = $writer->write(
                 (string) $ad->prompt,
                 (string) ($spec['language'] ?? 'de'),
                 $ad->kind,
-                $this->context($ad, $sites),
+                $this->context($ad, $site),
             );
         }
 
@@ -71,6 +75,20 @@ class RenderProjectAd implements ShouldQueue
         // paid for and then thrown away by the renderer.
         if ($ad->kind === 'image') {
             $scenes = array_slice($scenes, 0, 1);
+        }
+
+        // If the brief named a real page, a screenshot of it becomes the first scene, framed on
+        // the brand colour. That is a truer web ad than a generated photo, and it means one fewer
+        // paid image. Best effort: any failure just leaves the AI picture in place.
+        if ($site && $scenes) {
+            $shot = $work.'/site.png';
+            if ($shots->capture($site['url'], $shot)) {
+                $scenes[0]['image'] = 'site.png';
+                $scenes[0]['inset'] = true;
+                if (! empty($site['brand_color'])) {
+                    $spec['bg'] = $site['brand_color'];
+                }
+            }
         }
 
         foreach ($scenes as $i => &$scene) {
@@ -122,10 +140,10 @@ class RenderProjectAd implements ShouldQueue
      *
      * @return array<string,string>
      */
-    private function context(ProjectAd $ad, SiteBrief $sites): array
+    /** @param  array<string,string>|null  $site */
+    private function context(ProjectAd $ad, ?array $site): array
     {
         $project = $ad->project;
-        $site = $sites->forPrompt((string) $ad->prompt);
 
         // When the brief names a page, THAT is what the ad is for. The project is only where the
         // ad is filed: asking for an ad for codemenschen.at while sitting in a hair salon project
