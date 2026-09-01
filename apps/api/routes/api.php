@@ -37,10 +37,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/campaigns/{campaignId}/decide', [MeController::class, 'decideCampaign']);
     Route::get('/me/projects/{project}/builds/{buildId}/download', [MeController::class, 'downloadBuild']);
 
-    // Marketing clips, scoped to the customer's own projects.
-    Route::get('/me/videos', [MediaController::class, 'index']);
-    Route::post('/me/projects/{project}/videos', [MediaController::class, 'store'])->middleware('throttle:10,60');
-    Route::get('/me/videos/{video}/download', [MediaController::class, 'download']);
+    // Ad creatives (video or image), scoped to the customer's own projects.
+    Route::get('/me/ads', [MediaController::class, 'index']);
+    Route::post('/me/projects/{project}/ads', [MediaController::class, 'store'])->middleware('throttle:10,60');
+    Route::get('/me/ads/{ad}/download', [MediaController::class, 'download']);
 });
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.

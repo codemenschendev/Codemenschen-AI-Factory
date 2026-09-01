@@ -12,25 +12,39 @@ use RuntimeException;
  * the OpenClaw gateway. Reusing that one door means no second token and no direct route from this
  * container to the gateway, which binds loopback on purpose.
  */
-class VideoScriptWriter
+class AdScriptWriter
 {
-    private const SYSTEM = <<<'TXT'
-        You write very short marketing videos. Answer with JSON only, no prose, no code fence.
+    private const COMMON = <<<'TXT'
+        Answer with JSON only, no prose, no code fence.
 
         Shape:
         {"scenes":[{"title":"...","text":"...","seconds":3.5,"zoom":"in","image_prompt":"..."}]}
 
-        Rules:
-        - 3 to 5 scenes. The last one is a closing scene: title only, no text, no image_prompt.
         - title: at most 6 words. text: one sentence, at most 18 words. Same language as the request.
-        - seconds between 2.5 and 4. zoom is "in" or "out", alternating.
-        - image_prompt is English, describes a photo (subject, setting, light, mood). No text or
-          words in the picture, no logos, no user interface, no letters.
+        - image_prompt is English and describes a photo (subject, setting, light, mood). No text or
+          words in the picture, no logos, no user interface, no letters. The words are drawn on top
+          afterwards, so a picture with writing in it comes out unreadable.
         - Plain sentences. No em dashes.
         TXT;
 
+    private const VIDEO = <<<'TXT'
+        You write very short marketing videos.
+
+        - 3 to 5 scenes. The last one closes the film: title only, no text, no image_prompt.
+        - seconds between 2.5 and 4. zoom is "in" or "out", alternating.
+        TXT;
+
+    private const IMAGE = <<<'TXT'
+        You write single-picture ads, the kind that has to work while someone scrolls past.
+
+        - EXACTLY ONE scene, and it must carry an image_prompt.
+        - title is the hook and text is the reason to care. Both are read at a glance, so keep
+          them shorter than you would for a film.
+        - seconds and zoom are ignored for this kind; send them anyway.
+        TXT;
+
     /** @return array<int,array<string,mixed>> */
-    public function write(string $prompt, string $language = 'de'): array
+    public function write(string $prompt, string $language = 'de', string $kind = 'video'): array
     {
         $baseUrl = rtrim((string) config('services.ai_image.base_url'), '/');
         $token = (string) config('services.ai_image.token');
@@ -47,7 +61,7 @@ class VideoScriptWriter
             ->post('/v1/chat/completions', [
                 'model' => config('services.ai_image.chat_model', 'openclaw/main'),
                 'messages' => [
-                    ['role' => 'system', 'content' => self::SYSTEM],
+                    ['role' => 'system', 'content' => ($kind === 'image' ? self::IMAGE : self::VIDEO)."\n\n".self::COMMON],
                     ['role' => 'user', 'content' => "Language: {$language}\n\n{$prompt}"],
                 ],
             ]);

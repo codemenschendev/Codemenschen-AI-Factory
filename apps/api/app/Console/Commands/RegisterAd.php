@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Project;
-use App\Models\ProjectVideo;
+use App\Models\ProjectAd;
 use Illuminate\Console\Command;
 
 /**
@@ -13,14 +13,14 @@ use Illuminate\Console\Command;
  * inside the api container. The file itself is never moved here: the command only records where
  * it already is, and refuses paths that are not inside the media directory.
  */
-class RegisterVideo extends Command
+class RegisterAd extends Command
 {
-    protected $signature = 'video:register
+    protected $signature = 'ad:register
                             {project : Project UUID}
                             {file : File name inside the media directory, e.g. promo-20260901.mp4}
                             {--name= : Label shown in the portal (defaults to the file name)}';
 
-    protected $description = 'Register a rendered marketing clip against a project';
+    protected $description = 'Register a rendered ad file against a project';
 
     public function handle(): int
     {
@@ -42,7 +42,7 @@ class RegisterVideo extends Command
             return self::FAILURE;
         }
 
-        $video = ProjectVideo::updateOrCreate(
+        $video = ProjectAd::updateOrCreate(
             ['path' => $rel],
             [
                 'project_id' => $project->id,

@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
-"""Build an MP4 from images and text, using ffmpeg + ImageMagick. Runs on the manager server.
+"""Build an ad from pictures and text, using ffmpeg + ImageMagick.
 
-    make-video.py <spec.json> <out.mp4>
+    make-ad.py <spec.json> <out.mp4|out.png>
+
+`"kind": "image"` in the spec renders the FIRST scene as a still instead of stitching a video.
+Both kinds go through the same text layer on purpose, so an image ad and a video ad coming out
+of the same prompt look like they belong together.
 
 Spec (paths are relative to the spec file):
 
@@ -92,6 +96,23 @@ def text_layer(scene, W, H, work, idx):
     return out
 
 
+def render_still(scene, W, H, bg, base, work, out):
+    """One scene as a PNG: the same background crop and the same text layer the video uses."""
+    overlay = text_layer(scene, W, H, work, 0)
+    img = scene.get("image")
+    cmd = ["convert"]
+    if img:
+        src = img if os.path.isabs(img) else os.path.join(base, img)
+        if not os.path.exists(src):
+            sys.exit("LỖI: không thấy ảnh %s" % src)
+        # ^ then -extent: fill the canvas and crop the overflow, never squash the picture
+        cmd += [src, "-resize", "%dx%d^" % (W, H), "-gravity", "center", "-extent", "%dx%d" % (W, H)]
+    else:
+        cmd += ["-size", "%dx%d" % (W, H), "xc:%s" % bg]
+    cmd += [overlay, "-composite", out]
+    run(cmd)
+
+
 def scene_clip(scene, i, W, H, fps, bg, base, work):
     dur = float(scene.get("seconds") or 3.5)
     frames = max(1, int(round(dur * fps)))
@@ -149,7 +170,13 @@ def main(argv):
     if not scenes:
         sys.exit('LỖI: "scenes" trống')
 
-    work = tempfile.mkdtemp(prefix="mkvideo-")
+    work = tempfile.mkdtemp(prefix="mkad-")
+
+    if str(spec.get("kind") or "video") == "image":
+        render_still(scenes[0], W, H, bg, base, work, out_path)
+        print("XONG: %s · %dx%d · %.1f KB" % (out_path, W, H, os.path.getsize(out_path) / 1e3))
+        return 0
+
     clips, total = [], 0.0
     for i, sc in enumerate(scenes):
         clip, dur = scene_clip(sc, i, W, H, fps, bg, base, work)

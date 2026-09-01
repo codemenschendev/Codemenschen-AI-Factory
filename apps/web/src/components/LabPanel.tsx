@@ -5,8 +5,9 @@ import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
 
-interface VideoRow {
+interface AdRow {
   id: number;
+  kind: "video" | "image";
   name: string;
   status: "queued" | "rendering" | "ready" | "failed";
   error: string | null;
@@ -34,15 +35,16 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // undefined = localStorage not read yet (server render + first paint). Same convention as
   // AccountPanel: never flash the sign-in prompt at a visitor who is already signed in.
   const [token, setToken] = useState<string | null | undefined>(undefined);
-  const [videos, setVideos] = useState<VideoRow[] | null>(null);
+  const [ads, setAds] = useState<AdRow[] | null>(null);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
-  const [playing, setPlaying] = useState<{ id: number; url: string } | null>(null);
+  const [playing, setPlaying] = useState<{ id: number; url: string; kind: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState("");
   const [projectId, setProjectId] = useState("");
   const [format, setFormat] = useState("vertical");
+  const [kind, setKind] = useState<"video" | "image">("video");
   const [sending, setSending] = useState(false);
-  const playingRef = useRef<{ id: number; url: string } | null>(null);
+  const playingRef = useRef<{ id: number; url: string; kind: string } | null>(null);
 
   const l = d.lab;
 
@@ -52,9 +54,9 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   const load = useCallback(async () => {
     if (!token) return;
-    const r = await api<{ videos: VideoRow[] }>("/me/videos", { token });
-    setVideos(r.videos);
-    return r.videos;
+    const r = await api<{ ads: AdRow[] }>("/me/ads", { token });
+    setAds(r.ads);
+    return r.ads;
   }, [token]);
 
   useEffect(() => {
@@ -73,10 +75,10 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   // While something is rendering, keep asking: the queue has no way to push to this page.
   useEffect(() => {
-    if (!videos?.some((v) => v.status === "queued" || v.status === "rendering")) return;
+    if (!ads?.some((a) => a.status === "queued" || a.status === "rendering")) return;
     const t = setInterval(() => void load().catch(() => {}), 5000);
     return () => clearInterval(t);
-  }, [videos, load]);
+  }, [ads, load]);
 
   // A blob URL stays allocated until it is revoked; drop the previous one on every switch.
   useEffect(() => {
@@ -95,10 +97,10 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
     setSending(true);
     setError(null);
     try {
-      await api(`/me/projects/${projectId}/videos`, {
+      await api(`/me/projects/${projectId}/ads`, {
         token: token ?? undefined,
         method: "POST",
-        body: JSON.stringify({ prompt, format, language: locale }),
+        body: JSON.stringify({ prompt, kind, format, language: locale }),
       });
       setPrompt("");
       await load();
@@ -109,17 +111,17 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
     }
   }
 
-  async function play(v: VideoRow) {
+  async function play(v: AdRow) {
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/api/me/videos/${v.id}/download`, {
+      const res = await fetch(`${API_BASE}/api/me/ads/${v.id}/download`, {
         headers: { authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error(String(res.status));
       const url = URL.createObjectURL(await res.blob());
       setPlaying((prev) => {
         if (prev) URL.revokeObjectURL(prev.url);
-        return { id: v.id, url };
+        return { id: v.id, url, kind: v.kind };
       });
     } catch {
       setError(l.failed);
@@ -136,7 +138,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
     );
   }
 
-  const label = (v: VideoRow) =>
+  const label = (v: AdRow) =>
     v.status === "ready"
       ? `${new Date(v.created_at).toLocaleString(locale)} · ${mb(v.bytes)}`
       : v.status === "failed"
@@ -173,6 +175,13 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
             </select>
           </label>
           <label>
+            {l.kind}{" "}
+            <select value={kind} onChange={(e) => setKind(e.target.value as "video" | "image")}>
+              <option value="video">{l.kindVideo}</option>
+              <option value="image">{l.kindImage}</option>
+            </select>
+          </label>
+          <label>
             {l.format}{" "}
             <select value={format} onChange={(e) => setFormat(e.target.value)}>
               <option value="vertical">{l.vertical}</option>
@@ -186,24 +195,32 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
         </div>
       </form>
 
-      {playing && (
-        <video
-          key={playing.id}
-          src={playing.url}
-          controls
-          autoPlay
-          style={{ width: "100%", maxWidth: 360, borderRadius: 12, marginBottom: 24 }}
-        />
-      )}
+      {playing &&
+        (playing.kind === "image" ? (
+          <img
+            key={playing.id}
+            src={playing.url}
+            alt=""
+            style={{ width: "100%", maxWidth: 360, borderRadius: 12, marginBottom: 24 }}
+          />
+        ) : (
+          <video
+            key={playing.id}
+            src={playing.url}
+            controls
+            autoPlay
+            style={{ width: "100%", maxWidth: 360, borderRadius: 12, marginBottom: 24 }}
+          />
+        ))}
       {error && <p className="est-empty">{error}</p>}
 
-      {!videos ? (
+      {!ads ? (
         <p className="est-empty">{l.loading}</p>
-      ) : videos.length === 0 ? (
+      ) : ads.length === 0 ? (
         <p className="est-empty">{l.empty}</p>
       ) : (
         <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-          {videos.map((v) => (
+          {ads.map((v) => (
             <li
               key={v.id}
               style={{
@@ -219,12 +236,13 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 {v.name}
                 <br />
                 <small>
-                  {v.project.name.slice(0, 30)} · {label(v)}
+                  {v.kind === "image" ? l.kindImage : l.kindVideo} · {v.project.name.slice(0, 30)} ·{" "}
+                  {label(v)}
                 </small>
               </span>
               {v.status === "ready" && (
                 <button type="button" onClick={() => play(v)}>
-                  {l.play}
+                  {v.kind === "image" ? l.open : l.play}
                 </button>
               )}
             </li>

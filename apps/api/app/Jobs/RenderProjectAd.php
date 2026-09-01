@@ -3,8 +3,8 @@
 namespace App\Jobs;
 
 use App\Domain\Ai\ImageService;
-use App\Domain\Ai\VideoScriptWriter;
-use App\Models\ProjectVideo;
+use App\Domain\Ai\AdScriptWriter;
+use App\Models\ProjectAd;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -18,7 +18,7 @@ use Throwable;
  * costs money per scene: a failed HTTP request should not let the customer's browser retry it by
  * refreshing. The row carries the state the portal polls.
  */
-class RenderProjectVideo implements ShouldQueue
+class RenderProjectAd implements ShouldQueue
 {
     use Queueable;
 
@@ -26,44 +26,50 @@ class RenderProjectVideo implements ShouldQueue
 
     public int $tries = 1;      // images are paid for; never silently render twice
 
-    public function __construct(public int $videoId) {}
+    public function __construct(public int $adId) {}
 
-    public function handle(VideoScriptWriter $writer, ImageService $images): void
+    public function handle(AdScriptWriter $writer, ImageService $images): void
     {
-        $video = ProjectVideo::find($this->videoId);
-        if (! $video || $video->status === 'ready') {
+        $ad = ProjectAd::find($this->adId);
+        if (! $ad || $ad->status === 'ready') {
             return;
         }
 
-        $video->update(['status' => 'rendering', 'error' => null]);
+        $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($video, $writer, $images);
+            $this->render($ad, $writer, $images);
         } catch (Throwable $e) {
-            Log::error('render video failed', ['video' => $video->id, 'error' => $e->getMessage()]);
-            $video->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
+            Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
+            $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
         }
     }
 
-    private function render(ProjectVideo $video, VideoScriptWriter $writer, ImageService $images): void
+    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images): void
     {
-        $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$video->id;
+        $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
             throw new \RuntimeException('Không tạo được thư mục làm việc: '.$work);
         }
 
-        $spec = (array) ($video->spec ?? []);
+        $spec = (array) ($ad->spec ?? []);
         $size = (string) ($spec['size'] ?? '1080x1920');
         $scenes = $spec['scenes'] ?? [];
 
         // AI source: the prompt has not been turned into scenes yet.
-        if ($video->source === 'ai' && ! $scenes) {
-            $scenes = $writer->write((string) $video->prompt, (string) ($spec['language'] ?? 'de'));
+        if ($ad->source === 'ai' && ! $scenes) {
+            $scenes = $writer->write((string) $ad->prompt, (string) ($spec['language'] ?? 'de'), $ad->kind);
+        }
+
+        // An image ad is one picture. Anything the model sent beyond the first scene would be
+        // paid for and then thrown away by the renderer.
+        if ($ad->kind === 'image') {
+            $scenes = array_slice($scenes, 0, 1);
         }
 
         foreach ($scenes as $i => &$scene) {
             $prompt = trim((string) ($scene['image_prompt'] ?? ''));
-            // Closing scenes carry no image on purpose: make-video.py paints them on the
+            // Closing scenes carry no image on purpose: make-ad.py paints them on the
             // background colour, which also saves one paid render per clip.
             if ($prompt === '' || isset($scene['image'])) {
                 continue;
@@ -75,26 +81,28 @@ class RenderProjectVideo implements ShouldQueue
         unset($scene);
 
         $spec['size'] = $size;
+        $spec['kind'] = $ad->kind;
         $spec['scenes'] = array_values($scenes);
-        $video->update(['spec' => $spec]);
+        $ad->update(['spec' => $spec]);
 
         file_put_contents($work.'/spec.json', json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
 
-        $out = $work.'/out.mp4';
-        $proc = new Process(['python3', base_path('tools/make-video.py'), $work.'/spec.json', $out], null, null, null, 1500);
+        $ext = $ad->kind === 'image' ? 'png' : 'mp4';
+        $out = $work.'/out.'.$ext;
+        $proc = new Process(['python3', base_path('tools/make-ad.py'), $work.'/spec.json', $out], null, null, null, 1500);
         $proc->run();
 
         if (! $proc->isSuccessful() || ! is_file($out)) {
-            throw new \RuntimeException('ffmpeg: '.mb_substr($proc->getErrorOutput() ?: $proc->getOutput(), -400));
+            throw new \RuntimeException('render: '.mb_substr($proc->getErrorOutput() ?: $proc->getOutput(), -400));
         }
 
-        $name = 'p'.$video->project_id.'-'.$video->id.'.mp4';
+        $name = 'p'.$ad->project_id.'-'.$ad->id.'.'.$ext;
         $dest = rtrim((string) config('services.media.videos_path'), '/').'/'.$name;
         if (! rename($out, $dest) && ! copy($out, $dest)) {
             throw new \RuntimeException('Không chuyển được file vào thư mục media.');
         }
 
-        $video->update([
+        $ad->update([
             'path' => $name,
             'bytes' => filesize($dest) ?: 0,
             'status' => 'ready',

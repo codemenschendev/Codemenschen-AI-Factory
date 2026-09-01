@@ -42,9 +42,9 @@ class Project extends Model
         return $this->hasMany(PipelineRun::class);
     }
 
-    public function videos(): HasMany
+    public function ads(): HasMany
     {
-        return $this->hasMany(ProjectVideo::class);
+        return $this->hasMany(ProjectAd::class);
     }
 
     public function criteria(): HasMany
