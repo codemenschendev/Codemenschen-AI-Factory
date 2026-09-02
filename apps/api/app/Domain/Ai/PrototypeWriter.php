@@ -28,9 +28,12 @@ class PrototypeWriter
         The page is a clickable PROTOTYPE of what the visitor described. Rules:
         - One self-contained file. All CSS in a <style> tag. No external URLs, fonts, images or
           scripts: use system fonts, CSS gradients and inline SVG for any graphics.
-        - Make it look designed and modern: a hero, a few sections, clear buttons, a footer.
+        - Exactly: a nav, a hero, THREE sections, and a footer. Not more. This is a first
+          impression, not a finished site, and the visitor is watching a spinner while you write.
+        - Keep the whole file under 300 lines. Write compact CSS: group selectors, skip decorative
+          rules that do not change the look at this size.
         - Clickable via in-page anchors (nav jumps to sections). A little vanilla JS is allowed for
-          things like a mobile menu or tabs, but the page must make sense with JS switched off.
+          things like a mobile menu, but the page must make sense with JS switched off.
         - Real, specific copy about the visitor's idea, in their language. No lorem ipsum.
         - Responsive. No cookie banners, no fake login, no forms that pretend to submit anywhere.
         TXT;
@@ -57,10 +60,19 @@ class PrototypeWriter
                 ['role' => 'system', 'content' => self::SYSTEM],
                 ['role' => 'user', 'content' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."],
             ],
+            // A page this size is ~12k tokens of HTML. The cap keeps a chatty model from writing
+            // a 40 KB page that takes three minutes: the sidecar gives up at 180s, and a visitor
+            // watching a spinner gives up sooner.
+            'max_completion_tokens' => 14000,
         ]);
 
         if (! $res->successful()) {
-            throw new RuntimeException('Dựng prototype thất bại ('.$res->status().').');
+            // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS (180s) and answers 502. That
+            // is a slow generation, not a broken service, and it is worth saying so plainly.
+            $msg = $res->status() === 502
+                ? 'Bản mô tả quá lớn nên dựng lâu hơn giới hạn. Thử mô tả ngắn gọn hơn.'
+                : 'Dựng prototype thất bại ('.$res->status().').';
+            throw new RuntimeException($msg);
         }
 
         $html = $this->extractHtml((string) $res->json('choices.0.message.content'));
