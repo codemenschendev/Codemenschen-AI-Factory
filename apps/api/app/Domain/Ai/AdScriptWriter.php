@@ -20,24 +20,60 @@ use RuntimeException;
  */
 class AdScriptWriter
 {
+    /**
+     * What the ad has to make the reader do. The key is what the customer picks in the portal and
+     * what the ad row stores; the sentence is what the copywriter is told to close on. Adding a
+     * goal here is all the backend needs; the web dictionaries need a label for the key.
+     *
+     * No goal is a valid choice: then the copy closes on whatever action the subject itself
+     * obviously offers.
+     */
+    public const GOALS = [
+        'booking' => 'book an appointment, a table or a slot',
+        'call' => 'call or write to the business today',
+        'quote' => 'ask for a quote or a callback',
+        'buy' => 'buy the product now',
+        'signup' => 'sign up, register or start a trial',
+        'visit' => 'go to the website and look around',
+    ];
+
     private const COMMON = <<<'TXT'
-        You are a copywriter. You only write text. You never create, generate, draw or fetch
-        anything. Your entire answer is one JSON object and nothing else: no greeting, no
-        explanation, no code fence.
+        You are a direct response copywriter for paid social ads. You only write text. You never
+        create, generate, draw or fetch anything. Your entire answer is one JSON object and nothing
+        else: no greeting, no explanation, no code fence.
 
         {"scenes":[{"title":"...","text":"...","seconds":3.5,"zoom":"in","picture":"..."}]}
 
+        The reader is scrolling and does not care yet. Write to that person, not about the company:
+        what they get, not what the company is proud of.
+
+        - Every scene sells one thing the reader gets: time saved, money saved, work gone, worry
+          gone, customers won. A feature only ever appears as the reason a benefit is believable.
+        - Be concrete. Use the numbers, prices, names, places and services the brief gives you.
+          Invent nothing: no prices, no percentages, no guarantees, no customer quotes, no awards.
+        - Never write a sentence that would fit a different company unchanged. Banned words:
+          innovative, solutions, cutting edge, seamless, empower, digital transformation, next
+          level, one-stop.
         - title: at most 6 words. text: one sentence, at most 18 words. Same language as the brief.
-        - picture: an English sentence describing what a photographer would shoot for this scene
-          (subject, setting, light, mood). No words, letters, logos or screens in that description:
-          the copy is drawn on top afterwards, and a photo with writing in it comes out unreadable.
-        - Plain sentences. No em dashes.
+        - picture: an English sentence describing what an advertising photographer would shoot for
+          this scene (subject, setting, light, mood). Show the customer or the product in real use,
+          one clear subject, calm space in the lower third where the copy goes. No words, letters,
+          logos or screens in that description: the copy is drawn on top afterwards, and a photo
+          with writing in it comes out unreadable.
+        - Plain sentences. No em dashes. At most one exclamation mark in the whole ad.
         TXT;
 
     private const VIDEO = <<<'TXT'
-        You write very short marketing films.
+        You write very short marketing films that have to earn every second.
 
-        - 3 to 5 scenes. The last one closes the film: title only, no text, no picture.
+        - 4 scenes, in this order, and the order is the point:
+          1. Hook: the reader's problem or the moment they want, in their own words. This scene
+             decides whether the other three are watched. Never open with the company name.
+          2. Turn: what changes for them. One benefit, not a list.
+          3. Proof: the concrete reason to believe it. How it works, what it costs, how long it
+             takes. Only what the brief actually says.
+          4. Close: the call to action. title IS the action the reader should take now, text names
+             the subject and where to do it. This scene has no picture.
         - seconds between 2.5 and 4. zoom is "in" or "out", alternating.
         TXT;
 
@@ -45,18 +81,25 @@ class AdScriptWriter
         You write single-frame ads, the kind that has to land while someone scrolls past.
 
         - EXACTLY ONE scene, and it must have a picture.
-        - title is the hook, text is the reason to care. Shorter than you would write for a film.
+        - title is the hook: the reader's problem or the promise. Not the company name.
+        - text gives the benefit and ends with the call to action in the same sentence.
         - send seconds and zoom anyway; they are ignored for this kind.
         TXT;
 
     /**
      * @param  array<string,string>  $context  What is actually being advertised: the project it
      *                                         belongs to, and the real page if the brief named one.
+     * @param  string|null  $goal  A key of self::GOALS: the action the ad has to produce.
      * @return array<int,array<string,mixed>>
      */
-    public function write(string $prompt, string $language = 'de', string $kind = 'video', array $context = []): array
+    public function write(string $prompt, string $language = 'de', string $kind = 'video', array $context = [], ?string $goal = null): array
     {
         $system = ($kind === 'image' ? self::STILL : self::VIDEO)."\n\n".self::COMMON;
+
+        if (isset(self::GOALS[(string) $goal])) {
+            $system .= "\n\nThe ad has one job: make the reader ".self::GOALS[(string) $goal]
+                .'. Write the whole ad towards that one action, and say it plainly at the end.';
+        }
 
         if ($context !== []) {
             $lines = [];
@@ -65,9 +108,11 @@ class AdScriptWriter
             }
             $prompt = "What this ad is for:\n".implode("\n", $lines)."\n\nBrief: ".$prompt
                 ."\n\nWrite about the SUBJECT above and nothing else. `Filed under project` is only"
-                .' where the ad is stored; never write about that instead. Use the subject\'s own'
-                .' words and its own field of work, do not fall back on generic technology'
-                .' phrasing, and let the picture show what the subject is actually for.';
+                .' where the ad is stored; never write about that instead. Sell what the subject'
+                .' sells, in the subject\'s own words and its own field of work: pick the one'
+                .' customer it is for, the one thing that customer wants, and the one action they'
+                .' can take afterwards. No generic technology phrasing, and let the picture show'
+                .' that customer getting what they came for.';
         }
 
         // Two attempts: the agent occasionally answers conversationally on the first go, and a
@@ -75,11 +120,29 @@ class AdScriptWriter
         foreach ([$prompt, $prompt."\n\nReturn the JSON object only. Do not do anything else."] as $attempt) {
             $scenes = $this->parseScenes($this->ask($system, $language, $attempt));
             if ($scenes !== []) {
-                return $scenes;
+                return $kind === 'image' ? $scenes : $this->closeOnCta($scenes);
             }
         }
 
         throw new RuntimeException('AI không trả về kịch bản dùng được.');
+    }
+
+    /**
+     * The last scene of a film is the call to action, and make-ad.py paints it on the background
+     * colour. The model still sends a picture for it now and then, and keeping that would pay for
+     * one more generated photo and hide the action behind a stock image.
+     *
+     * @param  array<int,array<string,mixed>>  $scenes
+     * @return array<int,array<string,mixed>>
+     */
+    private function closeOnCta(array $scenes): array
+    {
+        $last = count($scenes) - 1;
+        if ($last >= 1) {
+            $scenes[$last]['picture'] = '';
+        }
+
+        return $scenes;
     }
 
     private function ask(string $system, string $language, string $brief): string

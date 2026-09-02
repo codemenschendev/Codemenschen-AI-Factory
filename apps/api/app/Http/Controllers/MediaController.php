@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ai\AdScriptWriter;
 use App\Jobs\RenderProjectAd;
 use App\Models\Project;
 use App\Models\ProjectAd;
@@ -38,7 +39,9 @@ class MediaController extends Controller
                 'project' => ['id' => $a->project->id, 'name' => $a->project->name],
             ]);
 
-        return response()->json(['ads' => $ads]);
+        // The goal list travels with the ads so the portal never keeps its own copy of it: a goal
+        // added in AdScriptWriter::GOALS shows up here, and the portal only needs a label for it.
+        return response()->json(['ads' => $ads, 'goals' => array_keys(AdScriptWriter::GOALS)]);
     }
 
     /** Prompt in, queued ad out. The render itself happens on the queue (RenderProjectAd). */
@@ -54,6 +57,9 @@ class MediaController extends Controller
             // background: auto = screenshot the page if the brief names one, else an AI photo;
             // site = insist on the screenshot; photo = always an AI photo, never the screenshot.
             'background' => 'nullable|in:auto,site,photo',
+            // What the ad has to make the reader do. Empty means the copy closes on whatever
+            // action the subject itself offers.
+            'goal' => 'nullable|in:'.implode(',', array_keys(AdScriptWriter::GOALS)),
         ]);
 
         // One render at a time per project: pictures are paid for per scene, and a customer
@@ -77,6 +83,7 @@ class MediaController extends Controller
                 'size' => $size,
                 'language' => $data['language'] ?? 'de',
                 'background' => $data['background'] ?? 'auto',
+                'goal' => $data['goal'] ?? null,
             ],
         ]);
 

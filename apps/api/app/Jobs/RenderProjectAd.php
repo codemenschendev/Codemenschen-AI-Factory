@@ -72,6 +72,7 @@ class RenderProjectAd implements ShouldQueue
                 (string) ($spec['language'] ?? 'de'),
                 $ad->kind,
                 $this->context($ad, $forCopy),
+                isset($spec['goal']) ? (string) $spec['goal'] : null,
             );
         }
 

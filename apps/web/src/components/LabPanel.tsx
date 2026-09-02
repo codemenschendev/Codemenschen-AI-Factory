@@ -45,6 +45,10 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [format, setFormat] = useState("vertical");
   const [kind, setKind] = useState<"video" | "image">("video");
   const [background, setBackground] = useState<"auto" | "site" | "photo">("auto");
+  // The goals come from the API, so a goal added in the backend appears here without a deploy of
+  // this component; only the label has to exist in the dictionaries.
+  const [goals, setGoals] = useState<string[]>([]);
+  const [goal, setGoal] = useState("");
   const [sending, setSending] = useState(false);
   const playingRef = useRef<{ id: number; url: string; kind: string } | null>(null);
 
@@ -56,8 +60,9 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   const load = useCallback(async () => {
     if (!token) return;
-    const r = await api<{ ads: AdRow[] }>("/me/ads", { token });
+    const r = await api<{ ads: AdRow[]; goals: string[] }>("/me/ads", { token });
     setAds(r.ads);
+    setGoals(r.goals ?? []);
     return r.ads;
   }, [token]);
 
@@ -102,7 +107,14 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
       await api(`/me/projects/${projectId}/ads`, {
         token: token ?? undefined,
         method: "POST",
-        body: JSON.stringify({ prompt, kind, format, background, language: locale }),
+        body: JSON.stringify({
+          prompt,
+          kind,
+          format,
+          background,
+          goal: goal || null,
+          language: locale,
+        }),
       });
       setPrompt("");
       await load();
@@ -192,6 +204,17 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               <option value="auto">{l.bgAuto}</option>
               <option value="site">{l.bgSite}</option>
               <option value="photo">{l.bgPhoto}</option>
+            </select>
+          </label>
+          <label>
+            {l.goal}{" "}
+            <select value={goal} onChange={(e) => setGoal(e.target.value)}>
+              <option value="">{l.goalAuto}</option>
+              {goals.map((g) => (
+                <option key={g} value={g}>
+                  {l.goals[g as keyof typeof l.goals] ?? g}
+                </option>
+              ))}
             </select>
           </label>
           <label>
