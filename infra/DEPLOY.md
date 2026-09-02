@@ -70,8 +70,8 @@ the `openclaw` user (user-level systemd, like the manager's portal-worker):
 install -o openclaw -g openclaw -m 600 /dev/null /home/openclaw/.config/ai-factory-relay.env
 cat > /home/openclaw/.config/ai-factory-relay.env <<EOT
 RELAY_TOKEN=<same as OPENCLAW_RELAY_TOKEN in infra/.env>
-OPENCLAW_BIN=/home/openclaw/.nvm/versions/node/v22.23.1/bin/openclaw
-PATH=/home/openclaw/.nvm/versions/node/v22.23.1/bin:/usr/local/bin:/usr/bin:/bin
+OPENCLAW_BIN=/usr/bin/openclaw
+PATH=/usr/local/bin:/usr/bin:/bin
 EOT
 cp infra/host-relay/ai-factory-relay.service /home/openclaw/.config/systemd/user/
 loginctl enable-linger openclaw

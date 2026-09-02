@@ -7,7 +7,7 @@ After=network.target
 
 [Service]
 EnvironmentFile=%h/.config/ai-factory-relay.env
-ExecStart=/home/openclaw/.nvm/versions/node/v22.23.1/bin/node /var/www/ai-factory/infra/host-relay/relay.mjs
+ExecStart=/usr/bin/node /var/www/ai-factory/infra/host-relay/relay.mjs
 Restart=always
 RestartSec=3
 
