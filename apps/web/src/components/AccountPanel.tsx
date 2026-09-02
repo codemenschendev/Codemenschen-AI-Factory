@@ -22,7 +22,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [token, setToken] = useState<string | null | undefined>(undefined);
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
-  const [me, setMe] = useState<{ email: string; projects: ProjectRow[] } | null>(null);
+  const [me, setMe] = useState<{ email: string; admin?: boolean; projects: ProjectRow[] } | null>(null);
 
   // Pick up the token handed over by the signed verify redirect (#token=…).
   useEffect(() => {
@@ -43,7 +43,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   useEffect(() => {
     if (!token) return;
-    api<{ email: string; projects: ProjectRow[] }>("/me/projects", { token })
+    api<{ email: string; admin: boolean; projects: ProjectRow[] }>("/me/projects", { token })
       .then(setMe)
       .catch(() => {
         localStorage.removeItem("aifactory-token");
@@ -116,6 +116,14 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
         >
           {a.logout}
         </button>
+        {/* The operator's own entrance. Shown to an admin only, and the page behind it asks the
+            server again: this link hides nothing, it just saves typing the URL. */}
+        {me.admin && (
+          <>
+            {" · "}
+            <Link href={`/${locale}/admin`}>{d.admin.title}</Link>
+          </>
+        )}
       </p>
       {me.projects.length === 0 && <p className="est-empty">{a.empty}</p>}
       <div className="grid" style={{ marginTop: 16 }}>

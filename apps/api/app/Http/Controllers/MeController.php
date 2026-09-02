@@ -246,6 +246,9 @@ class MeController extends Controller
 
         return response()->json([
             'email' => $request->user()->email,
+            // Only so the portal can show the operator its own entrance. The flag decides nothing:
+            // every admin route checks it again on the server.
+            'admin' => $request->user()->isAdmin(),
             'projects' => $projects,
         ]);
     }

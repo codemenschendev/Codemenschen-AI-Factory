@@ -12,6 +12,14 @@ class Customer extends Authenticatable
 
     protected $guarded = [];
 
+    protected $casts = ['is_admin' => 'boolean'];
+
+    /** The operator lane: sees every project in the factory and can push a stuck one along. */
+    public function isAdmin(): bool
+    {
+        return (bool) $this->is_admin;
+    }
+
     public function projects(): HasMany
     {
         return $this->hasMany(Project::class);

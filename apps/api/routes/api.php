@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\InternalRunController;
@@ -55,6 +56,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/campaigns/{campaign}/publish', [AdsController::class, 'publish']);
     Route::post('/me/campaigns/{campaign}/activate', [AdsController::class, 'activate']);
     Route::post('/me/campaigns/{campaign}/pause', [AdsController::class, 'pause']);
+});
+
+// Operator lane. Same magic-link login as a customer; the `admin` middleware is the whole
+// difference, and it is checked on the server for every single one of these routes.
+Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+    Route::get('/overview', [AdminController::class, 'overview']);
+    Route::get('/projects', [AdminController::class, 'projects']);
+    Route::get('/projects/{project}', [AdminController::class, 'project']);
+    Route::get('/customers', [AdminController::class, 'customers']);
+    Route::get('/ads', [AdminController::class, 'ads']);
+
+    // The rescue actions. Everything here is also possible from artisan; nothing here spends money.
+    Route::post('/projects/{project}/stage', [AdminController::class, 'dispatchStage']);
+    Route::post('/projects/{project}/status', [AdminController::class, 'setStatus']);
+    Route::post('/ads/{ad}/rerender', [AdminController::class, 'rerenderAd']);
 });
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.
