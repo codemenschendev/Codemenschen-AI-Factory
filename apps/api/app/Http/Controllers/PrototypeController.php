@@ -53,6 +53,9 @@ class PrototypeController extends Controller
             'id' => $prototype->id,
             'status' => $expired ? 'expired' : $prototype->status,
             'title' => $prototype->title,
+            // The visitor's own sentence, so "turn it into a real app" can carry it into the
+            // wizard instead of asking them to type the same thing twice.
+            'prompt' => $prototype->prompt,
             'error' => $prototype->error,
             'expires_at' => $prototype->expires_at->toIso8601String(),
         ]);

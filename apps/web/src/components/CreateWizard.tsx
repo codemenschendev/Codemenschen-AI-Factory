@@ -25,8 +25,17 @@ const MAX_REFINE_ROUNDS = 3;
 
 const FEATURE_KEYS = Object.keys(FEATURES) as FeatureKey[];
 
-export function CreateWizard({ locale, d }: { locale: Locale; d: Dict }) {
-  const [idea, setIdea] = useState("");
+export function CreateWizard({
+  locale,
+  d,
+  initialIdea,
+}: {
+  locale: Locale;
+  d: Dict;
+  /** Prefilled from a free prototype the visitor already made (?from=<id>). */
+  initialIdea?: string;
+}) {
+  const [idea, setIdea] = useState(initialIdea ?? "");
   const [audience, setAudience] = useState<Audience | null>(null);
   const [platform, setPlatform] = useState<Platform | null>(null);
   const [features, setFeatures] = useState<FeatureKey[]>([]);
