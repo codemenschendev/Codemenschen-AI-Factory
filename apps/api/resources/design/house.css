@@ -175,3 +175,64 @@ a  { color: inherit; }
   .section { padding: var(--sp-8) 0; }
   .cta { padding: var(--sp-7) var(--sp-5); }
 }
+
+/* --- App screens ------------------------------------------------------------------------
+   A prototype for an app has to show the app, not a page about it. Phones scroll sideways so
+   four screens fit a laptop without shrinking to thumbnails, and the frame is drawn in CSS
+   because the page may not load an image of one. */
+.screens { display: flex; gap: var(--sp-6); overflow-x: auto; padding: var(--sp-2) 0 var(--sp-5); }
+.phone { flex: 0 0 auto; width: 258px; }
+.phone-frame {
+  aspect-ratio: 9 / 19.5; border: 9px solid #1c1c1e; border-radius: 38px; background: var(--bg);
+  box-shadow: var(--shadow-lg); overflow: hidden; position: relative;
+  display: flex; flex-direction: column;
+}
+.phone-frame::before {
+  content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: 92px; height: 24px; background: #1c1c1e; border-radius: 0 0 14px 14px;
+}
+.phone-cap { margin-top: var(--sp-3); text-align: center; font-size: var(--fs-sm); color: var(--ink-soft); }
+
+.app-bar {
+  padding: 38px var(--sp-4) var(--sp-3); background: var(--surface);
+  border-bottom: 1px solid var(--border); font-weight: 660; font-size: var(--fs-base);
+}
+.app-body { flex: 1; padding: var(--sp-4); display: grid; gap: var(--sp-3); align-content: start; overflow: hidden; }
+.app-row { border: 1px solid var(--border); border-radius: var(--r); padding: var(--sp-3); }
+.app-row b { display: block; font-size: var(--fs-sm); }
+.app-row span { font-size: var(--fs-xs); color: var(--ink-soft); }
+.app-btn {
+  background: var(--accent); color: var(--accent-ink); border-radius: var(--r);
+  padding: var(--sp-3); text-align: center; font-size: var(--fs-sm); font-weight: 620;
+}
+.app-field { border: 1px solid var(--border); border-radius: var(--r); padding: var(--sp-3);
+  font-size: var(--fs-sm); color: var(--ink-soft); background: var(--surface); }
+.app-tabs { display: flex; border-top: 1px solid var(--border); background: var(--surface); }
+.app-tabs span { flex: 1; padding: var(--sp-3) 0 var(--sp-5); text-align: center;
+  font-size: var(--fs-xs); color: var(--ink-soft); }
+.app-tabs span.on { color: var(--accent); font-weight: 660; }
+
+/* --- Ad creatives -----------------------------------------------------------------------
+   Real platform ratios at a size that fits a screen, so the customer sees the shape their
+   money buys. No photographs: this tier generates none, and a flat accent with one wash reads
+   as a deliberate design rather than a missing image. */
+.ad-grid { display: flex; flex-wrap: wrap; gap: var(--sp-6); align-items: flex-start; }
+.ad {
+  position: relative; display: flex; flex-direction: column; justify-content: flex-end;
+  padding: var(--sp-5); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow);
+  color: var(--accent-ink);
+  background: radial-gradient(115% 75% at 72% 8%, rgb(255 255 255 / .22), transparent 62%), var(--accent);
+}
+.ad-story  { width: 232px; aspect-ratio: 9 / 16; }
+.ad-square { width: 300px; aspect-ratio: 1 / 1; }
+.ad-link   { width: 392px; aspect-ratio: 1.91 / 1; }
+.ad h3 { color: inherit; }
+.ad p  { color: inherit; opacity: .9; font-size: var(--fs-sm); margin-top: var(--sp-2); }
+.ad-cta {
+  align-self: flex-start; margin-top: var(--sp-4); background: var(--accent-ink); color: var(--accent);
+  border-radius: var(--r-full); padding: 9px var(--sp-4); font-size: var(--fs-xs); font-weight: 660;
+}
+.ad-size {
+  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  font-size: 11px; letter-spacing: .05em; opacity: .72;
+}

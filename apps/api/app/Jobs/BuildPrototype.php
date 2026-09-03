@@ -18,7 +18,7 @@ class BuildPrototype implements ShouldQueue
 
     public int $tries = 1;
 
-    public function __construct(public string $prototypeId) {}
+    public function __construct(public string $prototypeId, public string $kind = 'site') {}
 
     public function handle(PrototypeWriter $writer): void
     {
@@ -30,7 +30,7 @@ class BuildPrototype implements ShouldQueue
         $proto->update(['status' => 'building', 'error' => null]);
 
         try {
-            $out = $writer->build((string) $proto->prompt);
+            $out = $writer->build((string) $proto->prompt, $this->kind);
             $proto->update(['status' => 'ready', 'title' => $out['title'], 'html' => $out['html']]);
         } catch (Throwable $e) {
             Log::error('build prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);

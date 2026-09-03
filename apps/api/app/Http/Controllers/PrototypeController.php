@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ai\PrototypeWriter;
 use App\Jobs\BuildPrototype;
 use App\Models\Prototype;
 use Illuminate\Http\JsonResponse;
@@ -24,7 +25,11 @@ class PrototypeController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $data = $request->validate(['prompt' => 'required|string|min:12|max:1200']);
+        $data = $request->validate([
+            'prompt' => 'required|string|min:12|max:1200',
+            // What to draw: the app itself, the ads for it, or a landing page.
+            'kind' => 'nullable|in:'.implode(',', PrototypeWriter::KINDS),
+        ]);
         $ip = (string) $request->ip();
 
         $today = Prototype::where('ip', $ip)->where('created_at', '>=', now()->startOfDay())->count();
@@ -39,7 +44,9 @@ class PrototypeController extends Controller
             'expires_at' => now()->addDays(self::LIVE_DAYS),
         ]);
 
-        BuildPrototype::dispatch($proto->id);
+        // kind is not stored: it only decides how this one build draws, and the queue payload
+        // carries it as far as it needs to go.
+        BuildPrototype::dispatch($proto->id, $data['kind'] ?? 'site');
 
         return response()->json(['id' => $proto->id, 'status' => 'queued'], 202);
     }

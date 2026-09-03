@@ -498,6 +498,18 @@ export const en = {
     lead: "Describe your idea in one sentence. We build you a clickable preview right away, free.",
     label: "What do you want to build?",
     hint: "For example: a landing page for a hair salon with online booking and a price list.",
+    kindLabel: "What should we show you?",
+    kinds: { site: "Website", app: "App", ads: "Ads" },
+    kindHints: {
+      site: "A clickable home page with everything a customer wants before they call.",
+      app: "Four screens of your app on a phone, the way it would actually be used.",
+      ads: "Five finished ads in the sizes Meta and Google really run.",
+    },
+    hints: {
+      site: "For example: a home page for a hair salon in Vienna with a price list and online booking.",
+      app: "For example: an app where regulars book and move their own salon appointment.",
+      ads: "For example: ads for a hair salon in Vienna that bring new customers to online booking.",
+    },
     go: "Build prototype",
     building: "Building, one moment…",
     failed: "That did not work. Try again.",

@@ -500,6 +500,18 @@ export const de = {
     lead: "Beschreib deine Idee in einem Satz. Wir bauen dir sofort eine klickbare Vorschau, kostenlos.",
     label: "Was möchtest du bauen?",
     hint: "Zum Beispiel: eine Landingpage für ein Friseurstudio mit Online-Terminbuchung und Preisliste.",
+    kindLabel: "Was sollen wir dir zeigen?",
+    kinds: { site: "Website", app: "App", ads: "Werbung" },
+    kindHints: {
+      site: "Eine klickbare Startseite mit allem, was ein Kunde vor dem Anruf wissen will.",
+      app: "Vier Bildschirme deiner App auf dem Handy, so wie sie sich bedienen würde.",
+      ads: "Fünf fertige Anzeigen in den Größen, die Meta und Google tatsächlich ausspielen.",
+    },
+    hints: {
+      site: "Zum Beispiel: eine Startseite für ein Friseurstudio in Wien mit Preisliste und Online-Terminbuchung.",
+      app: "Zum Beispiel: eine App, mit der Stammkunden ihren Friseurtermin selbst buchen und verschieben.",
+      ads: "Zum Beispiel: Anzeigen für ein Friseurstudio in Wien, die neue Kunden zur Online-Buchung bringen.",
+    },
     go: "Prototyp bauen",
     building: "Wird gebaut, einen Moment…",
     failed: "Das hat nicht geklappt. Versuch es nochmal.",

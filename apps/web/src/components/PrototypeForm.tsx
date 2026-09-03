@@ -13,6 +13,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
+  const [kind, setKind] = useState<"site" | "app" | "ads">("site");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,7 +25,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
     try {
       const r = await api<{ id: string }>("/prototypes", {
         method: "POST",
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt, kind }),
       });
       router.push(`/${locale}/p/${r.id}`);
     } catch (err) {
@@ -37,13 +38,37 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
 
   return (
     <form onSubmit={submit} style={{ display: "grid", gap: 16, maxWidth: 640 }}>
+      {/* The choice comes before the sentence on purpose: what gets drawn changes what is worth
+          writing, and a visitor who picks "app" describes screens rather than a company. */}
+      <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 8 }}>
+        <legend style={{ padding: 0, marginBottom: 4 }}>{p.kindLabel}</legend>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          {(["site", "app", "ads"] as const).map((k) => (
+            <button
+              key={k}
+              type="button"
+              className="tab"
+              aria-pressed={kind === k}
+              onClick={() => setKind(k)}
+              style={{
+                borderColor: kind === k ? "currentColor" : undefined,
+                fontWeight: kind === k ? 600 : undefined,
+              }}
+            >
+              {p.kinds[k]}
+            </button>
+          ))}
+        </div>
+        <p className="small muted" style={{ margin: 0 }}>{p.kindHints[kind]}</p>
+      </fieldset>
+
       <label>
         {p.label}
         <textarea
           value={prompt}
           onChange={(e) => setPrompt(e.target.value)}
           rows={4}
-          placeholder={p.hint}
+          placeholder={p.hints[kind]}
           style={{ width: "100%", marginTop: 8, fontSize: "1rem", padding: 12 }}
         />
       </label>
