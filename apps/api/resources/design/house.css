@@ -245,6 +245,28 @@ a  { color: inherit; }
   font-size: var(--fs-xs); color: var(--ink-soft); }
 .app-tabs span.on { color: var(--accent); font-weight: 660; }
 
+/* From the reference library: 86 of 239 real screens end in an action pinned to the bottom, and
+   the top of the body is a coloured band carrying the one thing the screen is about. The markup
+   had no way to say either, so every generated screen was a stack of identical rows. */
+.app-hero {
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) 0; padding: var(--sp-4);
+  background: var(--accent); color: var(--accent-ink);
+}
+.app-hero b { display: block; font-size: var(--fs-lg); line-height: 1.2; }
+.app-hero span { font-size: var(--fs-xs); opacity: 0.86; }
+.app-cta {
+  margin-top: auto; background: var(--accent); color: var(--accent-ink); border-radius: var(--r);
+  padding: var(--sp-3); text-align: center; font-size: var(--fs-sm); font-weight: 660;
+}
+.app-tag {
+  display: inline-block; margin-top: var(--sp-2); padding: 1px var(--sp-2); border-radius: 99px;
+  background: var(--accent-soft); color: var(--accent); font-size: var(--fs-xs); font-weight: 620;
+}
+.app-stats { display: flex; gap: var(--sp-3); }
+.app-stat { flex: 1; border: 1px solid var(--border); border-radius: var(--r); padding: var(--sp-3); }
+.app-stat b { display: block; font-size: var(--fs-lg); line-height: 1.1; }
+.app-stat span { font-size: var(--fs-xs); color: var(--ink-soft); }
+
 /* --- Ad creatives -----------------------------------------------------------------------
    Real platform ratios at a size that fits a screen, so the customer sees the shape their
    money buys. No photographs: this tier generates none, and a flat accent with one wash reads
@@ -336,6 +358,7 @@ a  { color: inherit; }
 .hero.invert .mini b { color: #e7ecf5; }
 .hero.invert .phone-frame { background: #0f1625; }
 .hero.invert .app-bar { background: #131c2e; border-bottom-color: #1e293b; color: #f7f9fc; }
-.hero.invert .app-row { border-color: #22304a; }
+.hero.invert .app-row, .hero.invert .app-stat { border-color: #22304a; }
+.hero.invert .app-stat b { color: #e7ecf5; }
 .hero.invert .app-row b { color: #e7ecf5; }
 .hero.invert .app-tabs { background: #131c2e; border-top-color: #1e293b; }

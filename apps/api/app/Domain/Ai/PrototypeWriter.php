@@ -156,7 +156,8 @@ class PrototypeWriter
             <div class="phone-frame">
               <div class="app-bar">Screen title</div>
               <div class="app-body">
-                … .app-row (with b and span), .app-field, .app-btn, in any order that fits …
+                … the blocks listed in the conventions at the end of this brief, in the order
+                that screen needs …
               </div>
               <div class="app-tabs"><span class="on">Tab</span><span>Tab</span><span>Tab</span></div>
             </div>
@@ -265,6 +266,20 @@ class PrototypeWriter
     /** The three things a visitor can ask for. `site` is the default and the original behaviour. */
     public const KINDS = ['site', 'app', 'ads'];
 
+    /**
+     * What real app screens do, distilled from the labelled reference library.
+     *
+     * A file rather than another heredoc because it is derived from data: when the library grows
+     * and is labelled again, this is regenerated and the prompt improves without touching code.
+     * Only the app prompt gets it; a landing page learns nothing from a phone screen.
+     */
+    private function appConventions(): string
+    {
+        $path = resource_path('design/app-conventions.md');
+
+        return is_file($path) ? "\n\n".trim((string) file_get_contents($path)) : '';
+    }
+
     /** The house stylesheet plus its embedded typeface, inlined into whatever the model returns. */
     private function house(): string
     {
@@ -276,7 +291,7 @@ class PrototypeWriter
     public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null): array
     {
         $system = match ($kind) {
-            'app' => self::APP,
+            'app' => self::APP.$this->appConventions(),
             'ads' => self::ADS,
             default => self::SITE,
         };
