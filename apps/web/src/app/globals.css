@@ -45,7 +45,9 @@ body {
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
 }
-h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0 0 14px; }
+/* overflow-wrap + hyphens: a German compound like "Widerrufsbelehrung" is one word wider
+   than a 320px screen, and without these it pushes the whole page sideways. */
+h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0 0 14px; overflow-wrap: break-word; hyphens: auto; }
 h1 { font-size: clamp(34px, 5vw, 52px); }
 h2 { font-size: clamp(26px, 3.4vw, 34px); }
 h3 { font-size: 19px; }
