@@ -167,6 +167,17 @@
   .lp .hero-art { max-width: 380px; }
   .lp .hero-phones .ph-frame { width: 150px; }
 }
+/* Below ~400px the two 150px phone frames plus their gap are wider than the column they sit in
+   (320px of content in 272px of room on a 320px screen), and a grid item never shrinks below its
+   content, so the whole page scrolled sideways. Percentages keep the pair inside the column at any
+   width; min-width lets the track itself shrink with the screen. */
+@media (max-width: 400px) {
+  .lp .hero-grid > * { min-width: 0; }
+  .lp .hero-phones { gap: 12px; }
+  .lp .hero-phones .ph-frame { width: calc(50% - 6px); }
+  /* "Stripe-Checkout, Erstattung wenn wir nicht liefern können" is 321px of unbreakable line. */
+  .lp .tchip { white-space: normal; }
+}
 @media (max-width: 560px) {
   .lp .steps, .lp .price-grid, .lp .price-grid-3 { grid-template-columns: 1fr; }
   .lp .hero { padding: 72px 0 64px; }
