@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
+import { LibraryPanel } from "./LibraryPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -84,7 +85,7 @@ interface ProjectDetail {
   events: { type: string; actor: string; created_at: string }[];
 }
 
-type Tab = "overview" | "projects" | "ads" | "customers";
+type Tab = "overview" | "projects" | "ads" | "customers" | "library";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -232,7 +233,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   return (
     <div>
       <div className="tabs" role="tablist">
-        {(["overview", "projects", "ads", "customers"] as Tab[]).map((t) => (
+        {(["overview", "projects", "ads", "customers", "library"] as Tab[]).map((t) => (
           <button
             key={t}
             className="tab"
@@ -246,6 +247,8 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       </div>
 
       {note && <p className="note">{note}</p>}
+
+      {tab === "library" && token && <LibraryPanel token={token} locale={locale} d={d} />}
 
       {tab === "overview" && overview && (
         <>

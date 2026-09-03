@@ -92,6 +92,9 @@ return [
         // Marketing clips rendered by ops/make-video.py. Served only to signed-in customers.
         'videos_path' => env('MEDIA_VIDEOS_PATH', '/media/videos'),   // container path; host side is /var/appwerk-media/videos
         'uploads_path' => env('MEDIA_UPLOADS_PATH', '/media/uploads'), // images the customer uploads, and render scratch
+        // The shared photo library. Same directory ops/library.sh works on, bind-mounted from
+        // /var/appwerk-media/library on the host, so the shell and the app see one catalog.
+        'library_path' => env('MEDIA_LIBRARY_PATH', '/media/library'),
     ],
 
     'openclaw' => [

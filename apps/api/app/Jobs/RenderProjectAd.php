@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Ai\ImageService;
+use App\Domain\Library\ImageLibrary;
 use App\Domain\Ai\ScreenshotService;
 use App\Domain\Ai\SiteBrief;
 use App\Domain\Ai\AdScriptWriter;
@@ -30,7 +31,7 @@ class RenderProjectAd implements ShouldQueue
 
     public function __construct(public int $adId) {}
 
-    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots): void
+    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots, ImageLibrary $library): void
     {
         $ad = ProjectAd::find($this->adId);
         if (! $ad || $ad->status === 'ready') {
@@ -40,14 +41,14 @@ class RenderProjectAd implements ShouldQueue
         $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($ad, $writer, $images, $sites, $shots);
+            $this->render($ad, $writer, $images, $sites, $shots, $library);
         } catch (Throwable $e) {
             Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
             $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
         }
     }
 
-    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots): void
+    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots, ImageLibrary $library): void
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
@@ -103,8 +104,23 @@ class RenderProjectAd implements ShouldQueue
             if ($prompt === '' || isset($scene['image'])) {
                 continue;
             }
-            $file = sprintf('%02d.png', $i);
-            file_put_contents($work.'/'.$file, $images->generate($prompt, $this->imageSize($size)));
+            // Ask the library before paying for a picture. A hit costs nothing and returns at
+            // once; a miss is generated and then filed, so the next ad that needs this scene
+            // finds it. Photos stay with the project they were made for until somebody marks
+            // one shared, which keeps two rival businesses off the same hero image.
+            $hit = $library->find($prompt, (string) $ad->project_id);
+            // path() is asked separately and can come back empty: the operator may have deleted
+            // the photo between the search and here. Then this falls through and generates one.
+            $reuse = $hit ? $library->path($hit['id']) : null;
+            if ($reuse) {
+                $file = sprintf('%02d.jpg', $i);
+                copy($reuse, $work.'/'.$file);
+                Log::info('ad image reused', ['ad' => $ad->id, 'asset' => $hit['id'], 'score' => round($hit['score'], 2)]);
+            } else {
+                $file = sprintf('%02d.png', $i);
+                file_put_contents($work.'/'.$file, $images->generate($prompt, $this->imageSize($size)));
+                $library->remember($work.'/'.$file, $prompt, (string) $ad->project_id);
+            }
             $scene['image'] = $file;
         }
         unset($scene);

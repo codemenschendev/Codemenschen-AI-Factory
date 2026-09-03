@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\InternalRunController;
+use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MeController;
@@ -71,7 +72,19 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/projects/{project}/stage', [AdminController::class, 'dispatchStage']);
     Route::post('/projects/{project}/status', [AdminController::class, 'setStatus']);
     Route::post('/ads/{ad}/rerender', [AdminController::class, 'rerenderAd']);
+
+    // The photo library. Same catalog ops/library.sh works on from the shell.
+    Route::get('/library', [LibraryController::class, 'index']);
+    Route::post('/library/state', [LibraryController::class, 'state']);
+    Route::post('/library/{id}', [LibraryController::class, 'update']);
+    Route::delete('/library/{id}', [LibraryController::class, 'destroy']);
 });
+
+// Outside the admin group on purpose: an <img> tag sends no Authorization header, so the
+// signature in the URL is what authorises this one. It expires after an hour.
+Route::get('/admin/library/{id}/image', [LibraryController::class, 'image'])
+    ->middleware('signed')
+    ->name('admin.library.image');
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.
 Route::get('/preview/{project}/{path?}', PreviewController::class)->where('path', '.*');

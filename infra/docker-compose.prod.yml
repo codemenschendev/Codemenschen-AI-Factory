@@ -39,6 +39,9 @@ services:
       # therefore mounts the same directory writable.
       - /var/appwerk-media/videos:/media/videos:ro
       - /var/appwerk-media/uploads:/media/uploads
+      # The photo library. Writable here because the operator marks, renames and deletes
+      # entries from the admin panel; ops/library.sh works the same files from the host.
+      - /var/appwerk-media/library:/media/library
 
   horizon:
     build:
@@ -53,6 +56,8 @@ services:
       # RenderProjectVideo runs here: it writes the finished clip and needs the scratch dir.
       - /var/appwerk-media/videos:/media/videos
       - /var/appwerk-media/uploads:/media/uploads
+      # RenderProjectAd both reads from the library and files new photos into it.
+      - /var/appwerk-media/library:/media/library
 
   scheduler:
     build:
