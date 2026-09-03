@@ -236,10 +236,16 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
               />
               <span style={{ maxWidth: "56ch" }}>{c.termsLabel}</span>
             </label>
+            {/* New tab on purpose: reading the terms mid-checkout must not throw away the
+                e-mail and the boxes already ticked. */}
             <p className="small muted">
-              <Link href={`/${locale}/terms`}>{c.termsLink}</Link>
+              <Link href={`/${locale}/terms`} target="_blank" rel="noopener">
+                {c.termsLink}
+              </Link>
               {" · "}
-              <Link href={`/${locale}/withdrawal`}>{c.withdrawalLink}</Link>
+              <Link href={`/${locale}/withdrawal`} target="_blank" rel="noopener">
+                {c.withdrawalLink}
+              </Link>
             </p>
           </div>
         </section>
