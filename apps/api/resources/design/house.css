@@ -324,6 +324,9 @@ a  { color: inherit; }
 .fan > .card:nth-child(3) { transform: rotate(5deg) translateY(-8px); margin-top: -62%; opacity: .8; }
 
 /* The dark hero needs its frames to be dark too, or they punch a white hole in the band. */
+.hero.invert .card { background: #0f1625; border-color: #1e293b; }
+.hero.invert .card h3 { color: #f7f9fc; }
+.hero.invert .icon { background: #16203400; background: color-mix(in srgb, var(--accent) 22%, #0f1625); }
 .hero.invert .browser { border-color: #1e293b; background: #0f1625; }
 .hero.invert .browser-bar { background: #131c2e; border-bottom-color: #1e293b; }
 .hero.invert .browser-bar i { background: #2b3648; }

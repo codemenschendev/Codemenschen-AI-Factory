@@ -39,6 +39,26 @@ class PrototypeWriter
         Use it when the trade wants to look premium, technical or nocturnal, and leave it light
         for anything warm, local or hands-on. Roughly one page in two should be dark.
 
+        THE HERO MUST HAVE SOMETHING TO LOOK AT. A headline alone on a gradient is what makes a
+        page look generated. Wrap the hero content in <div class="hero-split"> with the words in
+        the first column and ONE of these in the second:
+
+          A browser showing the site itself:
+            <div class="browser"><div class="browser-bar"><i></i><i></i><i></i>
+              <span class="browser-url">firma.at</span></div>
+              <div class="browser-body"><div class="swatch"></div><h4>Real headline</h4>
+                <p>One line.</p><div class="mini"><div><b>Label</b>detail</div>… three of them …</div>
+              </div></div>
+
+          A phone showing the product in use (see the .phone block), for anything booked or ordered
+
+          Three cards fanned out, for anything with documents, plans or offers:
+            <div class="fan"><div class="card">…</div><div class="card">…</div><div class="card">…</div></div>
+
+        Fill it with the visitor's own content: real service names, real rows, real numbers from
+        the brief. A frame full of grey placeholder bars looks like a page that failed to load.
+
+
         Choose ONE palette and put it on the body, matching the trade:
           t-slate (professional services, finance, B2B) · t-forest (trades, nature, health, food)
           t-amber (hospitality, bakery, workshop, craft) · t-indigo (software, agency, tech)
@@ -96,6 +116,26 @@ class PrototypeWriter
         Use it when the trade wants to look premium, technical or nocturnal, and leave it light
         for anything warm, local or hands-on. Roughly one page in two should be dark.
 
+        THE HERO MUST HAVE SOMETHING TO LOOK AT. A headline alone on a gradient is what makes a
+        page look generated. Wrap the hero content in <div class="hero-split"> with the words in
+        the first column and ONE of these in the second:
+
+          A browser showing the site itself:
+            <div class="browser"><div class="browser-bar"><i></i><i></i><i></i>
+              <span class="browser-url">firma.at</span></div>
+              <div class="browser-body"><div class="swatch"></div><h4>Real headline</h4>
+                <p>One line.</p><div class="mini"><div><b>Label</b>detail</div>… three of them …</div>
+              </div></div>
+
+          A phone showing the product in use (see the .phone block), for anything booked or ordered
+
+          Three cards fanned out, for anything with documents, plans or offers:
+            <div class="fan"><div class="card">…</div><div class="card">…</div><div class="card">…</div></div>
+
+        Fill it with the visitor's own content: real service names, real rows, real numbers from
+        the brief. A frame full of grey placeholder bars looks like a page that failed to load.
+
+
         Structure:
           <nav class="nav"><div class="nav-inner"> the app name as .brand, then a
             .nav-links holding one .btn.btn-primary </div></nav>
@@ -150,6 +190,26 @@ class PrototypeWriter
         The hero may be light or dark. For a dark opening band write <header class="hero invert">.
         Use it when the trade wants to look premium, technical or nocturnal, and leave it light
         for anything warm, local or hands-on. Roughly one page in two should be dark.
+
+        THE HERO MUST HAVE SOMETHING TO LOOK AT. A headline alone on a gradient is what makes a
+        page look generated. Wrap the hero content in <div class="hero-split"> with the words in
+        the first column and ONE of these in the second:
+
+          A browser showing the site itself:
+            <div class="browser"><div class="browser-bar"><i></i><i></i><i></i>
+              <span class="browser-url">firma.at</span></div>
+              <div class="browser-body"><div class="swatch"></div><h4>Real headline</h4>
+                <p>One line.</p><div class="mini"><div><b>Label</b>detail</div>… three of them …</div>
+              </div></div>
+
+          A phone showing the product in use (see the .phone block), for anything booked or ordered
+
+          Three cards fanned out, for anything with documents, plans or offers:
+            <div class="fan"><div class="card">…</div><div class="card">…</div><div class="card">…</div></div>
+
+        Fill it with the visitor's own content: real service names, real rows, real numbers from
+        the brief. A frame full of grey placeholder bars looks like a page that failed to load.
+
 
         Structure:
           <nav class="nav"><div class="nav-inner"> the business name as .brand </div></nav>
