@@ -93,4 +93,8 @@ Route::get('/preview/{project}/{path?}', PreviewController::class)->where('path'
 Route::post('/internal/runs/{run}/heartbeat', [InternalRunController::class, 'heartbeat']);
 Route::post('/internal/runs/{run}/complete', [InternalRunController::class, 'complete']);
 
+// The ad canvases. No login: they are published platform specs, and the picker needs them
+// before a customer has decided anything.
+Route::get('/ad-formats', [MediaController::class, 'formats']);
+
 Route::get('/health', fn () => response()->json(['ok' => true]));

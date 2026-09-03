@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ads\AdFormats;
 use App\Domain\Ai\AdScriptWriter;
 use App\Jobs\RenderProjectAd;
 use App\Models\Project;
@@ -20,6 +21,30 @@ use Symfony\Component\HttpFoundation\BinaryFileResponse;
 class MediaController extends Controller
 {
     private const MIME = ['video' => 'video/mp4', 'image' => 'image/png'];
+
+    /**
+     * The canvases on offer, so the picker is built from the table instead of repeating it.
+     * Public: these are published platform specs, and the list gives nothing away.
+     *
+     * Unready formats are left out. They are real sizes with a correct entry, but the text layer
+     * still lays out for a large canvas, and offering them would produce ads nobody can read.
+     */
+    public function formats(): JsonResponse
+    {
+        $out = [];
+        foreach (['video', 'image'] as $kind) {
+            foreach (AdFormats::forKind($kind) as $key => $f) {
+                $out[$kind][] = [
+                    'key' => $key,
+                    'label' => $f['label'],
+                    'group' => $f['group'],
+                    'size' => $f['w'].'x'.$f['h'],
+                ];
+            }
+        }
+
+        return response()->json($out);
+    }
 
     public function index(Request $request): JsonResponse
     {
@@ -52,7 +77,9 @@ class MediaController extends Controller
         $data = $request->validate([
             'prompt' => 'required|string|min:10|max:2000',
             'kind' => 'nullable|in:video,image',
-            'format' => 'nullable|in:vertical,square,landscape',
+            // Every canvas in the table, checked against the chosen kind just below: the rule
+            // cannot see `kind`, so it lets any format through and the pairing is checked after.
+            'format' => 'nullable|'.AdFormats::rule(),
             'language' => 'nullable|in:de,en',
             // background: auto = screenshot the page if the brief names one, else an AI photo;
             // site = insist on the screenshot; photo = always an AI photo, never the screenshot.
@@ -67,11 +94,16 @@ class MediaController extends Controller
         $busy = $project->ads()->whereIn('status', ['queued', 'rendering'])->exists();
         abort_if($busy, 409, 'Đang dựng một quảng cáo cho project này, đợi xong đã.');
 
-        $size = match ($data['format'] ?? 'vertical') {
-            'square' => '1080x1080',
-            'landscape' => '1920x1080',
-            default => '1080x1920',
-        };
+        $kind = $data['kind'] ?? 'video';
+        $format = $data['format'] ?? AdFormats::DEFAULT;
+        $spec = AdFormats::get($format);
+        // A film has nowhere to run on a 320x50 banner, and the display units still lay their text
+        // out for a large canvas. Say which it is rather than rendering something unusable.
+        abort_unless($spec && in_array($kind, $spec['kinds'], true), 422,
+            'Khổ này không dùng được cho loại quảng cáo đã chọn.');
+        abort_unless($spec['ready'], 422,
+            'Khổ này đã có kích thước đúng nhưng phần chữ chưa dựng cho canvas nhỏ.');
+        $size = AdFormats::size($format);
 
         $ad = $project->ads()->create([
             'kind' => $data['kind'] ?? 'video',

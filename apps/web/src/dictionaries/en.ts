@@ -440,6 +440,15 @@ export const en = {
     vertical: "Vertical",
     square: "Square",
     landscape: "Landscape",
+    formats: {
+      vertical: "Story / Reels",
+      square: "Feed square",
+      landscape: "Wide / YouTube",
+      feed_portrait: "Feed portrait (4:5)",
+      link: "Link ad (1.91:1)",
+      gads_square: "Google square",
+      gads_portrait: "Google portrait (4:5)",
+    },
     goal: "Goal",
     goalAuto: "Automatic",
     goals: {

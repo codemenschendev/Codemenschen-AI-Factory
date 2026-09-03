@@ -6,6 +6,13 @@ import { API_BASE, api } from "@/lib/api";
 import { CampaignsPanel } from "@/components/CampaignsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
+interface AdFormat {
+  key: string;
+  label: string;
+  group: string;
+  size: string;
+}
+
 interface AdRow {
   id: number;
   kind: "video" | "image";
@@ -48,6 +55,9 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // The goals come from the API, so a goal added in the backend appears here without a deploy of
   // this component; only the label has to exist in the dictionaries.
   const [goals, setGoals] = useState<string[]>([]);
+  // Same idea for the canvases: the table lives in the backend, so a size added there shows up
+  // here without touching this file. Keyed by ad kind, since a film cannot run on a banner.
+  const [formats, setFormats] = useState<Record<string, AdFormat[]>>({});
   const [goal, setGoal] = useState("");
   const [sending, setSending] = useState(false);
   const playingRef = useRef<{ id: number; url: string; kind: string } | null>(null);
@@ -57,6 +67,23 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   useEffect(() => {
     setToken(localStorage.getItem("aifactory-token"));
   }, []);
+
+  // The canvases need no login, so they are fetched once and do not wait on the token.
+  useEffect(() => {
+    api<Record<string, AdFormat[]>>("/ad-formats")
+      .then(setFormats)
+      .catch(() => setFormats({}));
+  }, []);
+
+  // Switching between film and still changes which canvases exist: a still may go on a Google
+  // responsive square, a film may not. Keeping a now-invalid choice would only earn a 422 at
+  // submit, so fall back to the first canvas the new kind actually offers.
+  useEffect(() => {
+    const list = formats[kind];
+    if (list?.length && !list.some((f) => f.key === format)) {
+      setFormat(list[0].key);
+    }
+  }, [kind, formats, format]);
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -220,9 +247,11 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
           <label>
             {l.format}{" "}
             <select value={format} onChange={(e) => setFormat(e.target.value)}>
-              <option value="vertical">{l.vertical}</option>
-              <option value="square">{l.square}</option>
-              <option value="landscape">{l.landscape}</option>
+              {(formats[kind] ?? []).map((f) => (
+                <option key={f.key} value={f.key}>
+                  {l.formats[f.key as keyof typeof l.formats] ?? f.label} ({f.size})
+                </option>
+              ))}
             </select>
           </label>
           <button type="submit" disabled={sending || !projectId || prompt.trim().length < 10}>

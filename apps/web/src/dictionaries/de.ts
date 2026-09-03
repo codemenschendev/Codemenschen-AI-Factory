@@ -440,6 +440,17 @@ export const de = {
     vertical: "Hochkant",
     square: "Quadrat",
     landscape: "Quer",
+    // Beschriftung je Format. Die Liste selbst kommt aus der API, damit ein neues Format
+    // hier nur noch einen Namen braucht; fehlt der, zeigt die Auswahl den englischen aus der API.
+    formats: {
+      vertical: "Hochkant (Story, Reels)",
+      square: "Quadrat (Feed)",
+      landscape: "Quer (YouTube)",
+      feed_portrait: "Feed hoch (4:5)",
+      link: "Link-Anzeige (1,91:1)",
+      gads_square: "Google Quadrat",
+      gads_portrait: "Google hoch (4:5)",
+    },
     goal: "Ziel",
     goalAuto: "Automatisch",
     goals: {
