@@ -188,8 +188,8 @@ export const CATALOG: CatalogEntry[] = [
     weeksHi: 5,
     cat: { en: "B2B · Inventory", de: "B2B · Inventur" },
     cardDesc: {
-      en: "Stocktaking for small shops — scan, count, export.",
-      de: "Inventur für kleine Läden — scannen, zählen, exportieren.",
+      en: "Stocktaking for small shops: scan, count, export.",
+      de: "Inventur für kleine Läden: scannen, zählen, exportieren.",
     },
     lede: {
       en: "Countbee turns a phone into a stocktake scanner for small retail — scan barcodes, count stock, export a clean sheet for the accountant. Runs fully on the device: no accounts, no monthly fee.",

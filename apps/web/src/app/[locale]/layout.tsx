@@ -29,24 +29,47 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
-        <nav className="nav">
-          <Link href={`/${locale}`} className="nav-logo">
-            Appwerk
-          </Link>
-          <div className="nav-links">
-            <Link href={`/${locale}#apps`}>{dict.nav.ideas}</Link>
-            <Link href={`/${locale}/create`}>{dict.nav.create}</Link>
-            <Link href={`/${locale}#how`}>{dict.nav.how}</Link>
-            <Link href={`/${locale}/prototype`}>{dict.proto.navLink}</Link>
+        {/* Sticky header, ported from the appwerk prototype (site/index.html:14-30) */}
+        <header className="nav" id="top">
+          <div className="wrap nav-inner">
+            <Link href={`/${locale}`} className="nav-logo">
+              Appwerk<span className="logo-dot">.</span>
+              <span className="logo-by">{dict.nav.by}</span>
+            </Link>
+            <nav className="nav-links">
+              <Link href={`/${locale}#how`}>{dict.nav.how}</Link>
+              <Link href={`/${locale}#apps`}>{dict.nav.ideas}</Link>
+              <Link href={`/${locale}/create`}>{dict.nav.create}</Link>
+              <Link href={`/${locale}#pricing`}>{dict.nav.pricing}</Link>
+              <Link href={`/${locale}#faq`}>{dict.nav.faq}</Link>
+              <Link href={`/${locale}/prototype`}>{dict.proto.navLink}</Link>
+            </nav>
+            <div className="nav-right">
+              <AccountLink locale={locale as Locale} labels={{ account: dict.nav.account, login: dict.nav.login }} />
+              <LangSwitch current={locale as Locale} />
+              <Link className="btn btn-primary btn-sm nav-cta" href={`/${locale}#apps`}>
+                {dict.nav.cta}
+              </Link>
+            </div>
           </div>
-          <AccountLink locale={locale as Locale} labels={{ account: dict.nav.account, login: dict.nav.login }} />
-          <LangSwitch current={locale as Locale} />
-        </nav>
+        </header>
         {children}
         <footer className="site">
+          <div className="wrap footer-inner">
+            <div>
+              <p className="nav-logo">
+                Appwerk<span className="logo-dot">.</span>
+              </p>
+              <p className="footer-small">{dict.footer.by}</p>
+            </div>
+            <div className="footer-links">
+              <a href="https://www.codemenschen.at/impressum" target="_blank" rel="noopener">
+                {dict.footer.imprint}
+              </a>
+            </div>
+          </div>
           <div className="wrap">
-            <span>{dict.footer.by}</span>
-            <span className="counsel">{dict.footer.legal}</span>
+            <p className="footer-legal">{dict.footer.legal}</p>
           </div>
         </footer>
       </body>
