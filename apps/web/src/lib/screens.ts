@@ -116,7 +116,7 @@ export const SCREENS: Record<string, string[]> = {
         <div class="ph-body">
           <div class="ph-card ph-center" style="padding:12px">
             <div class="ph-ring ok" style="--p:67"><i>8/12<small>erledigt</small></i></div>
-            <small style="color:#8B90A0;display:block;margin-top:6px">Nur was wirklich fehlt — alles andere hast du schon.</small>
+            <small style="color:#8B90A0;display:block;margin-top:6px">Nur was wirklich fehlt, alles andere hast du schon.</small>
           </div>
           <div class="ph-card">
             <div class="ph-item"><span class="ph-check on"></span><span class="ph-txt"><b class="ph-strike">Dosentomaten</b></span><span class="ph-right"><small style="color:#A7ACB9">2×</small></span></div>
@@ -197,7 +197,7 @@ export const SCREENS: Record<string, string[]> = {
         <div class="ph-body" style="padding-top:6px">
           <div class="ph-bubble out">Erinnerung: Ihr Physio-Termin morgen um 09:00. Antworten Sie JA zum Bestätigen.<small>Gesendet 07:00 ✓✓</small></div>
           <div class="ph-bubble in"><b>JA</b><small>07:04</small></div>
-          <div class="ph-center" style="margin:2px 0 8px"><span class="ph-badge ok">✓ Termin bestätigt — Kalender aktualisiert</span></div>
+          <div class="ph-center" style="margin:2px 0 8px"><span class="ph-badge ok">✓ Termin bestätigt, Kalender aktualisiert</span></div>
           <div class="ph-bubble out">Erinnerung: Ihr Termin morgen um 10:30 bei Praxis Teubner.<small>Gesendet 07:00 ✓✓</small></div>
           <div class="ph-bubble in">Muss leider verschieben 🙏<small>07:31</small></div>
           <div class="ph-card"><div class="ph-item"><span class="ph-tile">🔁</span><span class="ph-txt"><b>Slot 10:30 wieder frei</b><small>Warteliste: 3 Personen</small></span><span class="ph-right"><span class="ph-badge">anbieten ›</span></span></div></div>

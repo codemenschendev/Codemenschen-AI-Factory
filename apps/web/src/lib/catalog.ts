@@ -44,8 +44,8 @@ export const CATALOG: CatalogEntry[] = [
       de: "Macht aus PDF-Formularen ausfüllbare Web-Flows für kleine Agenturen.",
     },
     lede: {
-      en: "FormPilot turns PDF forms into fillable web flows — upload a PDF, get a shareable web form with submissions in a dashboard. Selected by our AI analysis of app-store data; built exclusively for you, owned by you.",
-      de: "FormPilot macht aus PDF-Formularen ausfüllbare Web-Flows — PDF hochladen, teilbares Webformular erhalten, Einsendungen im Dashboard. Von unserer KI-Analyse von App-Store-Daten ausgewählt; exklusiv für dich gebaut, dir gehörend.",
+      en: "FormPilot turns PDF forms into fillable web flows: upload a PDF, get a shareable web form with submissions in a dashboard. Selected by our AI analysis of app-store data; built exclusively for you, owned by you.",
+      de: "FormPilot macht aus PDF-Formularen ausfüllbare Web-Flows: PDF hochladen, teilbares Webformular erhalten, Einsendungen im Dashboard. Von unserer KI-Analyse von App-Store-Daten ausgewählt; exklusiv für dich gebaut, dir gehörend.",
     },
     aud: [
       { i: "🏢", en: "Micro-agencies, 1–10 people", de: "Kleinstagenturen, 1–10 Personen" },
@@ -56,8 +56,8 @@ export const CATALOG: CatalogEntry[] = [
       {
         h: { en: "The demand signal is loud.", de: "Das Nachfrage-Signal ist laut." },
         p: {
-          en: "Thousands of app-store reviews complain about broken PDF-to-form workflows — the AI ranks this gap in the top percentile of the category.",
-          de: "Tausende App-Store-Rezensionen klagen über kaputte PDF-zu-Formular-Workflows — die KI stuft diese Lücke im obersten Perzentil der Kategorie ein.",
+          en: "Thousands of app-store reviews complain about broken PDF-to-form workflows. The AI ranks this gap in the top percentile of the category.",
+          de: "Tausende App-Store-Rezensionen klagen über kaputte PDF-zu-Formular-Workflows. Die KI stuft diese Lücke im obersten Perzentil der Kategorie ein.",
         },
       },
       {
@@ -83,15 +83,15 @@ export const CATALOG: CatalogEntry[] = [
       [
         { en: "Established players & prices", de: "Etablierte Anbieter & Preise" },
         {
-          en: "Jotform from $34/mo (35M users 2025), Typeform from $29/mo — no DACH-focused PDF-to-form specialist. Source: vendor pricing pages 2026",
-          de: "Jotform ab 34 $/Monat (35 Mio. Nutzer 2025), Typeform ab 29 $/Monat — kein DACH-fokussierter PDF-zu-Formular-Spezialist. Quelle: Anbieter-Preisseiten 2026",
+          en: "Jotform from $34/mo (35M users 2025), Typeform from $29/mo. No DACH-focused PDF-to-form specialist. Source: vendor pricing pages 2026",
+          de: "Jotform ab 34 $/Monat (35 Mio. Nutzer 2025), Typeform ab 29 $/Monat. Kein DACH-fokussierter PDF-zu-Formular-Spezialist. Quelle: Anbieter-Preisseiten 2026",
         },
       ],
       [
         { en: "Market size", de: "Marktgröße" },
         {
-          en: "Form-builder market ~$4.1B (2024), ~11% CAGR — estimates vary widely by analyst. Source: Verified Market Research 2024",
-          de: "Form-Builder-Markt ca. 4,1 Mrd. USD (2024), ~11 % CAGR — Schätzungen je nach Analyst stark abweichend. Quelle: Verified Market Research 2024",
+          en: "Form-builder market ~$4.1B (2024), ~11% CAGR. Estimates vary widely by analyst. Source: Verified Market Research 2024",
+          de: "Form-Builder-Markt ca. 4,1 Mrd. USD (2024), ~11 % CAGR. Schätzungen je nach Analyst stark abweichend. Quelle: Verified Market Research 2024",
         },
       ],
       [
@@ -118,8 +118,8 @@ export const CATALOG: CatalogEntry[] = [
       de: "Wochenpläne aus dem, was ohnehin im Kühlschrank ist.",
     },
     lede: {
-      en: "Mealgrid builds a weekly meal plan from what's already in your fridge — enter what you have, get a plan and a minimal shopping list. Runs fully on the device: no accounts, no monthly fee.",
-      de: "Mealgrid erstellt einen Wochen-Essensplan aus dem, was ohnehin im Kühlschrank ist — eingeben, was da ist, Plan und minimale Einkaufsliste erhalten. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
+      en: "Mealgrid builds a weekly meal plan from what's already in your fridge: enter what you have, get a plan and a minimal shopping list. Runs fully on the device: no accounts, no monthly fee.",
+      de: "Mealgrid erstellt einen Wochen-Essensplan aus dem, was ohnehin im Kühlschrank ist: eingeben, was da ist, Plan und minimale Einkaufsliste erhalten. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
     },
     aud: [
       { i: "🏠", en: "Busy working households", de: "Berufstätige Haushalte" },
@@ -144,8 +144,8 @@ export const CATALOG: CatalogEntry[] = [
       {
         h: { en: "Every incumbent is recipe-first.", de: "Alle Etablierten sind Rezept-zuerst." },
         p: {
-          en: "Fridge-first as a weekly habit is an unclaimed wedge — win the loop and consumer scale kicks in.",
-          de: "Kühlschrank-zuerst als Wochengewohnheit ist ein unbesetzter Hebel — gewinn die Routine und Consumer-Skalierung greift.",
+          en: "Fridge-first as a weekly habit is an unclaimed wedge. Win the loop and consumer scale kicks in.",
+          de: "Kühlschrank-zuerst als Wochengewohnheit ist ein unbesetzter Hebel. Gewinn die Routine und Consumer-Skalierung greift.",
         },
       },
     ],
@@ -157,8 +157,8 @@ export const CATALOG: CatalogEntry[] = [
       [
         { en: "Established players & prices", de: "Etablierte Anbieter & Preise" },
         {
-          en: "KptnCook (Berlin) Premium $5.99/mo, Mealime freemium — freemium pricing dominates. Source: KptnCook FAQ 2026",
-          de: "KptnCook (Berlin) Premium 5,99 $/Monat, Mealime Freemium — Freemium-Preismodelle dominieren. Quelle: KptnCook-FAQ 2026",
+          en: "KptnCook (Berlin) Premium $5.99/mo, Mealime freemium. Freemium pricing dominates. Source: KptnCook FAQ 2026",
+          de: "KptnCook (Berlin) Premium 5,99 $/Monat, Mealime Freemium. Freemium-Preismodelle dominieren. Quelle: KptnCook-FAQ 2026",
         },
       ],
       [
@@ -192,8 +192,8 @@ export const CATALOG: CatalogEntry[] = [
       de: "Inventur für kleine Läden: scannen, zählen, exportieren.",
     },
     lede: {
-      en: "Countbee turns a phone into a stocktake scanner for small retail — scan barcodes, count stock, export a clean sheet for the accountant. Runs fully on the device: no accounts, no monthly fee.",
-      de: "Countbee macht aus dem Handy einen Inventur-Scanner für kleine Läden — Barcodes scannen, Bestand zählen, saubere Tabelle für die Buchhaltung exportieren. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
+      en: "Countbee turns a phone into a stocktake scanner for small retail: scan barcodes, count stock, export a clean sheet for the accountant. Runs fully on the device: no accounts, no monthly fee.",
+      de: "Countbee macht aus dem Handy einen Inventur-Scanner für kleine Läden: Barcodes scannen, Bestand zählen, saubere Tabelle für die Buchhaltung exportieren. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
     },
     aud: [
       { i: "🏪", en: "Independent small shops", de: "Unabhängige kleine Läden" },
@@ -211,15 +211,15 @@ export const CATALOG: CatalogEntry[] = [
       {
         h: { en: "Buyers search with exact words.", de: "Die Käufer suchen mit exakten Worten." },
         p: {
-          en: "“inventur app kleines geschäft” — exact-match searches, and the German keyword pool is barely touched.",
-          de: "„inventur app kleines geschäft“ — exakte Suchbegriffe, und der deutsche Keyword-Pool ist kaum angetastet.",
+          en: "“inventur app kleines geschäft”: exact-match searches, and the German keyword pool is barely touched.",
+          de: "„inventur app kleines geschäft“: exakte Suchbegriffe, und der deutsche Keyword-Pool ist kaum angetastet.",
         },
       },
       {
         h: { en: "The smallest possible commitment.", de: "Das kleinstmögliche Engagement." },
         p: {
-          en: "€300 fixed price, no monthly fee — the smallest way to own a finished, focused tool.",
-          de: "300 € Fixpreis, keine Monatsgebühr — der kleinste Weg zu einem fertigen, fokussierten Tool.",
+          en: "€300 fixed price and no monthly fee: the smallest way to own a finished, focused tool.",
+          de: "300 € Fixpreis und keine Monatsgebühr: der kleinste Weg zu einem fertigen, fokussierten Tool.",
         },
       },
     ],
@@ -245,8 +245,8 @@ export const CATALOG: CatalogEntry[] = [
       [
         { en: "Demand indicators", de: "Nachfrage-Indikatoren" },
         {
-          en: "Sortly claims 20,000+ paying businesses at $49–299/mo — small niche, proven willingness to pay. Sources: Sortly 2026, AppBrain 2026",
-          de: "Sortly laut Eigenangabe 20.000+ zahlende Firmen bei 49–299 $/Monat — kleine Nische, belegte Zahlungsbereitschaft. Quellen: Sortly 2026, AppBrain 2026",
+          en: "Sortly claims 20,000+ paying businesses at $49–299/mo. Small niche, proven willingness to pay. Sources: Sortly 2026, AppBrain 2026",
+          de: "Sortly laut Eigenangabe 20.000+ zahlende Firmen bei 49–299 $/Monat. Kleine Nische, belegte Zahlungsbereitschaft. Quellen: Sortly 2026, AppBrain 2026",
         },
       ],
     ],
@@ -266,8 +266,8 @@ export const CATALOG: CatalogEntry[] = [
       de: "SMS-Terminerinnerungen für Physio- und Massagepraxen.",
     },
     lede: {
-      en: "Praxo sends automatic SMS reminders synced from a practice calendar — no-shows drop, the front desk stops phoning. Selected by our AI analysis; built exclusively for you, owned by you.",
-      de: "Praxo verschickt automatische SMS-Erinnerungen aus dem Praxiskalender — No-Shows sinken, die Rezeption telefoniert nicht mehr hinterher. Von unserer KI-Analyse ausgewählt; exklusiv für dich gebaut, dir gehörend.",
+      en: "Praxo sends automatic SMS reminders synced from a practice calendar. No-shows drop, the front desk stops phoning. Selected by our AI analysis; built exclusively for you, owned by you.",
+      de: "Praxo verschickt automatische SMS-Erinnerungen aus dem Praxiskalender. No-Shows sinken, die Rezeption telefoniert nicht mehr hinterher. Von unserer KI-Analyse ausgewählt; exklusiv für dich gebaut, dir gehörend.",
     },
     aud: [
       { i: "💆", en: "Physio & massage practices", de: "Physio- & Massagepraxen" },
@@ -285,8 +285,8 @@ export const CATALOG: CatalogEntry[] = [
       {
         h: { en: "The stickiest category.", de: "Die treueste Kategorie." },
         p: {
-          en: "Appointment tools show the lowest churn in the AI's category analysis — B2B utilities that remove a named pain stick.",
-          de: "Termin-Tools zeigen den niedrigsten Churn in der Kategorie-Analyse der KI — B2B-Utilities, die einen benannten Schmerz beseitigen, bleiben.",
+          en: "Appointment tools show the lowest churn in the AI's category analysis. B2B utilities that remove a named pain stick.",
+          de: "Termin-Tools zeigen den niedrigsten Churn in der Kategorie-Analyse der KI. B2B-Utilities, die einen benannten Schmerz beseitigen, bleiben.",
         },
       },
       {
@@ -305,8 +305,8 @@ export const CATALOG: CatalogEntry[] = [
       [
         { en: "Established players & prices", de: "Etablierte Anbieter & Preise" },
         {
-          en: "Doctolib from €139/mo per practitioner, Timify from ~€25/mo, appointmed (AT) €45–99/mo — big price gap below Doctolib. Source: vendor pricing pages 2026",
-          de: "Doctolib ab 139 €/Monat pro Behandler, Timify ab ~25 €/Monat, appointmed (AT) 45–99 €/Monat — große Preislücke unterhalb von Doctolib. Quelle: Anbieter-Preisseiten 2026",
+          en: "Doctolib from €139/mo per practitioner, Timify from ~€25/mo, appointmed (AT) €45–99/mo. Big price gap below Doctolib. Source: vendor pricing pages 2026",
+          de: "Doctolib ab 139 €/Monat pro Behandler, Timify ab ~25 €/Monat, appointmed (AT) 45–99 €/Monat. Große Preislücke unterhalb von Doctolib. Quelle: Anbieter-Preisseiten 2026",
         },
       ],
       [
@@ -340,8 +340,8 @@ export const CATALOG: CatalogEntry[] = [
       de: "Höfliche, automatische Zahlungserinnerungen für österreichische Freelancer.",
     },
     lede: {
-      en: "Rechni chases unpaid invoices for freelancers — connect your invoicing, and overdue clients get polite, escalating reminders automatically. Selected by our AI analysis; built exclusively for you, owned by you.",
-      de: "Rechni mahnt offene Rechnungen für Freelancer — Rechnungsstellung verbinden, säumige Kunden bekommen automatisch höfliche, eskalierende Erinnerungen. Von unserer KI-Analyse ausgewählt; exklusiv für dich gebaut, dir gehörend.",
+      en: "Rechni chases unpaid invoices for freelancers: connect your invoicing, and overdue clients get polite, escalating reminders automatically. Selected by our AI analysis; built exclusively for you, owned by you.",
+      de: "Rechni mahnt offene Rechnungen für Freelancer: Rechnungsstellung verbinden, säumige Kunden bekommen automatisch höfliche, eskalierende Erinnerungen. Von unserer KI-Analyse ausgewählt; exklusiv für dich gebaut, dir gehörend.",
     },
     aud: [
       { i: "🧑‍💻", en: "Austrian freelancers (376k EPU)", de: "Österreichische Freelancer (376.000 EPU)" },
@@ -359,8 +359,8 @@ export const CATALOG: CatalogEntry[] = [
       {
         h: { en: "A huge, reachable audience.", de: "Eine große, erreichbare Zielgruppe." },
         p: {
-          en: "376,000 one-person businesses in Austria (WKO 2025), >60% of all businesses — and no dunning tool speaks their language.",
-          de: "376.000 EPU in Österreich (WKO 2025), >60 % aller Unternehmen — und kein Mahn-Tool spricht ihre Sprache.",
+          en: "376,000 one-person businesses in Austria (WKO 2025), >60% of all businesses, and no dunning tool speaks their language.",
+          de: "376.000 EPU in Österreich (WKO 2025), >60 % aller Unternehmen, und kein Mahn-Tool spricht ihre Sprache.",
         },
       },
       {
@@ -379,8 +379,8 @@ export const CATALOG: CatalogEntry[] = [
       [
         { en: "Established players & prices", de: "Etablierte Anbieter & Preise" },
         {
-          en: "sevDesk from €8.90/mo, Billomat Professional €19/mo — accounting suites, no dunning-only tool for AT freelancers. Source: vendor pricing 2026",
-          de: "sevDesk ab 8,90 €/Monat, Billomat Professional 19 €/Monat — Buchhaltungs-Suiten, kein Nur-Mahnwesen-Tool für AT-Freelancer. Quelle: Anbieter-Preise 2026",
+          en: "sevDesk from €8.90/mo, Billomat Professional €19/mo. Accounting suites, no dunning-only tool for AT freelancers. Source: vendor pricing 2026",
+          de: "sevDesk ab 8,90 €/Monat, Billomat Professional 19 €/Monat. Buchhaltungs-Suiten, kein Nur-Mahnwesen-Tool für AT-Freelancer. Quelle: Anbieter-Preise 2026",
         },
       ],
       [
