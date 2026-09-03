@@ -38,7 +38,7 @@ class AdminTest extends TestCase
         $quote = $this->postJson('/api/quotes', [
             'idea' => 'club app', 'audience' => 'b2b', 'platform' => 'mobile', 'features' => [],
         ])->json('id');
-        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'kunde@example.com', 'fagg_waiver' => true]);
+        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'kunde@example.com', 'fagg_waiver' => true, 'terms' => true, 'terms' => true]);
         $order = Order::firstOrFail();
         $this->project = app(OrderFulfillment::class)->markPaid($order, 'pi', 100, []);
         $this->customerToken = $order->customer->createToken('portal')->plainTextToken;

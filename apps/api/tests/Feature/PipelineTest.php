@@ -30,7 +30,7 @@ class PipelineTest extends TestCase
             'idea' => 'club app', 'audience' => 'b2b', 'platform' => 'mobile', 'features' => ['auth'],
         ])->json('id');
         $this->postJson('/api/checkout', [
-            'quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => $waiver,
+            'quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => $waiver, 'terms' => true,
         ]);
 
         return app(OrderFulfillment::class)
@@ -265,7 +265,7 @@ class PipelineTest extends TestCase
 
         // Stripe is not configured in tests → quoted, but payment "unconfigured".
         $this->withHeader('Authorization', "Bearer $token")
-            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'Make the header blue please.', 'fagg_waiver' => true])
+            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'Make the header blue please.', 'fagg_waiver' => true, 'terms' => true, 'terms' => true])
             ->assertStatus(503)
             ->assertJsonPath('payment', 'unconfigured');
         $cr = $project->changeRequests()->first();

@@ -30,6 +30,9 @@ class CheckoutController extends Controller
             'ad_budget_monthly_eur' => 'nullable|integer|in:'.implode(',', Estimator::AD_BUDGET_OPTIONS),
             // FAGG § 18 express waiver — must be an explicit choice, never defaulted.
             'fagg_waiver' => 'required|boolean',
+            // The terms are a condition of the sale, so the server refuses an order without them.
+            // A box that is only checked in the browser is decoration.
+            'terms' => 'required|accepted',
             'locale' => 'nullable|in:de,en',
             // Store-listing languages; defaults to every supported one.
             'store_locales' => 'nullable|array|min:1',
@@ -58,6 +61,8 @@ class CheckoutController extends Controller
             'fagg_waiver' => $data['fagg_waiver'],
             'fagg_waiver_at' => $data['fagg_waiver'] ? now() : null,
             'fagg_waiver_ip' => $data['fagg_waiver'] ? $request->ip() : null,
+            'terms_accepted_at' => now(),
+            'terms_accepted_ip' => $request->ip(),
             'locale' => $data['locale'] ?? $quote->locale,
             'store_locales' => array_values(array_unique($data['store_locales'] ?? Order::SUPPORTED_STORE_LOCALES)),
         ]);

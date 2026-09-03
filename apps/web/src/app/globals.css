@@ -120,6 +120,11 @@ td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align:
 tr:last-child td { border-bottom: none; }
 td:first-child { font-weight: 500; white-space: nowrap; }
 
+/* Checkout: one panel per decision, numbered, so nothing is agreed to by accident. */
+.co-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 20px; }
+.co-panel h2 { font-size: 1.05rem; margin: 0 0 14px; }
+.co-panel .field:last-child { margin-bottom: 0; }
+
 /* ---------- Detail page ---------- */
 .detail-head { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
 .detail-icon { font-size: 34px; }

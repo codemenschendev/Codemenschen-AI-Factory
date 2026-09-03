@@ -70,7 +70,7 @@ class CommerceFlowTest extends TestCase
             'email' => 'patrick@example.com',
             'packages' => ['storePublishing' => true],
             'ad_budget_monthly_eur' => 500,
-            'fagg_waiver' => false,
+            'fagg_waiver' => false, 'terms' => true,
         ]);
         $res->assertStatus(503)->assertJsonPath('payment', 'unconfigured');
 
@@ -83,6 +83,22 @@ class CommerceFlowTest extends TestCase
         $this->assertSame(19, $order->hosting_monthly_eur);
     }
 
+    public function test_an_order_without_accepted_terms_is_refused_and_acceptance_is_recorded(): void
+    {
+        config(['services.stripe.secret' => null]);
+        $quoteId = $this->makeQuote();
+        $payload = ['quote_id' => $quoteId, 'email' => 'patrick@example.com', 'fagg_waiver' => false];
+
+        $this->postJson('/api/checkout', $payload)->assertStatus(422)->assertJsonValidationErrors('terms');
+        $this->postJson('/api/checkout', $payload + ['terms' => false])->assertStatus(422);
+        $this->assertNull(Order::first());
+
+        $this->postJson('/api/checkout', $payload + ['terms' => true])->assertStatus(503);
+        $order = Order::firstOrFail();
+        $this->assertNotNull($order->terms_accepted_at);
+        $this->assertNotNull($order->terms_accepted_ip);
+    }
+
     public function test_fulfillment_creates_project_and_defers_build_without_waiver(): void
     {
         config(['services.stripe.secret' => null]);
@@ -90,7 +106,7 @@ class CommerceFlowTest extends TestCase
         $this->postJson('/api/checkout', [
             'quote_id' => $quoteId,
             'email' => 'patrick@example.com',
-            'fagg_waiver' => false,
+            'fagg_waiver' => false, 'terms' => true,
         ])->assertStatus(503);
 
         $order = Order::firstOrFail();
@@ -108,7 +124,7 @@ class CommerceFlowTest extends TestCase
         $this->postJson('/api/checkout', [
             'quote_id' => $quoteId,
             'email' => 'patrick@example.com',
-            'fagg_waiver' => true,
+            'fagg_waiver' => true, 'terms' => true,
         ])->assertStatus(409);
     }
 
@@ -119,7 +135,7 @@ class CommerceFlowTest extends TestCase
         $this->postJson('/api/checkout', [
             'quote_id' => $quoteId,
             'email' => 'p2@example.com',
-            'fagg_waiver' => true,
+            'fagg_waiver' => true, 'terms' => true,
         ])->assertStatus(503);
 
         $order = Order::firstOrFail();
@@ -138,7 +154,7 @@ class CommerceFlowTest extends TestCase
 
         $quoteId = $this->makeQuote();
         $this->postJson('/api/checkout', [
-            'quote_id' => $quoteId, 'email' => 'p3@example.com', 'fagg_waiver' => true,
+            'quote_id' => $quoteId, 'email' => 'p3@example.com', 'fagg_waiver' => true, 'terms' => true,
         ]);
         $order = Order::firstOrFail();
         // No explicit choice → every supported store-listing language.
@@ -160,15 +176,15 @@ class CommerceFlowTest extends TestCase
         $quote = fn () => $this->postJson('/api/quotes', ['listing_slug' => 'countbee', 'locale' => 'de'])->json('id');
 
         $this->postJson('/api/checkout', [
-            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'store_locales' => ['de', 'de'],
+            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'terms' => true, 'store_locales' => ['de', 'de'],
         ])->assertStatus(503);
         $this->assertSame(['de'], Order::latest('created_at')->firstOrFail()->store_locales);
 
         $this->postJson('/api/checkout', [
-            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'store_locales' => ['fr'],
+            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'terms' => true, 'store_locales' => ['fr'],
         ])->assertUnprocessable();
         $this->postJson('/api/checkout', [
-            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'store_locales' => [],
+            'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'terms' => true, 'store_locales' => [],
         ])->assertUnprocessable();
     }
 }

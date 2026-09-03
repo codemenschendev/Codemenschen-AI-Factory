@@ -17,6 +17,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
   const [storeLocales, setStoreLocales] = useState<string[]>([]);
   const [email, setEmail] = useState("");
   const [waiver, setWaiver] = useState(false); // never pre-ticked (FAGG § 18)
+  const [terms, setTerms] = useState(false); // a condition of the sale; the API refuses without it
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -80,8 +81,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
   if (failed)
     return (
       <p className="note">
-        {c.missingQuote}{" "}
-        <Link href={`/${locale}/create`}>{d.nav.create}</Link>
+        {c.missingQuote} <Link href={`/${locale}/create`}>{d.nav.create}</Link>
       </p>
     );
   if (!quote || !totals) return <p className="est-empty">{c.working}</p>;
@@ -99,6 +99,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
           ad_budget_monthly_eur: adBudget,
           store_locales: storeLocales,
           fagg_waiver: waiver,
+          terms,
           locale,
         }),
       });
@@ -116,103 +117,132 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
   return (
     <div className="wizard-cols">
       <div>
-        <div className="field">
-          <span className="field-label">{c.packagesTitle}</span>
-          <div className="choices">
-            {Object.entries(quote.packages).map(([key, fee]) => (
-              <label className="choice" key={key}>
-                <input
-                  type="checkbox"
-                  checked={!!packages[key]}
-                  onChange={() =>
-                    setPackages((p) => ({ ...p, [key]: !p[key] }))
-                  }
-                />
-                {c.packages[key] ?? key}
-                <span className="cost">+{eur(fee, locale)}</span>
-              </label>
-            ))}
-          </div>
-        </div>
-
-        {(quote.store_locales?.length ?? 0) > 0 && (
+        <section className="co-panel">
+          <h2>{c.step1}</h2>
           <div className="field">
-            <span className="field-label">{c.storeLocalesTitle}</span>
+            <span className="field-label">{c.packagesTitle}</span>
             <div className="choices">
-              {quote.store_locales.map((code) => {
-                const on = storeLocales.includes(code);
-                return (
-                  <label className="choice" key={code}>
-                    <input
-                      type="checkbox"
-                      checked={on}
-                      // at least one language stays selected
-                      disabled={on && storeLocales.length === 1}
-                      onChange={() =>
-                        setStoreLocales((s) =>
-                          on ? s.filter((x) => x !== code) : [...s, code],
-                        )
-                      }
-                    />
-                    {c.localeNames[code] ?? code.toUpperCase()}
-                  </label>
-                );
-              })}
+              {Object.entries(quote.packages).map(([key, fee]) => (
+                <label className="choice" key={key}>
+                  <input
+                    type="checkbox"
+                    checked={!!packages[key]}
+                    onChange={() =>
+                      setPackages((p) => ({ ...p, [key]: !p[key] }))
+                    }
+                  />
+                  {c.packages[key] ?? key}
+                  <span className="cost">+{eur(fee, locale)}</span>
+                </label>
+              ))}
             </div>
-            <p className="small muted">{c.storeLocalesNote}</p>
           </div>
-        )}
 
-        <div className="field">
-          <label htmlFor="ads">{c.adBudget}</label>
-          <div className="choices">
-            {quote.ad_budget_options.map((v) => (
-              <label className="choice" key={v}>
-                <input
-                  type="radio"
-                  name="ads"
-                  checked={adBudget === v}
-                  onChange={() => setAdBudget(v)}
-                />
-                {v === 0 ? c.adNone : `${eur(v, locale)}/${monthUnit}`}
-              </label>
-            ))}
+          {(quote.store_locales?.length ?? 0) > 0 && (
+            <div className="field">
+              <span className="field-label">{c.storeLocalesTitle}</span>
+              <div className="choices">
+                {quote.store_locales.map((code) => {
+                  const on = storeLocales.includes(code);
+                  return (
+                    <label className="choice" key={code}>
+                      <input
+                        type="checkbox"
+                        checked={on}
+                        // at least one language stays selected
+                        disabled={on && storeLocales.length === 1}
+                        onChange={() =>
+                          setStoreLocales((s) =>
+                            on ? s.filter((x) => x !== code) : [...s, code],
+                          )
+                        }
+                      />
+                      {c.localeNames[code] ?? code.toUpperCase()}
+                    </label>
+                  );
+                })}
+              </div>
+              <p className="small muted">{c.storeLocalesNote}</p>
+            </div>
+          )}
+        </section>
+
+        <section className="co-panel">
+          <h2>{c.step2}</h2>
+          <div className="field">
+            <label htmlFor="ads">{c.adBudget}</label>
+            <div className="choices">
+              {quote.ad_budget_options.map((v) => (
+                <label className="choice" key={v}>
+                  <input
+                    type="radio"
+                    name="ads"
+                    checked={adBudget === v}
+                    onChange={() => setAdBudget(v)}
+                  />
+                  {v === 0 ? c.adNone : `${eur(v, locale)}/${monthUnit}`}
+                </label>
+              ))}
+            </div>
+            <p className="small muted">{c.adBudgetNote}</p>
           </div>
-          <p className="small muted">{c.adBudgetNote}</p>
-        </div>
+        </section>
 
-        <div className="field">
-          <label htmlFor="email">{c.email}</label>
-          <input
-            id="email"
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              fontSize: 15,
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius)",
-              background: "var(--surface)",
-              fontFamily: "var(--font-body)",
-            }}
-          />
-        </div>
+        <section className="co-panel">
+          <h2>{c.step3}</h2>
+          <div className="field">
+            <label className="choice" style={{ alignItems: "flex-start" }}>
+              <input
+                type="checkbox"
+                checked={waiver}
+                onChange={(e) => setWaiver(e.target.checked)}
+                style={{ marginTop: 4 }}
+              />
+              <span style={{ maxWidth: "56ch" }}>{c.waiverLabel}</span>
+            </label>
+            <p className="small muted">{c.waiverOff}</p>
+          </div>
+        </section>
 
-        <div className="field">
-          <span className="field-label">{c.waiverTitle}</span>
-          <label className="choice" style={{ alignItems: "flex-start" }}>
+        <section className="co-panel">
+          <h2>{c.step4}</h2>
+          <div className="field">
+            <label htmlFor="email">{c.email}</label>
             <input
-              type="checkbox"
-              checked={waiver}
-              onChange={(e) => setWaiver(e.target.checked)}
-              style={{ marginTop: 4 }}
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                fontSize: 15,
+                border: "1px solid var(--border)",
+                borderRadius: "var(--radius)",
+                background: "var(--surface)",
+                fontFamily: "var(--font-body)",
+              }}
             />
-            <span style={{ maxWidth: "56ch" }}>{c.waiverLabel}</span>
-          </label>
-          <p className="small muted">{c.waiverOff}</p>
-        </div>
+          </div>
+
+          <div className="field" style={{ marginBottom: 0 }}>
+            <span className="field-label">{c.termsTitle}</span>
+            <label className="choice" style={{ alignItems: "flex-start" }}>
+              <input
+                type="checkbox"
+                checked={terms}
+                onChange={(e) => setTerms(e.target.checked)}
+                style={{ marginTop: 4 }}
+              />
+              <span style={{ maxWidth: "56ch" }}>{c.termsLabel}</span>
+            </label>
+            <p className="small muted">
+              <Link href={`/${locale}/terms`}>{c.termsLink}</Link>
+              {" · "}
+              <Link href={`/${locale}/withdrawal`}>{c.withdrawalLink}</Link>
+            </p>
+          </div>
+        </section>
       </div>
 
       <aside className="est-panel">
@@ -232,7 +262,9 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
         <hr />
         <div className="row">
           <span className="muted">{c.totalToday}</span>
-          <strong style={{ fontSize: 18 }}>{eur(totals.oneTime, locale)}</strong>
+          <strong style={{ fontSize: 18 }}>
+            {eur(totals.oneTime, locale)}
+          </strong>
         </div>
         {quote.app_type === "B" && (
           <>
@@ -260,7 +292,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
         <hr />
         <button
           className="btn btn-primary btn-block"
-          disabled={!emailOk || busy}
+          disabled={!emailOk || !terms || busy}
           onClick={pay}
         >
           {busy ? c.working : c.pay}

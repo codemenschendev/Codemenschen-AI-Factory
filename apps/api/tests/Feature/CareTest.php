@@ -29,7 +29,7 @@ class CareTest extends TestCase
     private function releasedProject(): Project
     {
         $quote = $this->postJson('/api/quotes', ['idea' => 'club app', 'audience' => 'b2b', 'platform' => 'mobile', 'features' => ['auth']])->json('id');
-        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => true]);
+        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => true, 'terms' => true, 'terms' => true]);
         $project = app(OrderFulfillment::class)->markPaid(Order::latest('created_at')->firstOrFail(), 'pi', 100, [])->fresh();
         $project->update(['status' => 'READY']);
         $project->criteria()->create(['key' => 'boots', 'criterion' => 'app boots', 'kind' => 'automated', 'status' => 'passed']);
@@ -46,7 +46,7 @@ class CareTest extends TestCase
             ->postJson("/api/me/projects/{$project->id}/care/checkout", [])
             ->assertUnprocessable();
         $this->withHeader('Authorization', "Bearer {$this->token}")
-            ->postJson("/api/me/projects/{$project->id}/care/checkout", ['fagg_waiver' => true])
+            ->postJson("/api/me/projects/{$project->id}/care/checkout", ['fagg_waiver' => true, 'terms' => true, 'terms' => true])
             ->assertStatus(503)
             ->assertJsonPath('payment', 'unconfigured');
         $this->assertDatabaseHas('project_events', ['project_id' => $project->id, 'type' => 'care.checkout_requested']);

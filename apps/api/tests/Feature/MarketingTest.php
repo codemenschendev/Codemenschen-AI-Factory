@@ -28,7 +28,7 @@ class MarketingTest extends TestCase
             'idea' => 'x', 'audience' => 'consumer', 'platform' => 'mobile', 'features' => [],
         ])->json('id');
         $this->postJson('/api/checkout', [
-            'quote_id' => $quote, 'email' => 'mkt@example.com', 'fagg_waiver' => true,
+            'quote_id' => $quote, 'email' => 'mkt@example.com', 'fagg_waiver' => true, 'terms' => true,
             'packages' => ['marketingLaunch' => true], 'ad_budget_monthly_eur' => 500,
         ]);
         $order = Order::firstOrFail();

@@ -7,7 +7,7 @@ import { LangSwitch } from "@/components/LangSwitch";
 import "../globals.css";
 
 export const metadata: Metadata = {
-  title: "Appwerk — AI App Factory",
+  title: "Appwerk · AI App Factory",
   description: "Pick an app idea, pay a fixed price, own the finished app.",
 };
 
@@ -66,6 +66,8 @@ export default async function LocaleLayout({
               <a href="https://www.codemenschen.at/impressum" target="_blank" rel="noopener">
                 {dict.footer.imprint}
               </a>
+              <Link href={`/${locale}/terms`}>{dict.legal.terms.title}</Link>
+              <Link href={`/${locale}/withdrawal`}>{dict.legal.withdrawal.title}</Link>
             </div>
           </div>
           <div className="wrap">

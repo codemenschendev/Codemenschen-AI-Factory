@@ -28,7 +28,7 @@ class PublishingTest extends TestCase
             'idea' => 'x', 'audience' => 'b2b', 'platform' => 'mobile', 'features' => ['auth'],
         ])->json('id');
         $this->postJson('/api/checkout', [
-            'quote_id' => $quote, 'email' => 'pub@example.com', 'fagg_waiver' => true,
+            'quote_id' => $quote, 'email' => 'pub@example.com', 'fagg_waiver' => true, 'terms' => true,
             'packages' => ['storePublishing' => true],
         ]);
         $order = Order::firstOrFail();

@@ -81,7 +81,7 @@ class QuoteRefineTest extends TestCase
             ]),
         ]);
         $quote = $this->postJson('/api/quotes', ['idea' => 'salon booking', 'audience' => 'b2b', 'platform' => 'mobile', 'features' => ['auth']])->json('id');
-        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => true]);
+        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'c@example.com', 'fagg_waiver' => true, 'terms' => true, 'terms' => true]);
         $project = app(OrderFulfillment::class)->markPaid(Order::latest('created_at')->firstOrFail(), 'pi', 100, [])->fresh();
         $token = $project->customer->createToken('portal')->plainTextToken;
 

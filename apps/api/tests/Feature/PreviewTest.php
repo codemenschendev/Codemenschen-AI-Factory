@@ -23,7 +23,7 @@ class PreviewTest extends TestCase
         config(['services.stripe.secret' => null, 'services.worker.token' => 't', 'app.url' => 'https://api.test']);
         Http::fake(['*/run' => Http::response(['accepted' => true], 202)]);
         $quote = $this->postJson('/api/quotes', ['idea' => 'x', 'audience' => 'b2b', 'platform' => 'web', 'features' => ['dash']])->json('id');
-        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'prev@example.com', 'fagg_waiver' => true]);
+        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'prev@example.com', 'fagg_waiver' => true, 'terms' => true, 'terms' => true]);
         $this->project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 100, []);
 
         $this->dir = sys_get_temp_dir().'/factory-artifacts-'.uniqid();
