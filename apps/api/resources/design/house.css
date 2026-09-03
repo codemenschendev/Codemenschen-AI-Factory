@@ -40,8 +40,8 @@ body.t-rose   { --accent: #9f1239; --accent-soft: #fff1f2; --surface: #fdf8f9;
 
 body {
   background: var(--bg); color: var(--ink);
-  font: var(--fs-base)/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
-        "Helvetica Neue", Arial, sans-serif;
+  font: var(--fs-base)/1.65 "Instrument Sans", ui-sans-serif, system-ui, -apple-system,
+        "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   font-feature-settings: "kern" 1, "liga" 1;
 }
@@ -54,9 +54,9 @@ h1, h2, h3, p, li, .quote, .brand { overflow-wrap: break-word; }
 /* hyphens only where the column is genuinely too narrow for German compounds. At desktop width
    it fires on words that fit perfectly well and litters the page with "Kü-chen". */
 @media (max-width: 560px) { h1, h2, h3, p, li, .quote { hyphens: auto; } }
-h1, h2, h3 { margin: 0; line-height: 1.12; letter-spacing: -.022em; font-weight: 680; }
-h1 { font-size: var(--fs-4xl); letter-spacing: -.032em; }
-h2 { font-size: var(--fs-3xl); letter-spacing: -.026em; }
+h1, h2, h3 { margin: 0; line-height: 1.08; letter-spacing: -.025em; font-weight: 700; }
+h1 { font-size: var(--fs-4xl); letter-spacing: -.04em; }
+h2 { font-size: var(--fs-3xl); letter-spacing: -.032em; }
 h3 { font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -.014em; font-weight: 640; }
 p  { margin: 0; }
 a  { color: inherit; }
@@ -73,10 +73,12 @@ a  { color: inherit; }
   backdrop-filter: saturate(180%) blur(12px);
   border-bottom: 1px solid var(--border);
 }
-.nav-inner {
-  display: flex; align-items: center; gap: var(--sp-5);
-  height: 68px; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--sp-5);
-}
+/* The generator writes .nav-inner, or a .container, or nothing at all and just drops the brand
+   straight into .nav. Any direct child gets the container treatment, so all three shapes come out
+   with the same height and the same gutter instead of one of them collapsing onto the left edge. */
+.nav { display: flex; align-items: center; min-height: 68px; }
+.nav > * { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--sp-5); }
+.nav-inner { display: flex; align-items: center; gap: var(--sp-5); }
 .brand { font-weight: 700; letter-spacing: -.02em; font-size: var(--fs-lg); text-decoration: none; }
 .nav-links { display: flex; gap: var(--sp-5); margin-left: auto; align-items: center; }
 /* :not(.btn) matters. `.nav-links a` outranks `.btn-primary` on specificity, so without it the
@@ -87,12 +89,41 @@ a  { color: inherit; }
 @media (max-width: 720px) { .nav-links a:not(:last-child) { display: none; } }
 
 /* --- Hero ------------------------------------------------------------------------------ */
-.hero { padding: var(--sp-10) 0 var(--sp-9); position: relative; overflow: hidden; }
-.hero::after {
-  /* One soft wash instead of the gradient slab every generated page reaches for. */
-  content: ""; position: absolute; inset: -30% 30% 45% -20%; z-index: -1;
-  background: radial-gradient(closest-side, var(--accent-soft), transparent 72%);
+/* The wash is a background, not a pseudo-element. No z-index to get wrong, and no overflow:hidden,
+   which is what silently swallowed a heading here once already. */
+.hero {
+  padding: var(--sp-10) 0 var(--sp-9);
+  background: radial-gradient(58% 68% at 14% -8%, var(--accent-soft), transparent 70%);
 }
+
+/* A dark opening band. This is the single biggest change in how a page reads and the one thing a
+   light palette cannot do for itself, so the generator is told to reach for it on maybe half the
+   pages: always dark would be its own kind of sameness. */
+.hero.invert {
+  --ink: #f7f9fc; --ink-soft: #9aa8bd;
+  color: var(--ink);
+  background:
+    radial-gradient(52% 62% at 16% -6%, color-mix(in srgb, var(--accent) 62%, transparent), transparent 70%),
+    #0a0f1c;
+}
+.hero.invert .eyebrow { color: color-mix(in srgb, var(--accent) 45%, #ffffff); }
+.hero.invert .btn-ghost { background: transparent; border-color: #2b3648; color: var(--ink); }
+.hero.invert .btn-ghost:hover { background: #131b2b; }
+/* A white bar sitting on a dark hero draws a hard seam across the first thing anyone sees.
+   :has() lets the nav follow the hero it precedes, so the top of the page is one band. */
+.nav:has(+ .hero.invert) { background: color-mix(in srgb, #0a0f1c 88%, transparent); border-bottom-color: #1a2333; }
+.nav:has(+ .hero.invert) .brand { color: #f7f9fc; }
+.nav:has(+ .hero.invert) .nav-links a:not(.btn) { color: #9aa8bd; }
+.nav:has(+ .hero.invert) .nav-links a:not(.btn):hover { color: #f7f9fc; }
+
+/* A line of short proof under the hero: places served, years, what is included. Cheap to write,
+   and it stops the opening being one headline floating in space. */
+.tag-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); margin-top: var(--sp-6); }
+.tag {
+  font-size: var(--fs-xs); font-weight: 560; color: var(--ink-soft);
+  border: 1px solid var(--border); border-radius: var(--r-full); padding: 6px var(--sp-3);
+}
+.hero.invert .tag { border-color: #22304a; }
 .hero h1 { max-width: 18ch; }
 .hero .lead { margin-top: var(--sp-5); font-size: var(--fs-xl); line-height: 1.5; }
 .hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
@@ -181,7 +212,9 @@ a  { color: inherit; }
    four screens fit a laptop without shrinking to thumbnails, and the frame is drawn in CSS
    because the page may not load an image of one. */
 .screens { display: flex; gap: var(--sp-6); overflow-x: auto; padding: var(--sp-2) 0 var(--sp-5); }
-.phone { flex: 0 0 auto; width: 258px; }
+/* 4 x 240 plus three gaps is 1032, inside the 1072 a .container leaves at full width, so the
+   fourth screen is visible rather than half cut off behind a scrollbar nobody notices. */
+.phone { flex: 0 0 auto; width: 240px; }
 .phone-frame {
   aspect-ratio: 9 / 19.5; border: 9px solid #1c1c1e; border-radius: 38px; background: var(--bg);
   box-shadow: var(--shadow-lg); overflow: hidden; position: relative;
@@ -218,21 +251,27 @@ a  { color: inherit; }
    as a deliberate design rather than a missing image. */
 .ad-grid { display: flex; flex-wrap: wrap; gap: var(--sp-6); align-items: flex-start; }
 .ad {
-  position: relative; display: flex; flex-direction: column; justify-content: flex-end;
-  padding: var(--sp-5); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow);
+  position: relative; display: flex; flex-direction: column;
+  padding: var(--sp-4); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow);
   color: var(--accent-ink);
   background: radial-gradient(115% 75% at 72% 8%, rgb(255 255 255 / .22), transparent 62%), var(--accent);
 }
 .ad-story  { width: 232px; aspect-ratio: 9 / 16; }
 .ad-square { width: 300px; aspect-ratio: 1 / 1; }
-.ad-link   { width: 392px; aspect-ratio: 1.91 / 1; }
-.ad h3 { color: inherit; }
+.ad-link   { width: 460px; aspect-ratio: 1.91 / 1; }
+/* margin-top:auto here, not justify-content:flex-end on the parent. Bottom-justifying a flex
+   column pushes the FIRST child out through the top when the content is tall, and overflow in the
+   start direction is not counted by scrollHeight, so it vanishes with nothing reporting it. This
+   way the hook always stays readable and it is the tail that gets clipped. */
+.ad h3 { color: inherit; margin-top: auto; font-size: var(--fs-lg); }
 .ad p  { color: inherit; opacity: .9; font-size: var(--fs-sm); margin-top: var(--sp-2); }
 .ad-cta {
   align-self: flex-start; margin-top: var(--sp-4); background: var(--accent-ink); color: var(--accent);
   border-radius: var(--r-full); padding: 9px var(--sp-4); font-size: var(--fs-xs); font-weight: 660;
 }
+/* A flex item with margin-bottom:auto, not an absolute overlay: it sits at the top and pushes the
+   copy down instead of printing itself across the headline of the wider formats. */
 .ad-size {
-  position: absolute; top: var(--sp-3); right: var(--sp-3);
+  align-self: flex-end; margin-bottom: auto;
   font-size: 11px; letter-spacing: .05em; opacity: .72;
 }

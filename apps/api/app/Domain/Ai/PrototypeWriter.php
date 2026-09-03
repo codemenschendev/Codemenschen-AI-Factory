@@ -34,6 +34,10 @@ class PrototypeWriter
         for colour, spacing, type size, shadows or radius: those are decided. Write at most a
         handful of declarations, and only for something genuinely specific to this page.
 
+        The hero may be light or dark. For a dark opening band write <header class="hero invert">.
+        Use it when the trade wants to look premium, technical or nocturnal, and leave it light
+        for anything warm, local or hands-on. Roughly one page in two should be dark.
+
         Choose ONE palette and put it on the body, matching the trade:
           t-slate (professional services, finance, B2B) · t-forest (trades, nature, health, food)
           t-amber (hospitality, bakery, workshop, craft) · t-indigo (software, agency, tech)
@@ -43,7 +47,9 @@ class PrototypeWriter
           <nav class="nav"><div class="nav-inner"><a class="brand">…</a>
             <div class="nav-links"><a href="#…">…</a>… <a class="btn btn-primary">…</a></div></div></nav>
           <header class="hero"><div class="container"> span.eyebrow, h1, p.lead,
-            div.hero-actions with one .btn.btn-primary and one .btn.btn-ghost </div></header>
+            div.hero-actions with one .btn.btn-primary and one .btn.btn-ghost, then a .tag-row of
+            three or four span.tag with short proof: the town, the years, what is included
+            </div></header>
           THREE <section class="section"> (give the middle one class="section alt"), each with
             <div class="container">, a .section-head (h2 plus p.lead) and then its content
           <section class="section"><div class="container"><div class="cta">…</div></div></section>
@@ -85,10 +91,17 @@ class PrototypeWriter
 
         Choose ONE palette on the body: t-slate · t-forest · t-amber · t-indigo · t-rose.
 
+        The hero may be light or dark. For a dark opening band write <header class="hero invert">.
+        Use it when the trade wants to look premium, technical or nocturnal, and leave it light
+        for anything warm, local or hands-on. Roughly one page in two should be dark.
+
         Structure:
-          <nav class="nav"> with the app name as .brand and one .btn.btn-primary
+          <nav class="nav"><div class="nav-inner"> the app name as .brand, then a
+            .nav-links holding one .btn.btn-primary </div></nav>
           <header class="hero"><div class="container"> span.eyebrow, h1 naming the app,
-            p.lead saying in one sentence what it does for whom </div></header>
+            p.lead saying in one sentence what it does for whom, then a .tag-row of three
+            span.tag naming what it replaces: no phone calls, no waiting, no double bookings
+            </div></header>
           <section class="section"><div class="container">
             <div class="screens"> FOUR .phone blocks </div></div></section>
           <section class="section alt"> a .grid of three .card explaining what each part does
@@ -133,10 +146,15 @@ class PrototypeWriter
 
         Choose ONE palette on the body: t-slate · t-forest · t-amber · t-indigo · t-rose.
 
+        The hero may be light or dark. For a dark opening band write <header class="hero invert">.
+        Use it when the trade wants to look premium, technical or nocturnal, and leave it light
+        for anything warm, local or hands-on. Roughly one page in two should be dark.
+
         Structure:
-          <nav class="nav"> with the business name as .brand
+          <nav class="nav"><div class="nav-inner"> the business name as .brand </div></nav>
           <header class="hero"><div class="container"> span.eyebrow, h1, p.lead naming the one
-            customer these ads speak to and the one action they should take </div></header>
+            customer these ads speak to and the one action they should take, then a .tag-row of
+            three span.tag: the platform, the format, the goal </div></header>
           <section class="section"><div class="container"><div class="section-head">…</div>
             <div class="ad-grid"> the creatives </div></div></section>
           <section class="section alt"> a .grid of three .card: who the ad is shown to, what it
@@ -168,10 +186,11 @@ class PrototypeWriter
     /** The three things a visitor can ask for. `site` is the default and the original behaviour. */
     public const KINDS = ['site', 'app', 'ads'];
 
-    /** The house stylesheet, read once per request and inlined into whatever the model returns. */
+    /** The house stylesheet plus its embedded typeface, inlined into whatever the model returns. */
     private function house(): string
     {
-        return (string) file_get_contents(resource_path('design/house.css'));
+        return (string) file_get_contents(resource_path('design/font.css'))."\n"
+            .(string) file_get_contents(resource_path('design/house.css'));
     }
 
     /** @return array{title:string,html:string} */
