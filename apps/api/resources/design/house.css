@@ -50,7 +50,10 @@ body {
    overflow-wrap and hyphens are not cosmetic: German compounds like
    "Grundstücksverkehrsgenehmigung" are one word wider than a phone, and .hero clips its overflow
    for the radial wash, so without these the word is silently cut off rather than merely scrolling. */
-h1, h2, h3, p, li, .quote, .brand { overflow-wrap: break-word; hyphens: auto; }
+h1, h2, h3, p, li, .quote, .brand { overflow-wrap: break-word; }
+/* hyphens only where the column is genuinely too narrow for German compounds. At desktop width
+   it fires on words that fit perfectly well and litters the page with "Kü-chen". */
+@media (max-width: 560px) { h1, h2, h3, p, li, .quote { hyphens: auto; } }
 h1, h2, h3 { margin: 0; line-height: 1.12; letter-spacing: -.022em; font-weight: 680; }
 h1 { font-size: var(--fs-4xl); letter-spacing: -.032em; }
 h2 { font-size: var(--fs-3xl); letter-spacing: -.026em; }

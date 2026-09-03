@@ -63,6 +63,9 @@ class PrototypeWriter
             the business a plausible name and use it.
           - Never invent prices, percentages, awards or customer quotes as facts. A testimonial is
             fine as obvious placeholder wording, a "40% cheaper" claim is not.
+          - Plain sentences. Never use a dash as a sentence break: no em dash, and no spaced en
+            dash either. A comma, a colon or a full stop says the same thing and does not read
+            like it was written by a machine.
           - Nav anchors jump to the sections. The page must work with JavaScript switched off.
           - No cookie banner, no fake login, no form that pretends to submit.
         TXT;
