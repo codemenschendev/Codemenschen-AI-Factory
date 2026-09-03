@@ -1,0 +1,170 @@
+/* Codemenschen house style for generated prototypes.
+   Values are Tailwind's scales with shadcn's semantic naming, both MIT. The point is not that
+   these numbers are special: it is that they never change. A model that picks its own spacing and
+   its own blue every time produces pages that are each individually plausible and collectively a
+   mess. Take the choice away and the pages start to look like they came from one studio. */
+
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; }
+
+:root {
+  /* One ratio, used everywhere. Headings clamp so a phone never gets a 72px word. */
+  --fs-xs: .8125rem; --fs-sm: .9375rem; --fs-base: 1.0625rem; --fs-lg: 1.1875rem;
+  --fs-xl: 1.5rem;   --fs-2xl: 2rem;
+  --fs-3xl: clamp(2.1rem, 1.4rem + 2.6vw, 3.1rem);
+  --fs-4xl: clamp(2.6rem, 1.6rem + 4.2vw, 4.4rem);
+
+  --sp-1: 4px;  --sp-2: 8px;  --sp-3: 12px; --sp-4: 16px; --sp-5: 24px;
+  --sp-6: 32px; --sp-7: 48px; --sp-8: 64px; --sp-9: 96px; --sp-10: 128px;
+
+  --r: 10px; --r-lg: 16px; --r-full: 999px;
+  --shadow: 0 1px 2px rgb(16 24 40 / .06), 0 8px 24px -12px rgb(16 24 40 / .18);
+  --shadow-lg: 0 2px 4px rgb(16 24 40 / .05), 0 24px 48px -20px rgb(16 24 40 / .26);
+  --maxw: 1120px;
+
+  /* Neutral spine. Palettes below only swap the accent and tint the surfaces. */
+  --bg: #ffffff; --surface: #f8fafc; --ink: #0f172a; --ink-soft: #475569;
+  --border: #e2e8f0; --accent: #1e3a8a; --accent-ink: #ffffff; --accent-soft: #eef2ff;
+}
+
+/* Pick exactly one of these on <body>. They are the whole colour decision. */
+body.t-slate  { --accent: #1e40af; --accent-soft: #eff6ff; --surface: #f8fafc; }
+body.t-forest { --accent: #15803d; --accent-soft: #f0fdf4; --surface: #f7faf8;
+                --ink: #14251c; --ink-soft: #466154; --border: #dcebe2; }
+body.t-amber  { --accent: #b45309; --accent-soft: #fffbeb; --surface: #fdfaf5;
+                --ink: #2a1c0c; --ink-soft: #6b5540; --border: #efe3d2; }
+body.t-indigo { --accent: #4338ca; --accent-soft: #eef2ff; --surface: #fafaff;
+                --ink: #171432; --ink-soft: #4f4a6b; --border: #e4e3f2; }
+body.t-rose   { --accent: #9f1239; --accent-soft: #fff1f2; --surface: #fdf8f9;
+                --ink: #2a1119; --ink-soft: #6d4d56; --border: #f0dfe3; }
+
+body {
+  background: var(--bg); color: var(--ink);
+  font: var(--fs-base)/1.65 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  font-feature-settings: "kern" 1, "liga" 1;
+}
+
+/* Tight tracking on large type is most of what separates system fonts from cheap system fonts. */
+h1, h2, h3 { margin: 0; line-height: 1.12; letter-spacing: -.022em; font-weight: 680; }
+h1 { font-size: var(--fs-4xl); letter-spacing: -.032em; }
+h2 { font-size: var(--fs-3xl); letter-spacing: -.026em; }
+h3 { font-size: var(--fs-xl); line-height: 1.3; letter-spacing: -.014em; font-weight: 640; }
+p  { margin: 0; }
+a  { color: inherit; }
+
+.container { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--sp-5); }
+.lead { font-size: var(--fs-lg); color: var(--ink-soft); max-width: 62ch; }
+.muted { color: var(--ink-soft); }
+.stack > * + * { margin-top: var(--sp-4); }
+
+/* --- Navigation ------------------------------------------------------------------------ */
+.nav {
+  position: sticky; top: 0; z-index: 20;
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
+  backdrop-filter: saturate(180%) blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-inner {
+  display: flex; align-items: center; gap: var(--sp-5);
+  height: 68px; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--sp-5);
+}
+.brand { font-weight: 700; letter-spacing: -.02em; font-size: var(--fs-lg); text-decoration: none; }
+.nav-links { display: flex; gap: var(--sp-5); margin-left: auto; align-items: center; }
+/* :not(.btn) matters. `.nav-links a` outranks `.btn-primary` on specificity, so without it the
+   nav's call to action gets the muted link colour and goes almost invisible on its own accent. */
+.nav-links a:not(.btn) { text-decoration: none; color: var(--ink-soft); font-size: var(--fs-sm); font-weight: 520; }
+.nav-links a:not(.btn):hover { color: var(--ink); }
+.nav-links .btn { text-decoration: none; }
+@media (max-width: 720px) { .nav-links a:not(:last-child) { display: none; } }
+
+/* --- Hero ------------------------------------------------------------------------------ */
+.hero { padding: var(--sp-10) 0 var(--sp-9); position: relative; overflow: hidden; }
+.hero::after {
+  /* One soft wash instead of the gradient slab every generated page reaches for. */
+  content: ""; position: absolute; inset: -30% 30% 45% -20%; z-index: -1;
+  background: radial-gradient(closest-side, var(--accent-soft), transparent 72%);
+}
+.hero h1 { max-width: 18ch; }
+.hero .lead { margin-top: var(--sp-5); font-size: var(--fs-xl); line-height: 1.5; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: var(--sp-3); margin-top: var(--sp-6); }
+
+.eyebrow {
+  display: inline-block; font-size: var(--fs-xs); font-weight: 640; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--accent); margin-bottom: var(--sp-4);
+}
+
+/* --- Sections -------------------------------------------------------------------------- */
+.section { padding: var(--sp-9) 0; }
+.section.alt { background: var(--surface); border-block: 1px solid var(--border); }
+.section-head { max-width: 46rem; margin-bottom: var(--sp-7); }
+.section-head .lead { margin-top: var(--sp-4); }
+
+.grid { display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+.grid-2 { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.split { display: grid; gap: var(--sp-8); grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: center; }
+
+.card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: var(--sp-6); box-shadow: var(--shadow);
+}
+.card h3 { margin-bottom: var(--sp-3); }
+.card p { color: var(--ink-soft); }
+
+/* Inline SVG goes in here. Keep icons to a simple stroked glyph. */
+.icon {
+  width: 44px; height: 44px; border-radius: var(--r); display: grid; place-items: center;
+  background: var(--accent-soft); color: var(--accent); margin-bottom: var(--sp-4);
+}
+.icon svg { width: 22px; height: 22px; stroke: currentColor; fill: none; stroke-width: 1.75; }
+
+/* --- Buttons --------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  padding: 13px var(--sp-5); border-radius: var(--r); border: 1px solid transparent;
+  font-size: var(--fs-sm); font-weight: 620; text-decoration: none; cursor: pointer;
+  transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+}
+.btn-primary { background: var(--accent); color: var(--accent-ink); box-shadow: var(--shadow); }
+.btn-primary:hover { transform: translateY(-1px); box-shadow: var(--shadow-lg); }
+.btn-ghost { border-color: var(--border); background: var(--bg); color: var(--ink); }
+.btn-ghost:hover { background: var(--surface); }
+
+/* --- Numbers, prices, quotes ----------------------------------------------------------- */
+.stats { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.stat-n { font-size: var(--fs-3xl); font-weight: 700; letter-spacing: -.03em; color: var(--accent); line-height: 1; }
+.stat-l { margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--ink-soft); }
+
+.price { display: flex; align-items: baseline; gap: var(--sp-2); margin: var(--sp-4) 0; }
+.price b { font-size: var(--fs-2xl); letter-spacing: -.03em; }
+.card.featured { border-color: var(--accent); box-shadow: var(--shadow-lg); position: relative; }
+.card.featured::before {
+  content: attr(data-tag); position: absolute; top: calc(-1 * var(--sp-3)); left: var(--sp-6);
+  background: var(--accent); color: var(--accent-ink); font-size: var(--fs-xs); font-weight: 640;
+  padding: var(--sp-1) var(--sp-3); border-radius: var(--r-full);
+}
+.list { list-style: none; padding: 0; margin: 0; display: grid; gap: var(--sp-3); }
+.list li { display: flex; gap: var(--sp-3); color: var(--ink-soft); font-size: var(--fs-sm); }
+.list li::before { content: "✓"; color: var(--accent); font-weight: 700; }
+
+.quote { font-size: var(--fs-xl); line-height: 1.5; letter-spacing: -.012em; max-width: 46rem; }
+.quote-by { margin-top: var(--sp-5); font-size: var(--fs-sm); color: var(--ink-soft); }
+
+/* --- Call to action and footer --------------------------------------------------------- */
+.cta {
+  background: var(--accent); color: var(--accent-ink); border-radius: var(--r-lg);
+  padding: var(--sp-8) var(--sp-7); text-align: center;
+}
+.cta h2 { color: inherit; }
+.cta .lead { color: inherit; opacity: .88; margin-inline: auto; }
+.cta .btn-ghost { background: var(--accent-ink); border-color: transparent; color: var(--accent); }
+
+.footer { border-top: 1px solid var(--border); padding: var(--sp-7) 0; color: var(--ink-soft); font-size: var(--fs-sm); }
+.footer-inner { display: flex; flex-wrap: wrap; gap: var(--sp-5); align-items: center; justify-content: space-between; }
+
+@media (max-width: 640px) {
+  .hero { padding: var(--sp-8) 0 var(--sp-7); }
+  .section { padding: var(--sp-8) 0; }
+  .cta { padding: var(--sp-7) var(--sp-5); }
+}

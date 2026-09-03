@@ -25,18 +25,53 @@ class PrototypeWriter
         create files, never run commands, never fetch anything: your whole reply is the HTML, from
         <!doctype html> to </html>, with no prose and no code fence around it.
 
-        The page is a clickable PROTOTYPE of what the visitor described. Rules:
-        - One self-contained file. All CSS in a <style> tag. No external URLs, fonts, images or
-          scripts: use system fonts, CSS gradients and inline SVG for any graphics.
-        - Exactly: a nav, a hero, THREE sections, and a footer. Not more. This is a first
-          impression, not a finished site, and the visitor is watching a spinner while you write.
-        - Keep the whole file under 300 lines. Write compact CSS: group selectors, skip decorative
-          rules that do not change the look at this size.
-        - Clickable via in-page anchors (nav jumps to sections). A little vanilla JS is allowed for
-          things like a mobile menu, but the page must make sense with JS switched off.
-        - Real, specific copy about the visitor's idea, in their language. No lorem ipsum.
-        - Responsive. No cookie banners, no fake login, no forms that pretend to submit anywhere.
+        A house stylesheet is already loaded. You WRITE MARKUP, NOT CSS. Put this exact line in the
+        head and nothing else for styling:
+
+            <link rel="stylesheet" href="house.css">
+
+        Use the classes below and no others. Do not restate their rules, do not add a <style> block
+        for colour, spacing, type size, shadows or radius: those are decided. Write at most a
+        handful of declarations, and only for something genuinely specific to this page.
+
+        Choose ONE palette and put it on the body, matching the trade:
+          t-slate (professional services, finance, B2B) · t-forest (trades, nature, health, food)
+          t-amber (hospitality, bakery, workshop, craft) · t-indigo (software, agency, tech)
+          t-rose (beauty, salon, care, boutique)
+
+        Structure, in this order, and nothing more:
+          <nav class="nav"><div class="nav-inner"><a class="brand">…</a>
+            <div class="nav-links"><a href="#…">…</a>… <a class="btn btn-primary">…</a></div></div></nav>
+          <header class="hero"><div class="container"> span.eyebrow, h1, p.lead,
+            div.hero-actions with one .btn.btn-primary and one .btn.btn-ghost </div></header>
+          THREE <section class="section"> (give the middle one class="section alt"), each with
+            <div class="container">, a .section-head (h2 plus p.lead) and then its content
+          <section class="section"><div class="container"><div class="cta">…</div></div></section>
+          <footer class="footer"><div class="container"><div class="footer-inner">…</div></div></footer>
+
+        Blocks to build the three sections from, one kind per section:
+          .grid of .card, each with .icon (one inline SVG, stroked, no fill), h3, p
+          .split of a text column and a .card
+          .stats of .stat-n plus .stat-l
+          .grid of .card with .price (b for the number) and ul.list, one card .featured
+            with data-tag="…"
+          blockquote.quote plus p.quote-by
+
+        Rules that still hold:
+          - No external URLs, fonts, images or scripts. Icons are inline SVG using the .icon block.
+          - Real, specific copy about the visitor's idea, in their language. No lorem ipsum. Give
+            the business a plausible name and use it.
+          - Never invent prices, percentages, awards or customer quotes as facts. A testimonial is
+            fine as obvious placeholder wording, a "40% cheaper" claim is not.
+          - Nav anchors jump to the sections. The page must work with JavaScript switched off.
+          - No cookie banner, no fake login, no form that pretends to submit.
         TXT;
+
+    /** The house stylesheet, read once per request and inlined into whatever the model returns. */
+    private function house(): string
+    {
+        return (string) file_get_contents(resource_path('design/house.css'));
+    }
 
     /** @return array{title:string,html:string} */
     public function build(string $prompt): array
@@ -60,10 +95,10 @@ class PrototypeWriter
                 ['role' => 'system', 'content' => self::SYSTEM],
                 ['role' => 'user', 'content' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."],
             ],
-            // A page this size is ~12k tokens of HTML. The cap keeps a chatty model from writing
-            // a 40 KB page that takes three minutes: the sidecar gives up at 180s, and a visitor
-            // watching a spinner gives up sooner.
-            'max_completion_tokens' => 14000,
+            // Markup only now: the house stylesheet is inlined afterwards, so the model is not
+            // paying tokens to invent CSS. That roughly halves what it has to write, which is the
+            // difference between a visitor waiting and a visitor leaving.
+            'max_completion_tokens' => 8000,
         ]);
 
         if (! $res->successful()) {
@@ -79,8 +114,32 @@ class PrototypeWriter
         if ($html === '') {
             throw new RuntimeException('AI không trả về HTML dùng được.');
         }
+        $html = $this->inlineHouse($html);
 
         return ['title' => $this->titleOf($html), 'html' => $html];
+    }
+
+    /**
+     * Puts the house stylesheet into the page and takes out the placeholder link.
+     *
+     * The model is told to write one <link> and no CSS, but it is an agent and it improvises. So
+     * this does not trust the link to be there: it strips any reference to house.css and inserts
+     * the real thing at whatever anchor the document actually has. A prototype with no styling at
+     * all is the one outcome worth ruling out.
+     */
+    private function inlineHouse(string $html): string
+    {
+        $html = preg_replace('~<link[^>]*house\.css[^>]*>~i', '', $html) ?? $html;
+        $style = '<style>'."\n".$this->house()."\n".'</style>';
+
+        foreach (['</head>' => 0, '<body' => 0] as $needle => $_) {
+            $at = stripos($html, $needle);
+            if ($at !== false) {
+                return substr($html, 0, $at).$style.substr($html, $at);
+            }
+        }
+
+        return $style.$html;
     }
 
     private function extractHtml(string $text): string
