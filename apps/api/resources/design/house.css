@@ -46,7 +46,11 @@ body {
   font-feature-settings: "kern" 1, "liga" 1;
 }
 
-/* Tight tracking on large type is most of what separates system fonts from cheap system fonts. */
+/* Tight tracking on large type is most of what separates system fonts from cheap system fonts.
+   overflow-wrap and hyphens are not cosmetic: German compounds like
+   "Grundstücksverkehrsgenehmigung" are one word wider than a phone, and .hero clips its overflow
+   for the radial wash, so without these the word is silently cut off rather than merely scrolling. */
+h1, h2, h3, p, li, .quote, .brand { overflow-wrap: break-word; hyphens: auto; }
 h1, h2, h3 { margin: 0; line-height: 1.12; letter-spacing: -.022em; font-weight: 680; }
 h1 { font-size: var(--fs-4xl); letter-spacing: -.032em; }
 h2 { font-size: var(--fs-3xl); letter-spacing: -.026em; }
