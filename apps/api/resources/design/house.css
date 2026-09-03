@@ -275,3 +275,64 @@ a  { color: inherit; }
   align-self: flex-end; margin-bottom: auto;
   font-size: 11px; letter-spacing: .05em; opacity: .72;
 }
+
+/* --- Something to look at ----------------------------------------------------------------
+   A headline alone on a gradient is the difference between these pages and the ones they are
+   meant to stand next to. Every hero gets a visual, built here so the generator only writes
+   markup: a browser showing the site, a phone showing the app, or a stack of cards. */
+.hero-split {
+  display: grid; gap: var(--sp-8); align-items: center;
+  grid-template-columns: 1.05fr .95fr;
+}
+@media (max-width: 940px) { .hero-split { grid-template-columns: 1fr; } }
+
+/* A browser frame. The hero of a website prototype should show a website. */
+.browser {
+  border-radius: 14px; overflow: hidden; border: 1px solid var(--border);
+  background: var(--bg); box-shadow: var(--shadow-lg);
+  transform: perspective(1400px) rotateY(-7deg) rotateX(2deg); transform-origin: left center;
+}
+.browser-bar {
+  display: flex; align-items: center; gap: 6px;
+  padding: 10px var(--sp-4); background: var(--surface); border-bottom: 1px solid var(--border);
+}
+.browser-bar i { width: 9px; height: 9px; border-radius: 50%; background: var(--border); }
+.browser-url {
+  flex: 1; margin-left: var(--sp-3); padding: 4px var(--sp-3); border-radius: var(--r-full);
+  background: var(--bg); font-size: 11px; color: var(--ink-soft);
+}
+.browser-body { padding: var(--sp-5); display: grid; gap: var(--sp-4); }
+.browser-body h4 { margin: 0; font-size: var(--fs-lg); letter-spacing: -.02em; line-height: 1.15; }
+.browser-body p { font-size: var(--fs-xs); color: var(--ink-soft); }
+
+/* Miniature furniture for whatever sits inside a frame. Real shapes, not grey skeleton bars:
+   a mock full of placeholder rectangles looks like a page that failed to load. */
+.mini { display: grid; gap: var(--sp-2); grid-template-columns: repeat(3, 1fr); }
+.mini > div {
+  border: 1px solid var(--border); border-radius: 8px; padding: var(--sp-3);
+  font-size: 10px; line-height: 1.35; color: var(--ink-soft);
+}
+.mini b { display: block; color: var(--ink); font-size: 11px; margin-bottom: 2px; }
+.swatch { aspect-ratio: 16 / 9; border-radius: var(--r);
+  background: linear-gradient(135deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 45%, #ffffff) 100%); }
+
+/* Cards fanned out behind one another: depth without an image. */
+.fan { position: relative; padding: var(--sp-5) 0; }
+.fan > .card { position: relative; }
+.fan > .card:nth-child(1) { transform: rotate(-3deg) translateY(10px); opacity: .6; }
+.fan > .card:nth-child(2) { transform: rotate(1.5deg); margin-top: -62%; z-index: 1; }
+.fan > .card:nth-child(3) { transform: rotate(5deg) translateY(-8px); margin-top: -62%; opacity: .8; }
+
+/* The dark hero needs its frames to be dark too, or they punch a white hole in the band. */
+.hero.invert .browser { border-color: #1e293b; background: #0f1625; }
+.hero.invert .browser-bar { background: #131c2e; border-bottom-color: #1e293b; }
+.hero.invert .browser-bar i { background: #2b3648; }
+.hero.invert .browser-url { background: #0f1625; color: #7f8ea6; }
+.hero.invert .browser-body h4 { color: #f7f9fc; }
+.hero.invert .mini > div { border-color: #22304a; }
+.hero.invert .mini b { color: #e7ecf5; }
+.hero.invert .phone-frame { background: #0f1625; }
+.hero.invert .app-bar { background: #131c2e; border-bottom-color: #1e293b; color: #f7f9fc; }
+.hero.invert .app-row { border-color: #22304a; }
+.hero.invert .app-row b { color: #e7ecf5; }
+.hero.invert .app-tabs { background: #131c2e; border-top-color: #1e293b; }

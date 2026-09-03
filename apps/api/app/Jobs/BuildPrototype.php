@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Ai\PrototypeWriter;
+use App\Domain\Design\DesignRefs;
 use App\Models\Prototype;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -20,7 +21,7 @@ class BuildPrototype implements ShouldQueue
 
     public function __construct(public string $prototypeId, public string $kind = 'site') {}
 
-    public function handle(PrototypeWriter $writer): void
+    public function handle(PrototypeWriter $writer, DesignRefs $refs): void
     {
         $proto = Prototype::find($this->prototypeId);
         if (! $proto || $proto->status === 'ready') {
@@ -30,7 +31,7 @@ class BuildPrototype implements ShouldQueue
         $proto->update(['status' => 'building', 'error' => null]);
 
         try {
-            $out = $writer->build((string) $proto->prompt, $this->kind);
+            $out = $writer->build((string) $proto->prompt, $this->kind, $refs);
             $proto->update(['status' => 'ready', 'title' => $out['title'], 'html' => $out['html']]);
         } catch (Throwable $e) {
             Log::error('build prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);

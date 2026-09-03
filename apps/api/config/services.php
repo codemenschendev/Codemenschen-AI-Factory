@@ -95,6 +95,9 @@ return [
         // The shared photo library. Same directory ops/library.sh works on, bind-mounted from
         // /var/appwerk-media/library on the host, so the shell and the app see one catalog.
         'library_path' => env('MEDIA_LIBRARY_PATH', '/media/library'),
+        // Screenshots of designs to aim at. References only: shown to the model while it writes,
+        // never served to anyone, never embedded in anything that leaves the building.
+        'design_refs_path' => env('MEDIA_DESIGN_REFS_PATH', '/media/design-refs'),
     ],
 
     'openclaw' => [

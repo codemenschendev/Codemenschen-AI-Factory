@@ -42,6 +42,9 @@ services:
       # The photo library. Writable here because the operator marks, renames and deletes
       # entries from the admin panel; ops/library.sh works the same files from the host.
       - /var/appwerk-media/library:/media/library
+      # Design references. Read-only for the API: it lists and deletes through the panel, but
+      # nothing here is ever served, so it never needs to hand a file to anyone.
+      - /var/appwerk-media/design-refs:/media/design-refs
 
   horizon:
     build:
@@ -58,6 +61,8 @@ services:
       - /var/appwerk-media/uploads:/media/uploads
       # RenderProjectAd both reads from the library and files new photos into it.
       - /var/appwerk-media/library:/media/library
+      # BuildPrototype shows one of these to the model while it writes.
+      - /var/appwerk-media/design-refs:/media/design-refs:ro
 
   scheduler:
     build:
