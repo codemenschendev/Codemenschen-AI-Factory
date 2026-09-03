@@ -120,6 +120,11 @@ td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align:
 tr:last-child td { border-bottom: none; }
 td:first-child { font-weight: 500; white-space: nowrap; }
 
+/* Terms and withdrawal: every clause is its own <section>, and the global 72px section
+   padding turns that into 172px of blank space between two paragraphs of the same document. */
+.legal-doc section { padding: 0; margin-top: 26px; }
+.legal-doc section h2 { font-size: 20px; margin-bottom: 6px; }
+
 /* Checkout: one panel per decision, numbered, so nothing is agreed to by accident. */
 .co-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 22px 24px; margin-bottom: 20px; }
 .co-panel h2 { font-size: 1.05rem; margin: 0 0 14px; }
