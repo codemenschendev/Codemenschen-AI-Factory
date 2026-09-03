@@ -21,6 +21,24 @@ use RuntimeException;
 class AdScriptWriter
 {
     /**
+     * The shape of the story. The goal says what the reader should do at the end; the angle says
+     * how the four scenes get them there, which is the part a copywriter would decide first and
+     * the part an LLM otherwise picks at random.
+     *
+     * The keys are what the portal offers and what the ad row stores. Adding one here is all the
+     * backend needs; the web dictionaries need a label for the key.
+     */
+    public const ANGLES = [
+        'problem_solution' => 'Open on the reader\'s problem in their own words, make it concrete, then show the subject removing it.',
+        'before_after' => 'Contrast the day before with the day after: the same task, the same person, the work gone.',
+        'founder' => 'Speak as the person behind the business, plainly, about why they built this and who it is for.',
+        'testimonial' => 'Tell it from a customer\'s point of view. Use only words the brief actually gives you: if it names no customer and no quote, write what that customer would be trying to do, and never invent a name, a rating or a sentence in quotation marks.',
+        'demo' => 'Walk through the thing working, step by step, so the reader sees how short the way from problem to result is.',
+        'price_anchor' => 'Put the cost next to what it replaces. Use only the numbers the brief gives you, and no invented comparison.',
+        'seasonal' => 'Hang the ad on the moment in the year the brief names, and make that timing the reason to act now.',
+    ];
+
+    /**
      * What the ad has to make the reader do. The key is what the customer picks in the portal and
      * what the ad row stores; the sentence is what the copywriter is told to close on. Adding a
      * goal here is all the backend needs; the web dictionaries need a label for the key.
@@ -90,11 +108,17 @@ class AdScriptWriter
      * @param  array<string,string>  $context  What is actually being advertised: the project it
      *                                         belongs to, and the real page if the brief named one.
      * @param  string|null  $goal  A key of self::GOALS: the action the ad has to produce.
+     * @param  string|null  $angle  A key of self::ANGLES: the shape of the story that gets there.
      * @return array<int,array<string,mixed>>
      */
-    public function write(string $prompt, string $language = 'de', string $kind = 'video', array $context = [], ?string $goal = null): array
+    public function write(string $prompt, string $language = 'de', string $kind = 'video', array $context = [], ?string $goal = null, ?string $angle = null): array
     {
         $system = ($kind === 'image' ? self::STILL : self::VIDEO)."\n\n".self::COMMON;
+
+        if (isset(self::ANGLES[(string) $angle])) {
+            $system .= "\n\nThe angle for this ad, and it decides the whole thing: "
+                .self::ANGLES[(string) $angle];
+        }
 
         if (isset(self::GOALS[(string) $goal])) {
             $system .= "\n\nThe ad has one job: make the reader ".self::GOALS[(string) $goal]

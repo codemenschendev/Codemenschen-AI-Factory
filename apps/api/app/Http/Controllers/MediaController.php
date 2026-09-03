@@ -66,7 +66,11 @@ class MediaController extends Controller
 
         // The goal list travels with the ads so the portal never keeps its own copy of it: a goal
         // added in AdScriptWriter::GOALS shows up here, and the portal only needs a label for it.
-        return response()->json(['ads' => $ads, 'goals' => array_keys(AdScriptWriter::GOALS)]);
+        return response()->json([
+            'ads' => $ads,
+            'goals' => array_keys(AdScriptWriter::GOALS),
+            'angles' => array_keys(AdScriptWriter::ANGLES),
+        ]);
     }
 
     /** Prompt in, queued ad out. The render itself happens on the queue (RenderProjectAd). */
@@ -87,6 +91,8 @@ class MediaController extends Controller
             // What the ad has to make the reader do. Empty means the copy closes on whatever
             // action the subject itself offers.
             'goal' => 'nullable|in:'.implode(',', array_keys(AdScriptWriter::GOALS)),
+            // How the story is told. Empty leaves the shape to the copywriter.
+            'angle' => 'nullable|in:'.implode(',', array_keys(AdScriptWriter::ANGLES)),
         ]);
 
         // One render at a time per project: pictures are paid for per scene, and a customer
@@ -116,6 +122,7 @@ class MediaController extends Controller
                 'language' => $data['language'] ?? 'de',
                 'background' => $data['background'] ?? 'auto',
                 'goal' => $data['goal'] ?? null,
+                'angle' => $data['angle'] ?? null,
             ],
         ]);
 

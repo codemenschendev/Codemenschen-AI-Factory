@@ -65,6 +65,39 @@ class AdScriptWriterTest extends TestCase
         Http::assertSent(fn ($request) => ! str_contains($request['messages'][0]['content'], 'nonsense'));
     }
 
+    public function test_the_chosen_angle_decides_the_shape_of_the_story(): void
+    {
+        $this->fakeAnswer([['title' => 'Hook', 'text' => 'b', 'picture' => 'a shop front']]);
+
+        app(AdScriptWriter::class)->write('Ad for a salon', 'de', 'image', [], null, 'before_after');
+
+        Http::assertSent(fn ($request) => str_contains(
+            $request['messages'][0]['content'],
+            'Contrast the day before with the day after'
+        ));
+    }
+
+    public function test_the_testimonial_angle_is_told_not_to_invent_the_customer(): void
+    {
+        $this->fakeAnswer([['title' => 'Hook', 'text' => 'b', 'picture' => 'a shop front']]);
+
+        app(AdScriptWriter::class)->write('Ad for a salon', 'de', 'image', [], null, 'testimonial');
+
+        Http::assertSent(fn ($request) => str_contains(
+            $request['messages'][0]['content'],
+            'never invent a name, a rating or a sentence in quotation marks'
+        ));
+    }
+
+    public function test_an_unknown_angle_is_ignored_rather_than_pasted_into_the_brief(): void
+    {
+        $this->fakeAnswer([['title' => 'Hook', 'text' => 'b', 'picture' => 'a shop front']]);
+
+        app(AdScriptWriter::class)->write('Ad for a salon', 'de', 'image', [], null, 'jazzhands');
+
+        Http::assertSent(fn ($request) => ! str_contains($request['messages'][0]['content'], 'jazzhands'));
+    }
+
     public function test_the_brief_asks_for_a_hook_a_benefit_and_a_call_to_action(): void
     {
         $this->fakeAnswer([['title' => 'Hook', 'text' => 'b', 'picture' => 'a shop front']]);

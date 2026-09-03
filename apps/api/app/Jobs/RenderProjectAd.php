@@ -74,6 +74,7 @@ class RenderProjectAd implements ShouldQueue
                 $ad->kind,
                 $this->context($ad, $forCopy),
                 isset($spec['goal']) ? (string) $spec['goal'] : null,
+                isset($spec['angle']) ? (string) $spec['angle'] : null,
             );
         }
 

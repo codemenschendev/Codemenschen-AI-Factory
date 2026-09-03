@@ -449,6 +449,17 @@ export const en = {
       gads_square: "Google square",
       gads_portrait: "Google portrait (4:5)",
     },
+    angle: "Story angle",
+    angleAuto: "Automatic",
+    angles: {
+      problem_solution: "Problem and solution",
+      before_after: "Before and after",
+      founder: "The person behind it",
+      testimonial: "From the customer's side",
+      demo: "How it works",
+      price_anchor: "What it replaces",
+      seasonal: "Seasonal moment",
+    },
     goal: "Goal",
     goalAuto: "Automatic",
     goals: {

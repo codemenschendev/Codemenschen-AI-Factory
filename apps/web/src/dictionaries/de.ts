@@ -451,6 +451,17 @@ export const de = {
       gads_square: "Google Quadrat",
       gads_portrait: "Google hoch (4:5)",
     },
+    angle: "Erzählweise",
+    angleAuto: "Automatisch",
+    angles: {
+      problem_solution: "Problem und Lösung",
+      before_after: "Vorher und nachher",
+      founder: "Der Mensch dahinter",
+      testimonial: "Aus Kundensicht",
+      demo: "So läuft es ab",
+      price_anchor: "Was es ersetzt",
+      seasonal: "Zur Saison",
+    },
     goal: "Ziel",
     goalAuto: "Automatisch",
     goals: {

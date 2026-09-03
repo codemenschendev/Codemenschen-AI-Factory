@@ -55,10 +55,12 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // The goals come from the API, so a goal added in the backend appears here without a deploy of
   // this component; only the label has to exist in the dictionaries.
   const [goals, setGoals] = useState<string[]>([]);
+  const [angles, setAngles] = useState<string[]>([]);
   // Same idea for the canvases: the table lives in the backend, so a size added there shows up
   // here without touching this file. Keyed by ad kind, since a film cannot run on a banner.
   const [formats, setFormats] = useState<Record<string, AdFormat[]>>({});
   const [goal, setGoal] = useState("");
+  const [angle, setAngle] = useState("");
   const [sending, setSending] = useState(false);
   const playingRef = useRef<{ id: number; url: string; kind: string } | null>(null);
 
@@ -87,9 +89,10 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   const load = useCallback(async () => {
     if (!token) return;
-    const r = await api<{ ads: AdRow[]; goals: string[] }>("/me/ads", { token });
+    const r = await api<{ ads: AdRow[]; goals: string[]; angles: string[] }>("/me/ads", { token });
     setAds(r.ads);
     setGoals(r.goals ?? []);
+    setAngles(r.angles ?? []);
     return r.ads;
   }, [token]);
 
@@ -140,6 +143,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
           format,
           background,
           goal: goal || null,
+          angle: angle || null,
           language: locale,
         }),
       });
@@ -240,6 +244,17 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               {goals.map((g) => (
                 <option key={g} value={g}>
                   {l.goals[g as keyof typeof l.goals] ?? g}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            {l.angle}{" "}
+            <select value={angle} onChange={(e) => setAngle(e.target.value)}>
+              <option value="">{l.angleAuto}</option>
+              {angles.map((a) => (
+                <option key={a} value={a}>
+                  {l.angles[a as keyof typeof l.angles] ?? a}
                 </option>
               ))}
             </select>
