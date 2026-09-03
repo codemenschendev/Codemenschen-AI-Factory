@@ -560,7 +560,7 @@ export const en = {
           h: "The right",
           p: [
             "As a consumer in the EU you may withdraw within 14 days without giving any reason. The period starts when the contract is concluded.",
-            "An unambiguous statement to appwerk@codemenschen.at before the period ends is enough. We confirm receipt and refund payments received without undue delay.",
+            "An unambiguous statement to office@codemenschen.at before the period ends is enough. We confirm receipt and refund payments received without undue delay.",
           ],
         },
         {

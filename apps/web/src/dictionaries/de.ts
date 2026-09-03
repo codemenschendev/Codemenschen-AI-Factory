@@ -560,7 +560,7 @@ export const de = {
           h: "Das Recht",
           p: [
             "Als Verbraucherin oder Verbraucher in der EU kannst du binnen 14 Tagen ohne Angabe von Gründen widerrufen. Die Frist beginnt mit dem Vertragsabschluss.",
-            "Für den Widerruf genügt eine eindeutige Erklärung an appwerk@codemenschen.at vor Ablauf der Frist. Wir bestätigen den Eingang und erstatten erhaltene Zahlungen unverzüglich zurück.",
+            "Für den Widerruf genügt eine eindeutige Erklärung an office@codemenschen.at vor Ablauf der Frist. Wir bestätigen den Eingang und erstatten erhaltene Zahlungen unverzüglich zurück.",
           ],
         },
         {
