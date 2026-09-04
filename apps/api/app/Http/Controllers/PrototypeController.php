@@ -32,9 +32,15 @@ class PrototypeController extends Controller
         ]);
         $ip = (string) $request->ip();
 
-        $today = Prototype::where('ip', $ip)->where('created_at', '>=', now()->startOfDay())->count();
-        if ($today >= self::PER_IP_PER_DAY) {
-            return response()->json(['error' => 'Bạn đã tạo tối đa số prototype miễn phí hôm nay. Thử lại ngày mai hoặc liên hệ chúng tôi.'], 429);
+        // The cap is there to stop an anonymous visitor spending our money on generations. An
+        // operator testing the funnel is not that, and must not eat the public allowance either,
+        // so a signed-in admin passes straight through. The route stays open to everyone else:
+        // a token is read if one is sent, never required.
+        if (! ($request->user('sanctum')?->isAdmin() ?? false)) {
+            $today = Prototype::where('ip', $ip)->where('created_at', '>=', now()->startOfDay())->count();
+            if ($today >= self::PER_IP_PER_DAY) {
+                return response()->json(['error' => 'Bạn đã tạo tối đa số prototype miễn phí hôm nay. Thử lại ngày mai hoặc liên hệ chúng tôi.'], 429);
+            }
         }
 
         $proto = Prototype::create([
@@ -77,8 +83,8 @@ class PrototypeController extends Controller
             "default-src 'none'",
             "style-src 'unsafe-inline'",
             "script-src 'unsafe-inline'",
-            "img-src data:",
-            "font-src data:",
+            'img-src data:',
+            'font-src data:',
             "base-uri 'none'",
             "form-action 'none'",
             // Only our own share page may frame it; nobody can embed it elsewhere.

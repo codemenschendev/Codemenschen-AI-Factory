@@ -6,8 +6,12 @@ import { api } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
 
 /**
- * The public, anonymous prompt box. No token: this is the lead magnet. On submit it creates a
- * prototype and sends the visitor to its share page, which polls while it builds.
+ * The public, anonymous prompt box: this is the lead magnet. On submit it creates a prototype and
+ * sends the visitor to its share page, which polls while it builds.
+ *
+ * A token is sent only if the browser already has one, and only so that an operator testing the
+ * funnel is not stopped by the daily cap meant for anonymous visitors. A customer's token changes
+ * nothing: the API caps everyone who is not an admin.
  */
 export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
@@ -23,8 +27,10 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
     setBusy(true);
     setError(null);
     try {
+      // Read here, not in an effect: this only runs in the browser, on a click.
       const r = await api<{ id: string }>("/prototypes", {
         method: "POST",
+        token: localStorage.getItem("aifactory-token") ?? undefined,
         body: JSON.stringify({ prompt, kind }),
       });
       router.push(`/${locale}/p/${r.id}`);
