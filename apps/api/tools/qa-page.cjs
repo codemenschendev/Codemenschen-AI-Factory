@@ -112,15 +112,30 @@ function audit([placeholderSource, minTarget]) {
     const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
     return 0.2126 * r + 0.7152 * g + 0.0722 * b;
   };
-  const rgb = (s) => (s.match(/[\d.]+/g) || []).slice(0, 4).map(Number);
+  // Two shapes come back from getComputedStyle: rgb(19, 28, 46) and, for anything that went
+  // through color-mix(), color(srgb 0.7 0.6 0.9 / 0.5) with channels in 0..1. Read the second as
+  // the first and every mixed colour looks nearly black, which is what put the active tab at 1.2:1.
+  const rgb = (s) => {
+    const n = (s.match(/[\d.]+/g) || []).map(Number);
+    if (/^color\(srgb/.test(s)) return [n[0] * 255, n[1] * 255, n[2] * 255, n[3]];
+    return n.slice(0, 4);
+  };
+  // Translucent layers are composited, not skipped. A sticky nav at 88% dark over a white page
+  // is dark; treating it as white reported the brand at 1.1:1 on every dark hero.
   const bgOf = (el) => {
+    const layers = [];
+    let base = [255, 255, 255];
     for (let n = el; n && n !== document.documentElement.parentNode; n = n.parentElement) {
       const s = getComputedStyle(n);
       if (s.backgroundImage !== 'none') return null;
       const c = rgb(s.backgroundColor);
-      if (c.length >= 3 && (c[3] === undefined || c[3] >= 0.95)) return c;
+      if (c.length < 3) continue;
+      const a = c[3] === undefined ? 1 : c[3];
+      if (a >= 0.99) { base = c.slice(0, 3); break; }
+      if (a > 0) layers.push([c[0], c[1], c[2], a]);
     }
-    return [255, 255, 255];
+    return layers.reduceRight((under, [r, g, b, a]) =>
+      [r * a + under[0] * (1 - a), g * a + under[1] * (1 - a), b * a + under[2] * (1 - a)], base);
   };
   const bad = [];
   for (const el of document.querySelectorAll('body *')) {

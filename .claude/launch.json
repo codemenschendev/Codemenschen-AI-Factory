@@ -1,0 +1,52 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "web",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--workspace",
+        "web"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "appwerk-prototype",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4599",
+        "--directory",
+        "appwerk/site"
+      ],
+      "port": 4599
+    },
+    {
+      "name": "cssproof",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4601",
+        "--directory",
+        "/private/tmp/claude-502/-Volumes-CodemenschenSSD-Workspace-Codemenschen-AI-Factory/19e39b0b-e2de-4a79-8c8e-9b4f65dfab27/scratchpad/cssproof"
+      ],
+      "port": 4601
+    },
+    {
+      "name": "design-system",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4602",
+        "--directory",
+        "packages/design-system/dist"
+      ],
+      "port": 4602
+    }
+  ]
+}

@@ -379,3 +379,8 @@ a  { color: inherit; }
 .hero.invert .app-stat b { color: #e7ecf5; }
 .hero.invert .app-row b { color: #e7ecf5; }
 .hero.invert .app-tabs { background: #131c2e; border-top-color: #1e293b; }
+/* The accent itself sits at 2.2:1 on the dark band; the same lift the eyebrow gets. */
+.hero.invert .app-tabs span.on { color: color-mix(in srgb, var(--accent) 45%, #ffffff); }
+/* --surface stays light inside .invert, so an un-inverted field was pale text on a pale box. */
+.hero.invert .app-field { background: #131c2e; border-color: #22304a; color: #9aa8bd; }
+.hero.invert .app-tag { background: color-mix(in srgb, var(--accent) 28%, #0f1625); color: color-mix(in srgb, var(--accent) 45%, #ffffff); }
