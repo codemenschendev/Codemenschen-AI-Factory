@@ -417,6 +417,7 @@ export const de = {
       run_failed: "Stage gescheitert",
       run_stalled: "Stage hängt",
       ad_failed: "Anzeige gescheitert",
+      prototype_qa: "Prototyp mit Mängeln",
     },
     retryStage: "Stage neu starten",
     rerender: "Neu rendern",

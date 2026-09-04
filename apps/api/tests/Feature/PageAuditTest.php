@@ -1,0 +1,101 @@
+<?php
+
+namespace Tests\Feature;
+
+use App\Domain\Qa\PageAudit;
+use Tests\TestCase;
+
+/**
+ * The auditor itself, driving a real browser over a real page.
+ *
+ * Skipped where node or chromium is not installed, which is every developer machine that has not
+ * asked for them and no CI box we run. That is deliberate: the checks are only meaningful against
+ * a browser, and a mocked browser would test the mock.
+ */
+class PageAuditTest extends TestCase
+{
+    private function audit(): PageAudit
+    {
+        $a = app(PageAudit::class);
+        if (! $a->available()) {
+            $this->markTestSkipped('no node or no qa-page.cjs on this machine');
+        }
+
+        return $a;
+    }
+
+    public function test_a_clean_page_passes(): void
+    {
+        $report = $this->audit()->run(<<<'HTML'
+            <!doctype html><meta charset="utf-8"><title>Sauber</title>
+            <style>body{margin:0;font:16px sans-serif;background:#fff;color:#111}
+            .wrap{max-width:100%;padding:20px;box-sizing:border-box}
+            a.btn{display:inline-block;padding:12px 20px;background:#0a5c2b;color:#fff}</style>
+            <div class="wrap"><h1>Haarstudio Lena</h1><p>Termin in zwei Minuten gebucht.</p>
+            <a class="btn" href="#">Termin buchen</a></div>
+            HTML);
+
+        $this->assertTrue($report['ok'], json_encode($report['findings']));
+        $this->assertSame([], PageAudit::blocking($report));
+    }
+
+    public function test_a_page_wider_than_the_phone_is_blocking(): void
+    {
+        $report = $this->audit()->run(
+            '<!doctype html><meta charset="utf-8"><title>Breit</title>'
+            .'<style>body{margin:0}.w{width:900px;background:#eee}</style><div class="w">Breit</div>'
+        );
+
+        $this->assertFalse($report['ok']);
+        $checks = array_column(PageAudit::blocking($report), 'check');
+        $this->assertContains('overflow', $checks);
+
+        // The finding names the element that sticks out, not just the fact that something does.
+        $overflow = collect($report['findings'])->firstWhere('check', 'overflow');
+        $this->assertNotEmpty($overflow['elements']);
+        $this->assertStringContainsString('div.w', $overflow['elements'][0]);
+    }
+
+    public function test_text_the_model_did_not_write_is_blocking(): void
+    {
+        $report = $this->audit()->run(
+            '<!doctype html><meta charset="utf-8"><title>Platzhalter</title><p>Lorem ipsum dolor sit amet</p>'
+        );
+
+        $this->assertFalse($report['ok']);
+        $this->assertContains('placeholder', array_column(PageAudit::blocking($report), 'check'));
+    }
+
+    public function test_a_judgement_call_does_not_block(): void
+    {
+        // Grey on white is a real finding and a wrong one often enough that it must not cost a
+        // generation: measured, reported, not blocking.
+        $report = $this->audit()->run(
+            '<!doctype html><meta charset="utf-8"><title>Blass</title>'
+            .'<style>body{background:#fff}p{color:#ccc}</style><p>Kaum zu lesen</p>'
+        );
+
+        $this->assertTrue($report['ok']);
+        $this->assertContains('contrast', array_column($report['findings'], 'check'));
+    }
+
+    public function test_one_finding_per_fault_not_one_per_width(): void
+    {
+        $report = $this->audit()->run(
+            '<!doctype html><meta charset="utf-8"><title>Einmal</title><p>Lorem ipsum dolor</p>'
+        );
+
+        $placeholders = array_filter($report['findings'], fn ($f) => $f['check'] === 'placeholder');
+        $this->assertCount(1, $placeholders);
+        $this->assertCount(3, reset($placeholders)['viewports']);
+    }
+
+    public function test_a_missing_auditor_is_a_skip_not_a_failure(): void
+    {
+        $report = (new PageAudit('/nowhere/qa-page.cjs'))->run('<!doctype html><p>hi</p>');
+
+        $this->assertNull($report['ok']);
+        $this->assertSame([], $report['findings']);
+        $this->assertArrayHasKey('skipped', $report);
+    }
+}

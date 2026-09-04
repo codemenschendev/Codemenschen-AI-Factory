@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Qa\PageAudit;
 use App\Jobs\RenderProjectAd;
 use App\Models\Customer;
 use App\Models\MarketingCampaign;
@@ -9,6 +10,7 @@ use App\Models\Order;
 use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Models\ProjectAd;
+use App\Models\Prototype;
 use App\Services\PipelineOrchestrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -103,6 +105,24 @@ class AdminController extends Controller
                 'customer' => $a->project?->customer?->email,
                 'ad' => ['id' => $a->id, 'kind' => $a->kind, 'name' => $a->name],
                 'detail' => mb_substr((string) $a->error, 0, 300),
+            ];
+        }
+
+        // A prototype that went out with something a browser could see was wrong. It is live and
+        // the visitor has it either way, so this is not a failure to rescue: it is the list that
+        // says which prompts the generator keeps getting wrong, which is how the brief improves.
+        foreach (Prototype::whereNotNull('qa')->where('created_at', '>=', now()->subDays(3))
+            ->latest()->limit(30)->get() as $proto) {
+            if (! $proto->qaFailed()) {
+                continue;
+            }
+            $checks = array_column(PageAudit::blocking((array) $proto->qa), 'check');
+            $items[] = [
+                'kind' => 'prototype_qa', 'at' => $proto->created_at->toIso8601String(),
+                'project' => null,
+                'customer' => null,
+                'prototype' => ['id' => $proto->id, 'title' => $proto->title],
+                'detail' => implode(', ', array_unique($checks)).': '.mb_substr((string) $proto->prompt, 0, 120),
             ];
         }
 

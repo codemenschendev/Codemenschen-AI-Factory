@@ -3,6 +3,8 @@
 namespace App\Domain\Ai;
 
 use App\Domain\Design\DesignRefs;
+use App\Domain\Qa\PageAudit;
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -288,7 +290,7 @@ class PrototypeWriter
     }
 
     /** @return array{title:string,html:string} */
-    public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null): array
+    public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null, ?PageAudit $audit = null): array
     {
         $system = match ($kind) {
             'app' => self::APP.$this->appConventions(),
@@ -342,13 +344,74 @@ class PrototypeWriter
             throw new RuntimeException($msg);
         }
 
-        $html = $this->extractHtml((string) $res->json('choices.0.message.content'));
-        if ($html === '') {
+        $markup = $this->extractHtml((string) $res->json('choices.0.message.content'));
+        if ($markup === '') {
             throw new RuntimeException('AI không trả về HTML dùng được.');
         }
-        $html = $this->inlineHouse($html);
 
-        return ['title' => $this->titleOf($html), 'html' => $html];
+        // The audit runs against the finished page, because a fault only exists once the
+        // stylesheet is in; the repair runs against the markup, because that is all the model is
+        // allowed to change and it is a tenth of the tokens.
+        $page = $this->inlineHouse($markup);
+        $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
+
+        $blocking = PageAudit::blocking($qa);
+        if ($blocking !== []) {
+            $fixed = $this->repair($request, $system, $prompt, $markup, $blocking);
+            if ($fixed !== '') {
+                $second = $this->inlineHouse($fixed);
+                $after = $audit->run($second);
+
+                // Keep the repair only if it actually helped. A model asked to fix five things can
+                // come back with a shorter page and six, and shipping that would be worse than
+                // shipping the flaw we already knew about.
+                if (count(PageAudit::blocking($after)) < count($blocking)) {
+                    $page = $second;
+                    $qa = $after;
+                }
+                $qa['repaired'] = $page === $second;
+            }
+        }
+
+        return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];
+    }
+
+    /**
+     * One more pass at the same page, with the browser's complaints attached.
+     *
+     * One only. A second repair on a page the first did not fix is a model going in circles, and
+     * every round costs a generation the visitor is waiting through.
+     */
+    private function repair(PendingRequest $request, string $system,
+        string $prompt, string $markup, array $blocking): string
+    {
+        $brief = PageAudit::brief($blocking);
+
+        $res = $request->post('/v1/chat/completions', [
+            'model' => config('services.ai_image.chat_model', 'openclaw/main'),
+            'messages' => [
+                ['role' => 'system', 'content' => $system],
+                ['role' => 'user', 'content' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."],
+                ['role' => 'assistant', 'content' => $markup],
+                ['role' => 'user', 'content' => <<<TXT
+                    A browser opened your page at 320, 768 and 1280 pixels wide and found these
+                    faults. Fix every one of them and reply with the whole HTML file again, nothing
+                    else. Change as little as possible: keep the same sections, the same words and
+                    the same structure, and do not add a style block.
+
+                    {$brief}
+
+                    Overflow is almost always one element wider than the screen or one word that
+                    cannot break. Placeholder text means write the real thing for this business.
+                    A broken image means remove the tag, not point it somewhere else.
+                    TXT],
+            ],
+            'max_completion_tokens' => 8000,
+        ]);
+
+        return $res->successful()
+            ? $this->extractHtml((string) $res->json('choices.0.message.content'))
+            : '';
     }
 
     /**

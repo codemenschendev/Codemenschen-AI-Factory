@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Design\DesignRefs;
+use App\Domain\Qa\PageAudit;
 use App\Models\Prototype;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -21,7 +22,7 @@ class BuildPrototype implements ShouldQueue
 
     public function __construct(public string $prototypeId, public string $kind = 'site') {}
 
-    public function handle(PrototypeWriter $writer, DesignRefs $refs): void
+    public function handle(PrototypeWriter $writer, DesignRefs $refs, PageAudit $audit): void
     {
         $proto = Prototype::find($this->prototypeId);
         if (! $proto || $proto->status === 'ready') {
@@ -31,18 +32,31 @@ class BuildPrototype implements ShouldQueue
         $proto->update(['status' => 'building', 'error' => null]);
 
         try {
-            $out = $writer->build((string) $proto->prompt, $this->kind, $refs);
-            $proto->update(['status' => 'ready', 'title' => $out['title'], 'html' => $out['html']]);
+            $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit);
+            $proto->update([
+                'status' => 'ready', 'title' => $out['title'], 'html' => $out['html'],
+                'qa' => $out['qa'] ?? null,
+            ]);
+
+            // Not an error: the page is live either way. It is a line somebody can act on, and the
+            // admin panel reads the same column to say which prototypes went out with a fault.
+            if (($out['qa']['ok'] ?? null) === false) {
+                Log::warning('prototype shipped with faults', [
+                    'id' => $proto->id,
+                    'faults' => array_column(PageAudit::blocking($out['qa']), 'check'),
+                ]);
+            }
         } catch (Throwable $e) {
             Log::error('build prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);
             $proto->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
         }
     }
+
     /** A worker timeout throws MaxAttemptsExceeded OUTSIDE handle(), so record it here or the row
         stays stuck in its in-progress state forever. */
-    public function failed(\Throwable $e): void
+    public function failed(Throwable $e): void
     {
-        \App\Models\Prototype::whereKey($this->prototypeId)->where('status', '!=', 'ready')
+        Prototype::whereKey($this->prototypeId)->where('status', '!=', 'ready')
             ->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
     }
 }

@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Library\ImageLibrary;
+use App\Domain\Qa\PageAudit;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -29,6 +30,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             DesignLibrary::class,
             fn () => new DesignLibrary((string) config('services.media.design_library_path')),
+        );
+
+        $this->app->singleton(
+            PageAudit::class,
+            fn () => new PageAudit((string) config('services.qa.script'), config('services.qa.node')),
         );
     }
 

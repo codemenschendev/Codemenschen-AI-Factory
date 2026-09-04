@@ -5,8 +5,11 @@ FROM php:8.5-cli-alpine
 # and it is the one font on Alpine with full Vietnamese and German coverage.
 # chromium: screenshots of the customer's real site, used as ad backgrounds. A picture of the
 # actual product beats a generated stock photo and costs no API call.
+# nodejs: tools/qa-page.cjs drives the chromium above through playwright-core and reports what
+# is wrong with a generated page. playwright-core, not playwright, so no second browser is
+# downloaded and there is one to keep patched instead of two.
 RUN apk add --no-cache postgresql-dev icu-dev linux-headers \
-      ffmpeg imagemagick python3 font-dejavu chromium \
+      ffmpeg imagemagick python3 font-dejavu chromium nodejs npm \
   && docker-php-ext-install pdo_pgsql intl pcntl bcmath
 
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -14,6 +17,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /app
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-autoloader --no-scripts
+
+COPY tools/package.json tools/package-lock.json ./tools/
+RUN npm --prefix tools ci --omit=dev
 
 COPY . .
 RUN composer dump-autoload --optimize && php artisan config:clear

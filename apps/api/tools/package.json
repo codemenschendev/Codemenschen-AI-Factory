@@ -1,0 +1,9 @@
+{
+  "name": "ai-factory-tools",
+  "private": true,
+  "description": "The node side of the pipeline: qa-page.cjs audits a generated page before a visitor sees it.",
+  "type": "commonjs",
+  "dependencies": {
+    "playwright-core": "^1.56.0"
+  }
+}

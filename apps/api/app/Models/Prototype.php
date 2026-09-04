@@ -11,7 +11,13 @@ class Prototype extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['expires_at' => 'datetime'];
+    protected $casts = ['expires_at' => 'datetime', 'qa' => 'array'];
+
+    /** The page went out with something a browser could see was wrong. Null means nobody looked. */
+    public function qaFailed(): bool
+    {
+        return ($this->qa['ok'] ?? null) === false;
+    }
 
     public function isLive(): bool
     {

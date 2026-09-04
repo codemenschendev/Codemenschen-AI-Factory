@@ -22,12 +22,13 @@ interface Overview {
 }
 
 interface AttentionItem {
-  kind: "project_failed" | "run_failed" | "run_stalled" | "ad_failed";
+  kind: "project_failed" | "run_failed" | "run_stalled" | "ad_failed" | "prototype_qa";
   at: string;
   project: { id: string; name: string; status: string } | null;
   customer: string | null;
   stage?: string;
   ad?: { id: number; kind: string; name: string };
+  prototype?: { id: string; title: string | null };
   detail: string;
 }
 
@@ -325,6 +326,10 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                         <button className="tab" onClick={() => void openProject(item.project!.id)}>
                           {item.project.name}
                         </button>
+                      ) : item.prototype ? (
+                        <a href={`/${locale}/p/${item.prototype.id}`} target="_blank" rel="noopener">
+                          {item.prototype.title ?? item.prototype.id.slice(0, 8)}
+                        </a>
                       ) : (
                         "—"
                       )}

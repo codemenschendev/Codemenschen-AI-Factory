@@ -103,6 +103,13 @@ return [
         'design_library_path' => env('MEDIA_DESIGN_LIBRARY_PATH', '/media/design-library'),
     ],
 
+    // The browser that looks at a generated page before a visitor does. Both paths are inside the
+    // api image; if either is missing the audit reports itself skipped and the build carries on.
+    'qa' => [
+        'script' => env('QA_SCRIPT_PATH', base_path('tools/qa-page.cjs')),
+        'node' => env('QA_NODE_BIN'),
+    ],
+
     'openclaw' => [
         'hook_url' => env('OPENCLAW_HOOK_URL'),
         'hook_token' => env('OPENCLAW_HOOK_TOKEN'),
