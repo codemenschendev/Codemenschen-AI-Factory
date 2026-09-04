@@ -47,6 +47,18 @@
         "packages/design-system/dist"
       ],
       "port": 4602
+    },
+    {
+      "name": "proto-look",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "4603",
+        "--directory",
+        "/private/tmp/claude-502/-Volumes-CodemenschenSSD-Workspace-Codemenschen-AI-Factory/19e39b0b-e2de-4a79-8c8e-9b4f65dfab27/scratchpad/qa"
+      ],
+      "port": 4603
     }
   ]
 }

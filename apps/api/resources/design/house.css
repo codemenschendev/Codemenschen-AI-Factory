@@ -222,14 +222,32 @@ a  { color: inherit; }
 /* 4 x 240 plus three gaps is 1032, inside the 1072 a .container leaves at full width, so the
    fourth screen is visible rather than half cut off behind a scrollbar nobody notices. */
 .phone { flex: 0 0 auto; width: 240px; }
+/* A real device, not a rounded box. The bezel is painted on the border box and the screen on the
+   padding box, so one element is both and the generator still writes no extra markup.
+   The rim is a gradient with light corners because a flat #1c1c1e bezel on a dark hero measured
+   1.12:1 against the background: the phone vanished and the screens read as cards floating in
+   space, which is what a customer saw and called strange. */
 .phone-frame {
-  aspect-ratio: 9 / 19.5; border: 9px solid #1c1c1e; border-radius: 38px; background: var(--bg);
-  box-shadow: var(--shadow-lg); overflow: hidden; position: relative;
+  --screen: var(--bg);
+  aspect-ratio: 9 / 19.5;
+  border: 10px solid transparent;
+  border-radius: 42px;
+  /* Screen first, so it is the top layer and covers the padding box; the metal underneath then
+     shows only on the border ring. The other order paints the gradient across the whole element
+     and it grins through every gap between the rows. */
+  background:
+    var(--screen) padding-box,
+    linear-gradient(155deg, #737b86 0%, #1f2226 20%, #1f2226 80%, #868f9c 100%) border-box;
+  /* The hairline is what guarantees a silhouette on a background of any darkness. */
+  box-shadow: var(--shadow-lg), 0 0 0 1px rgb(255 255 255 / .12);
+  overflow: hidden; position: relative;
   display: flex; flex-direction: column;
 }
+/* Dynamic Island: a pill lying on the screen, not a notch bitten out of the top edge. At 240px
+   wide it is the one detail that says iPhone. */
 .phone-frame::before {
-  content: ""; position: absolute; top: 0; left: 50%; transform: translateX(-50%); z-index: 2;
-  width: 92px; height: 24px; background: #1c1c1e; border-radius: 0 0 14px 14px;
+  content: ""; position: absolute; top: 9px; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: 58px; height: 16px; border-radius: 99px; background: #0b0b0d;
 }
 .phone-cap { margin-top: var(--sp-3); text-align: center; font-size: var(--fs-sm); color: var(--ink-soft); }
 
@@ -373,7 +391,7 @@ a  { color: inherit; }
 .hero.invert .browser-body h4 { color: #f7f9fc; }
 .hero.invert .mini > div { border-color: #22304a; }
 .hero.invert .mini b { color: #e7ecf5; }
-.hero.invert .phone-frame { background: #0f1625; }
+.hero.invert .phone-frame { --screen: #0f1625; }
 .hero.invert .app-bar { background: #131c2e; border-bottom-color: #1e293b; color: #f7f9fc; }
 .hero.invert .app-row, .hero.invert .app-stat { border-color: #22304a; }
 .hero.invert .app-stat b { color: #e7ecf5; }
