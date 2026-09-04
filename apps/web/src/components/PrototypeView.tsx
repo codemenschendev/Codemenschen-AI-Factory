@@ -7,6 +7,8 @@ import type { Dict, Locale } from "@/lib/i18n";
 
 interface Meta {
   kind?: string;
+  photo_credit?: string | null;
+  photo_credit_url?: string | null;
   id: string;
   status: "queued" | "building" | "ready" | "failed" | "expired";
   title: string | null;
@@ -86,12 +88,28 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
           into 390px would be as wrong as hanging one app screen across a desktop. */}
       {meta.kind === "app" ? (
         <div className="device-stage">
-          <div className="device">
-            <iframe
-              title={meta.title ?? "Prototype"}
-              src={`${API_BASE}/api/prototypes/${id}/raw`}
-              sandbox="allow-scripts allow-popups"
-            />
+          <div>
+            <div className="device">
+              <iframe
+                title={meta.title ?? "Prototype"}
+                src={`${API_BASE}/api/prototypes/${id}/raw`}
+                sandbox="allow-scripts allow-popups"
+              />
+            </div>
+            {/* Under the phone, not inside it: a credit belongs to the page, not to the mockup. */}
+            {meta.photo_credit && (
+              <p className="small muted" style={{ textAlign: "center", marginTop: 12 }}>
+                Foto: {meta.photo_credit}
+                {meta.photo_credit_url && (
+                  <>
+                    {" · "}
+                    <a href={meta.photo_credit_url} target="_blank" rel="noopener">
+                      Pexels
+                    </a>
+                  </>
+                )}
+              </p>
+            )}
           </div>
         </div>
       ) : (

@@ -103,6 +103,13 @@ return [
         'design_library_path' => env('MEDIA_DESIGN_LIBRARY_PATH', '/media/design-library'),
     ],
 
+    // Free photographs for prototypes. A prototype is thrown away in a week, so a real stock
+    // photo is both cheaper and more honest than a generated one; generation stays for the paid
+    // ad pipeline. Empty key means the whole source is simply skipped.
+    'stock' => [
+        'pexels_key' => env('PEXELS_API_KEY'),
+    ],
+
     // The browser that looks at a generated page before a visitor does. Both paths are inside the
     // api image; if either is missing the audit reports itself skipped and the build carries on.
     'qa' => [

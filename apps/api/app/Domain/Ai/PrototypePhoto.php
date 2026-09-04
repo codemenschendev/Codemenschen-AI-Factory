@@ -34,66 +34,107 @@ class PrototypePhoto
     public function __construct(
         private readonly ImageService $images,
         private readonly ImageLibrary $library,
+        private readonly ?StockPhotos $stock = null,
     ) {}
 
     /**
-     * @return array{html:string,photo:?string} the page, and the brief that was drawn, if any
+     * @return array{html:string,photo:?string,credit:?string,credit_url:?string}
      */
     public function apply(string $html): array
     {
         // The first band only. Later ones keep their gradient rather than costing another call.
         if (! preg_match('~<div class="app-art"[^>]*>(.*?)</div>~is', $html, $m)) {
-            return ['html' => $html, 'photo' => null];
+            return $this->nothing($html);
         }
 
         $brief = trim(html_entity_decode(strip_tags($m[1]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
         if ($brief === '' || mb_strlen($brief) > 300) {
-            return ['html' => $html, 'photo' => null];
+            return $this->nothing($html);
         }
 
-        $data = $this->dataUri($brief);
-        if ($data === null) {
-            return ['html' => $html, 'photo' => null];
+        $found = $this->dataUri($brief);
+        if ($found === null) {
+            return $this->nothing($html);
         }
 
         $alt = htmlspecialchars($brief, ENT_QUOTES, 'UTF-8');
-        $img = '<div class="app-art has-photo"><img src="'.$data.'" alt="'.$alt.'"></div>';
+        $img = '<div class="app-art has-photo"><img src="'.$found['data'].'" alt="'.$alt.'"></div>';
 
-        return ['html' => str_replace($m[0], $img, $html), 'photo' => $brief];
+        return [
+            'html' => str_replace($m[0], $img, $html),
+            'photo' => $brief,
+            'credit' => $found['credit'],
+            'credit_url' => $found['url'],
+        ];
     }
 
-    /** The picture as an inline webp, from the library if it is already there. @return ?string */
-    private function dataUri(string $brief): ?string
+    /** @return array{html:string,photo:null,credit:null,credit_url:null} */
+    private function nothing(string $html): array
+    {
+        return ['html' => $html, 'photo' => null, 'credit' => null, 'credit_url' => null];
+    }
+
+    /**
+     * The picture, in the order that spends least.
+     *
+     * Already paid for, then free, then paid. The library holds what earlier prototypes bought or
+     * fetched; Pexels is free and instant and, for a bakery or a salon, a real photograph beats a
+     * generated one; generation is the last resort and stays for the paid ad pipeline where the
+     * picture has to show one particular scene.
+     *
+     * @return array{data:string,credit:?string,url:?string}|null
+     */
+    private function dataUri(string $brief): ?array
     {
         try {
             $hit = $this->library->find($brief, self::PROJECT);
             if ($hit !== null) {
                 $path = $this->library->path($hit['id']);
-                if ($path !== null) {
-                    return $this->encode($path);
+                $uri = $path === null ? null : $this->encode($path);
+                if ($uri !== null) {
+                    return ['data' => $uri, 'credit' => null, 'url' => null];
+                }
+            }
+
+            $shot = $this->stock?->find($brief);
+            if ($shot !== null) {
+                $found = $this->file($shot['bytes'], '.jpg', $brief);
+                if ($found !== null) {
+                    return ['data' => $found, 'credit' => $shot['credit'], 'url' => $shot['url']];
                 }
             }
 
             $bytes = $this->images->generate($this->prompt($brief), self::SIZE);
-            $tmp = tempnam(sys_get_temp_dir(), 'proto-photo-').'.png';
-            file_put_contents($tmp, $bytes);
+            $found = $this->file($bytes, '.png', $brief);
 
-            try {
-                $uri = $this->encode($tmp);
-                if ($uri !== null) {
-                    // Filed under one shared project key, so the next prototype with a similar
-                    // brief finds it instead of buying it again.
-                    $this->library->remember($tmp, $brief, self::PROJECT);
-                }
-
-                return $uri;
-            } finally {
-                @unlink($tmp);
-            }
+            return $found === null ? null : ['data' => $found, 'credit' => null, 'url' => null];
         } catch (\Throwable $e) {
             Log::warning('prototype photo skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
 
             return null;
+        }
+    }
+
+    /**
+     * Encode bytes for the page and file them for the next prototype.
+     *
+     * Filed under one shared project key, so a similar brief next week finds this instead of
+     * fetching or buying it again.
+     */
+    private function file(string $bytes, string $ext, string $brief): ?string
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'proto-photo-').$ext;
+        file_put_contents($tmp, $bytes);
+
+        try {
+            $uri = $this->encode($tmp);
+            if ($uri !== null) {
+                $this->library->remember($tmp, $brief, self::PROJECT);
+            }
+
+            return $uri;
+        } finally {
+            @unlink($tmp);
         }
     }
 

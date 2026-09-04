@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Domain\Ai\ImageService;
 use App\Domain\Ai\PrototypePhoto;
+use App\Domain\Ai\StockPhotos;
 use App\Domain\Library\ImageLibrary;
 use Illuminate\Support\Facades\File;
 use RuntimeException;
@@ -58,9 +59,9 @@ class PrototypePhotoTest extends TestCase
         return is_file($out) ? (string) file_get_contents($out) : null;
     }
 
-    private function photo(ImageService $images): PrototypePhoto
+    private function photo(ImageService $images, ?StockPhotos $stock = null): PrototypePhoto
     {
-        return new PrototypePhoto($images, new ImageLibrary($this->dir));
+        return new PrototypePhoto($images, new ImageLibrary($this->dir), $stock);
     }
 
     private function page(string $band = '<div class="app-art">Lena am Waschbecken, warmes Licht</div>'): string
@@ -153,11 +154,63 @@ class PrototypePhotoTest extends TestCase
         $this->assertNull($out['photo']);
     }
 
+    public function test_a_free_photograph_is_taken_before_a_paid_one(): void
+    {
+        // A prototype is thrown away in a week and costs money to make. Free and instant beats
+        // generated, and for a bakery a real photograph beats one with invented shop signs in it.
+        $sent = [];
+        $png = $this->png();
+        $stock = new class($png) extends StockPhotos
+        {
+            public function __construct(private string $png) {}
+
+            public function configured(): bool
+            {
+                return true;
+            }
+
+            public function find(string $brief, string $locale = 'de-DE'): ?array
+            {
+                return ['bytes' => $this->png, 'credit' => 'Anna Fotografin', 'url' => 'https://www.pexels.com/photo/1'];
+            }
+        };
+
+        $out = $this->photo($this->service($sent), $stock)->apply($this->page());
+
+        $this->assertSame([], $sent, 'nothing was generated');
+        $this->assertStringContainsString('data:image/webp;base64,', $out['html']);
+        $this->assertSame('Anna Fotografin', $out['credit']);
+        $this->assertSame('https://www.pexels.com/photo/1', $out['credit_url']);
+    }
+
+    public function test_a_stock_source_that_finds_nothing_falls_through_to_generating(): void
+    {
+        $sent = [];
+        $stock = new class extends StockPhotos
+        {
+            public function configured(): bool
+            {
+                return true;
+            }
+
+            public function find(string $brief, string $locale = 'de-DE'): ?array
+            {
+                return null;
+            }
+        };
+
+        $out = $this->photo($this->service($sent), $stock)->apply($this->page());
+
+        $this->assertCount(1, $sent, 'the paid path is the fallback, not the first choice');
+        $this->assertStringContainsString('data:image/webp;base64,', $out['html']);
+        $this->assertNull($out['credit']);
+    }
+
     public function test_the_photo_is_filed_so_the_next_prototype_reuses_it(): void
     {
         $sent = [];
         $lib = new ImageLibrary($this->dir);
-        (new PrototypePhoto($this->service($sent), $lib))->apply($this->page());
+        (new PrototypePhoto($this->service($sent), $lib, null))->apply($this->page());
 
         $rows = $lib->all();
         $this->assertCount(1, $rows);

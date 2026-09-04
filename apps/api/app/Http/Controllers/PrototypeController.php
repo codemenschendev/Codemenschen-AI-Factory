@@ -73,6 +73,9 @@ class PrototypeController extends Controller
             // wizard instead of asking them to type the same thing twice.
             'prompt' => $prototype->prompt,
             'error' => $prototype->error,
+            // Only what the share page has to print: the photographer and where the photo is from.
+            'photo_credit' => $prototype->qa['photo_credit'] ?? null,
+            'photo_credit_url' => $prototype->qa['photo_credit_url'] ?? null,
             'expires_at' => $prototype->expires_at->toIso8601String(),
         ]);
     }

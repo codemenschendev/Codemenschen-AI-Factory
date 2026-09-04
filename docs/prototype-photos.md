@@ -1,0 +1,38 @@
+# Photographs in a prototype
+
+The picture band in an app prototype holds a real photograph. The line the model wrote there is
+the photo brief, and the picture comes from the first of these that answers, in this order:
+
+1. **The shared photo library** on the host, under the project key `prototype`. Whatever an earlier
+   prototype fetched or bought is already there, so a second bakery in the same week costs nothing.
+2. **Pexels**, free, if `PEXELS_API_KEY` is set. Instant, and for a bakery or a salon a real
+   photograph beats a generated one: no invented shop signs, no six-fingered hands.
+3. **Generation** through the image sidecar, which costs money on Codemenschen's OpenAI account.
+4. **Nothing**, and the band keeps its accent gradient, which reads as a deliberate design.
+
+One photo per prototype, bought after the audit and any repair pass so a repaired page never pays
+twice.
+
+## The free key
+
+https://www.pexels.com/api/ , sign in, "Your API Key". Free, instant, no card. 200 requests an
+hour and 20 000 a month, which is far more than this uses.
+
+    ssh -t -p 7172 root@65.108.206.249 'f=/var/www/ai-factory/apps/api/.env; read -r -s -p "PEXELS_API_KEY: " v; echo; grep -q "^PEXELS_API_KEY=" $f || echo "PEXELS_API_KEY=" >> $f; sed -i "s|^PEXELS_API_KEY=.*|PEXELS_API_KEY=$v|" $f'
+
+Then recreate the containers, because env_file is read at creation and restart does not reload it:
+
+    cd /var/www/ai-factory && docker compose -f infra/docker-compose.prod.yml up -d --force-recreate api horizon
+
+With no key the source is skipped and everything behaves as it did before.
+
+## Attribution
+
+Pexels asks for a visible credit when their API is used. The photographer and the photo's page
+travel back with the bytes, are stored on the prototype, and the share page prints them under the
+phone, outside the mockup. A credit belongs to the page, not to the app being mocked up.
+
+## Why generation is still there
+
+An ad has to show the one scene its copy names, and no stock index holds that. Prototypes are
+throwaway lead magnets and can take what the world already photographed; paid ads cannot.
