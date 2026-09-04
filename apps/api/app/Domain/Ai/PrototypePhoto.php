@@ -34,7 +34,10 @@ class PrototypePhoto
     public function __construct(
         private readonly ImageService $images,
         private readonly ImageLibrary $library,
-        private readonly ?StockPhotos $stock = null,
+        // Required, not nullable with a default: the container skips a nullable parameter that
+        // already has one, so this silently arrived as null and every prototype paid for a photo
+        // the free source would have given away.
+        private readonly StockPhotos $stock,
     ) {}
 
     /**
@@ -96,7 +99,7 @@ class PrototypePhoto
                 }
             }
 
-            $shot = $this->stock?->find($brief);
+            $shot = $this->stock->find($brief);
             if ($shot !== null) {
                 $found = $this->file($shot['bytes'], '.jpg', $brief);
                 if ($found !== null) {

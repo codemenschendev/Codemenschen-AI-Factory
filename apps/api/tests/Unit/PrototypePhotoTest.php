@@ -7,6 +7,7 @@ use App\Domain\Ai\PrototypePhoto;
 use App\Domain\Ai\StockPhotos;
 use App\Domain\Library\ImageLibrary;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Http;
 use RuntimeException;
 use Symfony\Component\Process\Process;
 use Tests\TestCase;
@@ -61,7 +62,15 @@ class PrototypePhotoTest extends TestCase
 
     private function photo(ImageService $images, ?StockPhotos $stock = null): PrototypePhoto
     {
-        return new PrototypePhoto($images, new ImageLibrary($this->dir), $stock);
+        return new PrototypePhoto($images, new ImageLibrary($this->dir), $stock ?? $this->noStock());
+    }
+
+    /** A source with no key: present, as the container always provides it, and with nothing to give. */
+    private function noStock(): StockPhotos
+    {
+        config(['services.stock.pexels_key' => '']);
+
+        return new StockPhotos;
     }
 
     private function page(string $band = '<div class="app-art">Lena am Waschbecken, warmes Licht</div>'): string
@@ -154,6 +163,24 @@ class PrototypePhotoTest extends TestCase
         $this->assertNull($out['photo']);
     }
 
+    public function test_the_container_actually_wires_the_free_source_in(): void
+    {
+        // It did not, for a while: a nullable parameter with a default of null is left at its
+        // default by the container, so every prototype quietly paid for a picture Pexels had.
+        config(['services.stock.pexels_key' => 'k', 'services.media.library_path' => $this->dir]);
+        Http::fake([
+            'api.pexels.com/*' => Http::response(['photos' => [[
+                'photographer' => 'Anna', 'url' => 'https://www.pexels.com/photo/1',
+                'src' => ['large' => 'https://images.pexels.com/1.jpg'],
+            ]]]),
+            'images.pexels.com/*' => Http::response($this->png()),
+        ]);
+
+        $out = app(PrototypePhoto::class)->apply($this->page());
+
+        $this->assertSame('Anna', $out['credit'], 'the free source was used, so it was injected');
+    }
+
     public function test_a_free_photograph_is_taken_before_a_paid_one(): void
     {
         // A prototype is thrown away in a week and costs money to make. Free and instant beats
@@ -210,7 +237,7 @@ class PrototypePhotoTest extends TestCase
     {
         $sent = [];
         $lib = new ImageLibrary($this->dir);
-        (new PrototypePhoto($this->service($sent), $lib, null))->apply($this->page());
+        (new PrototypePhoto($this->service($sent), $lib, $this->noStock()))->apply($this->page());
 
         $rows = $lib->all();
         $this->assertCount(1, $rows);
