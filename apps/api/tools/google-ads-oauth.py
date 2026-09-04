@@ -57,8 +57,22 @@ def main():
         'code': got['code'], 'client_id': cid, 'client_secret': sec,
         'redirect_uri': redirect, 'grant_type': 'authorization_code',
     }).encode()
-    with urllib.request.urlopen('https://oauth2.googleapis.com/token', body, timeout=30) as r:
-        tok = json.loads(r.read())
+    try:
+        with urllib.request.urlopen('https://oauth2.googleapis.com/token', body, timeout=30) as r:
+            tok = json.loads(r.read())
+    except urllib.error.HTTPError as e:
+        # Google answers 401 invalid_client when the secret does not belong to this client id:
+        # pasted wrong, pasted empty, or a secret that was reset since. The code from the consent
+        # screen was fine, so the browser step does not need repeating, only this one.
+        try:
+            err = json.loads(e.read())
+        except Exception:
+            err = {}
+        why = err.get('error_description') or err.get('error') or str(e)
+        if e.code == 401 or err.get('error') == 'invalid_client':
+            sys.exit(f'LỖI: Google từ chối client secret ({why}). Client id đúng nhưng secret không khớp: '
+                     'chép lại secret trong console (Add secret nếu không hiện) rồi chạy lại.')
+        sys.exit(f'LỖI: đổi code lấy token thất bại ({e.code}: {why})')
 
     rt = tok.get('refresh_token')
     if not rt:

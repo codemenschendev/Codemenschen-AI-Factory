@@ -12,7 +12,14 @@ The admin overview (`/de/admin`) shows the same thing without the API call: conn
 which env keys are still empty.
 
 Secrets go into `/var/www/ai-factory/apps/api/.env` on the server, written by a person, never
-pasted into a chat. Then `docker compose -f infra/docker-compose.prod.yml restart api horizon`.
+pasted into a chat. Then recreate the containers, not restart them: `env_file` is read when a
+container is created, and `restart` keeps the old environment.
+
+    cd /var/www/ai-factory && docker compose -f infra/docker-compose.prod.yml up -d --force-recreate api horizon
+
+To write a secret without it echoing or landing in shell history:
+
+    ssh -t -p 7172 root@65.108.206.249 'f=/var/www/ai-factory/apps/api/.env; read -r -s -p "KEY: " v; echo; sed -i "s|^KEY=.*|KEY=$v|" $f'
 
 ## Google Ads
 
