@@ -1,13 +1,14 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DesignLibraryController;
 use App\Http\Controllers\InternalRunController;
 use App\Http\Controllers\LibraryController;
-use App\Http\Controllers\AdsController;
-use App\Http\Controllers\MediaController;
 use App\Http\Controllers\MeController;
+use App\Http\Controllers\MediaController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\QuoteController;
@@ -78,6 +79,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/library/state', [LibraryController::class, 'state']);
     Route::post('/library/{id}', [LibraryController::class, 'update']);
     Route::delete('/library/{id}', [LibraryController::class, 'destroy']);
+
+    // The reference library of collected app screens. Read-only: the labelling script owns it.
+    Route::get('/design-library', [DesignLibraryController::class, 'index']);
 });
 
 // Outside the admin group on purpose: an <img> tag sends no Authorization header, so the
@@ -85,6 +89,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
 Route::get('/admin/library/{id}/image', [LibraryController::class, 'image'])
     ->middleware('signed')
     ->name('admin.library.image');
+
+Route::get('/admin/design-library/{id}/image', [DesignLibraryController::class, 'image'])
+    ->middleware('signed')
+    ->name('admin.design-library.image');
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.
 Route::get('/preview/{project}/{path?}', PreviewController::class)->where('path', '.*');

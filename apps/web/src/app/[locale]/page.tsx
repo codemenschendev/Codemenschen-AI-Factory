@@ -232,23 +232,6 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </div>
       </section>
 
-      <section className="section" id="pricing">
-        <div className="wrap">
-          <p className="eyebrow reveal">{d.pricing.eyebrow}</p>
-          <h2 className="reveal">{d.pricing.title}</h2>
-          <div className="price-grid price-grid-3">
-            {d.pricing.items.map((it) => (
-              <div className="price-item reveal" key={it.h}>
-                <h3>{it.h}</h3>
-                <p className="price-fig">{it.fig}</p>
-                <p>{it.p}</p>
-              </div>
-            ))}
-          </div>
-          <p className="counsel-note reveal">{d.pricing.note}</p>
-        </div>
-      </section>
-
       <section className="section section-dark" id="about">
         <div className="wrap wrap-narrow">
           <p className="eyebrow reveal">{d.about.eyebrow}</p>
@@ -262,24 +245,6 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           >
             {d.about.cta}
           </a>
-        </div>
-      </section>
-
-      <section className="section" id="faq">
-        <div className="wrap wrap-narrow">
-          <p className="eyebrow reveal">{d.faq.eyebrow}</p>
-          <h2 className="reveal">{d.faq.title}</h2>
-          {d.faq.items.map((f) => (
-            <details className="faq-item reveal" key={f.q}>
-              <summary>{f.q}</summary>
-              <p>{f.a}</p>
-            </details>
-          ))}
-          <p className="reveal" style={{ textAlign: "center", marginTop: "2.4rem" }}>
-            <a className="btn btn-primary" href="#apps">
-              {d.faq.cta}
-            </a>
-          </p>
         </div>
       </section>
 

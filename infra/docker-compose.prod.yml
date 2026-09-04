@@ -45,6 +45,9 @@ services:
       # Design references. Read-only for the API: it lists and deletes through the panel, but
       # nothing here is ever served, so it never needs to hand a file to anyone.
       - /var/appwerk-media/design-refs:/media/design-refs
+      # The reference library of collected app screens. Read-only on purpose: the labelling
+      # script on the host owns this directory, the panel only looks.
+      - /var/lib/ai-factory/design-library:/media/design-library:ro
 
   horizon:
     build:

@@ -265,7 +265,7 @@ class PipelineTest extends TestCase
 
         // Stripe is not configured in tests → quoted, but payment "unconfigured".
         $this->withHeader('Authorization', "Bearer $token")
-            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'Make the header blue please.', 'fagg_waiver' => true, 'terms' => true, 'terms' => true])
+            ->postJson("/api/me/projects/{$project->id}/change-requests", ['text' => 'Make the header blue please.', 'fagg_waiver' => true, 'terms' => true])
             ->assertStatus(503)
             ->assertJsonPath('payment', 'unconfigured');
         $cr = $project->changeRequests()->first();

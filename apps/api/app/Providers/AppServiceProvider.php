@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Library\ImageLibrary;
 use Illuminate\Support\ServiceProvider;
@@ -23,6 +24,11 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             DesignRefs::class,
             fn () => new DesignRefs((string) config('services.media.design_refs_path')),
+        );
+
+        $this->app->singleton(
+            DesignLibrary::class,
+            fn () => new DesignLibrary((string) config('services.media.design_library_path')),
         );
     }
 

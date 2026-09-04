@@ -98,6 +98,9 @@ return [
         // Screenshots of designs to aim at. References only: shown to the model while it writes,
         // never served to anyone, never embedded in anything that leaves the building.
         'design_refs_path' => env('MEDIA_DESIGN_REFS_PATH', '/media/design-refs'),
+        // The reference library: app screens collected to study, never shipped. Read-only, and
+        // the app only ever browses it; the labelling script on the host is what writes it.
+        'design_library_path' => env('MEDIA_DESIGN_LIBRARY_PATH', '/media/design-library'),
     ],
 
     'openclaw' => [

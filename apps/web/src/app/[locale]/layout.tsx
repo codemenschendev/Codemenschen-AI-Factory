@@ -40,8 +40,6 @@ export default async function LocaleLayout({
               <Link href={`/${locale}#how`}>{dict.nav.how}</Link>
               <Link href={`/${locale}#apps`}>{dict.nav.ideas}</Link>
               <Link href={`/${locale}/create`}>{dict.nav.create}</Link>
-              <Link href={`/${locale}#pricing`}>{dict.nav.pricing}</Link>
-              <Link href={`/${locale}#faq`}>{dict.nav.faq}</Link>
               <Link href={`/${locale}/prototype`}>{dict.proto.navLink}</Link>
             </nav>
             <div className="nav-right">
