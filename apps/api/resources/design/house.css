@@ -79,7 +79,10 @@ a  { color: inherit; }
 .nav { display: flex; align-items: center; min-height: 68px; }
 .nav > * { width: 100%; max-width: var(--maxw); margin-inline: auto; padding-inline: var(--sp-5); }
 .nav-inner { display: flex; align-items: center; gap: var(--sp-5); }
-.brand { font-weight: 700; letter-spacing: -.02em; font-size: var(--fs-lg); text-decoration: none; }
+/* inline-flex with a floor, not a bare inline link: as text it measured 23px tall, one pixel
+   under the 24px minimum target size, on every page the audit looked at. */
+.brand { font-weight: 700; letter-spacing: -.02em; font-size: var(--fs-lg); text-decoration: none;
+         display: inline-flex; align-items: center; min-height: 24px; }
 .nav-links { display: flex; gap: var(--sp-5); margin-left: auto; align-items: center; }
 /* :not(.btn) matters. `.nav-links a` outranks `.btn-primary` on specificity, so without it the
    nav's call to action gets the muted link colour and goes almost invisible on its own accent. */
@@ -139,9 +142,13 @@ a  { color: inherit; }
 .section-head { max-width: 46rem; margin-bottom: var(--sp-7); }
 .section-head .lead { margin-top: var(--sp-4); }
 
-.grid { display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-.grid-2 { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
-.split { display: grid; gap: var(--sp-8); grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); align-items: center; }
+/* min(Npx, 100%) inside every minmax, not a bare Npx. A bare minimum never shrinks, so on a
+   320px phone a 300px column is wider than the container holding it and the whole page scrolls
+   sideways by the difference. The audit found this on two generated pages in a row before anyone
+   read the CSS. */
+.grid { display: grid; gap: var(--sp-5); grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); }
+.grid-2 { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); }
+.split { display: grid; gap: var(--sp-8); grid-template-columns: repeat(auto-fit, minmax(min(300px, 100%), 1fr)); align-items: center; }
 
 .card {
   background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-lg);
@@ -170,7 +177,7 @@ a  { color: inherit; }
 .btn-ghost:hover { background: var(--surface); }
 
 /* --- Numbers, prices, quotes ----------------------------------------------------------- */
-.stats { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); }
+.stats { display: grid; gap: var(--sp-6); grid-template-columns: repeat(auto-fit, minmax(min(160px, 100%), 1fr)); }
 .stat-n { font-size: var(--fs-3xl); font-weight: 700; letter-spacing: -.03em; color: var(--accent); line-height: 1; }
 .stat-l { margin-top: var(--sp-2); font-size: var(--fs-sm); color: var(--ink-soft); }
 

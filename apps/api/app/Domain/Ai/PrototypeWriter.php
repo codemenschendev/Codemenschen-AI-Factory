@@ -355,7 +355,7 @@ class PrototypeWriter
         $page = $this->inlineHouse($markup);
         $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
 
-        $blocking = PageAudit::blocking($qa);
+        $blocking = PageAudit::repairable($qa);
         if ($blocking !== []) {
             [$fixed, $why] = $this->repair($request, $system, $prompt, $markup, $blocking);
             $qa['repaired'] = false;
@@ -370,7 +370,7 @@ class PrototypeWriter
                 // Keep the repair only if it actually helped. A model asked to fix five things can
                 // come back with a shorter page and six, and shipping that would be worse than
                 // shipping the flaw we already knew about.
-                if (count(PageAudit::blocking($after)) < count($blocking)) {
+                if (count(PageAudit::repairable($after)) < count($blocking)) {
                     $page = $second;
                     $qa = $after;
                 }

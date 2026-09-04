@@ -57,11 +57,11 @@ class PrototypeRepairTest extends TestCase
         };
     }
 
-    private function fault(string $check = 'overflow'): array
+    private function fault(string $check = 'placeholder'): array
     {
         return ['ok' => false, 'findings' => [
-            ['severity' => 'blocking', 'check' => $check, 'detail' => 'page is 40px too wide',
-                'elements' => ['div.hero reaches 360px'], 'viewports' => ['320x640']],
+            ['severity' => 'blocking', 'check' => $check, 'detail' => 'Item 1',
+                'elements' => ['div.hero > p'], 'viewports' => ['320x640']],
         ]];
     }
 
@@ -98,8 +98,8 @@ class PrototypeRepairTest extends TestCase
             $messages = $request['messages'];
             $last = $messages[count($messages) - 1]['content'];
 
-            return is_string($last) && str_contains($last, 'overflow')
-                && str_contains($last, 'div.hero reaches 360px') && str_contains($last, '320x640');
+            return is_string($last) && str_contains($last, 'placeholder')
+                && str_contains($last, 'div.hero > p') && str_contains($last, '320x640');
         });
     }
 
@@ -108,7 +108,7 @@ class PrototypeRepairTest extends TestCase
         // Two faults in, two faults out: the repair bought nothing, so the first page stands.
         // Shipping the second would mean shipping an unreviewed page to fix a reviewed one.
         $this->answers('<h1>Original</h1>', '<h1>Schlimmer</h1>');
-        $audit = $this->auditor([$this->fault(), $this->fault('placeholder')]);
+        $audit = $this->auditor([$this->fault(), $this->fault('broken-image')]);
 
         $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
 
@@ -129,6 +129,20 @@ class PrototypeRepairTest extends TestCase
         $this->assertFalse($out['qa']['repaired']);
         $this->assertSame('http 502', $out['qa']['repair_failed']);
         $this->assertStringContainsString('Original', $out['html']);
+    }
+
+    public function test_a_fault_the_model_does_not_own_costs_no_generation(): void
+    {
+        // Overflow is nearly always the stylesheet's, and the model is told not to write CSS.
+        // It is still reported and the page is still marked as shipped with a fault.
+        $this->answers('<h1>Zu breit</h1>');
+        $audit = $this->auditor([$this->fault('overflow')]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+
+        Http::assertSentCount(1);
+        $this->assertFalse($out['qa']['ok']);
+        $this->assertArrayNotHasKey('repaired', $out['qa']);
     }
 
     public function test_without_an_auditor_nothing_changes(): void

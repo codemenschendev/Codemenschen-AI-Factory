@@ -66,12 +66,32 @@ class PageAudit
         }
     }
 
-    /** Only the faults worth spending a model call on. @return array<int,array<string,mixed>> */
+    /**
+     * Faults the model can fix by rewriting its own markup.
+     *
+     * Overflow is not one of them. Both of the first two audited prototypes scrolled sideways and
+     * both times the cause was in house.css, which the model is told not to touch and could not
+     * fix if it tried. Sending those to a second generation costs three minutes of the visitor's
+     * wait and changes nothing. They stay in the report and in the admin list, which is how those
+     * stylesheet bugs got found in the first place.
+     */
+    private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error'];
+
+    /** Everything a browser would call broken. @return array<int,array<string,mixed>> */
     public static function blocking(array $report): array
     {
         return array_values(array_filter(
             $report['findings'] ?? [],
             fn (array $f) => ($f['severity'] ?? '') === 'blocking',
+        ));
+    }
+
+    /** The subset worth spending a generation on. @return array<int,array<string,mixed>> */
+    public static function repairable(array $report): array
+    {
+        return array_values(array_filter(
+            self::blocking($report),
+            fn (array $f) => in_array($f['check'] ?? '', self::MODEL_OWNED, true),
         ));
     }
 
