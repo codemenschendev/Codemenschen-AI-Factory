@@ -11,6 +11,8 @@ interface Overview {
   runs: { queued: number; running: number; failed_24h: number };
   ads: Record<string, number>;
   campaigns: Record<string, number>;
+  /** Names of empty env keys only, never values: the tile says what is missing, not what is set. */
+  connections: Record<string, { configured: boolean; missing: string[] }>;
   customers: number;
   revenue: {
     paid_orders: number;
@@ -282,6 +284,23 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   {a.failed24h}: <span className="num">{overview.runs.failed_24h}</span>
                 </div>
               </div>
+            </div>
+            <div className="card">
+              <span className="cat">{a.connectionsTile}</span>
+              <div className="small" style={{ marginTop: 8, display: "grid", gap: 6 }}>
+                {Object.entries(overview.connections ?? {}).map(([platform, c]) => (
+                  <div key={platform}>
+                    <strong>{platform === "meta" ? "Meta (Facebook, Instagram)" : "Google Ads"}</strong>:{" "}
+                    {c.configured ? a.connected : a.notConnected}
+                    {c.missing.length > 0 && (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        {a.missing}: {c.missing.join(", ")}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <div className="small muted" style={{ marginTop: 8 }}>{a.connectionsHint}</div>
             </div>
             <div className="card">
               <span className="cat">{a.adsTile}</span>

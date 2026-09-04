@@ -26,4 +26,26 @@ class PublisherRegistry
     {
         return ['meta' => $this->meta->isConfigured(), 'google' => $this->google->isConfigured()];
     }
+
+    /** @return list<Publisher> */
+    public function all(): array
+    {
+        return [$this->meta, $this->google];
+    }
+
+    /**
+     * What the operator sees: configured or not, and which env names are still empty. No values,
+     * no API calls; this runs on every admin overview and must stay free.
+     *
+     * @return array<string,array{configured:bool,missing:list<string>}>
+     */
+    public function status(): array
+    {
+        $out = [];
+        foreach ($this->all() as $p) {
+            $out[$p->key()] = ['configured' => $p->isConfigured(), 'missing' => $p->missing()];
+        }
+
+        return $out;
+    }
 }

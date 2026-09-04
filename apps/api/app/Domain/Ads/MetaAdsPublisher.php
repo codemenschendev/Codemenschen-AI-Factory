@@ -25,9 +25,51 @@ class MetaAdsPublisher implements Publisher
         return 'meta';
     }
 
+    private const ENV = [
+        'token' => 'META_ADS_TOKEN',
+        'ad_account_id' => 'META_ADS_ACCOUNT_ID',
+        'page_id' => 'META_ADS_PAGE_ID',
+    ];
+
     public function isConfigured(): bool
     {
-        return $this->cfg('token') !== '' && $this->cfg('ad_account_id') !== '' && $this->cfg('page_id') !== '';
+        return $this->missing() === [];
+    }
+
+    public function missing(): array
+    {
+        $out = [];
+        foreach (self::ENV as $k => $env) {
+            if ($this->cfg($k) === '') {
+                $out[] = $env;
+            }
+        }
+
+        return $out;
+    }
+
+    /** Reads the ad account and the page. Both must open with this token or nothing can publish. */
+    public function verify(): array
+    {
+        if (! $this->isConfigured()) {
+            return ['ok' => false, 'account' => null, 'detail' => 'thiếu '.implode(', ', $this->missing())];
+        }
+
+        try {
+            $account = $this->get($this->cfg('ad_account_id'), 'name,currency,account_status');
+            $page = $this->get($this->cfg('page_id'), 'name');
+
+            // account_status 1 is ACTIVE; anything else (2 disabled, 3 unsettled, ...) will refuse spend.
+            $status = (int) ($account['account_status'] ?? 0);
+
+            return [
+                'ok' => $status === 1,
+                'account' => ($account['name'] ?? $this->cfg('ad_account_id')).' ('.($account['currency'] ?? '?').'), Seite: '.($page['name'] ?? $this->cfg('page_id')),
+                'detail' => $status === 1 ? null : "account_status={$status}",
+            ];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'account' => null, 'detail' => mb_substr($e->getMessage(), 0, 300)];
+        }
     }
 
     public function publish(MarketingCampaign $campaign): array
@@ -160,6 +202,18 @@ class MetaAdsPublisher implements Publisher
         $v = $this->cfg('api_version') ?: 'v21.0';
 
         return Http::baseUrl("https://graph.facebook.com/{$v}")->timeout(60)->connectTimeout(10);
+    }
+
+    /** @return array<string,mixed> */
+    private function get(string $path, string $fields): array
+    {
+        $res = $this->base()->get($path, ['fields' => $fields, 'access_token' => $this->cfg('token')]);
+        $body = $res->json() ?? [];
+        if (! $res->successful()) {
+            throw new RuntimeException('Meta API: '.($body['error']['message'] ?? mb_substr((string) $res->body(), 0, 300)));
+        }
+
+        return $body;
     }
 
     /**

@@ -25,15 +25,71 @@ class GoogleAdsPublisher implements Publisher
         return 'google';
     }
 
+    /** Env names behind the config keys, so a missing one can be named without being read. */
+    private const ENV = [
+        'developer_token' => 'GOOGLE_ADS_DEVELOPER_TOKEN',
+        'customer_id' => 'GOOGLE_ADS_CUSTOMER_ID',
+        'client_id' => 'GOOGLE_ADS_CLIENT_ID',
+        'client_secret' => 'GOOGLE_ADS_CLIENT_SECRET',
+        'refresh_token' => 'GOOGLE_ADS_REFRESH_TOKEN',
+    ];
+
     public function isConfigured(): bool
     {
-        foreach (['developer_token', 'customer_id', 'client_id', 'client_secret', 'refresh_token'] as $k) {
+        return $this->missing() === [];
+    }
+
+    public function missing(): array
+    {
+        $out = [];
+        foreach (self::ENV as $k => $env) {
             if ($this->cfg($k) === '') {
-                return false;
+                $out[] = $env;
             }
         }
 
-        return true;
+        return $out;
+    }
+
+    /**
+     * One search on the configured customer. It exercises everything at once: the OAuth pair and
+     * refresh token (access token), the developer token and login-customer-id (headers), and the
+     * customer id (the resource). A developer token that Google has not approved yet fails here
+     * with DEVELOPER_TOKEN_NOT_APPROVED, which is the answer the operator actually needs.
+     */
+    public function verify(): array
+    {
+        if (! $this->isConfigured()) {
+            return ['ok' => false, 'account' => null, 'detail' => 'thiếu '.implode(', ', $this->missing())];
+        }
+
+        try {
+            $cid = $this->cfg('customer_id');
+            $res = Http::withToken($this->accessToken())
+                ->withHeaders([
+                    'developer-token' => $this->cfg('developer_token'),
+                    'login-customer-id' => $this->cfg('login_customer_id') ?: $cid,
+                ])
+                ->timeout(30)
+                ->post($this->endpoint("customers/{$cid}/googleAds:search"), [
+                    'query' => 'SELECT customer.descriptive_name, customer.currency_code, customer.test_account FROM customer LIMIT 1',
+                ]);
+
+            if (! $res->successful()) {
+                return ['ok' => false, 'account' => null, 'detail' => mb_substr((string) $res->body(), 0, 300)];
+            }
+
+            $c = $res->json('results.0.customer') ?? [];
+            $name = (string) ($c['descriptiveName'] ?? $cid);
+
+            return [
+                'ok' => true,
+                'account' => $name.' ('.($c['currencyCode'] ?? '?').')'.(! empty($c['testAccount']) ? ' [test account]' : ''),
+                'detail' => null,
+            ];
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'account' => null, 'detail' => mb_substr($e->getMessage(), 0, 300)];
+        }
     }
 
     public function publish(MarketingCampaign $campaign): array
@@ -62,7 +118,7 @@ class GoogleAdsPublisher implements Publisher
                 'advertisingChannelType' => 'SEARCH',
                 'campaignBudget' => "customers/{$cid}/campaignBudgets/-1",
                 'networkSettings' => ['targetGoogleSearch' => true, 'targetSearchNetwork' => true],
-                'manualCpc' => new \stdClass(),
+                'manualCpc' => new \stdClass,
             ]]],
             ['adGroupOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/adGroups/-3",

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Qa\PageAudit;
 use App\Jobs\RenderProjectAd;
 use App\Models\Customer;
@@ -51,6 +52,10 @@ class AdminController extends Controller
             'campaigns' => MarketingCampaign::query()->selectRaw('platform_status, count(*) as n')
                 ->groupBy('platform_status')->pluck('n', 'platform_status'),
             'customers' => Customer::count(),
+            // Configured or not, and which env names are empty. Names only, checked locally; the
+            // live credential check is `factory:ads-check`, because an API call per page load is
+            // the wrong price for a tile.
+            'connections' => app(PublisherRegistry::class)->status(),
             'revenue' => [
                 'paid_orders' => Order::where('status', 'paid')->count(),
                 'paid_eur' => (int) Order::where('status', 'paid')->sum('total_one_time_eur'),

@@ -18,6 +18,17 @@ interface Publisher
 
     public function isConfigured(): bool;
 
+    /** Env keys that are still empty, by name only. Never the values. @return list<string> */
+    public function missing(): array;
+
+    /**
+     * One read-only call against the platform to prove the credentials work: the account exists,
+     * the token opens it, the developer token is accepted. Spends nothing, creates nothing.
+     *
+     * @return array{ok:bool,account:?string,detail:?string}
+     */
+    public function verify(): array;
+
     /**
      * Create the campaign on the platform in PAUSED state, upload the creative, wire it up, and
      * return the ids to store in platform_ref. Must never leave it active.
