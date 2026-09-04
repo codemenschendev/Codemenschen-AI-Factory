@@ -357,12 +357,12 @@ class PrototypeWriter
 
         $blocking = PageAudit::blocking($qa);
         if ($blocking !== []) {
-            $fixed = $this->repair($request, $system, $prompt, $markup, $blocking);
+            [$fixed, $why] = $this->repair($request, $system, $prompt, $markup, $blocking);
             $qa['repaired'] = false;
             if ($fixed === '') {
-                // The repair call itself failed, usually the gateway giving up on a second long
-                // generation. Worth recording: otherwise the report looks like nobody tried.
-                $qa['repair_failed'] = true;
+                // Record why, not just that. "The gateway gave up at 180s" and "the model
+                // answered in prose" are the same empty string here and want opposite fixes.
+                $qa['repair_failed'] = $why;
             } else {
                 $second = $this->inlineHouse($fixed);
                 $after = $audit->run($second);
@@ -387,8 +387,9 @@ class PrototypeWriter
      * One only. A second repair on a page the first did not fix is a model going in circles, and
      * every round costs a generation the visitor is waiting through.
      */
+    /** @return array{0:string,1:?string} the repaired markup, or '' plus why there is none */
     private function repair(PendingRequest $request, string $system,
-        string $prompt, string $markup, array $blocking): string
+        string $prompt, string $markup, array $blocking): array
     {
         $brief = PageAudit::brief($blocking);
 
@@ -414,9 +415,13 @@ class PrototypeWriter
             'max_completion_tokens' => 8000,
         ]);
 
-        return $res->successful()
-            ? $this->extractHtml((string) $res->json('choices.0.message.content'))
-            : '';
+        if (! $res->successful()) {
+            return ['', 'http '.$res->status()];
+        }
+
+        $html = $this->extractHtml((string) $res->json('choices.0.message.content'));
+
+        return $html === '' ? ['', 'no html in the reply'] : [$html, null];
     }
 
     /**

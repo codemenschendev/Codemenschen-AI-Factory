@@ -306,15 +306,7 @@ a  { color: inherit; }
   display: grid; gap: var(--sp-8); align-items: center;
   grid-template-columns: 1.05fr .95fr;
 }
-@media (max-width: 940px) {
-  .hero-split { grid-template-columns: 1fr; }
-  /* Flat below the breakpoint. Stacked, these fill the container, and a rotation swings the
-     painted edge past the layout box: 23px of sideways scroll on a 768px screen, which the page
-     audit caught on the first prototype it looked at. Depth is worth having next to a column of
-     text and not worth a scrollbar. */
-  .browser { transform: none; }
-  .fan > .card:nth-child(1), .fan > .card:nth-child(2), .fan > .card:nth-child(3) { transform: none; }
-}
+@media (max-width: 940px) { .hero-split { grid-template-columns: 1fr; } }
 
 /* A browser frame. The hero of a website prototype should show a website. */
 .browser {
@@ -352,6 +344,16 @@ a  { color: inherit; }
 .fan > .card:nth-child(1) { transform: rotate(-3deg) translateY(10px); opacity: .6; }
 .fan > .card:nth-child(2) { transform: rotate(1.5deg); margin-top: -62%; z-index: 1; }
 .fan > .card:nth-child(3) { transform: rotate(5deg) translateY(-8px); margin-top: -62%; opacity: .8; }
+
+/* Flat below the breakpoint, and after the rules it overrides: same specificity, so putting this
+   media query up with .hero-split left the tilt winning on source order alone. Stacked, these fill
+   the container and a rotation swings the painted edge past the layout box, which is 23px of
+   sideways scroll on a 768px screen. Depth is worth having next to a column of text and not worth
+   a scrollbar. */
+@media (max-width: 940px) {
+  .browser { transform: none; }
+  .fan > .card:nth-child(1), .fan > .card:nth-child(2), .fan > .card:nth-child(3) { transform: none; }
+}
 
 /* The dark hero needs its frames to be dark too, or they punch a white hole in the band. */
 .hero.invert .card { background: #0f1625; border-color: #1e293b; }

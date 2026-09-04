@@ -31,7 +31,9 @@ class PrototypeRepairTest extends TestCase
                 ['choices' => [['message' => ['content' => $this->page($body)]]]]
             ));
         }
-        Http::fake(['*/v1/chat/completions' => $sequence]);
+        // whenEmpty, not an exception: one test deliberately runs the sequence dry to see what
+        // the writer does when the repair call comes back with nothing.
+        Http::fake(['*/v1/chat/completions' => $sequence->whenEmpty(Http::response(null, 502))]);
     }
 
     /** @param array<int,array<string,mixed>> $reports one per run() call, last one repeats */
@@ -114,6 +116,19 @@ class PrototypeRepairTest extends TestCase
         $this->assertStringContainsString('Original', $out['html']);
         $this->assertFalse($out['qa']['ok']);
         $this->assertFalse($out['qa']['repaired']);
+    }
+
+    public function test_a_repair_that_never_arrived_says_why(): void
+    {
+        // One answer only, so the repair call runs out of fakes and comes back empty.
+        $this->answers('<h1>Original</h1>');
+        $audit = $this->auditor([$this->fault()]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+
+        $this->assertFalse($out['qa']['repaired']);
+        $this->assertSame('http 502', $out['qa']['repair_failed']);
+        $this->assertStringContainsString('Original', $out['html']);
     }
 
     public function test_without_an_auditor_nothing_changes(): void
