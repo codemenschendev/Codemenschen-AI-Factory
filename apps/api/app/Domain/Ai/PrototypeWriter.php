@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ai;
 
+use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
@@ -109,67 +110,59 @@ class PrototypeWriter
 
             <link rel="stylesheet" href="house.css">
 
-        This prototype shows THE APP ITSELF, not a page advertising it. The visitor should look at
-        it and see their idea running on a phone.
+        THIS IS THE APP, NOT A PAGE ABOUT THE APP. The whole document is one phone screen. It is
+        shown inside a phone on the share page, so write no navigation bar, no hero, no marketing
+        sections, no footer, and no bezel of your own. Somebody looking at it should believe they
+        are holding the thing.
 
-        Choose ONE palette on the body: t-slate · t-forest · t-amber · t-indigo · t-rose.
+        Choose ONE palette on the body: t-slate · t-forest · t-amber · t-indigo · t-rose. Dark
+        suits numbers, night work, media and premium trades; light suits everything local,
+        hands-on and transactional.
 
-        The hero may be light or dark. For a dark opening band write <header class="hero invert">.
-        Use it when the trade wants to look premium, technical or nocturnal, and leave it light
-        for anything warm, local or hands-on. Roughly one page in two should be dark.
+        Exactly this skeleton, with FOUR screens:
 
-        THE HERO MUST HAVE SOMETHING TO LOOK AT. A headline alone on a gradient is what makes a
-        page look generated. Wrap the hero content in <div class="hero-split"> with the words in
-        the first column and ONE of these in the second:
+          <body class="t-rose app-page">
+            <div class="app">
+              <input type="radio" name="screen" id="s1" checked>
+              <input type="radio" name="screen" id="s2">
+              <input type="radio" name="screen" id="s3">
+              <input type="radio" name="screen" id="s4">
 
-          A browser showing the site itself:
-            <div class="browser"><div class="browser-bar"><i></i><i></i><i></i>
-              <span class="browser-url">firma.at</span></div>
-              <div class="browser-body"><div class="swatch"></div><h4>Real headline</h4>
-                <p>One line.</p><div class="mini"><div><b>Label</b>detail</div>… three of them …</div>
-              </div></div>
+              <section class="screen"> … screen one … </section>
+              <section class="screen"> … screen two … </section>
+              <section class="screen"> … screen three … </section>
+              <section class="screen"> … screen four … </section>
 
-          A phone showing the product in use (see the .phone block), for anything booked or ordered
-
-          Three cards fanned out, for anything with documents, plans or offers:
-            <div class="fan"><div class="card">…</div><div class="card">…</div><div class="card">…</div></div>
-
-        Fill it with the visitor's own content: real service names, real rows, real numbers from
-        the brief. A frame full of grey placeholder bars looks like a page that failed to load.
-
-
-        Structure:
-          <nav class="nav"><div class="nav-inner"> the app name as .brand, then a
-            .nav-links holding one .btn.btn-primary </div></nav>
-          <header class="hero"><div class="container"> span.eyebrow, h1 naming the app,
-            p.lead saying in one sentence what it does for whom, then a .tag-row of three
-            span.tag naming what it replaces: no phone calls, no waiting, no double bookings
-            </div></header>
-          <section class="section"><div class="container">
-            <div class="screens"> FOUR .phone blocks </div></div></section>
-          <section class="section alt"> a .grid of three .card explaining what each part does
-          <section class="section"> .cta
-          <footer class="footer">
-
-        Each phone is exactly this shape, and the four together tell one story: what the user sees
-        first, what they pick, what they fill in, what they get back.
-
-          <div class="phone">
-            <div class="phone-frame">
-              <div class="app-bar">Screen title</div>
-              <div class="app-body">
-                … the blocks listed in the conventions at the end of this brief, in the order
-                that screen needs …
-              </div>
-              <div class="app-tabs"><span class="on">Tab</span><span>Tab</span><span>Tab</span></div>
+              <nav class="tabbar">
+                <label for="s1">Start</label><label for="s2">Buchen</label>
+                <label for="s3">Termine</label><label for="s4">Profil</label>
+              </nav>
             </div>
-            <p class="phone-cap">One line: what happens on this screen</p>
-          </div>
+          </body>
+
+        The four inputs, the four sections and the four labels must be in the same order and there
+        must be the same number of each: that is what makes the tabs work without scripting.
+
+        The four screens tell one story: what the user sees first, what they pick, what they fill
+        in, what they get back. Every screen opens with <p class="screen-bar">its title</p>.
+
+        Blocks to build a screen from, and nothing else:
+
+            <div class="app-art">A line naming what the picture would show</div>
+            <div class="app-hero"><b>The one number or result</b><span>the line under it</span></div>
+            <div class="app-row"><b>What it is</b><span>the detail that decides</span>
+              <span class="app-tag">frei</span></div>
+            <div class="app-field">Label and the value the user picked</div>
+            <div class="app-stats"><div class="app-stat"><b>63</b><span>Termine</span></div> … </div>
+            <div class="app-cta">The action this screen exists for</div>
 
         Rules:
           - Real content in every row: actual service names, times, prices, places from the idea.
-            An app screen full of "Item 1" sells nothing. No lorem ipsum.
-          - Keep each screen to four or five rows. A phone is small and so is the prototype.
+            A screen full of "Item 1" sells nothing. No lorem ipsum.
+          - Four or five blocks per screen. A phone is small; cut before you add.
+          - The first screen ends without an .app-cta: the tab bar is its navigation. The other
+            three each end in exactly one .app-cta.
+          - Tab labels are one word. Button labels are one or two.
           - No external URLs, fonts, images or scripts. The page must work with JS switched off.
           - Plain sentences. Never use a dash as a sentence break: no em dash, no spaced en dash.
           - Invent no prices, percentages or guarantees as facts about the business.
@@ -290,7 +283,8 @@ class PrototypeWriter
     }
 
     /** @return array{title:string,html:string} */
-    public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null, ?PageAudit $audit = null): array
+    public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null,
+        ?PageAudit $audit = null, ?DesignLibrary $library = null): array
     {
         $system = match ($kind) {
             'app' => self::APP.$this->appConventions(),
@@ -316,7 +310,11 @@ class PrototypeWriter
         // nothing else. Anything written inside a screenshot is somebody else's copy, and it is
         // also the one place an instruction could be smuggled in, so the prompt says plainly that
         // words in the picture are to be looked at and never obeyed.
-        $ref = $refs?->pick($kind, $prompt);
+        // An app brief is answered from the labelled reference library: 297 real app screens whose
+        // text is legible, picked by the trade the brief is about. Until this line existed the app
+        // prompt travelled with no picture at all, because every reference filed by hand is a
+        // website. Anything else still uses those.
+        $ref = ($kind === 'app' ? $library?->reference($prompt) : null) ?? $refs?->pick($kind, $prompt);
         $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."]];
         if ($ref) {
             $user[] = ['type' => 'text', 'text' => self::REFERENCE.($ref['note'] !== '' ? "\n\nWhat is good about it: {$ref['note']}" : '')];

@@ -6,6 +6,7 @@ import { API_BASE, api } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Meta {
+  kind?: string;
   id: string;
   status: "queued" | "building" | "ready" | "failed" | "expired";
   title: string | null;
@@ -81,12 +82,26 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
           </Link>
         </div>
       </div>
-      <iframe
-        title={meta.title ?? "Prototype"}
-        src={`${API_BASE}/api/prototypes/${id}/raw`}
-        sandbox="allow-scripts allow-popups"
-        style={{ width: "100%", height: "80vh", border: "1px solid rgba(0,0,0,.12)", borderRadius: 12 }}
-      />
+      {/* An app is shown in a phone and a website in a window. Squeezing a 1120px landing page
+          into 390px would be as wrong as hanging one app screen across a desktop. */}
+      {meta.kind === "app" ? (
+        <div className="device-stage">
+          <div className="device">
+            <iframe
+              title={meta.title ?? "Prototype"}
+              src={`${API_BASE}/api/prototypes/${id}/raw`}
+              sandbox="allow-scripts allow-popups"
+            />
+          </div>
+        </div>
+      ) : (
+        <iframe
+          title={meta.title ?? "Prototype"}
+          src={`${API_BASE}/api/prototypes/${id}/raw`}
+          sandbox="allow-scripts allow-popups"
+          style={{ width: "100%", height: "80vh", border: "1px solid rgba(0,0,0,.12)", borderRadius: 12 }}
+        />
+      )}
     </div>
   );
 }

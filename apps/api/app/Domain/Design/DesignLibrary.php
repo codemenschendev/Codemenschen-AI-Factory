@@ -200,6 +200,106 @@ class DesignLibrary
     }
 
     /**
+     * Words in a brief that point at an industry the library is labelled with.
+     *
+     * German first, because that is what the visitors write. Deliberately small: a wrong guess
+     * hands the model a fintech dashboard for a hair salon, and a miss just means no reference,
+     * which is the state everything was in before this existed.
+     *
+     * @var array<string,list<string>>
+     */
+    private const INDUSTRY_WORDS = [
+        'beauty_salon' => ['friseur', 'frisör', 'salon', 'kosmetik', 'nagel', 'haar', 'barbier', 'beauty', 'barber'],
+        'health_fitness' => ['fitness', 'yoga', 'training', 'gym', 'physio', 'therapie', 'massage', 'studio'],
+        'medical' => ['arzt', 'ärztin', 'praxis', 'zahnarzt', 'ordination', 'klinik', 'patient', 'apotheke'],
+        'restaurant' => ['restaurant', 'gasthaus', 'wirt', 'lokal', 'café', 'cafe', 'bistro', 'küche', 'bäckerei', 'pizzeria'],
+        'food_delivery' => ['lieferung', 'liefern', 'bestellen', 'delivery', 'abholung', 'take away'],
+        'retail_ecommerce' => ['shop', 'laden', 'geschäft', 'verkauf', 'produkte', 'sortiment', 'store'],
+        'fashion' => ['mode', 'kleidung', 'boutique', 'schneider', 'textil'],
+        'travel' => ['hotel', 'pension', 'reise', 'zimmer', 'gäste', 'ferienwohnung', 'tourismus'],
+        'transport_mobility' => ['taxi', 'fahrt', 'fahrer', 'transport', 'lieferdienst', 'uber', 'mitfahr'],
+        'real_estate' => ['immobilien', 'makler', 'wohnung', 'haus kaufen', 'miete'],
+        'education' => ['schule', 'kurs', 'unterricht', 'lernen', 'nachhilfe', 'trainer', 'seminar'],
+        'finance_banking' => ['bank', 'versicherung', 'buchhaltung', 'steuer', 'finanz', 'rechnung'],
+        'business_saas' => ['software', 'saas', 'agentur', 'kanzlei', 'beratung', 'verwaltung'],
+        'social' => ['verein', 'community', 'mitglieder', 'club', 'treffen'],
+        'utilities' => ['handwerk', 'installateur', 'elektriker', 'tischler', 'maler', 'reparatur', 'werkstatt', 'service'],
+    ];
+
+    /**
+     * One labelled app screen to show the model while it writes, as a data URI.
+     *
+     * Only detail-grade screens: at 360px the text is a few pixels tall and a reference nobody can
+     * read teaches nothing. The industry is guessed from the brief, and a miss returns null rather
+     * than a confident wrong answer, because no reference beats the wrong one.
+     *
+     * @return array{id:string,note:string,data:string}|null
+     */
+    public function reference(string $brief, ?string $screenType = null): ?array
+    {
+        $industry = $this->industryFor($brief);
+        if ($industry === null) {
+            return null;
+        }
+
+        $hits = [];
+        foreach ($this->records() as $r) {
+            $l = is_array($r['labels'] ?? null) ? $r['labels'] : [];
+            if (($r['medium'] ?? null) !== 'app' || ($r['visual']['grade'] ?? null) !== 'detail') {
+                continue;
+            }
+            if (($l['industry'] ?? null) !== $industry) {
+                continue;
+            }
+            if ($screenType !== null && ($l['screen_type'] ?? null) !== $screenType) {
+                continue;
+            }
+            $hits[] = $r;
+        }
+        if ($hits === []) {
+            return null;
+        }
+
+        // Random among the matches: two salons in the same town must not be handed the same screen.
+        $r = $hits[array_rand($hits)];
+        $path = $this->dir.'/'.($r['file'] ?? '');
+        $bytes = is_file($path) ? @file_get_contents($path) : false;
+        if ($bytes === false) {
+            return null;
+        }
+
+        $mime = str_ends_with($path, '.png') ? 'image/png' : (str_ends_with($path, '.webp') ? 'image/webp' : 'image/jpeg');
+
+        return [
+            'id' => (string) $r['id'],
+            'note' => (string) (($r['labels']['notes'] ?? '') ?: ''),
+            'data' => "data:{$mime};base64,".base64_encode($bytes),
+        ];
+    }
+
+    /** @return string|null the labelled industry this brief is about, if one is obvious */
+    private function industryFor(string $brief): ?string
+    {
+        $hay = mb_strtolower($brief);
+        $best = null;
+        $bestHits = 0;
+        foreach (self::INDUSTRY_WORDS as $industry => $words) {
+            $hits = 0;
+            foreach ($words as $w) {
+                if (str_contains($hay, $w)) {
+                    $hits++;
+                }
+            }
+            if ($hits > $bestHits) {
+                $bestHits = $hits;
+                $best = $industry;
+            }
+        }
+
+        return $best;
+    }
+
+    /**
      * Absolute path of one image, or null.
      *
      * The id is looked up in the catalog rather than pasted into a path: that way a crafted id

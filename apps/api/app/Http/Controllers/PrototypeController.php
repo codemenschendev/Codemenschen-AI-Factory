@@ -43,16 +43,17 @@ class PrototypeController extends Controller
             }
         }
 
+        $kind = $data['kind'] ?? 'site';
+
         $proto = Prototype::create([
             'status' => 'queued',
+            'kind' => $kind,
             'prompt' => $data['prompt'],
             'ip' => $ip,
             'expires_at' => now()->addDays(self::LIVE_DAYS),
         ]);
 
-        // kind is not stored: it only decides how this one build draws, and the queue payload
-        // carries it as far as it needs to go.
-        BuildPrototype::dispatch($proto->id, $data['kind'] ?? 'site');
+        BuildPrototype::dispatch($proto->id, $kind);
 
         return response()->json(['id' => $proto->id, 'status' => 'queued'], 202);
     }
@@ -65,6 +66,8 @@ class PrototypeController extends Controller
         return response()->json([
             'id' => $prototype->id,
             'status' => $expired ? 'expired' : $prototype->status,
+            // The share page frames an app in a phone and a site in a window.
+            'kind' => $prototype->kind,
             'title' => $prototype->title,
             // The visitor's own sentence, so "turn it into a real app" can carry it into the
             // wizard instead of asking them to type the same thing twice.

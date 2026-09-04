@@ -292,6 +292,81 @@ a  { color: inherit; }
 .app-stat b { display: block; font-size: var(--fs-lg); line-height: 1.1; }
 .app-stat span { font-size: var(--fs-xs); color: var(--ink-soft); }
 
+/* --- The app itself ----------------------------------------------------------------------
+   When the prototype IS the app, the document is one phone screen and nothing else: no nav, no
+   hero, no footer. The share page frames it in a device, so the page draws no bezel of its own.
+
+   Screens are switched by the tab bar with radio inputs and a sibling selector, so it works with
+   scripting off. That is not a preference: the page is served under a CSP the generator must not
+   fight, and a prototype that needs JS to show its second screen is one bug away from showing
+   none. The generator writes N inputs, N sections and N labels in the same order; the rules below
+   pair them up. */
+body.app-page {
+  background: var(--surface);
+  min-height: 100dvh; margin: 0;
+  display: flex; justify-content: center;
+}
+.app {
+  width: 100%; max-width: 430px; min-height: 100dvh;
+  background: var(--bg); position: relative;
+  display: flex; flex-direction: column;
+}
+.app > input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
+
+/* The title strip. A real phone puts the clock above this; the device frame supplies that space. */
+.screen-bar {
+  padding: var(--sp-5) var(--sp-5) var(--sp-4);
+  font-size: var(--fs-xl); font-weight: 700; letter-spacing: -.02em;
+}
+.screen {
+  display: none; flex: 1; flex-direction: column;
+  gap: var(--sp-3); padding: 0 var(--sp-5) var(--sp-5);
+}
+.app > input:nth-of-type(1):checked ~ .screen:nth-of-type(1),
+.app > input:nth-of-type(2):checked ~ .screen:nth-of-type(2),
+.app > input:nth-of-type(3):checked ~ .screen:nth-of-type(3),
+.app > input:nth-of-type(4):checked ~ .screen:nth-of-type(4),
+.app > input:nth-of-type(5):checked ~ .screen:nth-of-type(5) { display: flex; }
+
+/* The tab bar is fixed to the bottom of the phone, the way every app puts it. */
+.tabbar {
+  margin-top: auto; position: sticky; bottom: 0;
+  display: flex; background: var(--bg);
+  border-top: 1px solid var(--border); padding-bottom: var(--sp-4);
+}
+.tabbar label {
+  flex: 1; text-align: center; cursor: pointer;
+  padding: var(--sp-3) 0 var(--sp-2);
+  font-size: var(--fs-xs); color: var(--ink-soft);
+}
+.app > input:nth-of-type(1):checked ~ .tabbar label:nth-child(1),
+.app > input:nth-of-type(2):checked ~ .tabbar label:nth-child(2),
+.app > input:nth-of-type(3):checked ~ .tabbar label:nth-child(3),
+.app > input:nth-of-type(4):checked ~ .tabbar label:nth-child(4),
+.app > input:nth-of-type(5):checked ~ .tabbar label:nth-child(5) { color: var(--accent); font-weight: 660; }
+
+/* Full size, because these now carry a whole screen rather than a 240px mock. The band, the row,
+   the field and the action are the same vocabulary the reference library was counted in. */
+.screen .app-hero {
+  margin: 0 0 var(--sp-2); padding: var(--sp-5); border-radius: var(--r-lg);
+  background: var(--accent); color: var(--accent-ink);
+}
+.screen .app-hero b { font-size: var(--fs-2xl); letter-spacing: -.03em; }
+.screen .app-hero span { font-size: var(--fs-sm); }
+.screen .app-row { padding: var(--sp-4); border-radius: var(--r-lg); }
+.screen .app-row b { font-size: var(--fs-base); }
+.screen .app-row span { font-size: var(--fs-sm); }
+.screen .app-field { padding: var(--sp-4); border-radius: var(--r-lg); font-size: var(--fs-base); }
+.screen .app-cta { padding: var(--sp-4); border-radius: var(--r-lg); font-size: var(--fs-base); }
+.screen .app-stat { padding: var(--sp-4); border-radius: var(--r-lg); }
+.screen .app-stat b { font-size: var(--fs-2xl); letter-spacing: -.03em; }
+/* A picture band: real screens open with one, and the page may load no image, so it is drawn. */
+.screen .app-art {
+  aspect-ratio: 16 / 9; border-radius: var(--r-lg); display: grid; place-items: end start;
+  padding: var(--sp-4); color: var(--accent-ink); font-weight: 660;
+  background: linear-gradient(150deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #000) 100%);
+}
+
 /* --- Ad creatives -----------------------------------------------------------------------
    Real platform ratios at a size that fits a screen, so the customer sees the shape their
    money buys. No photographs: this tier generates none, and a flat accent with one wash reads

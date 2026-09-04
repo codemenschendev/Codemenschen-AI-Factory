@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Domain\Ai\PrototypeWriter;
+use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Qa\PageAudit;
 use App\Models\Prototype;
@@ -22,7 +23,7 @@ class BuildPrototype implements ShouldQueue
 
     public function __construct(public string $prototypeId, public string $kind = 'site') {}
 
-    public function handle(PrototypeWriter $writer, DesignRefs $refs, PageAudit $audit): void
+    public function handle(PrototypeWriter $writer, DesignRefs $refs, PageAudit $audit, DesignLibrary $library): void
     {
         $proto = Prototype::find($this->prototypeId);
         if (! $proto || $proto->status === 'ready') {
@@ -32,7 +33,7 @@ class BuildPrototype implements ShouldQueue
         $proto->update(['status' => 'building', 'error' => null]);
 
         try {
-            $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit);
+            $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit, $library);
             $proto->update([
                 'status' => 'ready', 'title' => $out['title'], 'html' => $out['html'],
                 'qa' => $out['qa'] ?? null,

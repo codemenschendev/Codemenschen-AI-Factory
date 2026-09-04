@@ -206,3 +206,43 @@ footer.site .nav-logo { color: var(--paper); }
 .phone-actions { display: flex; gap: 6px; }
 .phone-actions .lang-toggle { cursor: pointer; }
 @media (max-width: 1040px) { .detail-layout { grid-template-columns: 1fr; } .phone-aside { display: none; } }
+
+/* --- The device that frames an app prototype -----------------------------------------------
+   The generated page is 390 x 844, a phone viewport, so the review frame has to be a phone.
+   Shown at that size the app reads as an app; shown in the wide box a website gets, it reads as
+   a stack of boxes, which is what a customer told us it looked like.
+
+   Same construction as the mock in house.css: the bezel is a gradient painted on the border box,
+   the screen is the padding box, and a hairline ring guarantees a silhouette on any background. */
+.device-stage {
+  display: flex; justify-content: center;
+  padding: 32px 0 40px;
+  background: #f4f5f7; border-radius: 16px;
+}
+@media (prefers-color-scheme: dark) { .device-stage { background: #14161a; } }
+
+.device {
+  width: 390px; max-width: 100%;
+  aspect-ratio: 390 / 844;
+  border: 12px solid transparent;
+  border-radius: 56px;
+  background:
+    #fff padding-box,
+    linear-gradient(155deg, #737b86 0%, #1f2226 20%, #1f2226 80%, #868f9c 100%) border-box;
+  box-shadow: 0 24px 60px -20px rgb(16 24 40 / .45), 0 0 0 1px rgb(255 255 255 / .12);
+  overflow: hidden; position: relative;
+}
+/* Dynamic Island. The page inside draws none, so the frame owns it. */
+.device::before {
+  content: ""; position: absolute; top: 11px; left: 50%; transform: translateX(-50%); z-index: 2;
+  width: 104px; height: 30px; border-radius: 99px; background: #0b0b0d;
+}
+.device iframe {
+  width: 100%; height: 100%; border: 0; display: block; background: #fff;
+}
+/* Below the phone's own width the frame would overflow the page, so it scales instead. */
+@media (max-width: 460px) {
+  .device-stage { padding: 16px 0 20px; }
+  .device { border-width: 9px; border-radius: 44px; }
+  .device::before { width: 88px; height: 25px; top: 9px; }
+}

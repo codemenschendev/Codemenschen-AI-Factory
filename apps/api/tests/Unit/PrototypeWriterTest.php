@@ -35,6 +35,17 @@ class PrototypeWriterTest extends TestCase
         return is_array($sent) ? json_encode($sent) : $sent;
     }
 
+    public function test_the_app_prompt_builds_the_app_not_a_page_about_it(): void
+    {
+        $sent = $this->systemPrompt('app');
+
+        // The old app prompt said "the app itself" and then dictated a nav, a hero, marketing
+        // sections and a footer, which is what a customer looked at and called strange.
+        $this->assertStringContainsString('app-page', $sent);
+        $this->assertStringContainsString('tabbar', $sent);
+        $this->assertStringNotContainsString('<footer class="footer">', $sent);
+    }
+
     public function test_the_app_brief_carries_the_conventions_from_the_library(): void
     {
         $prompt = $this->systemPrompt('app');
