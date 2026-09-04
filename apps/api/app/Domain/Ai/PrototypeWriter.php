@@ -358,7 +358,12 @@ class PrototypeWriter
         $blocking = PageAudit::blocking($qa);
         if ($blocking !== []) {
             $fixed = $this->repair($request, $system, $prompt, $markup, $blocking);
-            if ($fixed !== '') {
+            $qa['repaired'] = false;
+            if ($fixed === '') {
+                // The repair call itself failed, usually the gateway giving up on a second long
+                // generation. Worth recording: otherwise the report looks like nobody tried.
+                $qa['repair_failed'] = true;
+            } else {
                 $second = $this->inlineHouse($fixed);
                 $after = $audit->run($second);
 

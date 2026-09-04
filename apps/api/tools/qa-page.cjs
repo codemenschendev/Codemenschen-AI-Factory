@@ -51,10 +51,19 @@ function audit([placeholderSource, minTarget]) {
   const doc = document.documentElement;
   const over = doc.scrollWidth - doc.clientWidth;
   if (over > 1) {
+    // A row of phone mocks that scrolls sideways inside its own box reaches past the viewport by
+    // design and takes its children with it. Blaming those buries the one element that actually
+    // pushes the document wide, which is the only one anybody can fix.
+    const clipped = (el) => {
+      for (let n = el.parentElement; n; n = n.parentElement) {
+        if (getComputedStyle(n).overflowX !== 'visible') return true;
+      }
+      return false;
+    };
     const wide = [];
     for (const el of document.querySelectorAll('body *')) {
       const r = el.getBoundingClientRect();
-      if (visible(el) && (r.right > doc.clientWidth + 1 || r.left < -1)) {
+      if (visible(el) && (r.right > doc.clientWidth + 1 || r.left < -1) && !clipped(el)) {
         // The outermost offender is the one to fix; its children stick out because it does.
         if (!wide.some((w) => w.el.contains(el))) wide.push({ el, right: Math.round(r.right) });
       }
