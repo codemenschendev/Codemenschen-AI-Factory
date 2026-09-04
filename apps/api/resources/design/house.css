@@ -310,6 +310,9 @@ body.app-page {
   width: 100%; max-width: 430px; min-height: 100dvh;
   background: var(--bg); position: relative;
   display: flex; flex-direction: column;
+  /* Room at the top for the status bar, and for the island the device frame on the share page
+     draws over the page. Without it the first screen's title sits under the island. */
+  padding-top: 46px;
 }
 .app > input { position: absolute; width: 0; height: 0; opacity: 0; pointer-events: none; }
 
