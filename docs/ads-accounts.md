@@ -87,3 +87,33 @@ account cannot spend and the check says so.
 
 Store publishing (App Store Connect, Play Developer API) is a separate topic: each customer app
 ships under the customer's own developer account, per PLAN.md.
+
+## The ad reference library
+
+Ads are catalogued by how they PERSUADE, not by what they are for, so they get their own
+vocabulary and their own script. An app screen is an onboarding or a checkout; an ad is a price
+anchor or a testimonial, and those are the seven angles the copywriter already writes to.
+
+    python3 /var/lib/ai-factory/label-ad-library.py            # labels every unlabelled ad
+    python3 /var/lib/ai-factory/label-ad-library.py --rebuild-only
+
+Labels: angle (the seven in AdScriptWriter::ANGLES), industry, format, hook_position, text_load,
+has_people, has_price, cta_words, notes. Format is measured from the aspect ratio rather than
+asked, and AdFormats::shape() derives it the same way from a bought format, so the two cannot
+drift. A test fails if the seven angles ever differ between the PHP and the Python.
+
+Once ads are labelled, RenderProjectAd hands the copywriter one of the same angle, and the free
+`ads` prototype gets any labelled one. No ad of that angle means no picture: a reference that
+teaches the wrong shape is worse than none.
+
+### What to scrape
+
+Meta Ad Library, filtered. Thirty variants of one campaign teach one lesson; the app half of the
+library is useful because it holds hundreds of different apps.
+
+- Country Austria and Germany, not worldwide.
+- Search by trade, not by brand: Friseur, Bäckerei, Physiotherapie, Tischlerei, Zahnarzt,
+  Restaurant, Fitnessstudio.
+- Prefer ads that have been running for months. A long-running ad is a profitable ad, and that is
+  the only free quality signal the platform gives.
+- Aim for roughly 200 ads from 50 different advertisers before treating this as a library.

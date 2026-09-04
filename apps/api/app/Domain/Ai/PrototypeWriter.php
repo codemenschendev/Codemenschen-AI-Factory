@@ -342,7 +342,13 @@ class PrototypeWriter
         // text is legible, picked by the trade the brief is about. Until this line existed the app
         // prompt travelled with no picture at all, because every reference filed by hand is a
         // website. Anything else still uses those.
-        $ref = ($kind === 'app' ? $library?->reference($prompt) : null) ?? $refs?->pick($kind, $prompt);
+        $ref = match ($kind) {
+            'app' => $library?->reference($prompt),
+            // No angle: the free prototype draws all three formats at once and is not written to
+            // one story, so any labelled ad is a fair lesson in shape.
+            'ads' => $library?->adReference(null, $prompt),
+            default => null,
+        } ?? $refs?->pick($kind, $prompt);
         $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."]];
         if ($ref) {
             $user[] = ['type' => 'text', 'text' => self::REFERENCE.($ref['note'] !== '' ? "\n\nWhat is good about it: {$ref['note']}" : '')];

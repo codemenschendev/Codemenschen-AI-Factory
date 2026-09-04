@@ -2,11 +2,13 @@
 
 namespace App\Jobs;
 
+use App\Domain\Ads\AdFormats;
+use App\Domain\Ai\AdScriptWriter;
 use App\Domain\Ai\ImageService;
-use App\Domain\Library\ImageLibrary;
 use App\Domain\Ai\ScreenshotService;
 use App\Domain\Ai\SiteBrief;
-use App\Domain\Ai\AdScriptWriter;
+use App\Domain\Design\DesignLibrary;
+use App\Domain\Library\ImageLibrary;
 use App\Models\ProjectAd;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -31,7 +33,8 @@ class RenderProjectAd implements ShouldQueue
 
     public function __construct(public int $adId) {}
 
-    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots, ImageLibrary $library): void
+    public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites,
+        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs): void
     {
         $ad = ProjectAd::find($this->adId);
         if (! $ad || $ad->status === 'ready') {
@@ -41,14 +44,15 @@ class RenderProjectAd implements ShouldQueue
         $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($ad, $writer, $images, $sites, $shots, $library);
+            $this->render($ad, $writer, $images, $sites, $shots, $library, $refs);
         } catch (Throwable $e) {
             Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
             $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
         }
     }
 
-    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites, ScreenshotService $shots, ImageLibrary $library): void
+    private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites,
+        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs): void
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
@@ -75,6 +79,14 @@ class RenderProjectAd implements ShouldQueue
                 $this->context($ad, $forCopy),
                 isset($spec['goal']) ? (string) $spec['goal'] : null,
                 isset($spec['angle']) ? (string) $spec['angle'] : null,
+                // A real ad of the same angle, if the library has one. The angle is the request:
+                // showing a testimonial when the customer asked for a price anchor would teach
+                // the wrong shape, so a miss sends no picture at all.
+                $refs->adReference(
+                    isset($spec['angle']) ? (string) $spec['angle'] : null,
+                    (string) $ad->prompt,
+                    AdFormats::shape(isset($spec['format']) ? (string) $spec['format'] : null),
+                ),
             );
         }
 
@@ -195,11 +207,12 @@ class RenderProjectAd implements ShouldQueue
 
         return $w === $h ? '1024x1024' : ($w > $h ? '1536x1024' : '1024x1536');
     }
+
     /** A worker timeout throws MaxAttemptsExceeded OUTSIDE handle(), so record it here or the row
         stays stuck in its in-progress state forever. */
-    public function failed(\Throwable $e): void
+    public function failed(Throwable $e): void
     {
-        \App\Models\ProjectAd::whereKey($this->adId)->where('status', '!=', 'ready')
+        ProjectAd::whereKey($this->adId)->where('status', '!=', 'ready')
             ->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
     }
 }

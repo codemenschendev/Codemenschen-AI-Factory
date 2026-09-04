@@ -223,7 +223,9 @@ class DesignLibrary
         'finance_banking' => ['bank', 'versicherung', 'buchhaltung', 'steuer', 'finanz', 'rechnung'],
         'business_saas' => ['software', 'saas', 'agentur', 'kanzlei', 'beratung', 'verwaltung'],
         'social' => ['verein', 'community', 'mitglieder', 'club', 'treffen'],
-        'utilities' => ['handwerk', 'installateur', 'elektriker', 'tischler', 'maler', 'reparatur', 'werkstatt', 'service'],
+        'utilities' => ['handwerk', 'installateur', 'elektriker', 'maler', 'reparatur', 'service'],
+        'trades_crafts' => ['tischler', 'schreiner', 'werkstatt', 'zimmerei', 'schlosser', 'dachdecker'],
+        'events_culture' => ['veranstaltung', 'konzert', 'festival', 'messe', 'ausstellung', 'theater'],
     ];
 
     /**
@@ -268,13 +270,88 @@ class DesignLibrary
             return null;
         }
 
-        $mime = str_ends_with($path, '.png') ? 'image/png' : (str_ends_with($path, '.webp') ? 'image/webp' : 'image/jpeg');
-
         return [
             'id' => (string) $r['id'],
             'note' => (string) (($r['labels']['notes'] ?? '') ?: ''),
-            'data' => "data:{$mime};base64,".base64_encode($bytes),
+            'data' => $this->mimeFor($path).base64_encode($bytes),
         ];
+    }
+
+    /**
+     * One labelled advertisement to show the copywriter, as a data URI.
+     *
+     * Chosen by ANGLE first, because the angle is the whole ad: a price anchor and a testimonial
+     * are different pictures before they are different sentences. The trade narrows it further
+     * when the library has one, and format last, because a story and a square of the same idea
+     * teach the same lesson.
+     *
+     * Grade is not filtered here the way it is for app screens. An ad is a poster: at 360px the
+     * composition, the weight of the text and where the hook sits all still read, and those are
+     * the three things worth copying.
+     *
+     * @return array{id:string,note:string,data:string}|null
+     */
+    public function adReference(?string $angle, string $brief = '', ?string $format = null): ?array
+    {
+        $industry = $brief === '' ? null : $this->industryFor($brief);
+
+        $ads = [];
+        foreach ($this->records() as $r) {
+            if (! in_array($r['visual']['category'] ?? '', ['advertisement', 'banner'], true)) {
+                continue;
+            }
+            $l = is_array($r['labels'] ?? null) ? $r['labels'] : [];
+            if (($l['angle'] ?? null) === null) {
+                continue;
+            }
+            $ads[] = [$r, $l];
+        }
+        if ($ads === []) {
+            return null;
+        }
+
+        // Narrow while narrowing still leaves something. An empty result from the last filter is
+        // worse than a looser match: the point is to show an ad, not to show the perfect ad.
+        $narrow = function (array $pool, callable $keep) {
+            $kept = array_values(array_filter($pool, $keep));
+
+            return $kept === [] ? $pool : $kept;
+        };
+
+        if ($angle !== null) {
+            $exact = array_values(array_filter($ads, fn (array $p) => $p[1]['angle'] === $angle));
+            if ($exact === []) {
+                return null;   // the angle is the request; a different one answers a different question
+            }
+            $ads = $exact;
+        }
+        if ($industry !== null) {
+            $ads = $narrow($ads, fn (array $p) => ($p[1]['industry'] ?? null) === $industry);
+        }
+        if ($format !== null) {
+            $ads = $narrow($ads, fn (array $p) => ($p[1]['format'] ?? null) === $format);
+        }
+
+        [$r, $l] = $ads[array_rand($ads)];
+        $path = $this->dir.'/'.($r['file'] ?? '');
+        $bytes = is_file($path) ? @file_get_contents($path) : false;
+        if ($bytes === false) {
+            return null;
+        }
+
+        return [
+            'id' => (string) $r['id'],
+            'note' => (string) (($l['notes'] ?? '') ?: ''),
+            'data' => $this->mimeFor($path).base64_encode($bytes),
+        ];
+    }
+
+    private function mimeFor(string $path): string
+    {
+        $mime = str_ends_with($path, '.png') ? 'image/png'
+            : (str_ends_with($path, '.webp') ? 'image/webp' : 'image/jpeg');
+
+        return "data:{$mime};base64,";
     }
 
     /** @return string|null the labelled industry this brief is about, if one is obvious */

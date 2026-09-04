@@ -116,6 +116,28 @@ final class AdFormats
     }
 
     /**
+     * The platform slot this format is, in the words the ad reference library is labelled with.
+     *
+     * Derived from the ratio rather than mapped from a table, because tools/label-ad-library.py
+     * derives it the same way from the pixels of a scraped ad. Two lists would drift; one piece of
+     * arithmetic cannot.
+     */
+    public static function shape(?string $key): ?string
+    {
+        $f = self::FORMATS[$key ?? self::DEFAULT] ?? self::FORMATS[self::DEFAULT];
+        $r = $f['w'] / $f['h'];
+
+        foreach (['story' => 9 / 16, 'feed_portrait' => 4 / 5, 'feed_square' => 1.0,
+            'link' => 1.91, 'landscape' => 16 / 9] as $name => $target) {
+            if (abs($r - $target) <= 0.06) {
+                return $name;
+            }
+        }
+
+        return 'other';
+    }
+
+    /**
      * The formats a given ad kind can be rendered in, with only the ones that render properly
      * today unless $includeUnready says otherwise.
      *
