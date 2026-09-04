@@ -60,6 +60,18 @@ and answer with ONE JSON object and nothing else: no prose, no code fence.
 Use only the values listed. If you cannot tell, use null rather than guessing. Answer in English.
 """ % (SCREEN_TYPES, INDUSTRIES, PATTERNS)
 
+# A 360px screenshot carries its layout and nothing else: the words on it are a few pixels tall.
+# Without this the model reads them anyway and invents button labels that are not there.
+LAYOUT_NOTE = """
+This screenshot is 360px wide, so the text on it is not legible. Judge the layout, the blocks and
+the rhythm. Set primary_action to null unless a label is genuinely readable, and do not guess a
+word from the shape of it."""
+
+# Sidecars are grouped by grade on disk, and `grade` is the field that says how much to trust the
+# pixels, so the prompt is chosen per image rather than per run.
+def prompt_for(grade):
+    return PROMPT + (LAYOUT_NOTE if grade == 'layout' else '')
+
 print_lock = threading.Lock()
 
 
@@ -79,11 +91,11 @@ def read_env(path):
     }
 
 
-def ask(cfg, image_path, timeout=120):
+def ask(cfg, image_path, prompt, timeout=120):
     b64 = base64.b64encode(open(image_path, 'rb').read()).decode()
     mime = 'image/webp' if image_path.endswith('.webp') else 'image/png'
     body = {'messages': [{'role': 'user', 'content': [
-        {'type': 'text', 'text': PROMPT},
+        {'type': 'text', 'text': prompt},
         {'type': 'image_url', 'image_url': {'url': f'data:{mime};base64,{b64}'}},
     ]}]}
     if cfg['model']:
@@ -134,7 +146,7 @@ def sidecars(root, medium, grade):
             rec = json.load(open(path, encoding='utf-8'))
             if medium and rec.get('medium') != medium:
                 continue
-            if grade and rec.get('visual', {}).get('grade') != grade:
+            if grade and grade != 'all' and rec.get('visual', {}).get('grade') != grade:
                 continue
             yield path, rec
 
@@ -178,12 +190,18 @@ def main():
     ap.add_argument('--root', default=DEFAULT_ROOT)
     ap.add_argument('--env', default=ENV_FILE)
     ap.add_argument('--medium', default='app')
-    ap.add_argument('--grade', default='detail')
+    ap.add_argument('--grade', default='detail', help="detail, layout, or all")
     ap.add_argument('--limit', type=int, default=0)
     ap.add_argument('--workers', type=int, default=3)
     ap.add_argument('--force', action='store_true', help='relabel images that already have labels')
     ap.add_argument('--dry-run', action='store_true', help='label but write nothing')
+    ap.add_argument('--rebuild-only', action='store_true',
+                    help='rebuild catalog.json + index/ from the sidecars and stop; no vision calls')
     args = ap.parse_args()
+
+    if args.rebuild_only:
+        print(f'catalog.json + index/ dựng lại từ {rebuild(args.root)} bản ghi', flush=True)
+        return
 
     cfg = read_env(args.env)
     if not cfg['base'] or not cfg['token']:
@@ -201,7 +219,7 @@ def main():
         path, rec = item
         img = os.path.join(args.root, rec['file'])
         try:
-            labels = parse(ask(cfg, img))
+            labels = parse(ask(cfg, img, prompt_for(rec.get('visual', {}).get('grade'))))
         except (urllib.error.URLError, OSError, KeyError, ValueError) as e:
             labels, err = None, str(e)[:120]
         else:

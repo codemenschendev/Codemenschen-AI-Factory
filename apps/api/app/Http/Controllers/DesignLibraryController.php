@@ -27,6 +27,7 @@ class DesignLibraryController extends Controller
         }
 
         $filters = $request->validate([
+            'medium' => 'sometimes|string|max:20',
             'screen_type' => 'sometimes|string|max:40',
             'industry' => 'sometimes|string|max:40',
             'pattern' => 'sometimes|string|max:40',

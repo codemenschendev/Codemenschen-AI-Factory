@@ -374,6 +374,7 @@ export const en = {
       "Collected app screens, kept to look things up. They are never shipped. The prototype writer reads the rules distilled from them, not the pictures.",
     refUnavailable: "The library is not mounted on this server.",
     refSearchHint: "Search notes, button text or source",
+    refMedium: "Medium",
     refScreenType: "Screen",
     refIndustry: "Industry",
     refPattern: "Pattern",

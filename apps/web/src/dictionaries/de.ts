@@ -374,6 +374,7 @@ export const de = {
       "Gesammelte App-Screens zum Nachschlagen. Sie werden nie ausgeliefert. Der Prototyp-Generator liest nicht diese Bilder, sondern die Regeln, die daraus abgeleitet wurden.",
     refUnavailable: "Die Bibliothek ist auf diesem Server nicht eingebunden.",
     refSearchHint: "Notiz, Button-Text oder Quelle durchsuchen",
+    refMedium: "Art",
     refScreenType: "Screen",
     refIndustry: "Branche",
     refPattern: "Muster",

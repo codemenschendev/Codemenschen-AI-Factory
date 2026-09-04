@@ -6,6 +6,8 @@ import type { Dict, Locale } from "@/lib/i18n";
 
 interface RefItem {
   id: string;
+  medium: string | null;
+  orientation: string | null;
   width: number;
   height: number;
   bytes: number;
@@ -37,9 +39,10 @@ interface RefPage {
   items: RefItem[];
 }
 
-type FilterKey = "screen_type" | "industry" | "pattern" | "scheme" | "grade" | "labelled";
+type FilterKey = "medium" | "screen_type" | "industry" | "pattern" | "scheme" | "grade" | "labelled";
 
 const EMPTY: Record<FilterKey, string> = {
+  medium: "",
   screen_type: "",
   industry: "",
   pattern: "",
@@ -115,6 +118,7 @@ export function ReferencePanel({ token, d }: { token: string; locale: Locale; d:
       <p className="note">{a.refNote}</p>
 
       <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "end", marginBottom: 16 }}>
+        {select("medium", a.refMedium, data?.facets.medium)}
         {select("screen_type", a.refScreenType, data?.facets.screen_type)}
         {select("industry", a.refIndustry, data?.facets.industry)}
         {select("pattern", a.refPattern, data?.facets.pattern)}
@@ -183,7 +187,7 @@ export function ReferencePanel({ token, d }: { token: string; locale: Locale; d:
                 loading="lazy"
                 style={{
                   width: "100%",
-                  aspectRatio: "9 / 19",
+                  aspectRatio: it.orientation === "landscape" ? "16 / 10" : "9 / 19",
                   objectFit: "cover",
                   objectPosition: "top",
                   borderRadius: 6,
@@ -193,6 +197,7 @@ export function ReferencePanel({ token, d }: { token: string; locale: Locale; d:
             </a>
 
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "8px 0 6px" }}>
+              {it.medium && <span className="badge">{it.medium}</span>}
               {it.screen_type && <span className="badge">{pretty(it.screen_type)}</span>}
               {it.industry && <span className="badge">{pretty(it.industry)}</span>}
               {it.density && <span className="badge">{it.density}</span>}

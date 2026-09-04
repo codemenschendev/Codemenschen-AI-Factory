@@ -110,7 +110,8 @@ class DesignLibraryTest extends TestCase
             ->assertJsonPath('matched', 3)
             ->assertJsonPath('facets.screen_type.calendar_booking', 1)
             ->assertJsonPath('facets.grade.detail', 2)
-            ->assertJsonPath('facets.pattern.sticky_cta', 1);
+            ->assertJsonPath('facets.pattern.sticky_cta', 1)
+            ->assertJsonPath('facets.medium.app', 3);
     }
 
     public function test_the_filters_narrow_the_page(): void
@@ -123,6 +124,9 @@ class DesignLibraryTest extends TestCase
 
         $this->getJson('/api/admin/design-library?scheme=dark', $this->asAdmin())
             ->assertOk()->assertJsonPath('matched', 1);
+
+        $this->getJson('/api/admin/design-library?medium=web', $this->asAdmin())
+            ->assertOk()->assertJsonPath('matched', 0);
 
         $this->getJson('/api/admin/design-library?labelled=no', $this->asAdmin())
             ->assertOk()->assertJsonPath('matched', 1)->assertJsonPath('items.0.id', 'ccc');

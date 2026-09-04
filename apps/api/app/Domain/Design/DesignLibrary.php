@@ -58,7 +58,7 @@ class DesignLibrary
      */
     public function facets(): array
     {
-        $count = ['screen_type' => [], 'industry' => [], 'pattern' => [], 'category' => [], 'grade' => [], 'scheme' => []];
+        $count = ['medium' => [], 'screen_type' => [], 'industry' => [], 'pattern' => [], 'category' => [], 'grade' => [], 'scheme' => []];
         $labelled = 0;
 
         foreach ($this->records() as $r) {
@@ -77,6 +77,7 @@ class DesignLibrary
             if ($s = ($l['palette']['scheme'] ?? null)) {
                 $count['scheme'][$s] = ($count['scheme'][$s] ?? 0) + 1;
             }
+            $count['medium'][$r['medium'] ?? 'unknown'] = ($count['medium'][$r['medium'] ?? 'unknown'] ?? 0) + 1;
             $count['category'][$r['visual']['category'] ?? 'unknown'] = ($count['category'][$r['visual']['category'] ?? 'unknown'] ?? 0) + 1;
             $count['grade'][$r['visual']['grade'] ?? 'unknown'] = ($count['grade'][$r['visual']['grade'] ?? 'unknown'] ?? 0) + 1;
         }
@@ -136,6 +137,9 @@ class DesignLibrary
                 return false;
             }
         }
+        if (($filters['medium'] ?? null) && ($r['medium'] ?? null) !== $filters['medium']) {
+            return false;
+        }
         if ($filters['labelled'] ?? null) {
             $has = ($l['screen_type'] ?? null) !== null;
             if (($filters['labelled'] === 'yes') !== $has) {
@@ -176,9 +180,11 @@ class DesignLibrary
 
         return [
             'id' => $r['id'],
+            'medium' => $r['medium'] ?? null,
             'width' => $r['visual']['width'] ?? 0,
             'height' => $r['visual']['height'] ?? 0,
             'bytes' => $r['byte_size'] ?? 0,
+            'orientation' => $r['visual']['orientation'] ?? null,
             'category' => $r['visual']['category'] ?? null,
             'grade' => $r['visual']['grade'] ?? null,
             'source' => $src['label'] ?? ($src['domain'] ?? null),
