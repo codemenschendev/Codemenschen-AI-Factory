@@ -28,7 +28,13 @@ class PrototypePhotoTest extends TestCase
         parent::setUp();
         $this->dir = storage_path('framework/testing/photo-'.uniqid());
         File::makeDirectory($this->dir.'/img', 0755, true);
-        config(['services.media.library_path' => $this->dir, 'services.ai_image.quality' => 'medium']);
+        config([
+            'services.media.library_path' => $this->dir,
+            'services.ai_image.quality' => 'medium',
+            // Most tests here are about the paid path, so they turn it on explicitly. The default
+            // is off, and one test below proves it.
+            'services.stock.generate_for_prototypes' => true,
+        ]);
     }
 
     protected function tearDown(): void
@@ -143,6 +149,21 @@ class PrototypePhotoTest extends TestCase
         $this->assertStringContainsString('<div class="app-art">Zweite Aufnahme</div>', $out['html']);
     }
 
+    public function test_the_free_tier_does_not_buy_a_picture_by_default(): void
+    {
+        // Prototypes are given away by the hundred. When nothing free matches, the band keeps its
+        // gradient, which is a design; an invoice for one is not.
+        config(['services.stock.generate_for_prototypes' => false]);
+        $sent = [];
+        $page = $this->page();
+
+        $out = $this->photo($this->service($sent))->apply($page);
+
+        $this->assertSame([], $sent, 'nothing was generated');
+        $this->assertSame($page, $out['html'], 'the band is untouched');
+        $this->assertNull($out['source']);
+    }
+
     public function test_a_page_without_a_band_buys_nothing(): void
     {
         $sent = [];
@@ -206,6 +227,7 @@ class PrototypePhotoTest extends TestCase
 
         $this->assertSame([], $sent, 'nothing was generated');
         $this->assertStringContainsString('data:image/webp;base64,', $out['html']);
+        $this->assertSame('stock', $out['source']);
         $this->assertSame('Anna Fotografin', $out['credit']);
         $this->assertSame('https://www.pexels.com/photo/1', $out['credit_url']);
     }
@@ -230,6 +252,7 @@ class PrototypePhotoTest extends TestCase
 
         $this->assertCount(1, $sent, 'the paid path is the fallback, not the first choice');
         $this->assertStringContainsString('data:image/webp;base64,', $out['html']);
+        $this->assertSame('generated', $out['source']);
         $this->assertNull($out['credit']);
     }
 

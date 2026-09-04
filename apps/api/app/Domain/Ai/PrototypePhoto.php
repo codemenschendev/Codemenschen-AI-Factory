@@ -41,7 +41,7 @@ class PrototypePhoto
     ) {}
 
     /**
-     * @return array{html:string,photo:?string,credit:?string,credit_url:?string}
+     * @return array{html:string,photo:?string,source:?string,credit:?string,credit_url:?string}
      */
     public function apply(string $html): array
     {
@@ -66,15 +66,19 @@ class PrototypePhoto
         return [
             'html' => str_replace($m[0], $img, $html),
             'photo' => $brief,
+            // Which of the three answered. An empty credit used to mean "library or generated",
+            // two things that differ by the price of a generation, and nobody could tell them
+            // apart afterwards.
+            'source' => $found['source'],
             'credit' => $found['credit'],
             'credit_url' => $found['url'],
         ];
     }
 
-    /** @return array{html:string,photo:null,credit:null,credit_url:null} */
+    /** @return array{html:string,photo:null,source:null,credit:null,credit_url:null} */
     private function nothing(string $html): array
     {
-        return ['html' => $html, 'photo' => null, 'credit' => null, 'credit_url' => null];
+        return ['html' => $html, 'photo' => null, 'source' => null, 'credit' => null, 'credit_url' => null];
     }
 
     /**
@@ -85,7 +89,7 @@ class PrototypePhoto
      * generated one; generation is the last resort and stays for the paid ad pipeline where the
      * picture has to show one particular scene.
      *
-     * @return array{data:string,credit:?string,url:?string}|null
+     * @return array{data:string,source:string,credit:?string,url:?string}|null
      */
     private function dataUri(string $brief): ?array
     {
@@ -95,7 +99,7 @@ class PrototypePhoto
                 $path = $this->library->path($hit['id']);
                 $uri = $path === null ? null : $this->encode($path);
                 if ($uri !== null) {
-                    return ['data' => $uri, 'credit' => null, 'url' => null];
+                    return ['data' => $uri, 'source' => 'library', 'credit' => null, 'url' => null];
                 }
             }
 
@@ -103,14 +107,23 @@ class PrototypePhoto
             if ($shot !== null) {
                 $found = $this->file($shot['bytes'], '.jpg', $brief);
                 if ($found !== null) {
-                    return ['data' => $found, 'credit' => $shot['credit'], 'url' => $shot['url']];
+                    return ['data' => $found, 'source' => 'stock', 'credit' => $shot['credit'], 'url' => $shot['url']];
                 }
+            }
+
+            // The free tier does not buy pictures unless somebody turns that on. A prototype is a
+            // lead magnet given away by the hundred, and a gradient band is a deliberate design;
+            // an invoice for one is not.
+            if (! config('services.stock.generate_for_prototypes')) {
+                Log::info('prototype photo: nothing free matched, generation is off', ['brief' => $brief]);
+
+                return null;
             }
 
             $bytes = $this->images->generate($this->prompt($brief), self::SIZE);
             $found = $this->file($bytes, '.png', $brief);
 
-            return $found === null ? null : ['data' => $found, 'credit' => null, 'url' => null];
+            return $found === null ? null : ['data' => $found, 'source' => 'generated', 'credit' => null, 'url' => null];
         } catch (\Throwable $e) {
             Log::warning('prototype photo skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
 

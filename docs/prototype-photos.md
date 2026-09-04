@@ -8,7 +8,20 @@ the photo brief, and the picture comes from the first of these that answers, in 
 2. **Pexels**, free, if `PEXELS_API_KEY` is set. Instant, and for a bakery or a salon a real
    photograph beats a generated one: no invented shop signs, no six-fingered hands.
 3. **Generation** through the image sidecar, which costs money on Codemenschen's OpenAI account.
+   **Off by default.** A prototype is given away by the hundred and a gradient band is a design;
+   an invoice for one is not. Set `PROTOTYPE_GENERATE_PHOTOS=true` to allow it.
 4. **Nothing**, and the band keeps its accent gradient, which reads as a deliberate design.
+
+Paid ads are a different pipeline and always generate: an ad has to show the one scene its copy
+names, and no stock index holds that.
+
+## What each prototype actually used
+
+    docker exec infra-api-1 php artisan factory:photo-sources --days=7
+
+One row per source. Before this existed an empty credit meant either the shared library or a
+generation, two things that differ by the price of a call, and nobody could tell them apart after
+the fact.
 
 One photo per prototype, bought after the audit and any repair pass so a repaired page never pays
 twice.
