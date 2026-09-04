@@ -363,12 +363,17 @@ body.app-page {
 .screen .app-cta { padding: var(--sp-4); border-radius: var(--r-lg); font-size: var(--fs-base); }
 .screen .app-stat { padding: var(--sp-4); border-radius: var(--r-lg); }
 .screen .app-stat b { font-size: var(--fs-2xl); letter-spacing: -.03em; }
-/* A picture band: real screens open with one, and the page may load no image, so it is drawn. */
+/* A picture band. Real screens open with one. The gradient is what it looks like before a photo
+   arrives, and what it keeps if none does: a flat accent reads as a deliberate design, a grey
+   rectangle reads as a page that failed to load. */
 .screen .app-art {
   aspect-ratio: 16 / 9; border-radius: var(--r-lg); display: grid; place-items: end start;
-  padding: var(--sp-4); color: var(--accent-ink); font-weight: 660;
+  padding: var(--sp-4); color: var(--accent-ink); font-weight: 660; overflow: hidden;
   background: linear-gradient(150deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #000) 100%);
 }
+/* With a photograph in it the band carries no words: the screen around it already has them. */
+.screen .app-art.has-photo { padding: 0; display: block; }
+.screen .app-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
 
 /* --- Ad creatives -----------------------------------------------------------------------
    Real platform ratios at a size that fits a screen, so the customer sees the shape their

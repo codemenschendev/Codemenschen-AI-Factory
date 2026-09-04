@@ -149,6 +149,10 @@ class PrototypeWriter
         Blocks to build a screen from, and nothing else:
 
             <div class="app-art">A line naming what the picture would show</div>
+              ^ that line is a photo brief: a real photograph is generated from it and put in the
+                band. Write what a photographer would be told, in the visitor's own trade and
+                place: "Lena am Waschbecken, warmes Licht". Use it AT MOST ONCE in the whole app,
+                on the screen where a picture earns its place, usually the first or the last.
             <div class="app-hero"><b>The one number or result</b><span>the line under it</span></div>
             <div class="app-row"><b>What it is</b><span>the detail that decides</span>
               <span class="app-tag">frei</span></div>
@@ -284,7 +288,7 @@ class PrototypeWriter
 
     /** @return array{title:string,html:string} */
     public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null,
-        ?PageAudit $audit = null, ?DesignLibrary $library = null): array
+        ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null): array
     {
         $system = match ($kind) {
             'app' => self::APP.$this->appConventions(),
@@ -374,6 +378,15 @@ class PrototypeWriter
                 }
                 $qa['repaired'] = $page === $second;
             }
+        }
+
+        // Last, and only for an app: the picture band names what it would show, so the photo is
+        // bought once, after the page has settled. Doing it before the repair pass would risk
+        // paying for an image the repair then throws away.
+        if ($kind === 'app' && $photo !== null) {
+            $shot = $photo->apply($page);
+            $page = $shot['html'];
+            $qa['photo'] = $shot['photo'];
         }
 
         return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];
