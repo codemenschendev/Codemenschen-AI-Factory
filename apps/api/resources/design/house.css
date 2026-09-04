@@ -39,6 +39,10 @@ body.t-rose   { --accent: #9f1239; --accent-soft: #fff1f2; --surface: #fdf8f9;
                 --ink: #2a1119; --ink-soft: #6d4d56; --border: #f0dfe3; }
 
 body {
+  /* The accent used as INK rather than as a surface. On a light page it is the accent itself; on
+     a dark one the same colour measures under 2:1 against the background, so night lifts it. It
+     is declared here, not on :root, because the palette classes set --accent on the body too. */
+  --accent-on: var(--accent);
   background: var(--bg); color: var(--ink);
   font: var(--fs-base)/1.65 "Instrument Sans", ui-sans-serif, system-ui, -apple-system,
         "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -268,7 +272,7 @@ a  { color: inherit; }
 .app-tabs { display: flex; border-top: 1px solid var(--border); background: var(--surface); }
 .app-tabs span { flex: 1; padding: var(--sp-3) 0 var(--sp-5); text-align: center;
   font-size: var(--fs-xs); color: var(--ink-soft); }
-.app-tabs span.on { color: var(--accent); font-weight: 660; }
+.app-tabs span.on { color: var(--accent-on); font-weight: 660; }
 
 /* From the reference library: 86 of 239 real screens end in an action pinned to the bottom, and
    the top of the body is a coloured band carrying the one thing the screen is about. The markup
@@ -285,7 +289,7 @@ a  { color: inherit; }
 }
 .app-tag {
   display: inline-block; margin-top: var(--sp-2); padding: 1px var(--sp-2); border-radius: 99px;
-  background: var(--accent-soft); color: var(--accent); font-size: var(--fs-xs); font-weight: 620;
+  background: var(--accent-soft); color: var(--accent-on); font-size: var(--fs-xs); font-weight: 620;
 }
 .app-stats { display: flex; gap: var(--sp-3); }
 .app-stat { flex: 1; border: 1px solid var(--border); border-radius: var(--r); padding: var(--sp-3); }
@@ -346,7 +350,7 @@ body.app-page {
 .app > input:nth-of-type(2):checked ~ .tabbar label:nth-child(2),
 .app > input:nth-of-type(3):checked ~ .tabbar label:nth-child(3),
 .app > input:nth-of-type(4):checked ~ .tabbar label:nth-child(4),
-.app > input:nth-of-type(5):checked ~ .tabbar label:nth-child(5) { color: var(--accent); font-weight: 660; }
+.app > input:nth-of-type(5):checked ~ .tabbar label:nth-child(5) { color: var(--accent-on); font-weight: 660; }
 
 /* Full size, because these now carry a whole screen rather than a 240px mock. The band, the row,
    the field and the action are the same vocabulary the reference library was counted in. */
@@ -374,6 +378,97 @@ body.app-page {
 /* With a photograph in it the band carries no words: the screen around it already has them. */
 .screen .app-art.has-photo { padding: 0; display: block; }
 .screen .app-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* The five patterns the reference library counted most often and this vocabulary could not draw.
+   Card grids appeared on 443 of the labelled screens, carousels on 275, avatar rows on 207,
+   segmented controls on 201 and search fields on 174. Without them every generated screen came
+   out a stack of bordered rectangles, which is exactly what it was compared against a real app
+   and found wanting. */
+
+/* A row that carries a picture, a value and a state: what a ride, a dish or a product looks like
+   in a list. .app-row stays the plain two-line row and is still right for most things. */
+.screen .app-line {
+  display: flex; align-items: center; gap: var(--sp-3);
+  border: 1px solid var(--border); border-radius: var(--r-lg); padding: var(--sp-3) var(--sp-4);
+}
+.screen .app-line > i {
+  flex: 0 0 46px; height: 46px; border-radius: var(--r); display: grid; place-items: center;
+  background: var(--accent-soft);
+}
+.screen .app-line > i svg { width: 26px; height: 26px; stroke: var(--accent-on); fill: none; stroke-width: 1.6; }
+.screen .app-line > div { flex: 1; min-width: 0; }
+.screen .app-line b { display: block; font-size: var(--fs-base); }
+.screen .app-line span { display: block; font-size: var(--fs-sm); color: var(--ink-soft); }
+/* The badge sits inside that block column, so it inherits display:block and stretches the whole
+   width unless it is told otherwise. A pill as wide as the row does not read as a pill. */
+.screen .app-line .app-tag { display: inline-block; width: auto; margin-top: var(--sp-1); }
+.screen .app-line .app-val {
+  display: block; margin-left: auto; font-size: var(--fs-lg); font-weight: 700;
+  letter-spacing: -.02em; white-space: nowrap; color: var(--ink);
+}
+/* The one the user has chosen. Weight, not colour: colour is the accent's job. */
+.screen .app-line.on { border-color: var(--ink); border-width: 2px; padding: calc(var(--sp-3) - 1px) calc(var(--sp-4) - 1px); }
+
+/* "Where to?". The first thing on a great many home screens. */
+.screen .app-search {
+  display: flex; align-items: center; gap: var(--sp-3);
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-full);
+  padding: var(--sp-3) var(--sp-4); color: var(--ink-soft); font-size: var(--fs-base);
+}
+.screen .app-search svg { flex: 0 0 auto; width: 19px; height: 19px; stroke: currentColor; fill: none; stroke-width: 1.9; }
+.screen .app-search .app-tag { margin: 0 0 0 auto; }
+
+/* Two or three modes of the same app: Fahrten and Essen, Heute and Woche. */
+.screen .app-seg {
+  display: flex; gap: 3px; background: var(--surface); border-radius: var(--r-full); padding: 3px;
+}
+.screen .app-seg span {
+  flex: 1; text-align: center; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-full);
+  font-size: var(--fs-sm); font-weight: 560; color: var(--ink-soft);
+}
+.screen .app-seg span.on { background: var(--bg); color: var(--ink); box-shadow: var(--shadow); }
+
+/* The grid of shortcuts under the search field. Three or four, never more on one line. */
+.screen .app-tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--sp-2); }
+.screen .app-tiles.three { grid-template-columns: repeat(3, 1fr); }
+.screen .app-tile {
+  position: relative; display: grid; gap: var(--sp-2); justify-items: center; text-align: center;
+  background: var(--surface); border-radius: var(--r); padding: var(--sp-3) var(--sp-2);
+  font-size: var(--fs-xs); color: var(--ink-soft); line-height: 1.25;
+}
+.screen .app-tile svg { width: 24px; height: 24px; stroke: var(--accent-on); fill: none; stroke-width: 1.7; }
+.screen .app-tile .app-tag { position: absolute; top: -7px; right: -4px; margin: 0; }
+
+/* A row that scrolls sideways. It bleeds into the screen's gutter, the way every app does it,
+   so the next card is half visible and the row reads as continuing. */
+.screen .app-scroll {
+  display: flex; gap: var(--sp-3); overflow-x: auto; scrollbar-width: none;
+  margin-inline: calc(var(--sp-5) * -1); padding-inline: var(--sp-5);
+}
+.screen .app-scroll::-webkit-scrollbar { display: none; }
+.screen .app-card {
+  flex: 0 0 64%; border: 1px solid var(--border); border-radius: var(--r-lg);
+  padding: var(--sp-4); display: grid; gap: var(--sp-1); align-content: start;
+}
+.screen .app-card b { font-size: var(--fs-base); }
+.screen .app-card span { font-size: var(--fs-sm); color: var(--ink-soft); }
+
+/* People. Initials, not photographs: a generated face in a prototype is a promise nobody made. */
+.screen .app-people { display: flex; align-items: center; gap: var(--sp-3); }
+.screen .app-people .who {
+  flex: 0 0 auto; width: 38px; height: 38px; border-radius: 50%;
+  background: var(--accent-soft); color: var(--accent-on);
+  display: grid; place-items: center; font-weight: 700; font-size: var(--fs-sm);
+}
+
+/* Half the screens in the library are dark, and this page could only be light. Add `night` to the
+   body next to the palette; the accent stays whatever the palette chose. */
+body.app-page.night {
+  --bg: #0f1318; --surface: #171c23; --ink: #f3f6fa; --ink-soft: #94a1b2;
+  --border: #242c37; --accent-soft: #1b2534;
+  --accent-on: color-mix(in srgb, var(--accent) 38%, #ffffff);
+}
+body.app-page.night .app-seg span.on { box-shadow: none; background: #242c37; }
 
 /* --- Ad creatives -----------------------------------------------------------------------
    Real platform ratios at a size that fits a screen, so the customer sees the shape their

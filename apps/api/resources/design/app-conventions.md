@@ -47,6 +47,27 @@ The story is: what the user sees first, what they pick, what they fill in, what 
 - Light and dark run close to even, 677 to 591. Dark suits numbers, night work, media and premium
   trades; light suits everything local, hands-on and transactional.
 
+## What a screen is made of, and how often the library used it
+
+Counted across the labelled screens. A screen built only from rows is the failure these numbers
+warn about: real screens mix.
+
+    hero_image           708    .app-art, the picture band
+    bottom_tab_bar       541    .tabbar
+    sticky_cta           480    .app-cta
+    badge_labels         449    .app-tag
+    card_grid            443    .app-tiles, four shortcuts under the search
+    list_rows            306    .app-row and .app-line
+    horizontal_carousel  275    .app-scroll
+    avatar_row           207    .app-people
+    segmented_control    201    .app-seg
+    search_bar           174    .app-search
+    stat_tiles           100    .app-stats
+
+A home screen usually opens with a search field or a segmented control and a grid of tiles. A list
+you choose from uses `.app-line`: an icon on the left, two lines in the middle, the price on the
+right, and `.on` for the one already chosen. A conversation is `.app-people`.
+
 ## The classes for all of this
 
     .app-bar        screen title, one line
@@ -58,6 +79,17 @@ The story is: what the user sees first, what they pick, what they fill in, what 
     .app-cta        the action the screen exists for, pinned to the bottom
     .app-stat       one number with its label, two or three side by side
     .app-tabs       three or four tabs, one with class="on"
+
+For a prototype that IS the app rather than a page about it, the page is `body.app-page`, add
+`night` for a dark one, and the screens live in `.screen` inside `.app` with `.tabbar` at the
+bottom. Then also:
+
+    .app-search     the field a home screen opens with
+    .app-seg        two or three modes of the same app
+    .app-tiles      a grid of four shortcuts, each an .app-tile with one stroked svg
+    .app-scroll     a row that scrolls sideways, of .app-card
+    .app-line       icon, two lines, value on the right; .on for the chosen one
+    .app-people     initials in circles, never generated faces
 
 Real content in every one of them: the visitor's own services, times, prices and places. A screen
 full of "Item 1" sells nothing, and the auditor now blocks a page that ships one.

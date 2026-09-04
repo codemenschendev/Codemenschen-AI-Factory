@@ -146,13 +146,29 @@ class PrototypeWriter
         The four screens tell one story: what the user sees first, what they pick, what they fill
         in, what they get back. Every screen opens with <p class="screen-bar">its title</p>.
 
-        Blocks to build a screen from, and nothing else:
+        Add `night` next to the palette for a dark app: <body class="t-indigo app-page night">.
+        Half the screens in the reference library are dark. Dark suits numbers, night work, media,
+        transport and premium trades; light suits everything local, hands-on and transactional.
+
+        Blocks to build a screen from, and nothing else. USE THE RICH ONES: a screen made only of
+        .app-row is a stack of boxes, and that is the difference between this and a real app.
 
             <div class="app-art">A line naming what the picture would show</div>
               ^ that line is a photo brief: a real photograph is generated from it and put in the
                 band. Write what a photographer would be told, in the visitor's own trade and
                 place: "Lena am Waschbecken, warmes Licht". Use it AT MOST ONCE in the whole app,
                 on the screen where a picture earns its place, usually the first or the last.
+
+            <div class="app-search"><svg …></svg>Wohin? <span class="app-tag">Jetzt</span></div>
+            <div class="app-seg"><span class="on">Fahrten</span><span>Essen</span></div>
+            <div class="app-tiles"><div class="app-tile"><svg …></svg>Fahrt</div> … four …</div>
+            <div class="app-scroll"><div class="app-card"><b>Name</b><span>detail</span></div> … </div>
+            <div class="app-line"><i><svg …></svg></i>
+              <div><b>UberX</b><span>19:41, 2 Minuten entfernt</span></div>
+              <b class="app-val">7,81 €</b></div>
+            <div class="app-line on"> … the one the user has chosen … </div>
+            <div class="app-people"><span class="who">LM</span><span class="who">MS</span>
+              <div><b>Lena und Mert</b><span>antworten meist in einer Stunde</span></div></div>
             <div class="app-hero"><b>The one number or result</b><span>the line under it</span></div>
             <div class="app-row"><b>What it is</b><span>the detail that decides</span>
               <span class="app-tag">frei</span></div>
@@ -160,10 +176,18 @@ class PrototypeWriter
             <div class="app-stats"><div class="app-stat"><b>63</b><span>Termine</span></div> … </div>
             <div class="app-cta">The action this screen exists for</div>
 
+        Every <svg> is yours to write: viewBox="0 0 24 24" and one simple stroked glyph, no fill,
+        no text inside it. A car, a scissors, a loaf, a clock, a pin. The stylesheet colours and
+        sizes them, so write no style attribute.
+
         Rules:
           - Real content in every row: actual service names, times, prices, places from the idea.
             A screen full of "Item 1" sells nothing. No lorem ipsum.
           - Four or five blocks per screen. A phone is small; cut before you add.
+          - Vary them. A home screen opens with a search field or a segmented control and a grid
+            of tiles; a list of things to choose uses .app-line with a price on the right; a
+            conversation uses .app-people. Four screens of identical .app-row is the failure this
+            vocabulary exists to prevent.
           - The first screen ends without an .app-cta: the tab bar is its navigation. The other
             three each end in exactly one .app-cta.
           - Tab labels are one word. Button labels are one or two.
