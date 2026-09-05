@@ -35,11 +35,11 @@ class PrototypeWriterTest extends TestCase
         return is_array($sent) ? json_encode($sent) : $sent;
     }
 
-    public function test_both_free_prompts_carry_the_laws_and_the_photo_contract(): void
+    public function test_every_prompt_carries_the_laws_and_the_photo_contract(): void
     {
         // Handing the look back to the model loses what the stylesheet guaranteed by construction,
         // so the guarantees are stated instead. Losing either of these silently is the failure.
-        foreach (['app', 'site'] as $kind) {
+        foreach (['app', 'site', 'ads'] as $kind) {
             $sent = $this->systemPrompt($kind);
             $this->assertStringContainsString('NEVER emoji', $sent, $kind);
             $this->assertStringContainsString('Nothing may scroll sideways', $sent, $kind);
@@ -58,12 +58,24 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringContainsString('Proof comes before explanation', $sent);
     }
 
-    public function test_the_ad_prototype_still_draws_on_the_house_stylesheet(): void
+    public function test_the_ad_prototype_is_the_ads_in_their_frames(): void
     {
-        // Its canvases are real platform sizes; that is the whole point of it and not a style.
+        // The house version put a landing page hero above five text boxes, and a customer who
+        // had picked "Werbung" asked where the ads were. Now the page IS the five creatives, each
+        // in the frame of the platform it runs on, each on a photograph, and it writes its own CSS.
         $sent = $this->systemPrompt('ads');
 
-        $this->assertStringNotContainsString('YOU WRITE THE CSS', $sent);
+        $this->assertStringContainsString('YOU WRITE THE CSS', $sent);
+        $this->assertStringContainsString('NOT A PAGE ABOUT THE ADS', $sent);
+        $this->assertStringContainsString('Gesponsert', $sent);
+        $this->assertStringContainsString('ad-story', $sent);
+        $this->assertStringContainsString('photo-wide', $sent);
+        $this->assertStringContainsString('NEVER emoji', $sent);
+        // The Christmas campaign for a Vienna company was addressed to "Salzburger Betriebe".
+        $this->assertStringContainsString('If the brief names no town, name none', $sent);
+        // What the labelled ad library counted travels with it.
+        $this->assertStringContainsString('hook sits at the TOP', $sent);
+        $this->assertStringNotContainsString('house.css', $sent);
     }
 
     public function test_the_app_prompt_builds_the_app_not_a_page_about_it(): void

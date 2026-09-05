@@ -145,19 +145,17 @@ class PrototypeRepairTest extends TestCase
         $this->assertTrue($out['qa']['repaired']);
     }
 
-    public function test_overflow_is_ours_when_the_page_is_drawn_on_the_house_stylesheet(): void
+    public function test_the_ad_prototype_repairs_its_own_overflow_now(): void
     {
-        // The ad prototype still uses house.css, and both overflows the audit has ever found on a
-        // house page were in house.css. Asking the model to repair a file it was told not to write
-        // costs a generation and changes nothing.
-        $this->answers('<h1>Zu breit</h1>');
-        $audit = $this->auditor([$this->fault('overflow')]);
+        // It was the last page drawn on house.css, where an overflow was ours and a repair call
+        // could change nothing. It writes its own stylesheet now, so the fault is its own.
+        $this->answers('<h1>Zu breit</h1>', '<h1>Passt</h1>');
+        $audit = $this->auditor([$this->fault('overflow'), $this->clean()]);
 
         $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'ads', null, $audit);
 
-        Http::assertSentCount(1);
-        $this->assertFalse($out['qa']['ok']);
-        $this->assertArrayNotHasKey('repaired', $out['qa']);
+        Http::assertSentCount(2);
+        $this->assertTrue($out['qa']['repaired']);
     }
 
     public function test_the_page_is_audited_again_once_the_photographs_are_in(): void

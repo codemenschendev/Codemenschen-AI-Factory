@@ -69,8 +69,10 @@ class PrototypeWriter
 
         Write the brief the way a photographer would be told it, in the visitor's own trade and
         place: "Frische Kipferl im Weidenkorb, warmes Morgenlicht". Up to six in the page. Style
-        them yourself; give each one a size and a shape. If no photograph is found the element
-        keeps whatever background you gave it, so give it one worth looking at.
+        them yourself; give each one a size and a shape. The photograph arrives as an <img> inside
+        the element, so style that too: display block, width and height 100%, object-fit cover,
+        and it fills whatever shape you drew. If no photograph is found the element keeps whatever
+        background you gave it, so give it one worth looking at.
         TXT;
 
     private const SITE = <<<'TXT'
@@ -131,71 +133,58 @@ class PrototypeWriter
         You never create files, never run commands, never fetch anything: your whole reply is the
         HTML, from <!doctype html> to </html>, with no prose and no code fence around it.
 
-        A house stylesheet is already loaded. You WRITE MARKUP, NOT CSS. Put this exact line in the
-        head and nothing else for styling:
+        THIS PAGE IS THE ADS, NOT A PAGE ABOUT THE ADS. Five creatives, each shown the way the
+        platform would show it, and that is the whole document. No navigation bar, no marketing
+        hero, no sections that explain the campaign, no footer. One line at the top is allowed:
+        whom these ads are for and where they run. Then the creatives, big, all five in view on a
+        laptop.
 
-            <link rel="stylesheet" href="house.css">
+        YOU WRITE THE CSS. One <style> block, and design it properly: a quiet neutral page so the
+        creatives are the only colour on it, and inside each creative the type, colour and rhythm
+        of THIS trade. A bakery does not advertise like a law firm. A creative that could sell any
+        business sells none.
 
-        This prototype shows THE ADS that would run for the visitor's business, at the real sizes
-        the platforms sell.
+        Every creative sits inside a frame that shows where it runs. Draw the frames in CSS:
 
-        Choose ONE palette on the body: t-slate · t-forest · t-amber · t-indigo · t-rose.
+          Story, 1080 x 1920, drawn at 270 x 480: a phone-shaped dark frame with rounded corners.
+            Thin progress segments along the top edge, a small round avatar with the page name and
+            the word "Gesponsert" under it, the photograph filling the whole frame, the words on
+            the lower third over a soft dark gradient, a "Mehr dazu" pill at the bottom.
+          Feed square, 1080 x 1080, drawn 360 wide: a white card. A row with avatar, page name and
+            "Gesponsert", the photograph as a square, then the caption line, and a grey strip with
+            the headline in bold on the left and the call to action as a button on the right.
+          Link, 1200 x 628, drawn 360 wide: the same card with the photograph at 1.91:1 and beneath
+            it a grey link strip: the domain in small capitals, the headline, the button.
 
-        The hero may be light or dark. For a dark opening band write <header class="hero invert">.
-        Use it when the trade wants to look premium, technical or nocturnal, and leave it light
-        for anything warm, local or hands-on. Roughly one page in two should be dark.
+        Keep these class names exactly, whatever the frames look like. They are a contract:
+        other tools read them.
 
-        THE HERO MUST HAVE SOMETHING TO LOOK AT. A headline alone on a gradient is what makes a
-        page look generated. Wrap the hero content in <div class="hero-split"> with the words in
-        the first column and ONE of these in the second:
+          <main class="ads">
+            <article class="ad ad-story"> … </article>
+            <article class="ad ad-square"> … </article>
+            <article class="ad ad-link"> … </article>
+            <article class="ad ad-square"> … </article>
+            <article class="ad ad-story"> … </article>
+          </main>
 
-          A browser showing the site itself:
-            <div class="browser"><div class="browser-bar"><i></i><i></i><i></i>
-              <span class="browser-url">firma.at</span></div>
-              <div class="browser-body"><div class="swatch"></div><h4>Real headline</h4>
-                <p>One line.</p><div class="mini"><div><b>Label</b>detail</div>… three of them …</div>
-              </div></div>
+        In that order, and each with <span class="ad-size">1080 × 1920</span> printed small under
+        the frame, outside it. Inside every creative ONE photograph: <div class="photo-wide"> in a
+        story, <div class="photo-card"> in a square or a link. It is the creative's picture, so
+        brief it as one: the customer's world, not the product on white. Position the words over
+        or under it; the slot holds the brief and nothing else.
 
-          A phone showing the product in use (see the .phone block), for anything booked or ordered
-
-          Three cards fanned out, for anything with documents, plans or offers:
-            <div class="fan"><div class="card">…</div><div class="card">…</div><div class="card">…</div></div>
-
-        Fill it with the visitor's own content: real service names, real rows, real numbers from
-        the brief. A frame full of grey placeholder bars looks like a page that failed to load.
-
-
-        Structure:
-          <nav class="nav"><div class="nav-inner"> the business name as .brand </div></nav>
-          <header class="hero"><div class="container"> span.eyebrow, h1, p.lead naming the one
-            customer these ads speak to and the one action they should take, then a .tag-row of
-            three span.tag: the platform, the format, the goal </div></header>
-          <section class="section"><div class="container"><div class="section-head">…</div>
-            <div class="ad-grid"> the creatives </div></div></section>
-          <section class="section alt"> a .grid of three .card: who the ad is shown to, what it
-            costs to find out, what happens when someone clicks
-          <section class="section"> .cta
-          <footer class="footer">
-
-        Build exactly these five creatives, in this order:
-          <div class="ad ad-story"><span class="ad-size">1080 × 1920</span>
-            <h3>Hook</h3><p>One sentence.</p><span class="ad-cta">Action</span></div>
-          <div class="ad ad-square"><span class="ad-size">1080 × 1080</span>…</div>
-          <div class="ad ad-link"><span class="ad-size">1200 × 628</span>…</div>
-          <div class="ad ad-square"><span class="ad-size">1080 × 1080</span>…</div>
-          <div class="ad ad-story"><span class="ad-size">1080 × 1920</span>…</div>
-
-        Write them as five different angles on the same business, not five wordings of one idea:
+        Five different angles on the same business, not five wordings of one idea, in this order:
         the problem, the result, the proof, the offer, the reminder.
 
-        Rules:
-          - h3 is at most 6 words and never opens with the company name. p is one sentence, at most
-            18 words. The reader is scrolling and does not care yet.
+        Words:
+          - The headline is at most 6 words and never opens with the company name. The line under
+            it is one sentence, at most 18 words. The reader is scrolling and does not care yet.
+          - The button is two or three words that name what happens next.
           - Sell what the reader gets, not what the business is proud of.
-          - Invent no prices, percentages, guarantees, awards or testimonials as facts.
           - Banned: innovative, solutions, seamless, cutting edge, next level, one-stop.
-          - Plain sentences. Never use a dash as a sentence break: no em dash, no spaced en dash.
-          - No external URLs, fonts, images or scripts. The page must work with JS switched off.
+          - The business is where the brief says it is. If the brief names no town, name none:
+            "bei dir vor Ort", never a town you picked. The same for prices, dates and discounts:
+            only what the brief says, and the offer angle sells a reason, not an invented number.
         TXT;
 
     /**
@@ -240,22 +229,16 @@ class PrototypeWriter
         return is_file($path) ? "\n\n".trim((string) file_get_contents($path)) : '';
     }
 
-    /** The house stylesheet plus its embedded typeface, inlined into whatever the model returns. */
-    private function house(): string
-    {
-        return (string) file_get_contents(resource_path('design/font.css'))."\n"
-            .(string) file_get_contents(resource_path('design/house.css'));
-    }
-
     /** @return array{title:string,html:string} */
     public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null,
         ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null): array
     {
+        // Every kind writes its own CSS now and carries the laws and the photo contract. The ad
+        // prototype was the last on the house stylesheet, and what it got for that was a landing
+        // page hero above five text boxes: the sizes were right and nothing else was.
         $system = match ($kind) {
-            // Free prototypes carry the laws and the photo contract; the ad prototype still draws
-            // fixed platform canvases on the house stylesheet, where the sizes are the point.
             'app' => self::APP."\n\n".self::PHOTO_SLOTS."\n\n".self::LAWS.$this->conventions('app-conventions.md'),
-            'ads' => self::ADS,
+            'ads' => self::ADS."\n\n".self::PHOTO_SLOTS."\n\n".self::LAWS.$this->conventions('ad-conventions.md'),
             default => self::SITE."\n\n".self::PHOTO_SLOTS."\n\n".self::LAWS.$this->conventions('web-conventions.md'),
         };
 
@@ -326,17 +309,12 @@ class PrototypeWriter
             throw new RuntimeException('AI không trả về HTML dùng được.');
         }
 
-        // The audit runs against the finished page, because a fault only exists once the
-        // stylesheet is in; the repair runs against the markup, because that is all the model is
-        // allowed to change and it is a tenth of the tokens.
-        // Only the ad prototype is still drawn on the house stylesheet. The other two write their
-        // own CSS, so there is nothing to inline and the page is already whole.
-        $page = $kind === 'ads' ? $this->inlineHouse($markup) : $markup;
+        // The page is whole as it comes back: the model wrote the stylesheet, so there is nothing
+        // to inline, and every fault the audit finds is its own and worth one repair.
+        $page = $markup;
         $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
 
-        // The model wrote the CSS for these two, so overflow and a tab bar left in the document
-        // flow are its own faults and worth a repair. On the ad prototype they would be ours.
-        $blocking = PageAudit::repairable($qa, ownsStyle: $kind !== 'ads');
+        $blocking = PageAudit::repairable($qa, ownsStyle: true);
         if ($blocking !== []) {
             [$fixed, $why] = $this->repair($request, $system, $prompt, $markup, $blocking);
             $qa['repaired'] = false;
@@ -345,13 +323,13 @@ class PrototypeWriter
                 // answered in prose" are the same empty string here and want opposite fixes.
                 $qa['repair_failed'] = $why;
             } else {
-                $second = $kind === 'ads' ? $this->inlineHouse($fixed) : $fixed;
+                $second = $fixed;
                 $after = $audit->run($second);
 
                 // Keep the repair only if it actually helped. A model asked to fix five things can
                 // come back with a shorter page and six, and shipping that would be worse than
                 // shipping the flaw we already knew about.
-                if (count(PageAudit::repairable($after, ownsStyle: $kind !== 'ads')) < count($blocking)) {
+                if (count(PageAudit::repairable($after, ownsStyle: true)) < count($blocking)) {
                     $page = $second;
                     $qa = $after;
                 }
@@ -359,10 +337,10 @@ class PrototypeWriter
             }
         }
 
-        // Last, and only for an app: the picture band names what it would show, so the photo is
-        // fetched once, after the page has settled. Doing it before the repair pass would risk
-        // fetching for markup the repair then throws away.
-        if ($kind !== 'ads' && $photo !== null) {
+        // Last: every slot names what it would show, so the photographs are fetched once, after
+        // the page has settled. Doing it before the repair pass would risk fetching for markup the
+        // repair then throws away.
+        if ($photo !== null) {
             $shot = $photo->apply($page);
             $page = $shot['html'];
 
@@ -432,29 +410,6 @@ class PrototypeWriter
         $html = $this->extractHtml((string) $res->json('choices.0.message.content'));
 
         return $html === '' ? ['', 'no html in the reply'] : [$html, null];
-    }
-
-    /**
-     * Puts the house stylesheet into the page and takes out the placeholder link.
-     *
-     * The model is told to write one <link> and no CSS, but it is an agent and it improvises. So
-     * this does not trust the link to be there: it strips any reference to house.css and inserts
-     * the real thing at whatever anchor the document actually has. A prototype with no styling at
-     * all is the one outcome worth ruling out.
-     */
-    private function inlineHouse(string $html): string
-    {
-        $html = preg_replace('~<link[^>]*house\.css[^>]*>~i', '', $html) ?? $html;
-        $style = '<style>'."\n".$this->house()."\n".'</style>';
-
-        foreach (['</head>' => 0, '<body' => 0] as $needle => $_) {
-            $at = stripos($html, $needle);
-            if ($at !== false) {
-                return substr($html, 0, $at).$style.substr($html, $at);
-            }
-        }
-
-        return $style.$html;
     }
 
     private function extractHtml(string $text): string

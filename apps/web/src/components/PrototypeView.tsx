@@ -118,12 +118,29 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
           </div>
         </div>
       ) : (
-        <iframe
-          title={meta.title ?? "Prototype"}
-          src={`${API_BASE}/api/prototypes/${id}/raw`}
-          sandbox="allow-scripts allow-popups"
-          style={{ width: "100%", height: "80vh", border: "1px solid rgba(0,0,0,.12)", borderRadius: 12 }}
-        />
+        <div>
+          <iframe
+            title={meta.title ?? "Prototype"}
+            src={`${API_BASE}/api/prototypes/${id}/raw`}
+            sandbox="allow-scripts allow-popups"
+            style={{ width: "100%", height: "80vh", border: "1px solid rgba(0,0,0,.12)", borderRadius: 12 }}
+          />
+          {/* A website and the ads carry photographs too, and Pexels asks for the credit wherever
+              their picture is shown. It went missing here when only the app had pictures. */}
+          {meta.photo_credit && (
+            <p className="small muted" style={{ marginTop: 10 }}>
+              Foto: {meta.photo_credit}
+              {meta.photo_credit_url && (
+                <>
+                  {" · "}
+                  <a href={meta.photo_credit_url} target="_blank" rel="noopener">
+                    Pexels
+                  </a>
+                </>
+              )}
+            </p>
+          )}
+        </div>
       )}
     </div>
   );
