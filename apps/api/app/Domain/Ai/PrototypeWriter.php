@@ -359,6 +359,7 @@ class PrototypeWriter
             // No angle: the free prototype draws all three formats at once and is not written to
             // one story, so any labelled ad is a fair lesson in shape.
             'ads' => $library?->adReference(null, $prompt),
+            'site' => $library?->siteReference($prompt),
             default => null,
         } ?? $refs?->pick($kind, $prompt);
         $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."]];

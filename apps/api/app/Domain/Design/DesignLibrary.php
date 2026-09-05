@@ -346,6 +346,68 @@ class DesignLibrary
         ];
     }
 
+    /**
+     * One labelled web page to show the model while it writes a landing page.
+     *
+     * Detail grade only, and no grade fallback: at 360px a page is a blur, and the thing worth
+     * learning from a landing page is the order of its sections.
+     *
+     * Chosen by the trade the brief is about, then by whether the visitor asked for something
+     * dark. A miss on the trade is not fatal the way a wrong ad angle is: every landing page in
+     * the library teaches section order and how much air to leave, whatever it sells.
+     *
+     * @return array{id:string,note:string,data:string}|null
+     */
+    public function siteReference(string $brief, ?string $scheme = null): ?array
+    {
+        $pages = [];
+        foreach ($this->records() as $r) {
+            $l = is_array($r['labels'] ?? null) ? $r['labels'] : [];
+            if (($r['medium'] ?? null) !== 'web' || ($r['visual']['grade'] ?? null) !== 'detail') {
+                continue;
+            }
+            if (($l['page_type'] ?? null) === null) {
+                continue;
+            }
+            $pages[] = [$r, $l];
+        }
+        if ($pages === []) {
+            return null;
+        }
+
+        // Narrow only while narrowing leaves something: a page of the right shape beats none.
+        $narrow = function (array $pool, callable $keep) {
+            $kept = array_values(array_filter($pool, $keep));
+
+            return $kept === [] ? $pool : $kept;
+        };
+
+        // A landing page is what this generator writes, so prefer one, then the trade, then dark
+        // or light. Each filter is a preference, none of them is a requirement.
+        $pages = $narrow($pages, fn (array $p) => in_array($p[1]['page_type'], ['landing', 'product'], true));
+
+        $industry = $this->industryFor($brief);
+        if ($industry !== null) {
+            $pages = $narrow($pages, fn (array $p) => ($p[1]['industry'] ?? null) === $industry);
+        }
+        if ($scheme !== null) {
+            $pages = $narrow($pages, fn (array $p) => ($p[1]['palette']['scheme'] ?? null) === $scheme);
+        }
+
+        [$r, $l] = $pages[array_rand($pages)];
+        $path = $this->dir.'/'.($r['file'] ?? '');
+        $bytes = is_file($path) ? @file_get_contents($path) : false;
+        if ($bytes === false) {
+            return null;
+        }
+
+        return [
+            'id' => (string) $r['id'],
+            'note' => (string) (($l['notes'] ?? '') ?: ''),
+            'data' => $this->mimeFor($path).base64_encode($bytes),
+        ];
+    }
+
     private function mimeFor(string $path): string
     {
         $mime = str_ends_with($path, '.png') ? 'image/png'
