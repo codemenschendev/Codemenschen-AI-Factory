@@ -222,7 +222,13 @@ a  { color: inherit; }
    A prototype for an app has to show the app, not a page about it. Phones scroll sideways so
    four screens fit a laptop without shrinking to thumbnails, and the frame is drawn in CSS
    because the page may not load an image of one. */
-.screens { display: flex; gap: var(--sp-6); overflow-x: auto; padding: var(--sp-2) 0 var(--sp-5); }
+.screens {
+  display: flex; gap: var(--sp-6); overflow-x: auto; padding: var(--sp-2) 0 var(--sp-5);
+  /* No bar: the half-cut phone at the edge says the row continues, the same way the rows
+     inside the screens do it, and the audit holds every page to that. */
+  scrollbar-width: none;
+}
+.screens::-webkit-scrollbar { display: none; }
 /* 4 x 240 plus three gaps is 1032, inside the 1072 a .container leaves at full width, so the
    fourth screen is visible rather than half cut off behind a scrollbar nobody notices. */
 .phone { flex: 0 0 auto; width: 240px; }

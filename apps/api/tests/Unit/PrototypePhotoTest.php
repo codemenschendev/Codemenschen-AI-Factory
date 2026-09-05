@@ -103,7 +103,7 @@ class PrototypePhotoTest extends TestCase
         $out = $this->photo($this->stock($this->png()))->apply($this->page());
 
         $this->assertStringContainsString('data:image/webp;base64,', $out['html']);
-        $this->assertStringContainsString('class="app-art has-photo"', $out['html']);
+        $this->assertStringContainsString('class="has-photo app-art"', $out['html']);
         $this->assertStringContainsString('alt="Lena am Waschbecken, warmes Licht"', $out['html']);
         // The words are gone from the band: the screen around it already carries them.
         $this->assertStringNotContainsString('>Lena am Waschbecken', $out['html']);
@@ -111,9 +111,10 @@ class PrototypePhotoTest extends TestCase
         $this->assertSame('Anna Fotografin', $out['credit']);
     }
 
-    public function test_nothing_free_matched_leaves_the_page_exactly_as_it_was(): void
+    public function test_a_wide_band_nobody_could_fill_keeps_its_caption(): void
     {
-        // The gradient band is a deliberate design. A prototype never buys its way out of this.
+        // The band is a deliberate design and wide enough to carry a line of text. A prototype
+        // never buys its way out of an empty one.
         $page = $this->page();
 
         $out = $this->photo()->apply($page);
@@ -121,6 +122,18 @@ class PrototypePhotoTest extends TestCase
         $this->assertSame($page, $out['html']);
         $this->assertNull($out['photo']);
         $this->assertNull($out['source']);
+    }
+
+    public function test_the_slot_is_found_among_the_model_s_own_classes(): void
+    {
+        // A free page styles every slot, so the class attribute is never just the slot name.
+        // Requiring an exact match meant almost none of them were ever processed.
+        $out = $this->photo($this->stock($this->png()))
+            ->apply($this->page('<span class="photo-thumb avatar" id="x">Lena am Waschbecken</span>'));
+
+        $this->assertCount(1, $out['photos']);
+        $this->assertStringContainsString('class="has-photo photo-thumb avatar"', $out['html']);
+        $this->assertStringContainsString('id="x"', $out['html'], 'the model keeps its own attributes');
     }
 
     public function test_every_slot_in_the_app_gets_a_picture(): void
@@ -136,11 +149,11 @@ class PrototypePhotoTest extends TestCase
         $out = $this->photo($this->stock($this->png()))->apply($page);
 
         $this->assertCount(3, $out['photos']);
-        $this->assertStringContainsString('class="app-art has-photo"', $out['html']);
-        $this->assertStringContainsString('class="app-thumb has-photo"', $out['html']);
-        $this->assertStringContainsString('class="app-cover has-photo"', $out['html']);
+        $this->assertStringContainsString('class="has-photo app-art"', $out['html']);
+        $this->assertStringContainsString('class="has-photo app-thumb"', $out['html']);
+        $this->assertStringContainsString('class="has-photo app-cover"', $out['html']);
         // The tag is preserved, so an <i> in a row stays an <i> and the layout does not shift.
-        $this->assertStringContainsString('<i class="app-thumb has-photo">', $out['html']);
+        $this->assertStringContainsString('<i class="has-photo app-thumb">', $out['html']);
     }
 
     public function test_a_seventh_slot_keeps_its_gradient(): void
@@ -169,6 +182,32 @@ class PrototypePhotoTest extends TestCase
         $sizeOf = fn (string $html) => strlen(explode('"', explode('src="', $html)[1])[0]);
 
         $this->assertLessThan($sizeOf($band['html']) / 2, $sizeOf($thumb['html']));
+    }
+
+    public function test_a_slot_wrapped_around_a_whole_card_is_left_alone(): void
+    {
+        // A ride-hailing app put the class on the card instead of on a picture inside it, and
+        // flattening that gave a "brief" like "Praterstern to Hauptbahnhof, yesterday, 9,40 euro".
+        // No stock library has that, and emptying it would delete the card.
+        $card = '<div class="photo-card"><b>Praterstern</b><span>Gestern, 9,40 Euro</span></div>';
+        $sent = [];
+        $stock = $this->stock($this->png());
+
+        $out = $this->photo($stock)->apply($this->page($card));
+
+        $this->assertStringContainsString('<b>Praterstern</b>', $out['html']);
+        $this->assertSame([], $out['photos']);
+    }
+
+    public function test_a_slot_nobody_could_fill_keeps_its_shape_and_loses_its_words(): void
+    {
+        // Six words of direction for a photographer, crammed into a 58px square, read as a bug.
+        $page = $this->page('<span class="photo-thumb avatar">Porträt eines lächelnden Mannes</span>');
+
+        $out = $this->photo()->apply($page);
+
+        $this->assertStringContainsString('class="photo-thumb avatar"></span>', $out['html']);
+        $this->assertStringNotContainsString('Porträt eines', $out['html']);
     }
 
     public function test_a_page_without_a_band_asks_for_nothing(): void

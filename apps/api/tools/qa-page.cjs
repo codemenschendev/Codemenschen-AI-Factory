@@ -206,7 +206,43 @@ function audit([placeholderSource, minTarget]) {
     out.push({ severity: 'advisory', check: 'tap-target', detail: `${small.length} below ${minTarget}px`, elements: small.slice(0, 5) });
   }
 
-  // 7. Contrast. Walked up the tree for the first opaque background, which is what the eye does
+  // 7. A scrollbar drawn across the page. A row of cards is allowed to scroll sideways, and a
+  // phone shows that by cutting the last card off, never by a grey bar: on a phone frame the bar
+  // reads as a broken layout, which is exactly what it was every time it appeared. Whether it is
+  // drawn is a declaration, not a measurement, because whether the platform reserves space for it
+  // differs per machine and the audit must find the same fault on all of them.
+  const hides = [];
+  for (const sheet of document.styleSheets) {
+    let rules = null;
+    try { rules = sheet.cssRules; } catch { continue; }   // a sheet from another origin
+    for (const r of rules || []) {
+      if (!r.selectorText || !/::-webkit-scrollbar\b/.test(r.selectorText)) continue;
+      if (r.style.display !== 'none' && parseFloat(r.style.width) !== 0) continue;
+      for (const part of r.selectorText.split(',')) {
+        const p = part.trim().split('::')[0].trim();
+        hides.push(p === '' ? '*' : p);
+      }
+    }
+  }
+  const bars = [];
+  for (const el of document.querySelectorAll('body *')) {
+    if (!visible(el)) continue;
+    const s = getComputedStyle(el);
+    if (!/auto|scroll/.test(s.overflowX)) continue;
+    if (el.scrollWidth - el.clientWidth <= 1) continue;
+    if (s.scrollbarWidth === 'none') continue;
+    if (hides.some((h) => { try { return el.matches(h); } catch { return false; } })) continue;
+    bars.push(`${sel(el)} scrolls ${el.scrollWidth - el.clientWidth}px sideways`);
+  }
+  if (bars.length) {
+    out.push({
+      severity: 'blocking', check: 'sideways-scrollbar',
+      detail: `${bars.length} element(s) scroll sideways with the scrollbar showing`,
+      elements: bars.slice(0, 5),
+    });
+  }
+
+  // 8. Contrast. Walked up the tree for the first opaque background, which is what the eye does
   // too; a gradient or a photo behind the text defeats it, hence advisory.
   const lum = (c) => {
     const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });

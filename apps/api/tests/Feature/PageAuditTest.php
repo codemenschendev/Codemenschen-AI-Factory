@@ -56,6 +56,28 @@ class PageAuditTest extends TestCase
         $this->assertStringContainsString('div.w', $overflow['elements'][0]);
     }
 
+    public function test_a_row_that_scrolls_sideways_must_hide_its_bar(): void
+    {
+        // The fault the user pointed at on a phone prototype: a grey bar across the screen. A row
+        // of cards may scroll, and the half-cut card at the edge is what says so.
+        $row = '<div class="row %s"><div>Eins</div><div>Zwei</div><div>Drei</div></div>';
+        $css = '<style>body{margin:0}.row{display:flex;gap:8px;overflow-x:auto}'
+            .'.row>div{flex:0 0 200px;height:80px;background:#eee}'
+            .'.quiet{scrollbar-width:none}.hidden::-webkit-scrollbar{display:none}</style>';
+
+        $loud = $this->audit()->run('<!doctype html><meta charset="utf-8"><title>Reihe</title>'
+            .$css.sprintf($row, 'loud'));
+        $checks = array_column(PageAudit::blocking($loud), 'check');
+        $this->assertContains('sideways-scrollbar', $checks);
+
+        // Both ways of hiding it count, because the model may reach for either.
+        foreach (['quiet', 'hidden'] as $way) {
+            $ok = $this->audit()->run('<!doctype html><meta charset="utf-8"><title>Reihe</title>'
+                .$css.sprintf($row, $way));
+            $this->assertNotContains('sideways-scrollbar', array_column($ok['findings'], 'check'), $way);
+        }
+    }
+
     public function test_text_the_model_did_not_write_is_blocking(): void
     {
         $report = $this->audit()->run(

@@ -78,7 +78,7 @@ class PageAudit
     private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error'];
 
     /** Faults that belong to whoever wrote the CSS: the model on a free page, us on a house one. */
-    private const STYLE_OWNED = ['overflow', 'nav-below-the-fold'];
+    private const STYLE_OWNED = ['overflow', 'nav-below-the-fold', 'sideways-scrollbar'];
 
     /** Everything a browser would call broken. @return array<int,array<string,mixed>> */
     public static function blocking(array $report): array

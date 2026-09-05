@@ -61,31 +61,49 @@ class PrototypePhoto
      */
     public function apply(string $html): array
     {
-        $photos = $sources = $credits = $urls = [];
+        $photos = $sources = $credits = $urls = $empty = [];
 
         foreach (self::SLOTS as $class => $width) {
-            preg_match_all('~<(\w+) class="'.$class.'"[^>]*>(.*?)</\1>~is', $html, $all, PREG_SET_ORDER);
+            // The slot name among whatever else the model put in the class attribute. Requiring
+            // the attribute to be exactly the slot name meant class="photo-thumb avatar" never
+            // matched, and a free page styles every slot, so almost none of them did.
+            $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.preg_quote($class, '~').'\b[^"]*"[^>]*)>(.*?)</\1>~is';
+            preg_match_all($pattern, $html, $all, PREG_SET_ORDER);
 
             foreach ($all as $m) {
                 if (count($photos) >= self::MAX) {
                     break 2;
                 }
 
-                $brief = trim(html_entity_decode(strip_tags($m[2]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                // A slot holds a sentence and nothing else. When it holds elements, the model has
+                // wrapped a whole card in the class instead of putting a picture inside one, and
+                // flattening that gives a "brief" like "Praterstern to Hauptbahnhof, yesterday,
+                // 9,40 euro", which no stock library has and which must not be emptied either.
+                if (str_contains($m[3], '<')) {
+                    continue;
+                }
+
+                $brief = trim(html_entity_decode($m[3], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                 if ($brief === '' || mb_strlen($brief) > 300) {
                     continue;
                 }
+
+                $empty[] = [$m, $class];
 
                 $found = $this->dataUri($brief, $width);
                 if ($found === null) {
                     continue;   // this slot keeps its gradient; the next one still gets a try
                 }
 
+                // The model's own attributes are kept, so a slot it styled keeps its styling and
+                // only gains the marker class and the picture.
                 $alt = htmlspecialchars($brief, ENT_QUOTES, 'UTF-8');
+                $open = preg_replace('~(\sclass=")~', '$1has-photo ', $m[2], 1);
                 $html = str_replace($m[0],
-                    '<'.$m[1].' class="'.$class.' has-photo"><img src="'.$found['data'].'" alt="'.$alt.'"></'.$m[1].'>',
+                    '<'.$m[1].$open.'><img src="'.$found['data'].'" alt="'.$alt.'"></'.$m[1].'>',
                     $html);
 
+                array_pop($empty);
                 $photos[] = $brief;
                 $sources[] = $found['source'];
                 if ($found['credit'] !== null) {
@@ -93,6 +111,16 @@ class PrototypePhoto
                     $urls[] = $found['url'];
                 }
             }
+        }
+
+        // A thumbnail nobody could fill keeps its shape and loses its words: six words of
+        // direction for a photographer, crammed into a 58px square, read as a bug. A wide band
+        // is big enough for a line of text and keeps its caption.
+        foreach ($empty as [$m, $class]) {
+            if (! str_ends_with($class, 'thumb')) {
+                continue;
+            }
+            $html = str_replace($m[0], '<'.$m[1].$m[2].'></'.$m[1].'>', $html);
         }
 
         if ($photos === []) {
