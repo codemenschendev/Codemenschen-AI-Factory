@@ -3,11 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { remember } from "@/lib/history";
 import type { Dict, Locale } from "@/lib/i18n";
 
 /**
  * The public, anonymous prompt box: this is the lead magnet. On submit it creates a prototype and
  * sends the visitor to its share page, which polls while it builds.
+ *
+ * What it built is remembered in this browser, so the page offers the visitor's own prototypes
+ * instead of an empty box on every visit. Nothing about that leaves the machine.
  *
  * A token is sent only if the browser already has one, and only so that an operator testing the
  * funnel is not stopped by the daily cap meant for anonymous visitors. A customer's token changes
@@ -33,6 +37,9 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
         token: localStorage.getItem("aifactory-token") ?? undefined,
         body: JSON.stringify({ prompt, kind }),
       });
+      // Written before the redirect, so a visitor who never comes back to this tab still finds
+      // the prototype in the list next time. The title is filled in by the share page.
+      remember({ id: r.id, kind, prompt: prompt.trim() });
       router.push(`/${locale}/p/${r.id}`);
     } catch (err) {
       // 429 from the per-IP cap is the common one; show its message.

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
+import { forget, rename } from "@/lib/history";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Meta {
@@ -34,6 +35,10 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
         const m = await api<Meta>(`/prototypes/${id}`);
         if (stop) return;
         setMeta(m);
+        // The list in the visitor's browser only knows the sentence they typed. The build knows
+        // what it called itself, and an expired one has nothing left to open.
+        if (m.status === "ready") rename(id, m.title);
+        if (m.status === "expired") forget(id);
         if (m.status === "queued" || m.status === "building") setTimeout(tick, 3000);
       } catch {
         if (!stop) setMeta({ id, status: "failed", title: null, error: null });

@@ -559,6 +559,11 @@ export const de = {
     makeReal: "Daraus eine echte App machen",
     another: "Noch einen bauen",
     limit: "Tageslimit erreicht. Morgen wieder oder schreib uns.",
+    mine: "Deine Prototypen",
+    mineHint: "Nur auf diesem Gerät gespeichert. Wir legen dazu nichts an und schicken nichts weg.",
+    daysLeft: "noch {n} Tage",
+    oneDayLeft: "noch 1 Tag",
+    forget: "Entfernen",
   },
   legal: {
     draft: "Entwurf. Das ist die Klartext-Fassung, geschrieben von uns und noch nicht anwaltlich freigegeben. Wir stellen sie trotzdem online, weil Vertrag und Werbung nie zwei verschiedene Geschichten erzählen dürfen.",

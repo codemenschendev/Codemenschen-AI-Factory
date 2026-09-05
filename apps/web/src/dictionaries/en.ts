@@ -557,6 +557,11 @@ export const en = {
     makeReal: "Turn it into a real app",
     another: "Build another",
     limit: "Daily limit reached. Come back tomorrow or get in touch.",
+    mine: "Your prototypes",
+    mineHint: "Kept on this device only. We store nothing for it and send nothing away.",
+    daysLeft: "{n} days left",
+    oneDayLeft: "1 day left",
+    forget: "Remove",
   },
   legal: {
     draft: "Draft. This is the plain-language version, written by us and not yet cleared by counsel. We publish it anyway, because the contract and the marketing must never tell two different stories.",
