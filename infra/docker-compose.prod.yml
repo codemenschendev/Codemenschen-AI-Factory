@@ -66,6 +66,10 @@ services:
       - /var/appwerk-media/library:/media/library
       # BuildPrototype shows one of these to the model while it writes.
       - /var/appwerk-media/design-refs:/media/design-refs:ro
+      # The labelled reference library. It was mounted on the api only, so every prototype built
+      # on this queue was drawn with no reference at all: DesignLibrary read an empty catalog
+      # here and returned null, quietly. Read-only, the labelling script on the host owns it.
+      - /var/lib/ai-factory/design-library:/media/design-library:ro
 
   scheduler:
     build:
