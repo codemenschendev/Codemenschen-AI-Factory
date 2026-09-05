@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ai;
 
+use App\Domain\Design\AppStoreShots;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Qa\PageAudit;
@@ -24,6 +25,12 @@ use RuntimeException;
  */
 class PrototypeWriter
 {
+    /** Required, not nullable: the container skips a nullable class parameter and hands null. */
+    public function __construct(
+        private readonly DesignStudy $study,
+        private readonly AppStoreShots $store,
+    ) {}
+
     /**
      * The laws a free prototype must obey however it is styled.
      *
@@ -224,6 +231,9 @@ class PrototypeWriter
     /** Repair rounds at most. The second runs only if the first reduced the faults. */
     private const REPAIRS = 2;
 
+    /** Screens a build studies and then sees again while drawing: library screens plus store shots. */
+    private const STUDY_SCREENS = 8;
+
     /**
      * What real app screens do, distilled from the labelled reference library.
      *
@@ -264,6 +274,25 @@ class PrototypeWriter
             $t0 = $now;
         };
         $stage = fn (string $s) => $progress?->__invoke($s);
+
+        // The look at the trade's best apps, before anything is drawn. Only with a library to
+        // draw from: the tests build without one and expect the writer to go straight to work.
+        $brief = null;
+        $studied = [];
+        $meta = [];
+        if ($kind === 'app' && $library !== null) {
+            $stage('studying');
+            $plan = $this->study->plan($prompt, $kind);
+            if ($plan !== null) {
+                $refs = $library->references($plan['industry'], $plan['screens'], 4);
+                $shots = $this->store->forApps($plan['apps'], $plan['country'], 2);
+                $studied = array_slice(array_merge($refs, $shots), 0, self::STUDY_SCREENS);
+                $brief = $this->study->study($prompt, $plan, $studied, $library->industryStats($plan['industry']));
+                $meta = $plan + ['references' => array_column($studied, 'id'), 'brief' => $brief];
+            }
+            $lap('study');
+        }
+
         $stage('writing');
 
         // Every kind writes its own CSS now and carries the laws and the photo contract. The ad
@@ -299,18 +328,31 @@ class PrototypeWriter
         // text is legible, picked by the trade the brief is about. Until this line existed the app
         // prompt travelled with no picture at all, because every reference filed by hand is a
         // website. Anything else still uses those.
-        $ref = match ($kind) {
-            'app' => $library?->reference($prompt),
-            // No angle: the free prototype draws all three formats at once and is not written to
-            // one story, so any labelled ad is a fair lesson in shape.
-            'ads' => $library?->adReference(null, $prompt),
-            'site' => $library?->siteReference($prompt),
-            default => null,
-        } ?? $refs?->pick($kind, $prompt);
         $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."]];
-        if ($ref) {
-            $user[] = ['type' => 'text', 'text' => self::REFERENCE.($ref['note'] !== '' ? "\n\nWhat is good about it: {$ref['note']}" : '')];
-            $user[] = ['type' => 'image_url', 'image_url' => ['url' => $ref['data']]];
+        if ($brief !== null) {
+            // The study's brief is the requirement, and the screens it was written from travel
+            // along so the builder sees what "like the leading apps" looks like.
+            $n = count($studied);
+            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} screens of the leading apps of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\n{$brief}"];
+            $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThe screens the brief was written from, in order:"];
+            foreach ($studied as $i => $shot) {
+                $label = 'Screen '.($i + 1).': '.str_replace('_', ' ', $shot['screen_type']).($shot['note'] !== '' ? " ({$shot['note']})" : '');
+                $user[] = ['type' => 'text', 'text' => $label];
+                $user[] = ['type' => 'image_url', 'image_url' => ['url' => $shot['data']]];
+            }
+        } else {
+            $ref = match ($kind) {
+                'app' => $library?->reference($prompt),
+                // No angle: the free prototype draws all three formats at once and is not written
+                // to one story, so any labelled ad is a fair lesson in shape.
+                'ads' => $library?->adReference(null, $prompt),
+                'site' => $library?->siteReference($prompt),
+                default => null,
+            } ?? $refs?->pick($kind, $prompt);
+            if ($ref) {
+                $user[] = ['type' => 'text', 'text' => self::REFERENCE.($ref['note'] !== '' ? "\n\nWhat is good about it: {$ref['note']}" : '')];
+                $user[] = ['type' => 'image_url', 'image_url' => ['url' => $ref['data']]];
+            }
         }
 
         $res = $request->post('/v1/chat/completions', [
@@ -361,7 +403,7 @@ class PrototypeWriter
         while (($blocking = PageAudit::repairable($qa, ownsStyle: true)) !== [] && $rounds < self::REPAIRS) {
             $rounds++;
             $stage('repairing');
-            [$fixed, $why] = $this->repair($request, $system, $prompt, $page, $blocking);
+            [$fixed, $why] = $this->repair($request, $system, $user, $page, $blocking);
             $lap('repair');
             $qa['repaired'] = false;
             if ($fixed === '') {
@@ -422,6 +464,9 @@ class PrototypeWriter
 
         $timing['total'] = round(array_sum($timing), 1);
         $qa['timing'] = $timing;
+        if ($meta !== []) {
+            $qa['study'] = $meta;
+        }
         if ($first !== []) {
             $qa['first_faults'] = $first;
         }
@@ -439,8 +484,9 @@ class PrototypeWriter
      * every round costs a generation the visitor is waiting through.
      */
     /** @return array{0:string,1:?string} the repaired markup, or '' plus why there is none */
+    /** @param  array<int,array<string,mixed>>  $user  the first user turn, replayed as it was */
     private function repair(PendingRequest $request, string $system,
-        string $prompt, string $markup, array $blocking): array
+        array $user, string $markup, array $blocking): array
     {
         $brief = PageAudit::brief($blocking);
 
@@ -448,7 +494,7 @@ class PrototypeWriter
             'model' => config('services.ai_image.chat_model', 'openclaw/main'),
             'messages' => [
                 ['role' => 'system', 'content' => $system],
-                ['role' => 'user', 'content' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."],
+                ['role' => 'user', 'content' => $user],
                 ['role' => 'assistant', 'content' => $markup],
                 ['role' => 'user', 'content' => <<<TXT
                     A browser opened your page at 320, 768 and 1280 pixels wide and found these

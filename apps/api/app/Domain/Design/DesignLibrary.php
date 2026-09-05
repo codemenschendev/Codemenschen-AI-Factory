@@ -23,6 +23,22 @@ class DesignLibrary
 
     public function __construct(private readonly string $dir) {}
 
+    /** MUST match INDUSTRIES in tools/label-design-library.py; a test fails if they drift. */
+    public const INDUSTRIES = [
+        'food_delivery', 'restaurant', 'retail_ecommerce', 'fashion', 'beauty_salon', 'health_fitness',
+        'medical', 'finance_banking', 'crypto', 'travel', 'transport_mobility', 'real_estate',
+        'education', 'productivity', 'social', 'media_entertainment', 'music', 'dating', 'gaming',
+        'utilities', 'business_saas', 'other',
+    ];
+
+    /** MUST match SCREEN_TYPES in tools/label-design-library.py; a test fails if they drift. */
+    public const SCREEN_TYPES = [
+        'onboarding', 'signup_login', 'home_dashboard', 'list_feed', 'detail', 'search', 'filter',
+        'map', 'calendar_booking', 'checkout_payment', 'cart', 'form_input', 'profile_account',
+        'settings', 'messaging_chat', 'notifications', 'empty_state', 'paywall_pricing',
+        'success_confirmation', 'media_player', 'camera_scanner', 'stats_report', 'other',
+    ];
+
     public function available(): bool
     {
         return is_file($this->dir.'/catalog.json');
@@ -278,6 +294,141 @@ class DesignLibrary
     }
 
     /**
+     * The screens to study before drawing: one per wanted screen type from the trade's own apps,
+     * then the trade's other screens up to the cap.
+     *
+     * Detail grade first, because text that can be read teaches the most; layout grade is allowed
+     * behind it, because a trade with two legible screens still has thirty whose structure reads
+     * fine at 360px, and structure is what a study is for. A trade the library barely knows falls
+     * back to the same screen types from every trade: the shape of a map screen is the shape of a
+     * map screen. Random among equals, so two briefs in one trade do not study the same six.
+     *
+     * @param  list<string>  $screenTypes  what the four screens will be, in order
+     * @return list<array{id:string,note:string,data:string,screen_type:string,grade:string,industry:string}>
+     */
+    public function references(string $industry, array $screenTypes, int $max = 6): array
+    {
+        $apps = array_values(array_filter($this->records(), fn (array $r) => ($r['medium'] ?? null) === 'app'
+            && is_array($r['labels'] ?? null) && ($r['labels']['screen_type'] ?? null) !== null));
+        $own = array_values(array_filter($apps, fn (array $r) => ($r['labels']['industry'] ?? null) === $industry));
+
+        $rank = fn (array $r) => ($r['visual']['grade'] ?? '') === 'detail' ? 0 : 1;
+        $pick = function (array $pool, callable $keep, array &$taken) use ($rank): ?array {
+            $hits = array_values(array_filter($pool, fn (array $r) => $keep($r) && ! isset($taken[$r['id']])));
+            if ($hits === []) {
+                return null;
+            }
+            shuffle($hits);
+            usort($hits, fn (array $a, array $b) => $rank($a) <=> $rank($b));
+            $taken[$hits[0]['id']] = true;
+
+            return $hits[0];
+        };
+
+        $taken = [];
+        $chosen = [];
+        foreach ($screenTypes as $type) {
+            $r = $pick($own, fn (array $r) => $r['labels']['screen_type'] === $type, $taken)
+                ?? $pick($apps, fn (array $r) => $r['labels']['screen_type'] === $type, $taken);
+            if ($r !== null) {
+                $chosen[] = $r;
+            }
+        }
+        while (count($chosen) < $max) {
+            $r = $pick($own, fn () => true, $taken);
+            if ($r === null) {
+                break;
+            }
+            $chosen[] = $r;
+        }
+
+        $out = [];
+        foreach (array_slice($chosen, 0, $max) as $r) {
+            $image = $this->image($r);
+            if ($image === null) {
+                continue;
+            }
+            $out[] = $image + [
+                'screen_type' => (string) $r['labels']['screen_type'],
+                'grade' => (string) ($r['visual']['grade'] ?? ''),
+                'industry' => (string) ($r['labels']['industry'] ?? ''),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
+     * What the trade's apps do, counted, as one paragraph for the prompt.
+     *
+     * The average over the whole library says an app has a tab bar; the count for ride-hailing
+     * says a third of its screens are maps. The second is the one that changes a design.
+     */
+    public function industryStats(string $industry): string
+    {
+        $own = array_values(array_filter($this->records(), fn (array $r) => ($r['medium'] ?? null) === 'app'
+            && is_array($r['labels'] ?? null) && ($r['labels']['industry'] ?? null) === $industry
+            && ($r['labels']['screen_type'] ?? null) !== null));
+        $n = count($own);
+        if ($n < 5) {
+            return '';
+        }
+
+        $count = function (callable $key) use ($own): array {
+            $c = [];
+            foreach ($own as $r) {
+                foreach ((array) $key($r) as $v) {
+                    if (is_string($v) && $v !== '') {
+                        $c[$v] = ($c[$v] ?? 0) + 1;
+                    }
+                }
+            }
+            arsort($c);
+
+            return $c;
+        };
+        $top = fn (array $c, int $k) => implode(', ', array_map(
+            fn ($v, $cnt) => str_replace('_', ' ', $v)." ($cnt)", array_keys(array_slice($c, 0, $k, true)), array_slice($c, 0, $k, true)));
+
+        $screens = $count(fn ($r) => $r['labels']['screen_type']);
+        $patterns = $count(fn ($r) => $r['labels']['layout_patterns'] ?? []);
+        $schemes = $count(fn ($r) => $r['labels']['palette']['scheme'] ?? null);
+        $accents = $count(fn ($r) => $r['labels']['palette']['accent'] ?? null);
+        $density = $count(fn ($r) => $r['labels']['density'] ?? null);
+
+        $label = str_replace('_', ' ', $industry);
+        $lines = ["{$n} screens of {$label} apps in the reference library, counted:"];
+        $lines[] = '- Screen types: '.$top($screens, 5).'.';
+        if ($patterns !== []) {
+            $lines[] = '- Layout patterns: '.$top($patterns, 6).'.';
+        }
+        if ($schemes !== []) {
+            $lines[] = '- Colour scheme: '.$top($schemes, 2).'; accent colours: '.$top($accents, 4).'.';
+        }
+        if ($density !== []) {
+            $lines[] = '- Density: '.$top($density, 3).'.';
+        }
+
+        return implode("\n", $lines);
+    }
+
+    /** @return array{id:string,note:string,data:string}|null */
+    private function image(array $r): ?array
+    {
+        $path = $this->dir.'/'.($r['file'] ?? '');
+        $bytes = is_file($path) ? @file_get_contents($path) : false;
+        if ($bytes === false) {
+            return null;
+        }
+
+        return [
+            'id' => (string) $r['id'],
+            'note' => (string) (($r['labels']['notes'] ?? '') ?: ''),
+            'data' => $this->mimeFor($path).base64_encode($bytes),
+        ];
+    }
+
+    /**
      * One labelled advertisement to show the copywriter, as a data URI.
      *
      * Chosen by ANGLE first, because the angle is the whole ad: a price anchor and a testimonial
@@ -417,7 +568,7 @@ class DesignLibrary
     }
 
     /** @return string|null the labelled industry this brief is about, if one is obvious */
-    private function industryFor(string $brief): ?string
+    public function industryFor(string $brief): ?string
     {
         $hay = mb_strtolower($brief);
         $best = null;

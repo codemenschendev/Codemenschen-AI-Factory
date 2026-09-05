@@ -563,6 +563,7 @@ export const en = {
     oneDayLeft: "1 day left",
     forget: "Remove",
     stages: {
+      studying: "Studying the best apps of the trade before drawing.",
       writing: "Writing the page. This takes two to four minutes.",
       auditing: "Opening the page in a browser and checking it at three screen sizes.",
       repairing: "Fixing what the check found.",

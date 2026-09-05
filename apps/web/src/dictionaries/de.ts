@@ -565,6 +565,7 @@ export const de = {
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
     stages: {
+      studying: "Schaut sich die besten Apps der Branche an, bevor gezeichnet wird.",
       writing: "Schreibt gerade die Seite. Das dauert zwei bis vier Minuten.",
       auditing: "Öffnet die Seite im Browser und prüft sie auf drei Bildschirmgrößen.",
       repairing: "Bessert nach, was die Prüfung gefunden hat.",
