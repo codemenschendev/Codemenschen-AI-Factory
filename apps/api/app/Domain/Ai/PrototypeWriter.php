@@ -258,7 +258,10 @@ class PrototypeWriter
             throw new RuntimeException('Chưa cấu hình dịch vụ AI.');
         }
 
-        $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(240)->connectTimeout(10);
+        // The chain has to fire in order: the sidecar gives up at 300s and answers a clean 502
+        // this client can explain, so this waits a little longer, and the queue job longer still.
+        // With the old 240 here, a slow generation surfaced as a connection exception instead.
+        $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(330)->connectTimeout(10);
         $backend = (string) config('services.ai_image.chat_backend_model');
         if ($backend !== '') {
             $request = $request->withHeaders(['x-openclaw-model' => $backend]);
@@ -302,7 +305,7 @@ class PrototypeWriter
         ]);
 
         if (! $res->successful()) {
-            // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS (180s) and answers 502. That
+            // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS (300s) and answers 502. That
             // is a slow generation, not a broken service, and it is worth saying so plainly.
             $msg = $res->status() === 502
                 ? 'Bản mô tả quá lớn nên dựng lâu hơn giới hạn. Thử mô tả ngắn gọn hơn.'

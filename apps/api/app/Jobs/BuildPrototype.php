@@ -19,11 +19,11 @@ class BuildPrototype implements ShouldQueue
     use Queueable;
 
     /**
-     * Ten minutes. A free prototype writes its own stylesheet, which is about twice the output of
-     * the markup-only pages this was sized for, and it may also fetch photographs and be audited
-     * twice. Five minutes killed the first one that tried.
+     * Fifteen minutes, which is the sum and not a guess: the sidecar may take 300s to write the
+     * page, the audit runs, a repair may take another 300s, the audit runs again, and photographs
+     * are fetched. Ten minutes would cut a repaired page off at the last step.
      */
-    public int $timeout = 600;
+    public int $timeout = 900;
 
     public int $tries = 1;
 
