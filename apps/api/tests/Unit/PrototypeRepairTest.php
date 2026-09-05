@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Domain\Ai\PrototypePhoto;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Support\Facades\Http;
@@ -157,6 +158,31 @@ class PrototypeRepairTest extends TestCase
         Http::assertSentCount(1);
         $this->assertFalse($out['qa']['ok']);
         $this->assertArrayNotHasKey('repaired', $out['qa']);
+    }
+
+    public function test_the_page_is_audited_again_once_the_photographs_are_in(): void
+    {
+        // The verdict has to describe the page that ships. A dentist app came back clean and then
+        // reached 273px past a 390px screen once five photographs were in it.
+        $this->answers('<h1>Salon</h1><div class="photo-wide">Lena am Waschbecken</div>');
+        $audit = $this->auditor([$this->clean(), $this->fault('overflow')]);
+
+        $photo = new class extends PrototypePhoto
+        {
+            public function __construct() {}
+
+            public function apply(string $html): array
+            {
+                return ['html' => $html.'<!--photo-->', 'photo' => 'Lena am Waschbecken',
+                    'photos' => ['Lena am Waschbecken'], 'source' => 'stock', 'sources' => ['stock'],
+                    'credit' => 'Anna', 'credit_url' => 'u', 'credits' => ['Anna']];
+            }
+        };
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'app', null, $audit, null, $photo);
+
+        $this->assertFalse($out['qa']['ok'], 'the second audit is the one that counts');
+        $this->assertSame('stock', $out['qa']['photo_source'], 'and the photo facts survive it');
     }
 
     public function test_without_an_auditor_nothing_changes(): void

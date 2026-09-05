@@ -357,6 +357,18 @@ class PrototypeWriter
         if ($kind !== 'ads' && $photo !== null) {
             $shot = $photo->apply($page);
             $page = $shot['html'];
+
+            // Audit again, because the page that was audited is no longer the page that ships. A
+            // dentist app came back clean and then reached 273px past a 390px screen once five
+            // photographs were in it: the pictures change the layout, and the stored verdict has
+            // to describe what the visitor actually gets.
+            if ($shot['photo'] !== null) {
+                $after = $audit?->run($page);
+                if (($after['ok'] ?? null) !== null) {
+                    $qa = $after + array_intersect_key($qa, array_flip(['repaired', 'repair_failed']));
+                }
+            }
+
             $qa['photo'] = $shot['photo'];
             $qa['photos'] = $shot['photos'] ?? [];
             $qa['photo_source'] = $shot['source'] ?? null;

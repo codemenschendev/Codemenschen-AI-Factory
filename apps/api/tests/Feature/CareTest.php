@@ -21,7 +21,7 @@ class CareTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Http::fake(["*" => Http::response(["accepted" => "run"], 202)]); // worker admission at payment / revise dispatch
+        Http::fake(['*' => Http::response(['accepted' => 'run'], 202)]); // worker admission at payment / revise dispatch
         config(['services.stripe.secret' => null]);
     }
 
@@ -76,7 +76,7 @@ class CareTest extends TestCase
         $cr = $project->changeRequests()->first();
         $this->assertSame(0, $cr->price_eur);
         $this->assertSame('care', $cr->covered_by);
-        $this->assertSame('PUBLISHED' === $project->status ? 'PUBLISHED' : 'READY', $project->fresh()->resume_status);
+        $this->assertSame($project->status === 'PUBLISHED' ? 'PUBLISHED' : 'READY', $project->fresh()->resume_status);
         $this->assertSame(PipelineOrchestrator::MAX_REVISION_ROUNDS, $orchestrator->freeRoundsLeft($project->fresh()));
     }
 
