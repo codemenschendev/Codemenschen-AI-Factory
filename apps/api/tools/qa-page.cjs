@@ -17,11 +17,77 @@
  * is downloaded and there is one browser to keep patched instead of two.
  */
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { chromium } = require('playwright-core');
 
-const CHROMIUM = ['/usr/bin/chromium', '/usr/bin/chromium-browser',
-  '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(p => fs.existsSync(p));
+/**
+ * Which browser to drive, expressed as launch options rather than a path.
+ *
+ * `{}` means playwright has a build of its own and may pick the browser itself, which is the quiet
+ * choice: for a headless run it reaches for the headless shell, and the shell opens no window and
+ * claims no Dock icon. Next comes the chromium in the container image, which is the whole reason
+ * this file uses playwright-core. A developer's Google Chrome is last because it is the full
+ * browser: it works, but its icon flashes in the Dock once per audited page, and an auditor that
+ * interrupts the person it is auditing for is a poor auditor. `null` means there is nothing to
+ * drive, and the audit is skipped rather than failed.
+ */
+function resolveChromium() {
+  try {
+    if (fs.existsSync(chromium.executablePath())) return {};
+  } catch {
+    // playwright-core ships no browser unless one was installed for it. Keep looking.
+  }
+
+  const shell = newestHeadlessShell();
+  if (shell) return { executablePath: shell };
+
+  const installed = ['/usr/bin/chromium', '/usr/bin/chromium-browser',
+    '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'].find(p => fs.existsSync(p));
+  return installed ? { executablePath: installed } : null;
+}
+
+/**
+ * A headless shell some other project left in playwright's cache. Its revision is often not the
+ * one this playwright expects, so take the newest and let the launch decide: a protocol that does
+ * not match throws, and a throw here is a skipped audit, which is what the rest of this file is
+ * built to survive.
+ */
+function newestHeadlessShell() {
+  const cache = process.env.PLAYWRIGHT_BROWSERS_PATH || (process.platform === 'darwin'
+    ? path.join(os.homedir(), 'Library', 'Caches', 'ms-playwright')
+    : path.join(os.homedir(), '.cache', 'ms-playwright'));
+
+  let revisions;
+  try {
+    revisions = fs.readdirSync(cache)
+      .filter(d => d.startsWith('chromium_headless_shell-'))
+      .sort((a, b) => Number(b.split('-')[1]) - Number(a.split('-')[1]));
+  } catch {
+    return null;
+  }
+
+  for (const revision of revisions) {
+    let platforms;
+    try {
+      platforms = fs.readdirSync(path.join(cache, revision), { withFileTypes: true })
+        .filter(e => e.isDirectory()).map(e => e.name);
+    } catch {
+      continue;
+    }
+    // The binary was renamed from headless_shell to chrome-headless-shell along the way, and a
+    // cache can hold both eras at once.
+    for (const dir of platforms) {
+      for (const name of ['chrome-headless-shell', 'headless_shell']) {
+        const bin = path.join(cache, revision, dir, name);
+        if (fs.existsSync(bin)) return bin;
+      }
+    }
+  }
+  return null;
+}
+
+const CHROMIUM = resolveChromium();
 
 /** Words that mean the model stopped writing the visitor's business and started filling space. */
 const PLACEHOLDER = /lorem ipsum|item [1-9]\b|placeholder|your (text|logo|name) here|mustertext|beispieltext|text hier|todo:|xxx+/i;
@@ -217,7 +283,7 @@ async function main() {
   const timeout = Number(arg('timeout', 15000));
 
   const browser = await chromium.launch({
-    executablePath: CHROMIUM,
+    ...CHROMIUM,
     args: ['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
   });
 
