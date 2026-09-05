@@ -33,7 +33,13 @@ class PrototypePhoto
      * would be ten times the bytes for the same pixels on screen. The band is the widest thing on
      * the screen, a card cover is most of a card, a thumbnail is a stamp.
      */
-    private const SLOTS = ['app-art' => 720, 'app-cover' => 420, 'app-thumb' => 180];
+    private const SLOTS = [
+        // What a free prototype writes. Named for what they are rather than for where they started.
+        'photo-wide' => 720, 'photo-card' => 420, 'photo-thumb' => 180,
+        // What the house stylesheet calls the same three. Kept so pages built before the change,
+        // and the ad prototype which still uses it, keep their pictures.
+        'app-art' => 720, 'app-cover' => 420, 'app-thumb' => 180,
+    ];
 
     /**
      * Six across the whole app.

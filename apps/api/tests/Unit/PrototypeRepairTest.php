@@ -131,14 +131,28 @@ class PrototypeRepairTest extends TestCase
         $this->assertStringContainsString('Original', $out['html']);
     }
 
-    public function test_a_fault_the_model_does_not_own_costs_no_generation(): void
+    public function test_overflow_is_the_model_s_fault_when_the_model_wrote_the_css(): void
     {
-        // Overflow is nearly always the stylesheet's, and the model is told not to write CSS.
-        // It is still reported and the page is still marked as shipped with a fault.
+        // A free prototype styles itself, so a page that scrolls sideways is its own mistake and
+        // it can be asked to fix it.
+        $this->answers('<h1>Zu breit</h1>', '<h1>Passt</h1>');
+        $audit = $this->auditor([$this->fault('overflow'), $this->clean()]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+
+        Http::assertSentCount(2);
+        $this->assertTrue($out['qa']['repaired']);
+    }
+
+    public function test_overflow_is_ours_when_the_page_is_drawn_on_the_house_stylesheet(): void
+    {
+        // The ad prototype still uses house.css, and both overflows the audit has ever found on a
+        // house page were in house.css. Asking the model to repair a file it was told not to write
+        // costs a generation and changes nothing.
         $this->answers('<h1>Zu breit</h1>');
         $audit = $this->auditor([$this->fault('overflow')]);
 
-        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'ads', null, $audit);
 
         Http::assertSentCount(1);
         $this->assertFalse($out['qa']['ok']);

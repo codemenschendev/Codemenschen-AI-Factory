@@ -24,80 +24,59 @@ use RuntimeException;
  */
 class PrototypeWriter
 {
+    /**
+     * The laws a free prototype must obey however it is styled.
+     *
+     * The house stylesheet used to guarantee these by construction. Handing the look back to the
+     * model buys distinctiveness and loses that guarantee, so what the stylesheet enforced becomes
+     * a short list the page audit checks: the same floor, stated instead of implied.
+     */
+    private const LAWS = <<<'TXT'
+        Rules that are not style choices:
+          - ONE <style> block in the head. No external URL of any kind: no font, no image, no
+            script, no stylesheet. The page must render offline and with scripting switched off.
+          - Nothing may scroll sideways at 320px. German words are long; let them wrap.
+          - Icons are inline <svg>, one simple stroked glyph, viewBox="0 0 24 24". NEVER emoji:
+            they are a different size, colour and shape on every platform and read as a placeholder.
+          - Body text at least 4.5:1 against what is behind it.
+          - Real content everywhere: actual names, times, prices and places from the idea. No
+            "Item 1", no lorem ipsum, no placeholder rectangles.
+          - Plain sentences. Never a dash as a sentence break: no em dash, no spaced en dash.
+          - Invent no prices, percentages, ratings or guarantees as facts about the business.
+        TXT;
+
+    /**
+     * The picture slots, which are a contract rather than a style.
+     *
+     * Whatever the page looks like, a real photograph is fetched for each of these and put inside
+     * it, so the class names have to survive. What the model writes INSIDE the slot is the brief
+     * the photograph is searched for.
+     */
+    private const PHOTO_SLOTS = <<<'TXT'
+        Photographs. Write the brief INSIDE the element and a real photograph replaces it:
+
+          <div class="photo-wide">what a wide picture would show</div>
+          <div class="photo-card">what a card's picture would show</div>
+          <span class="photo-thumb">what a small square picture would show</span>
+
+        Write the brief the way a photographer would be told it, in the visitor's own trade and
+        place: "Frische Kipferl im Weidenkorb, warmes Morgenlicht". Up to six in the page. Style
+        them yourself; give each one a size and a shape. If no photograph is found the element
+        keeps whatever background you gave it, so give it one worth looking at.
+        TXT;
+
     private const SITE = <<<'TXT'
-        You are a front-end designer who outputs ONE complete HTML file and nothing else. You never
-        create files, never run commands, never fetch anything: your whole reply is the HTML, from
+        You are a designer who outputs ONE complete HTML file and nothing else. You never create
+        files, never run commands, never fetch anything: your whole reply is the HTML, from
         <!doctype html> to </html>, with no prose and no code fence around it.
 
-        A house stylesheet is already loaded. You WRITE MARKUP, NOT CSS. Put this exact line in the
-        head and nothing else for styling:
+        YOU WRITE THE CSS. One <style> block, and design it properly: choose a type scale, a
+        colour, a rhythm and a radius that suit THIS trade and this town. A bakery is not a dental
+        practice is not a joinery. Aim for the work of a designer who has an opinion. A page that
+        could belong to any business belongs to none.
 
-            <link rel="stylesheet" href="house.css">
-
-        Use the classes below and no others. Do not restate their rules, do not add a <style> block
-        for colour, spacing, type size, shadows or radius: those are decided. Write at most a
-        handful of declarations, and only for something genuinely specific to this page.
-
-        The hero may be light or dark. For a dark opening band write <header class="hero invert">.
-        Use it when the trade wants to look premium, technical or nocturnal, and leave it light
-        for anything warm, local or hands-on. Roughly one page in two should be dark.
-
-        THE HERO MUST HAVE SOMETHING TO LOOK AT. A headline alone on a gradient is what makes a
-        page look generated. Wrap the hero content in <div class="hero-split"> with the words in
-        the first column and ONE of these in the second:
-
-          A browser showing the site itself:
-            <div class="browser"><div class="browser-bar"><i></i><i></i><i></i>
-              <span class="browser-url">firma.at</span></div>
-              <div class="browser-body"><div class="swatch"></div><h4>Real headline</h4>
-                <p>One line.</p><div class="mini"><div><b>Label</b>detail</div>… three of them …</div>
-              </div></div>
-
-          A phone showing the product in use (see the .phone block), for anything booked or ordered
-
-          Three cards fanned out, for anything with documents, plans or offers:
-            <div class="fan"><div class="card">…</div><div class="card">…</div><div class="card">…</div></div>
-
-        Fill it with the visitor's own content: real service names, real rows, real numbers from
-        the brief. A frame full of grey placeholder bars looks like a page that failed to load.
-
-
-        Choose ONE palette and put it on the body, matching the trade:
-          t-slate (professional services, finance, B2B) · t-forest (trades, nature, health, food)
-          t-amber (hospitality, bakery, workshop, craft) · t-indigo (software, agency, tech)
-          t-rose (beauty, salon, care, boutique)
-
-        Structure, in this order, and nothing more:
-          <nav class="nav"><div class="nav-inner"><a class="brand">…</a>
-            <div class="nav-links"><a href="#…">…</a>… <a class="btn btn-primary">…</a></div></div></nav>
-          <header class="hero"><div class="container"> span.eyebrow, h1, p.lead,
-            div.hero-actions with one .btn.btn-primary and one .btn.btn-ghost, then a .tag-row of
-            three or four span.tag with short proof: the town, the years, what is included
-            </div></header>
-          THREE <section class="section"> (give the middle one class="section alt"), each with
-            <div class="container">, a .section-head (h2 plus p.lead) and then its content
-          <section class="section"><div class="container"><div class="cta">…</div></div></section>
-          <footer class="footer"><div class="container"><div class="footer-inner">…</div></div></footer>
-
-        Blocks to build the three sections from, one kind per section:
-          .grid of .card, each with .icon (one inline SVG, stroked, no fill), h3, p
-          .split of a text column and a .card
-          .stats of .stat-n plus .stat-l
-          .grid of .card with .price (b for the number) and ul.list, one card .featured
-            with data-tag="…"
-          blockquote.quote plus p.quote-by
-
-        Rules that still hold:
-          - No external URLs, fonts, images or scripts. Icons are inline SVG using the .icon block.
-          - Real, specific copy about the visitor's idea, in their language. No lorem ipsum. Give
-            the business a plausible name and use it.
-          - Never invent prices, percentages, awards or customer quotes as facts. A testimonial is
-            fine as obvious placeholder wording, a "40% cheaper" claim is not.
-          - Plain sentences. Never use a dash as a sentence break: no em dash, and no spaced en
-            dash either. A comma, a colon or a full stop says the same thing and does not read
-            like it was written by a machine.
-          - Nav anchors jump to the sections. The page must work with JavaScript switched off.
-          - No cookie banner, no fake login, no form that pretends to submit.
+        This is a landing page for one small business: a navigation bar, an opening screen, two or
+        three sections, a closing action, a footer. Anchors in the nav jump to the sections.
         TXT;
 
     private const APP = <<<'TXT'
@@ -105,107 +84,38 @@ class PrototypeWriter
         create files, never run commands, never fetch anything: your whole reply is the HTML, from
         <!doctype html> to </html>, with no prose and no code fence around it.
 
-        A house stylesheet is already loaded. You WRITE MARKUP, NOT CSS. Put this exact line in the
-        head and nothing else for styling:
+        THIS IS THE APP, NOT A PAGE ABOUT THE APP. The whole document is one phone screen and it is
+        shown inside a phone. No navigation bar, no marketing hero, no footer, and no phone bezel of
+        your own: the frame is drawn around you.
 
-            <link rel="stylesheet" href="house.css">
+        YOU WRITE THE CSS. One <style> block, and design it properly: choose a type scale, a colour,
+        a rhythm and a radius that suit THIS trade. A dental practice is not a bakery is not a
+        joinery. Aim for the work of a designer who has an opinion, not a template.
 
-        THIS IS THE APP, NOT A PAGE ABOUT THE APP. The whole document is one phone screen. It is
-        shown inside a phone on the share page, so write no navigation bar, no hero, no marketing
-        sections, no footer, and no bezel of your own. Somebody looking at it should believe they
-        are holding the thing.
+        Keep these class names exactly, whatever you make them look like. They are a contract: other
+        tools read them, and the screens do not switch without them.
 
-        Choose ONE palette on the body: t-slate · t-forest · t-amber · t-indigo · t-rose. Dark
-        suits numbers, night work, media and premium trades; light suits everything local,
-        hands-on and transactional.
-
-        Exactly this skeleton, with FOUR screens:
-
-          <body class="t-rose app-page">
-            <div class="app">
-              <input type="radio" name="screen" id="s1" checked>
-              <input type="radio" name="screen" id="s2">
-              <input type="radio" name="screen" id="s3">
-              <input type="radio" name="screen" id="s4">
-
-              <section class="screen"> … screen one … </section>
-              <section class="screen"> … screen two … </section>
-              <section class="screen"> … screen three … </section>
-              <section class="screen"> … screen four … </section>
-
+          <body class="app-page">
+            <div class="app">                         the phone-width column, centred, full height
+              <input type="radio" name="screen" id="s1" checked>   … four of these …
+              <section class="screen"> … </section>                … four, in the same order …
               <nav class="tabbar">
-                <label for="s1">Start</label><label for="s2">Buchen</label>
-                <label for="s3">Termine</label><label for="s4">Profil</label>
+                <label for="s1">Start</label>                      … four, in the same order …
               </nav>
             </div>
           </body>
 
-        The four inputs, the four sections and the four labels must be in the same order and there
-        must be the same number of each: that is what makes the tabs work without scripting.
+        Write the CSS that shows screen N when input N is checked and marks tab N, with a sibling
+        selector. No script.
+
+        THE TAB BAR MUST STAY ON THE SCREEN. It belongs at the bottom of the phone, not at the
+        bottom of the document: a tab bar you have to scroll down to find is not a tab bar. Give
+        each screen its own scrolling if the content is long.
 
         The four screens tell one story: what the user sees first, what they pick, what they fill
-        in, what they get back. Every screen opens with <p class="screen-bar">its title</p>.
-
-        Add `night` next to the palette for a dark app: <body class="t-indigo app-page night">.
-        Half the screens in the reference library are dark. Dark suits numbers, night work, media,
-        transport and premium trades; light suits everything local, hands-on and transactional.
-
-        Blocks to build a screen from, and nothing else. USE THE RICH ONES: a screen made only of
-        .app-row is a stack of boxes, and that is the difference between this and a real app.
-
-            <div class="app-art">A line naming what the picture would show</div>
-            <i class="app-thumb">…</i>          inside an .app-line, in place of the <i><svg></i>
-            <div class="app-cover">…</div>      the first thing inside an .app-card
-
-              ^ each of those three is a PHOTO SLOT, and the line inside it is the brief. A real
-                photograph is fetched for it. Write what a photographer would be told, in the
-                visitor's own trade and place: "Lena am Waschbecken, warmes Licht".
-
-                Two thirds of real app screens carry a picture and a fifth carry one in more than
-                one place, so use up to FOUR across the whole app: one band, and thumbnails on the
-                rows of a list where the thing itself is worth seeing, a dish, a haircut, a table.
-                A list of things people choose by looking is photographs with prices beside them.
-                Rows about an action rather than a thing keep the <i><svg></i> icon.
-
-            <div class="app-search"><svg …></svg>Wohin? <span class="app-tag">Jetzt</span></div>
-            <div class="app-seg"><span class="on">Fahrten</span><span>Essen</span></div>
-            <div class="app-tiles"><div class="app-tile"><svg …></svg>Fahrt</div> … four …</div>
-            <div class="app-scroll"><div class="app-card"><div class="app-cover">Was zu sehen ist</div>
-              <b>Name</b><span>detail</span></div> … </div>
-            <div class="app-line"><i><svg …></svg></i>
-              <div><b>UberX</b><span>19:41, 2 Minuten entfernt</span></div>
-              <b class="app-val">7,81 €</b></div>
-            <div class="app-line"><i class="app-thumb">Wiener Schnitzel auf weissem Teller</i>
-              <div><b>Wiener Schnitzel</b><span>mit Erdäpfelsalat</span></div>
-              <b class="app-val">18,50 €</b></div>
-            <div class="app-line on"> … the one the user has chosen … </div>
-            <div class="app-people"><span class="who">LM</span><span class="who">MS</span>
-              <div><b>Lena und Mert</b><span>antworten meist in einer Stunde</span></div></div>
-            <div class="app-hero"><b>The one number or result</b><span>the line under it</span></div>
-            <div class="app-row"><b>What it is</b><span>the detail that decides</span>
-              <span class="app-tag">frei</span></div>
-            <div class="app-field">Label and the value the user picked</div>
-            <div class="app-stats"><div class="app-stat"><b>63</b><span>Termine</span></div> … </div>
-            <div class="app-cta">The action this screen exists for</div>
-
-        Every <svg> is yours to write: viewBox="0 0 24 24" and one simple stroked glyph, no fill,
-        no text inside it. A car, a scissors, a loaf, a clock, a pin. The stylesheet colours and
-        sizes them, so write no style attribute.
-
-        Rules:
-          - Real content in every row: actual service names, times, prices, places from the idea.
-            A screen full of "Item 1" sells nothing. No lorem ipsum.
-          - Four or five blocks per screen. A phone is small; cut before you add.
-          - Vary them. A home screen opens with a search field or a segmented control and a grid
-            of tiles; a list of things to choose uses .app-line with a price on the right; a
-            conversation uses .app-people. Four screens of identical .app-row is the failure this
-            vocabulary exists to prevent.
-          - The first screen ends without an .app-cta: the tab bar is its navigation. The other
-            three each end in exactly one .app-cta.
-          - Tab labels are one word. Button labels are one or two.
-          - No external URLs, fonts, images or scripts. The page must work with JS switched off.
-          - Plain sentences. Never use a dash as a sentence break: no em dash, no spaced en dash.
-          - Invent no prices, percentages or guarantees as facts about the business.
+        in, what they get back. Four or five things per screen; a phone is small, cut before you
+        add. The first screen ends without a call to action, because the tab bar is its navigation.
+        The other three each end in exactly one.
         TXT;
 
     private const ADS = <<<'TXT'
@@ -308,9 +218,16 @@ class PrototypeWriter
      * and is labelled again, this is regenerated and the prompt improves without touching code.
      * Only the app prompt gets it; a landing page learns nothing from a phone screen.
      */
-    private function appConventions(): string
+    /**
+     * What the labelled reference library counted, as text.
+     *
+     * The pictures never reach the model; these numbers do. They are the durable half of the
+     * library, and they survived the stylesheet: what real screens DO is independent of what ours
+     * happen to look like.
+     */
+    private function conventions(string $file): string
     {
-        $path = resource_path('design/app-conventions.md');
+        $path = resource_path('design/'.$file);
 
         return is_file($path) ? "\n\n".trim((string) file_get_contents($path)) : '';
     }
@@ -327,9 +244,11 @@ class PrototypeWriter
         ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null): array
     {
         $system = match ($kind) {
-            'app' => self::APP.$this->appConventions(),
+            // Free prototypes carry the laws and the photo contract; the ad prototype still draws
+            // fixed platform canvases on the house stylesheet, where the sizes are the point.
+            'app' => self::APP."\n\n".self::PHOTO_SLOTS."\n\n".self::LAWS.$this->conventions('app-conventions.md'),
             'ads' => self::ADS,
-            default => self::SITE,
+            default => self::SITE."\n\n".self::PHOTO_SLOTS."\n\n".self::LAWS.$this->conventions('web-conventions.md'),
         };
 
         $baseUrl = rtrim((string) config('services.ai_image.base_url'), '/');
@@ -397,10 +316,14 @@ class PrototypeWriter
         // The audit runs against the finished page, because a fault only exists once the
         // stylesheet is in; the repair runs against the markup, because that is all the model is
         // allowed to change and it is a tenth of the tokens.
-        $page = $this->inlineHouse($markup);
+        // Only the ad prototype is still drawn on the house stylesheet. The other two write their
+        // own CSS, so there is nothing to inline and the page is already whole.
+        $page = $kind === 'ads' ? $this->inlineHouse($markup) : $markup;
         $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
 
-        $blocking = PageAudit::repairable($qa);
+        // The model wrote the CSS for these two, so overflow and a tab bar left in the document
+        // flow are its own faults and worth a repair. On the ad prototype they would be ours.
+        $blocking = PageAudit::repairable($qa, ownsStyle: $kind !== 'ads');
         if ($blocking !== []) {
             [$fixed, $why] = $this->repair($request, $system, $prompt, $markup, $blocking);
             $qa['repaired'] = false;
@@ -409,13 +332,13 @@ class PrototypeWriter
                 // answered in prose" are the same empty string here and want opposite fixes.
                 $qa['repair_failed'] = $why;
             } else {
-                $second = $this->inlineHouse($fixed);
+                $second = $kind === 'ads' ? $this->inlineHouse($fixed) : $fixed;
                 $after = $audit->run($second);
 
                 // Keep the repair only if it actually helped. A model asked to fix five things can
                 // come back with a shorter page and six, and shipping that would be worse than
                 // shipping the flaw we already knew about.
-                if (count(PageAudit::repairable($after)) < count($blocking)) {
+                if (count(PageAudit::repairable($after, ownsStyle: $kind !== 'ads')) < count($blocking)) {
                     $page = $second;
                     $qa = $after;
                 }
@@ -426,7 +349,7 @@ class PrototypeWriter
         // Last, and only for an app: the picture band names what it would show, so the photo is
         // fetched once, after the page has settled. Doing it before the repair pass would risk
         // fetching for markup the repair then throws away.
-        if ($kind === 'app' && $photo !== null) {
+        if ($kind !== 'ads' && $photo !== null) {
             $shot = $photo->apply($page);
             $page = $shot['html'];
             $qa['photo'] = $shot['photo'];

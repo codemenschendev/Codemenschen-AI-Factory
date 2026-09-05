@@ -77,6 +77,9 @@ class PageAudit
      */
     private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error'];
 
+    /** Faults that belong to whoever wrote the CSS: the model on a free page, us on a house one. */
+    private const STYLE_OWNED = ['overflow', 'nav-below-the-fold'];
+
     /** Everything a browser would call broken. @return array<int,array<string,mixed>> */
     public static function blocking(array $report): array
     {
@@ -86,12 +89,26 @@ class PageAudit
         ));
     }
 
-    /** The subset worth spending a generation on. @return array<int,array<string,mixed>> */
-    public static function repairable(array $report): array
+    /**
+     * The subset worth spending a generation on.
+     *
+     * `ownsStyle` is the whole question. When the model wrote the CSS, a page that scrolls
+     * sideways is its mistake and it can fix it. When the page is drawn on our stylesheet it is
+     * ours, and asking the model to repair a fault in a file it was told not to write costs a
+     * generation and changes nothing: both overflows the audit found on house pages were in
+     * house.css.
+     *
+     * @return array<int,array<string,mixed>>
+     */
+    public static function repairable(array $report, bool $ownsStyle = false): array
     {
+        $owned = $ownsStyle
+            ? array_merge(self::MODEL_OWNED, self::STYLE_OWNED)
+            : self::MODEL_OWNED;
+
         return array_values(array_filter(
             self::blocking($report),
-            fn (array $f) => in_array($f['check'] ?? '', self::MODEL_OWNED, true),
+            fn (array $f) => in_array($f['check'] ?? '', $owned, true),
         ));
     }
 

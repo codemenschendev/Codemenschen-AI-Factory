@@ -35,6 +35,37 @@ class PrototypeWriterTest extends TestCase
         return is_array($sent) ? json_encode($sent) : $sent;
     }
 
+    public function test_both_free_prompts_carry_the_laws_and_the_photo_contract(): void
+    {
+        // Handing the look back to the model loses what the stylesheet guaranteed by construction,
+        // so the guarantees are stated instead. Losing either of these silently is the failure.
+        foreach (['app', 'site'] as $kind) {
+            $sent = $this->systemPrompt($kind);
+            $this->assertStringContainsString('NEVER emoji', $sent, $kind);
+            $this->assertStringContainsString('Nothing may scroll sideways', $sent, $kind);
+            $this->assertStringContainsString('photo-wide', $sent, $kind);
+            $this->assertStringContainsString('YOU WRITE THE CSS', $sent, $kind);
+        }
+    }
+
+    public function test_the_site_prompt_carries_what_the_web_library_counted(): void
+    {
+        $sent = $this->systemPrompt('site');
+
+        // 202 of 545 landing pages open on a photograph, more than every drawn mock together, and
+        // reaching for a mock instead is the thing the numbers exist to correct.
+        $this->assertStringContainsString('photograph is the most common', $sent);
+        $this->assertStringContainsString('Proof comes before explanation', $sent);
+    }
+
+    public function test_the_ad_prototype_still_draws_on_the_house_stylesheet(): void
+    {
+        // Its canvases are real platform sizes; that is the whole point of it and not a style.
+        $sent = $this->systemPrompt('ads');
+
+        $this->assertStringNotContainsString('YOU WRITE THE CSS', $sent);
+    }
+
     public function test_the_app_prompt_builds_the_app_not_a_page_about_it(): void
     {
         $sent = $this->systemPrompt('app');
