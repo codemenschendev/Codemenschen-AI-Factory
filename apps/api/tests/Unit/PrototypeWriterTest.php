@@ -71,8 +71,10 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringContainsString('ad-story', $sent);
         $this->assertStringContainsString('photo-wide', $sent);
         $this->assertStringContainsString('NEVER emoji', $sent);
-        // The Christmas campaign for a Vienna company was addressed to "Salzburger Betriebe".
+        // The Christmas campaign for a Vienna company was addressed to "Salzburger Betriebe",
+        // claimed "über 40 Betriebe online" and, told not to count, named a "Tischlerei Huber".
         $this->assertStringContainsString('If the brief names no town, name none', $sent);
+        $this->assertStringContainsString('never a customer you', $sent);
         // What the labelled ad library counted travels with it.
         $this->assertStringContainsString('hook sits at the TOP', $sent);
         $this->assertStringNotContainsString('house.css', $sent);

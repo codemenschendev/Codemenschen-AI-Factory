@@ -179,8 +179,10 @@ class PrototypeWriter
 
         Five different angles on the same business, not five wordings of one idea, in this order:
         the problem, the result, the proof, the offer, the reminder. Proof is something the reader
-        can check: a finished example, a before and after, a named trade that is already live.
-        Never a count of customers, years or stars the brief did not give you.
+        can check: a finished example, a before and after, a trade that is already live. Never a
+        count of customers, years or stars the brief did not give you, and never a customer you
+        invented: no "Tischlerei Huber" unless the brief names one. Without a name, show the
+        result itself, "eine fertige Website für eine Tischlerei", and let the picture be the proof.
 
         Words:
           - The headline is at most 6 words and never opens with the company name. The line under
