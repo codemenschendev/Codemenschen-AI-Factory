@@ -75,15 +75,17 @@ class PrototypePhoto
                     break 2;
                 }
 
-                // A slot holds a sentence and nothing else. When it holds elements, the model has
-                // wrapped a whole card in the class instead of putting a picture inside one, and
-                // flattening that gives a "brief" like "Praterstern to Hauptbahnhof, yesterday,
-                // 9,40 euro", which no stock library has and which must not be emptied either.
-                if (str_contains($m[3], '<')) {
+                // A slot holds a sentence and nothing else. When it holds a card's worth of
+                // elements, the model has wrapped a whole card in the class instead of putting a
+                // picture inside one, and flattening that gives a "brief" like "Praterstern to
+                // Hauptbahnhof, yesterday, 9,40 euro", which no stock library has and which must
+                // not be emptied either. One wrapper around the sentence is still the sentence:
+                // an ad page styled every brief as <span class="brief"> and got no pictures.
+                if (! self::isBrief($m[3])) {
                     continue;
                 }
 
-                $brief = trim(html_entity_decode($m[3], ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                $brief = trim(html_entity_decode(strip_tags($m[3]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
                 if ($brief === '' || mb_strlen($brief) > 300) {
                     continue;
                 }
@@ -125,8 +127,10 @@ class PrototypePhoto
             if (! str_ends_with($class, 'thumb')) {
                 continue;
             }
-            $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.preg_quote($class, '~').'\b[^"]*"[^>]*)>([^<]+)</\1>~is';
-            $html = preg_replace($pattern, '<$1$2></$1>', $html);
+            $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.preg_quote($class, '~').'\b[^"]*"[^>]*)>(.*?)</\1>~is';
+            $html = preg_replace_callback($pattern, fn (array $m) => self::isBrief($m[3]) && trim(strip_tags($m[3])) !== ''
+                ? '<'.$m[1].$m[2].'></'.$m[1].'>'
+                : $m[0], $html);
         }
 
         if ($photos === []) {
@@ -162,6 +166,17 @@ class PrototypePhoto
      *
      * @return array{data:string,source:string,credit:?string,url:?string}|null
      */
+    /**
+     * Is what is inside a slot a brief, or a card that happens to carry the class?
+     *
+     * A brief is text, or text in one wrapper. Two elements or more is a card, and a picture
+     * already in there means the slot has been filled.
+     */
+    private static function isBrief(string $inner): bool
+    {
+        return ! str_contains(strtolower($inner), '<img') && preg_match_all('~<\w~', $inner) <= 1;
+    }
+
     private function dataUri(string $brief, int $width, ?string $search = null): ?array
     {
         try {

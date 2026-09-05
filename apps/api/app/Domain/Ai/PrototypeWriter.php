@@ -66,7 +66,8 @@ class PrototypeWriter
         stock library files it. "laptop advent wreath", "carpenter workshop", "dentist chair".
         No adjectives, no mood, no verbs: those go in the sentence, which is for a photographer.
 
-        Each of those holds THE SENTENCE AND NOTHING ELSE: no heading, no price, no other element.
+        Each of those holds THE SENTENCE AND NOTHING ELSE, as bare text: no span around it, no
+        heading, no price, no other element.
         The whole element is replaced by the photograph, so anything else inside it disappears.
         A card with a picture is the slot FIRST and then the card's own text beside or beneath it,
         never the card wrapped in the slot.

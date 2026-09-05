@@ -248,6 +248,27 @@ class PrototypePhotoTest extends TestCase
         $this->assertStringContainsString('data-q="carpenter workshop phone"', $out['html'], 'the attribute survives');
     }
 
+    public function test_a_brief_in_one_wrapper_is_still_the_brief(): void
+    {
+        // An ad page styled every brief as <span class="brief"> inside the slot and, because a
+        // slot with an element in it was read as a wrapped card, shipped with no picture at all.
+        $out = $this->photo($this->stock($this->png()))->apply($this->page(
+            '<div class="photo-wide" data-q="advent wreath"><span class="brief">Adventkranz am Tresen</span></div>'
+            .'<i class="photo-thumb"><span class="brief">Porträt der Wirtin</span></i>'
+        ));
+
+        $this->assertCount(2, $out['photos']);
+        $this->assertStringContainsString('alt="Adventkranz am Tresen"', $out['html']);
+        $this->assertStringNotContainsString('class="brief"', $out['html']);
+    }
+
+    public function test_a_wrapped_thumbnail_nobody_filled_is_emptied_too(): void
+    {
+        $out = $this->photo()->apply($this->page('<i class="photo-thumb"><span>Porträt der Wirtin</span></i>'));
+
+        $this->assertStringContainsString('<i class="photo-thumb"></i>', $out['html']);
+    }
+
     public function test_a_page_without_a_band_asks_for_nothing(): void
     {
         $out = $this->photo($this->stock($this->png()))->apply('<html><body><p>kein Bild</p></body></html>');
