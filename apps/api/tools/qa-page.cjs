@@ -271,7 +271,30 @@ function audit([placeholderSource, minTarget]) {
     });
   }
 
-  // 9. Contrast. Walked up the tree for the first opaque background, which is what the eye does
+  // 9. Something under the Dynamic Island. An app page is shown inside a phone whose frame paints
+  // a status bar and an island over its top 54px. A search bar drawn at y=12 sits under a black
+  // pill, and a customer sees that before anything else. Only app pages; a website has no island.
+  if (document.body.classList.contains('app-page')) {
+    const under = [];
+    for (const el of document.querySelectorAll('.app *')) {
+      if (!visible(el)) continue;
+      const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.nodeValue.trim());
+      const interactive = el.matches('a, button, input, select, textarea, label, [role="button"]');
+      if (!own && !interactive) continue;
+      const r = el.getBoundingClientRect();
+      if (r.top < 48 && r.bottom > 8) under.push(`${sel(el)} at ${Math.round(r.top)}px`);
+      if (under.length >= 5) break;
+    }
+    if (under.length) {
+      out.push({
+        severity: 'blocking', check: 'under-the-island',
+        detail: `${under.length} element(s) in the top 54px, where the frame draws the status bar and the island`,
+        elements: under,
+      });
+    }
+  }
+
+  // 10. Contrast. Walked up the tree for the first opaque background, which is what the eye does
   // too; a gradient or a photo behind the text defeats it, hence advisory.
   const lum = (c) => {
     const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });

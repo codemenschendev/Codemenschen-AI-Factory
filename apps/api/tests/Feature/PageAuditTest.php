@@ -99,6 +99,26 @@ class PageAuditTest extends TestCase
         $this->assertNotContains('dash', array_column($ok['findings'], 'check'));
     }
 
+    public function test_an_app_page_keeps_the_top_band_free_for_the_island(): void
+    {
+        // "CHÀO BUỔI SÁNG" under a black pill, twice in one day: the frame paints the status bar
+        // and the Dynamic Island over the page's top 54px, and the model drew there.
+        $app = fn (string $inset) => '<!doctype html><meta charset="utf-8"><title>App</title>'
+            .'<style>body{margin:0}.app{padding-top:'.$inset.'}.bar{padding:12px;background:#eee}</style>'
+            .'<body class="app-page"><div class="app"><input class="bar" placeholder="Bạn muốn đi đâu?"></div></body>';
+
+        $under = $this->audit()->run($app('0'));
+        $this->assertContains('under-the-island', array_column(PageAudit::blocking($under), 'check'));
+        $this->assertContains('under-the-island', array_column(PageAudit::repairable($under, ownsStyle: true), 'check'));
+
+        $ok = $this->audit()->run($app('54px'));
+        $this->assertNotContains('under-the-island', array_column($ok['findings'], 'check'));
+
+        // A website has no island: the same bar at the top of a plain page is fine.
+        $site = $this->audit()->run(str_replace('class="app-page"', '', $app('0')));
+        $this->assertNotContains('under-the-island', array_column($site['findings'], 'check'));
+    }
+
     public function test_text_the_model_did_not_write_is_blocking(): void
     {
         $report = $this->audit()->run(

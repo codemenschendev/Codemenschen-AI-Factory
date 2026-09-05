@@ -134,6 +134,11 @@ class PrototypeWriter
         Write the CSS that shows screen N when input N is checked and marks tab N, with a sibling
         selector. No script.
 
+        THE TOP 54px OF THE SCREEN ARE NOT YOURS. The frame draws the status bar and the Dynamic
+        Island there, over your page. Nothing may sit in that band: give the first thing on every
+        screen a top inset of 54px, and a map or a photograph that fills the screen keeps its
+        controls below it. A search bar under the island is the first thing a customer notices.
+
         THE TAB BAR MUST STAY ON THE SCREEN. It belongs at the bottom of the phone, not at the
         bottom of the document: a tab bar you have to scroll down to find is not a tab bar. Give
         each screen its own scrolling if the content is long.
