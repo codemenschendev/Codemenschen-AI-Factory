@@ -143,18 +143,18 @@ class PrototypePhotoTest extends TestCase
         $this->assertStringContainsString('<i class="app-thumb has-photo">', $out['html']);
     }
 
-    public function test_a_fifth_slot_keeps_its_gradient(): void
+    public function test_a_seventh_slot_keeps_its_gradient(): void
     {
-        // Every one of these is bytes in a page served on every view, so four is the ceiling.
+        // Every one of these is bytes in a page served on every view, so the ceiling stays low.
         $bands = '';
-        foreach (range(1, 6) as $n) {
+        foreach (range(1, 8) as $n) {
             $bands .= '<div class="app-art">Aufnahme Nummer '.$n.'</div>';
         }
 
         $out = $this->photo($this->stock($this->png()))->apply($this->page($bands));
 
-        $this->assertCount(4, $out['photos']);
-        $this->assertStringContainsString('<div class="app-art">Aufnahme Nummer 5</div>', $out['html']);
+        $this->assertCount(6, $out['photos']);
+        $this->assertStringContainsString('<div class="app-art">Aufnahme Nummer 7</div>', $out['html']);
     }
 
     public function test_a_thumbnail_is_encoded_smaller_than_a_band(): void

@@ -396,6 +396,10 @@ body.app-page {
   color: var(--accent-ink); font-size: var(--fs-xs); font-weight: 620;
 }
 .screen .app-thumb.has-photo, .screen .app-card > .app-cover.has-photo { padding: 0; display: block; }
+/* A slot that got no photograph keeps its coloured square and drops the brief. The band is wide
+   enough to carry a line of text and read as a caption; six words crammed into a 58px stamp read
+   as a bug. */
+.screen .app-thumb:not(.has-photo) { font-size: 0; }
 .screen .app-art img, .screen .app-thumb img, .screen .app-cover img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }

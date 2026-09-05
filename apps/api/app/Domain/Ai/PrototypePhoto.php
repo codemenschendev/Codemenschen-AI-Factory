@@ -36,13 +36,13 @@ class PrototypePhoto
     private const SLOTS = ['app-art' => 720, 'app-cover' => 420, 'app-thumb' => 180];
 
     /**
-     * Four across the whole app.
+     * Six across the whole app.
      *
-     * Two thirds of the labelled screens carry a picture and a fifth carry one in more than one
-     * place, but those are a handful, never a gallery, and every one of these is bytes in a page
-     * that is served on every view.
+     * Four was one too few for the first menu that used it: a band, three dishes and a fourth
+     * row left holding its own brief. A list people choose by looking has three or four things in
+     * it, and each of these is bytes in a page served on every view, so the ceiling stays low.
      */
-    private const MAX = 4;
+    private const MAX = 6;
 
     public function __construct(
         private readonly ImageLibrary $library,
