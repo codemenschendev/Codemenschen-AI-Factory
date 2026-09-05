@@ -210,6 +210,23 @@ class PrototypePhotoTest extends TestCase
         $this->assertStringNotContainsString('Porträt eines', $out['html']);
     }
 
+    public function test_thumbnails_past_the_ceiling_lose_their_words_too(): void
+    {
+        // A ride-hailing page wrote eleven driver portraits. Six got a photograph and the other
+        // five were left saying "Porträt eines Fahrers mit Kappe" in a circle the size of a coin.
+        $thumbs = '';
+        foreach (range(1, 8) as $n) {
+            $thumbs .= '<i class="photo-thumb pt-'.$n.'">Porträt Nummer '.$n.'</i>';
+        }
+
+        $out = $this->photo($this->stock($this->png()))->apply($this->page($thumbs));
+
+        $this->assertCount(6, $out['photos']);
+        // The words survive only as alt text on the six that became photographs.
+        $this->assertStringNotContainsString('>Porträt Nummer', $out['html']);
+        $this->assertStringContainsString('<i class="photo-thumb pt-7"></i>', $out['html']);
+    }
+
     public function test_a_page_without_a_band_asks_for_nothing(): void
     {
         $out = $this->photo($this->stock($this->png()))->apply('<html><body><p>kein Bild</p></body></html>');

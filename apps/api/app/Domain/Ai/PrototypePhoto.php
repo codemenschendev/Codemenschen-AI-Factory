@@ -61,7 +61,7 @@ class PrototypePhoto
      */
     public function apply(string $html): array
     {
-        $photos = $sources = $credits = $urls = $empty = [];
+        $photos = $sources = $credits = $urls = [];
 
         foreach (self::SLOTS as $class => $width) {
             // The slot name among whatever else the model put in the class attribute. Requiring
@@ -88,8 +88,6 @@ class PrototypePhoto
                     continue;
                 }
 
-                $empty[] = [$m, $class];
-
                 $found = $this->dataUri($brief, $width);
                 if ($found === null) {
                     continue;   // this slot keeps its gradient; the next one still gets a try
@@ -103,7 +101,6 @@ class PrototypePhoto
                     '<'.$m[1].$open.'><img src="'.$found['data'].'" alt="'.$alt.'"></'.$m[1].'>',
                     $html);
 
-                array_pop($empty);
                 $photos[] = $brief;
                 $sources[] = $found['source'];
                 if ($found['credit'] !== null) {
@@ -113,14 +110,18 @@ class PrototypePhoto
             }
         }
 
-        // A thumbnail nobody could fill keeps its shape and loses its words: six words of
-        // direction for a photographer, crammed into a 58px square, read as a bug. A wide band
-        // is big enough for a line of text and keeps its caption.
-        foreach ($empty as [$m, $class]) {
+        // A thumbnail nobody filled keeps its shape and loses its words: six words of direction
+        // for a photographer, crammed into a 58px square, read as a bug. That covers the ones no
+        // source could answer and the ones past the ceiling alike; a ride-hailing page wrote
+        // eleven driver portraits and the five after the sixth photograph were left saying
+        // "Porträt eines Fahrers mit Kappe". A wide band is big enough for a line of text and
+        // keeps its caption.
+        foreach (array_keys(self::SLOTS) as $class) {
             if (! str_ends_with($class, 'thumb')) {
                 continue;
             }
-            $html = str_replace($m[0], '<'.$m[1].$m[2].'></'.$m[1].'>', $html);
+            $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.preg_quote($class, '~').'\b[^"]*"[^>]*)>([^<]+)</\1>~is';
+            $html = preg_replace($pattern, '<$1$2></$1>', $html);
         }
 
         if ($photos === []) {
