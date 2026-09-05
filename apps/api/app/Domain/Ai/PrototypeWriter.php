@@ -406,7 +406,8 @@ class PrototypeWriter
 
                     Overflow is almost always one element wider than the screen or one word that
                     cannot break. Placeholder text means write the real thing for this business.
-                    A broken image means remove the tag, not point it somewhere else.
+                    A broken image means remove the tag, not point it somewhere else. A dash means
+                    rewrite that sentence with a comma, a colon or a full stop, in the title too.
                     TXT],
             ],
             'max_completion_tokens' => 8000,

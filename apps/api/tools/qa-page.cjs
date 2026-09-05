@@ -242,7 +242,31 @@ function audit([placeholderSource, minTarget]) {
     });
   }
 
-  // 8. Contrast. Walked up the tree for the first opaque background, which is what the eye does
+  // 8. A dash used as a sentence break. An em dash, or an en dash with a space on each side, is
+  // the punctuation of generated text, and a customer reads it as such before reading anything
+  // else. The words are the model's own and a comma, a colon or a full stop is a one-word fix,
+  // so this is a fault to repair, not a note. The title counts: it becomes the prototype's name.
+  const DASH = /\u2014|\s\u2013\s/;
+  const dashes = [];
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const t = n.nodeValue || '';
+    if (!DASH.test(t)) continue;
+    const el = n.parentElement;
+    if (!el || el.closest('script, style')) continue;
+    dashes.push(`${sel(el)}: "${t.trim().slice(0, 60)}"`);
+    if (dashes.length >= 8) break;
+  }
+  if (DASH.test(document.title || '')) dashes.unshift(`title: "${document.title.slice(0, 60)}"`);
+  if (dashes.length) {
+    out.push({
+      severity: 'blocking', check: 'dash',
+      detail: `${dashes.length} dash(es) used as a sentence break`,
+      elements: dashes.slice(0, 5),
+    });
+  }
+
+  // 9. Contrast. Walked up the tree for the first opaque background, which is what the eye does
   // too; a gradient or a photo behind the text defeats it, hence advisory.
   const lum = (c) => {
     const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });

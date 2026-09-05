@@ -78,6 +78,27 @@ class PageAuditTest extends TestCase
         }
     }
 
+    public function test_a_dash_as_a_sentence_break_is_blocking_and_names_the_line(): void
+    {
+        // "codemenschen.at — Weihnachtskampagne" went out as the title of an ad prototype after
+        // the prompt had said no dash twice. The words are the model's, so the audit sends them
+        // back; a hyphen inside a word and a minus in a price are not what this is about.
+        $report = $this->audit()->run('<!doctype html><meta charset="utf-8">'
+            .'<title>Bäckerei Rupert – Frisch seit 1923</title>'
+            .'<h1>Brot — jeden Morgen frisch</h1><p>Kipferl 1,20 Euro. Öffnungszeiten: 6-18 Uhr, Mo-Sa.</p>');
+
+        $dash = collect(PageAudit::blocking($report))->firstWhere('check', 'dash');
+        $this->assertNotNull($dash, json_encode($report['findings']));
+        $this->assertSame(2, (int) $dash['detail']);
+        $this->assertStringContainsString('title:', $dash['elements'][0]);
+        $this->assertStringContainsString('h1', $dash['elements'][1]);
+        $this->assertContains('dash', array_column(PageAudit::repairable($report), 'check'));
+
+        $ok = $this->audit()->run('<!doctype html><meta charset="utf-8"><title>Bäckerei Rupert</title>'
+            .'<p>Öffnungszeiten: 6-18 Uhr, Mo-Sa. Kipferl 1,20 Euro.</p>');
+        $this->assertNotContains('dash', array_column($ok['findings'], 'check'));
+    }
+
     public function test_text_the_model_did_not_write_is_blocking(): void
     {
         $report = $this->audit()->run(
