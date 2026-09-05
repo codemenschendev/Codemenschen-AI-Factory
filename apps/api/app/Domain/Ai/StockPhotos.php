@@ -76,6 +76,47 @@ class StockPhotos
     }
 
     /**
+     * Words that put a recognisable person in the picture, in the two languages the copywriter
+     * writes. Not exhaustive and not meant to be: it errs towards generating, which is the safe
+     * direction.
+     */
+    private const PEOPLE = [
+        // No "Hand": a pair of hands kneading dough identifies nobody, and the release this
+        // guards against is about recognisable people. It also sits at the front of
+        // "handgehobelt", which is a plank.
+        'frau', 'mann', 'männ', 'kund', 'kind', 'team', 'mitarbeiter', 'person', 'leute',
+        'gesicht', 'läch', 'familie', 'paar', 'besitzer', 'inhaber', 'chef',
+        'meister', 'friseur', 'bäcker', 'ärzt', 'arzt', 'trainer', 'gast', 'gäste', 'porträt',
+        'portrait', 'woman', 'women', 'customer', 'people', 'staff', 'smil', 'family', 'owner',
+        'face', 'guest',
+    ];
+
+    /**
+     * A photograph for a PAID advertisement, or null to generate one instead.
+     *
+     * Same free source, one rule on top. The Pexels licence allows commercial use, but it does not
+     * guarantee a model release, and it asks that the people in a photo are not made to look like
+     * they endorse the product. A stranger's face in a paid Meta ad for a salon is exactly that
+     * use, so any scene that names a person is generated rather than borrowed.
+     *
+     * Places, rooms, food, tools and products carry no such claim, and those are most scenes.
+     *
+     * @return array{bytes:string,credit:string,url:string}|null
+     */
+    public function findForAd(string $brief): ?array
+    {
+        // Matched at the start of a word, never mid-word: German compounds put "hand" inside
+        // "Behandlungsstuhl", and a treatment chair is a chair. The boundary is written as "not
+        // preceded by a letter" because \b is ASCII-minded about ä and ö.
+        $pattern = '/(?<!\p{L})('.implode('|', self::PEOPLE).')/ui';
+        if (preg_match($pattern, $brief) === 1) {
+            return null;
+        }
+
+        return $this->find($brief);
+    }
+
+    /**
      * The photo brief, cut down to what a stock search can actually match.
      *
      * The model writes a sentence for a photographer: "Frische Kipferl und Mohnzopf im Weidenkorb,

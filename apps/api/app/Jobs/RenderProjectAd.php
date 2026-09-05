@@ -7,6 +7,7 @@ use App\Domain\Ai\AdScriptWriter;
 use App\Domain\Ai\ImageService;
 use App\Domain\Ai\ScreenshotService;
 use App\Domain\Ai\SiteBrief;
+use App\Domain\Ai\StockPhotos;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Library\ImageLibrary;
 use App\Models\ProjectAd;
@@ -34,7 +35,7 @@ class RenderProjectAd implements ShouldQueue
     public function __construct(public int $adId) {}
 
     public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites,
-        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs): void
+        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs, StockPhotos $stock): void
     {
         $ad = ProjectAd::find($this->adId);
         if (! $ad || $ad->status === 'ready') {
@@ -44,7 +45,7 @@ class RenderProjectAd implements ShouldQueue
         $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($ad, $writer, $images, $sites, $shots, $library, $refs);
+            $this->render($ad, $writer, $images, $sites, $shots, $library, $refs, $stock);
         } catch (Throwable $e) {
             Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
             $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
@@ -52,7 +53,7 @@ class RenderProjectAd implements ShouldQueue
     }
 
     private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites,
-        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs): void
+        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs, StockPhotos $stock): void
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
@@ -110,6 +111,10 @@ class RenderProjectAd implements ShouldQueue
             }
         }
 
+        // Whose photographs ended up in this ad. Pexels asks for a credit where their API is
+        // used, and an ad is published: the operator needs to be able to answer for every frame.
+        $credits = [];
+
         foreach ($scenes as $i => &$scene) {
             $prompt = trim((string) ($scene['picture'] ?? $scene['image_prompt'] ?? ''));
             // Closing scenes carry no image on purpose: make-ad.py paints them on the
@@ -129,6 +134,16 @@ class RenderProjectAd implements ShouldQueue
                 $file = sprintf('%02d.jpg', $i);
                 copy($reuse, $work.'/'.$file);
                 Log::info('ad image reused', ['ad' => $ad->id, 'asset' => $hit['id'], 'score' => round($hit['score'], 2)]);
+            } elseif ($shot = $stock->findForAd($prompt)) {
+                // A free photograph of a real place beats a generated one and costs nothing.
+                // findForAd refuses any scene that names a person: the Pexels licence allows
+                // commercial use but guarantees no model release, and a stranger's face in a paid
+                // ad for somebody's salon is the endorsement its terms ask us not to imply.
+                $file = sprintf('%02d.jpg', $i);
+                file_put_contents($work.'/'.$file, $shot['bytes']);
+                $library->remember($work.'/'.$file, $prompt, (string) $ad->project_id);
+                $credits[] = $shot['credit'].' · '.$shot['url'];
+                Log::info('ad image from stock', ['ad' => $ad->id, 'credit' => $shot['credit']]);
             } else {
                 $file = sprintf('%02d.png', $i);
                 file_put_contents($work.'/'.$file, $images->generate($prompt, $this->imageSize($size)));
@@ -141,6 +156,9 @@ class RenderProjectAd implements ShouldQueue
         $spec['size'] = $size;
         $spec['kind'] = $ad->kind;
         $spec['scenes'] = array_values($scenes);
+        // Kept on the ad, not painted into the frame: an ad has no room for a credit line, and
+        // the operator is the one who has to be able to answer for a photograph.
+        $spec['photo_credits'] = $credits;
         $ad->update(['spec' => $spec]);
 
         file_put_contents($work.'/spec.json', json_encode($spec, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT));
