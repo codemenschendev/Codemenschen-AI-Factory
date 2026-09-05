@@ -10,29 +10,27 @@ use Symfony\Component\Process\Process;
  * Puts one real photograph into a generated app prototype.
  *
  * The model writes `<div class="app-art">what the picture would show</div>`, which is already a
- * photo brief in the visitor's own language and trade. That line is what gets generated, and the
- * band it was standing in becomes the picture.
+ * photo brief in the visitor's own language and trade. That line is what gets searched for, and
+ * the band it was standing in becomes the picture.
  *
- * One photo per prototype, never more. Generation costs Codemenschen's money on a free lead
- * magnet, and a second picture on a phone screen buys nothing; the shared library is searched
- * first, so the second bakery in the same week pays nothing at all.
+ * Free pictures only. A prototype is a lead magnet given away by the hundred, so it borrows what
+ * the world already photographed and never buys anything: the shared library first, then Pexels.
+ * Generation belongs to the paid ad pipeline, where a picture must show the one scene its copy
+ * names and no stock index holds that.
  *
- * Nothing here can fail a build. No sidecar, no imagemagick, a timeout, a refusal: the band keeps
- * the flat accent gradient it already had, which is a deliberate design and not a missing image.
+ * Nothing here can fail a build. No key, no imagemagick, a timeout, an empty search: the band
+ * keeps the flat accent gradient it already had, which is a deliberate design, not a missing
+ * image.
  */
 class PrototypePhoto
 {
     /** Prototypes borrow from each other and from nobody else: they are throwaway lead magnets. */
     private const PROJECT = 'prototype';
 
-    /** Landscape, the closest generated shape to the 16:9 band it lands in. */
-    private const SIZE = '1536x1024';
-
     /** What the phone actually needs. A 1536px PNG inline would be two megabytes of base64. */
     private const WIDTH = 720;
 
     public function __construct(
-        private readonly ImageService $images,
         private readonly ImageLibrary $library,
         // Required, not nullable with a default: the container skips a nullable parameter that
         // already has one, so this silently arrived as null and every prototype paid for a photo
@@ -82,12 +80,11 @@ class PrototypePhoto
     }
 
     /**
-     * The picture, in the order that spends least.
+     * The picture, from the two sources that cost nothing.
      *
-     * Already paid for, then free, then paid. The library holds what earlier prototypes bought or
-     * fetched; Pexels is free and instant and, for a bakery or a salon, a real photograph beats a
-     * generated one; generation is the last resort and stays for the paid ad pipeline where the
-     * picture has to show one particular scene.
+     * The library holds what earlier prototypes already fetched; Pexels is free, instant, and for
+     * a bakery or a salon a real photograph beats a generated one anyway. Neither answering means
+     * no picture, which is a decision rather than a failure.
      *
      * @return array{data:string,source:string,credit:?string,url:?string}|null
      */
@@ -111,19 +108,9 @@ class PrototypePhoto
                 }
             }
 
-            // The free tier does not buy pictures unless somebody turns that on. A prototype is a
-            // lead magnet given away by the hundred, and a gradient band is a deliberate design;
-            // an invoice for one is not.
-            if (! config('services.stock.generate_for_prototypes')) {
-                Log::info('prototype photo: nothing free matched, generation is off', ['brief' => $brief]);
+            Log::info('prototype photo: nothing free matched, the band keeps its gradient', ['brief' => $brief]);
 
-                return null;
-            }
-
-            $bytes = $this->images->generate($this->prompt($brief), self::SIZE);
-            $found = $this->file($bytes, '.png', $brief);
-
-            return $found === null ? null : ['data' => $found, 'source' => 'generated', 'credit' => null, 'url' => null];
+            return null;
         } catch (\Throwable $e) {
             Log::warning('prototype photo skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
 
@@ -152,19 +139,6 @@ class PrototypePhoto
         } finally {
             @unlink($tmp);
         }
-    }
-
-    /**
-     * The brief, said the way a photographer would be told it.
-     *
-     * No text in the picture: a generated sign in the wrong language is the fastest way to make a
-     * prototype look fake, and the screen already carries the words.
-     */
-    private function prompt(string $brief): string
-    {
-        return "Editorial photograph for a mobile app screen: {$brief}. "
-            .'Real place, real people at work, natural light, shallow depth of field, '
-            .'documentary rather than staged, no text, no logos, no watermark, no user interface.';
     }
 
     /** Resize and re-encode to webp, then inline it. @return ?string */

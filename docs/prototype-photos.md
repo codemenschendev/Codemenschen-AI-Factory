@@ -7,10 +7,10 @@ the photo brief, and the picture comes from the first of these that answers, in 
    prototype fetched or bought is already there, so a second bakery in the same week costs nothing.
 2. **Pexels**, free, if `PEXELS_API_KEY` is set. Instant, and for a bakery or a salon a real
    photograph beats a generated one: no invented shop signs, no six-fingered hands.
-3. **Generation** through the image sidecar, which costs money on Codemenschen's OpenAI account.
-   **Off by default.** A prototype is given away by the hundred and a gradient band is a design;
-   an invoice for one is not. Set `PROTOTYPE_GENERATE_PHOTOS=true` to allow it.
-4. **Nothing**, and the band keeps its accent gradient, which reads as a deliberate design.
+3. **Nothing**, and the band keeps its accent gradient, which reads as a deliberate design.
+
+A prototype never generates. It is a lead magnet given away by the hundred, so it borrows what the
+world already photographed or it goes without.
 
 ## Paid ads
 

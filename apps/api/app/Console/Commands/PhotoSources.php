@@ -8,22 +8,21 @@ use Illuminate\Console\Command;
 /**
  * Where prototype pictures came from, and what that cost.
  *
- * The question this answers is "are we still paying for photographs", which nobody could answer
- * before: an empty credit meant either the shared library or a generation, and those differ by the
- * price of a call.
+ * Prototypes buy nothing: the library first, then Pexels, then the accent gradient. This says how
+ * often each answered, which is how we know whether the free sources are actually carrying it.
  */
 class PhotoSources extends Command
 {
     protected $signature = 'factory:photo-sources {--days=7}';
 
-    protected $description = 'Count where prototype photos came from: the library, Pexels, or generation';
+    protected $description = 'Count where prototype photos came from: the shared library or Pexels';
 
     public function handle(): int
     {
         $days = max(1, (int) $this->option('days'));
         $rows = Prototype::whereNotNull('qa')->where('created_at', '>=', now()->subDays($days))->get();
 
-        $count = ['library' => 0, 'stock' => 0, 'generated' => 0, 'none' => 0, 'unknown' => 0];
+        $count = ['library' => 0, 'stock' => 0, 'none' => 0, 'unknown' => 0];
         foreach ($rows as $p) {
             $qa = (array) $p->qa;
             if (! array_key_exists('photo', $qa)) {
@@ -48,13 +47,8 @@ class PhotoSources extends Command
             ])->values()->all()
         );
 
-        $this->line($count['generated'] === 0
-            ? "  Nothing was generated in the last {$days} days."
-            : "  {$count['generated']} generated in the last {$days} days: that is what the free tier cost.");
-
-        if (! config('services.stock.generate_for_prototypes')) {
-            $this->line('  Generation for prototypes is OFF (PROTOTYPE_GENERATE_PHOTOS).');
-        }
+        $this->line('  Prototypes never generate: free sources only. '
+            .$count['none'].' had no picture and kept the gradient.');
 
         return self::SUCCESS;
     }

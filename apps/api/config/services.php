@@ -108,10 +108,6 @@ return [
     // ad pipeline. Empty key means the whole source is simply skipped.
     'stock' => [
         'pexels_key' => env('PEXELS_API_KEY'),
-        // Off: the free tier gives prototypes away by the hundred and must not buy pictures for
-        // them. When nothing free matches, the band keeps its accent gradient, which is a
-        // deliberate design. Paid ads generate regardless; that is a different pipeline.
-        'generate_for_prototypes' => (bool) env('PROTOTYPE_GENERATE_PHOTOS', false),
     ],
 
     // The browser that looks at a generated page before a visitor does. Both paths are inside the

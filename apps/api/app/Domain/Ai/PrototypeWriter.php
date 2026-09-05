@@ -411,8 +411,8 @@ class PrototypeWriter
         }
 
         // Last, and only for an app: the picture band names what it would show, so the photo is
-        // bought once, after the page has settled. Doing it before the repair pass would risk
-        // paying for an image the repair then throws away.
+        // fetched once, after the page has settled. Doing it before the repair pass would risk
+        // fetching for markup the repair then throws away.
         if ($kind === 'app' && $photo !== null) {
             $shot = $photo->apply($page);
             $page = $shot['html'];
