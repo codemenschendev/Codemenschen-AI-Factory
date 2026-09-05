@@ -231,8 +231,15 @@ class PrototypeWriter
     /** Repair rounds at most. The second runs only if the first reduced the faults. */
     private const REPAIRS = 2;
 
-    /** Screens a build studies and then sees again while drawing: library screens plus store shots. */
+    /** Screens a build studies: library screens plus store shots. */
     private const STUDY_SCREENS = 8;
+
+    /**
+     * Screens the builder sees again while drawing. The study digested all eight; the builder
+     * with eight attached ran past the sidecar's limit and produced nothing. Three is the first
+     * screen of the trade and one store shot per competitor, enough to keep the look honest.
+     */
+    private const BUILD_SCREENS = 3;
 
     /**
      * What real app screens do, distilled from the labelled reference library.
@@ -314,7 +321,7 @@ class PrototypeWriter
         // The chain has to fire in order: the sidecar gives up at 300s and answers a clean 502
         // this client can explain, so this waits a little longer, and the queue job longer still.
         // With the old 240 here, a slow generation surfaced as a connection exception instead.
-        $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(330)->connectTimeout(10);
+        $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(630)->connectTimeout(10);
         if (($backend = ChatBackend::pin()) !== null) {
             $request = $request->withHeaders(['x-openclaw-model' => $backend]);
         }
@@ -334,8 +341,8 @@ class PrototypeWriter
             // along so the builder sees what "like the leading apps" looks like.
             $n = count($studied);
             $user[] = ['type' => 'text', 'text' => "A designer studied {$n} screens of the leading apps of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\n{$brief}"];
-            $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThe screens the brief was written from, in order:"];
-            foreach ($studied as $i => $shot) {
+            $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThree of the screens the brief was written from:"];
+            foreach ($this->forBuilder($studied) as $i => $shot) {
                 $label = 'Screen '.($i + 1).': '.str_replace('_', ' ', $shot['screen_type']).($shot['note'] !== '' ? " ({$shot['note']})" : '');
                 $user[] = ['type' => 'text', 'text' => $label];
                 $user[] = ['type' => 'image_url', 'image_url' => ['url' => $shot['data']]];
@@ -520,6 +527,25 @@ class PrototypeWriter
         $html = $this->extractHtml((string) $res->json('choices.0.message.content'));
 
         return $html === '' ? ['', 'no html in the reply'] : [$html, null];
+    }
+
+    /**
+     * The first library screen, then the first store shot of each competitor, up to the cap.
+     *
+     * @param  list<array<string,mixed>>  $studied
+     * @return list<array<string,mixed>>
+     */
+    private function forBuilder(array $studied): array
+    {
+        $library = array_values(array_filter($studied, fn (array $s) => ! isset($s['app'])));
+        $store = [];
+        foreach ($studied as $s) {
+            if (isset($s['app']) && ! isset($store[$s['app']])) {
+                $store[$s['app']] = $s;
+            }
+        }
+
+        return array_slice(array_merge(array_slice($library, 0, 1), array_values($store), array_slice($library, 1)), 0, self::BUILD_SCREENS);
     }
 
     private function extractHtml(string $text): string

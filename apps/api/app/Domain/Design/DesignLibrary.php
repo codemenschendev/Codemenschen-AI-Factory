@@ -325,11 +325,13 @@ class DesignLibrary
             return $hits[0];
         };
 
+        // The trade's own screens first, whatever their type: a ride-hailing detail screen
+        // teaches more about a ride-hailing list than a music app's list does. Only a trade the
+        // library barely knows borrows the wanted types from everyone else.
         $taken = [];
         $chosen = [];
         foreach ($screenTypes as $type) {
-            $r = $pick($own, fn (array $r) => $r['labels']['screen_type'] === $type, $taken)
-                ?? $pick($apps, fn (array $r) => $r['labels']['screen_type'] === $type, $taken);
+            $r = $pick($own, fn (array $r) => $r['labels']['screen_type'] === $type, $taken);
             if ($r !== null) {
                 $chosen[] = $r;
             }
@@ -340,6 +342,14 @@ class DesignLibrary
                 break;
             }
             $chosen[] = $r;
+        }
+        if (count($chosen) < $max) {
+            foreach ($screenTypes as $type) {
+                $r = $pick($apps, fn (array $r) => $r['labels']['screen_type'] === $type, $taken);
+                if ($r !== null && count($chosen) < $max) {
+                    $chosen[] = $r;
+                }
+            }
         }
 
         $out = [];

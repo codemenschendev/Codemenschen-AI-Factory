@@ -19,11 +19,11 @@ class BuildPrototype implements ShouldQueue
     use Queueable;
 
     /**
-     * Fifteen minutes, which is the sum and not a guess: the sidecar may take 300s to write the
-     * page, the audit runs, a repair may take another 300s, the audit runs again, and photographs
-     * are fetched. Ten minutes would cut a repaired page off at the last step.
+     * Thirty minutes, which is the sum and not a guess: the study, then the sidecar may take up
+     * to 600s to write the page, the audit runs, two repairs may take 600s each, the audit runs
+     * again, and photographs are fetched. The owner chose a slower build over a worse one.
      */
-    public int $timeout = 900;
+    public int $timeout = 1800;
 
     public int $tries = 1;
 

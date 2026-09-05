@@ -89,7 +89,7 @@ class PrototypeStudyTest extends TestCase
             return str_contains($text, 'the brief wins')
                 && str_contains($text, 'opens on a map')
                 && str_contains($text, 'Screen 1: map (note map)')
-                && count($images) === 4;
+                && count($images) === 3;   // the builder sees three, the study saw them all
         });
     }
 

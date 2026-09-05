@@ -66,11 +66,14 @@ class DesignStudyReferencesTest extends TestCase
         $ids = array_column($refs, 'id');
         $this->assertSame('ride-map-d', $ids[0], 'the legible map beats the small one');
         $this->assertSame(['ride-list', 'ride-form'], array_slice($ids, 1, 2));
-        // No ride-hailing confirmation exists: the shape is borrowed from another trade.
-        $this->assertContains($ids[3], ['food-ok', 'bank-ok']);
-        // Then the trade's own remaining screens, up to the cap.
+        // No ride-hailing confirmation exists. The trade's own remaining screens come first,
+        // whatever their type: a music app's list teaches less about rides than a ride app's
+        // onboarding does. Only then is the missing type borrowed from another trade.
         $this->assertCount(6, $refs);
-        $this->assertEmpty(array_diff(array_slice($ids, 4), ['ride-map-l', 'ride-home', 'ride-onb']));
+        // Random among equals, so the three are asserted as a set.
+        $this->assertSame(6, count(array_unique($ids)));
+        $this->assertEmpty(array_diff($ids, ['ride-map-d', 'ride-list', 'ride-form', 'ride-map-l', 'ride-home', 'ride-onb']),
+            'six own screens fill the cap before anything is borrowed');
         $this->assertSame('map', $refs[0]['screen_type']);
         $this->assertStringStartsWith('data:image/webp;base64,', $refs[0]['data']);
     }
