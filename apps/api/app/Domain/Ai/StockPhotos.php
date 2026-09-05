@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ai;
 
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 
 /**
@@ -38,53 +39,89 @@ class StockPhotos
      * stock index is filed by nouns and the sentence is written for a photographer. "Tischlerin
      * steht abends allein in ihrer" found a woman in a dark alley; "carpenter workshop phone"
      * finds a carpenter.
+     *
+     * @return array{bytes:string,credit:string,url:string}|null
      */
     public function find(string $brief, string $locale = 'de-DE', ?string $search = null): ?array
     {
-        if (! $this->configured()) {
-            return null;
-        }
+        return $this->findMany([['brief' => $brief, 'search' => $search, 'locale' => $locale]])[0] ?? null;
+    }
 
-        $search = trim((string) $search);
-        if ($search !== '') {
-            $locale = 'en-US';
+    /**
+     * Several at once: every search in one round trip, then every download in one.
+     *
+     * A page carries up to six photographs and each one used to cost a search and a download in
+     * turn, which is a visitor watching a spinner for the sum of twelve round trips to Pexels.
+     * Pooled, it is the slowest one.
+     *
+     * @param  list<array{brief:string,search?:?string,locale?:string}>  $wants
+     * @return array<int,array{bytes:string,credit:string,url:string}|null> same keys as $wants
+     */
+    public function findMany(array $wants): array
+    {
+        $out = array_fill_keys(array_keys($wants), null);
+        if ($wants === [] || ! $this->configured()) {
+            return $out;
         }
 
         try {
-            $res = Http::withHeaders(['Authorization' => (string) config('services.stock.pexels_key')])
-                ->timeout(20)->connectTimeout(8)
-                ->get('https://api.pexels.com/v1/search', [
-                    'query' => $search !== '' ? mb_substr($search, 0, 80) : $this->query($brief),
-                    'per_page' => self::POOL,
-                    'orientation' => 'landscape',
-                    'locale' => $locale,
-                ]);
+            $key = (string) config('services.stock.pexels_key');
+            $searches = Http::pool(function ($pool) use ($wants, $key) {
+                foreach ($wants as $i => $w) {
+                    $search = trim((string) ($w['search'] ?? ''));
+                    $pool->as((string) $i)->withHeaders(['Authorization' => $key])
+                        ->timeout(20)->connectTimeout(8)
+                        ->get('https://api.pexels.com/v1/search', [
+                            'query' => $search !== '' ? mb_substr($search, 0, 80) : $this->query($w['brief']),
+                            'per_page' => self::POOL,
+                            'orientation' => 'landscape',
+                            'locale' => $search !== '' ? 'en-US' : ($w['locale'] ?? 'de-DE'),
+                        ]);
+                }
+            });
 
-            $photos = $res->successful() ? ($res->json('photos') ?? []) : [];
-            if ($photos === []) {
-                return null;
+            $picked = [];
+            foreach ($wants as $i => $_) {
+                $res = $searches[(string) $i] ?? null;
+                $photos = $res instanceof Response && $res->successful()
+                    ? ($res->json('photos') ?? []) : [];
+                if ($photos === []) {
+                    continue;
+                }
+                $photo = $photos[array_rand($photos)];
+                // `large` is 940px wide, which is already more than the band needs; the caller
+                // downscales again before inlining.
+                $src = $photo['src']['large'] ?? ($photo['src']['medium'] ?? null);
+                if (is_string($src)) {
+                    $picked[$i] = ['src' => $src, 'photo' => $photo];
+                }
+            }
+            if ($picked === []) {
+                return $out;
             }
 
-            $photo = $photos[array_rand($photos)];
-            // `large` is 940px wide, which is already more than the band needs; the caller
-            // downscales again before inlining.
-            $src = $photo['src']['large'] ?? ($photo['src']['medium'] ?? null);
-            if (! is_string($src)) {
-                return null;
-            }
+            $downloads = Http::pool(function ($pool) use ($picked) {
+                foreach ($picked as $i => $p) {
+                    $pool->as((string) $i)->timeout(25)->get($p['src']);
+                }
+            });
 
-            $bytes = Http::timeout(25)->get($src);
-
-            return $bytes->successful() && strlen($bytes->body()) > 5000
-                ? [
+            foreach ($picked as $i => $p) {
+                $bytes = $downloads[(string) $i] ?? null;
+                if (! $bytes instanceof Response || ! $bytes->successful() || strlen($bytes->body()) <= 5000) {
+                    continue;
+                }
+                $out[$i] = [
                     'bytes' => $bytes->body(),
-                    'credit' => trim((string) ($photo['photographer'] ?? '')) ?: 'Pexels',
-                    'url' => (string) ($photo['url'] ?? 'https://www.pexels.com'),
-                ]
-                : null;
+                    'credit' => trim((string) ($p['photo']['photographer'] ?? '')) ?: 'Pexels',
+                    'url' => (string) ($p['photo']['url'] ?? 'https://www.pexels.com'),
+                ];
+            }
         } catch (\Throwable) {
-            return null;
+            // A pool that failed as a whole is a page without photographs, not a failed build.
         }
+
+        return $out;
     }
 
     /**

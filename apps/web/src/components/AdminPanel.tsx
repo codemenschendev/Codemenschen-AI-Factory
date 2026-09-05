@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
+import { useToken } from "@/lib/token";
 import { LibraryPanel } from "./LibraryPanel";
 import { ReferencePanel } from "./ReferencePanel";
 import type { Dict, Locale } from "@/lib/i18n";
@@ -103,7 +104,7 @@ const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
  */
 export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const a = d.admin;
-  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const token = useToken();
   const [denied, setDenied] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
   const [overview, setOverview] = useState<Overview | null>(null);
@@ -117,10 +118,6 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [statusFilter, setStatusFilter] = useState("");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
-
-  useEffect(() => {
-    setToken(localStorage.getItem("aifactory-token"));
-  }, []);
 
   /** Every call goes through here so a 403 turns into the "no access" state instead of a blank page. */
   const call = useCallback(
@@ -161,6 +158,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   useEffect(() => {
     if (!token) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the state is set after an await inside the loader, not in the effect body
     void loadOverview();
     void loadProjects();
   }, [token, loadOverview, loadProjects]);

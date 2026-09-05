@@ -120,12 +120,16 @@ function audit([placeholderSource, minTarget]) {
     // A row of phone mocks that scrolls sideways inside its own box reaches past the viewport by
     // design and takes its children with it. Blaming those buries the one element that actually
     // pushes the document wide, which is the only one anybody can fix.
+    // html and body do not count as clippers: overflow-x: hidden on either is the band-aid a
+    // model reaches for, it does nothing on a phone, and treating it as a clip left the audit
+    // saying "39px wider" with no element to blame, which a repair can do nothing with.
     const clipped = (el) => {
-      for (let n = el.parentElement; n; n = n.parentElement) {
+      for (let n = el.parentElement; n && n !== document.body && n !== doc; n = n.parentElement) {
         if (getComputedStyle(n).overflowX !== 'visible') return true;
       }
       return false;
     };
+    const bandaid = ['html', 'body'].filter((t) => getComputedStyle(document.querySelector(t)).overflowX === 'hidden');
     const wide = [];
     for (const el of document.querySelectorAll('body *')) {
       const r = el.getBoundingClientRect();
@@ -136,7 +140,8 @@ function audit([placeholderSource, minTarget]) {
     }
     out.push({
       severity: 'blocking', check: 'overflow',
-      detail: `page is ${over}px wider than the screen`,
+      detail: `page is ${over}px wider than the screen`
+        + (bandaid.length ? ` (overflow-x: hidden on ${bandaid.join(' and ')} hides it on a desktop only; remove it and fix the element)` : ''),
       elements: wide.slice(0, 5).map((w) => `${sel(w.el)} reaches ${w.right}px`),
     });
   }

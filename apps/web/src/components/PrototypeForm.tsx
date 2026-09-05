@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { remember } from "@/lib/history";
+import { getToken } from "@/lib/token";
 import type { Dict, Locale } from "@/lib/i18n";
 
 /**
@@ -34,7 +35,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       // Read here, not in an effect: this only runs in the browser, on a click.
       const r = await api<{ id: string }>("/prototypes", {
         method: "POST",
-        token: localStorage.getItem("aifactory-token") ?? undefined,
+        token: getToken() ?? undefined,
         body: JSON.stringify({ prompt, kind }),
       });
       // Written before the redirect, so a visitor who never comes back to this tab still finds

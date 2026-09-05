@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import type { Dict, Locale } from "@/lib/i18n";
+import type { Dict } from "@/lib/i18n";
 
 type PlatformStatus = "unpublished" | "publishing" | "paused" | "active" | "failed";
 
@@ -25,7 +25,7 @@ interface Campaign {
  * labelled as such. Preflight problems are shown before either is offered, so a campaign that
  * would be rejected never gets a publish button.
  */
-export function CampaignsPanel({ locale, d, token }: { locale: Locale; d: Dict; token: string }) {
+export function CampaignsPanel({ d, token }: { d: Dict; token: string }) {
   const [campaigns, setCampaigns] = useState<Campaign[] | null>(null);
   const [platforms, setPlatforms] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState<number | null>(null);
@@ -39,6 +39,7 @@ export function CampaignsPanel({ locale, d, token }: { locale: Locale; d: Dict; 
   }, [token]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the state is set after an await inside the loader, not in the effect body
     load().catch(() => setCampaigns([]));
   }, [load]);
 

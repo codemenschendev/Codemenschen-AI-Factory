@@ -38,7 +38,11 @@ class PrototypeWriter
           - Nothing may scroll sideways at 320px. German words are long; let them wrap. A row of
             cards MAY scroll sideways, and then it hides its own scrollbar: scrollbar-width: none
             plus ::-webkit-scrollbar { display: none }. Nothing else on the page scrolls sideways,
-            least of all the phone column itself.
+            least of all the phone column itself. Never paper over it with overflow-x: hidden on
+            html or body: phones ignore that, and the audit sees through it. Fix the element.
+          - Tight CSS. No comments, no vendor prefixes, no reset beyond what the page uses, no
+            rule the page does not need. The whole file is around 20 KB; a page twice that long
+            takes twice as long to arrive, and the visitor is waiting.
           - Icons are inline <svg>, one simple stroked glyph, viewBox="0 0 24 24". NEVER emoji:
             they are a different size, colour and shape on every platform and read as a placeholder.
           - Body text at least 4.5:1 against what is behind it.
@@ -217,6 +221,9 @@ class PrototypeWriter
     /** The three things a visitor can ask for. `site` is the default and the original behaviour. */
     public const KINDS = ['site', 'app', 'ads'];
 
+    /** Repair rounds at most. The second runs only if the first reduced the faults. */
+    private const REPAIRS = 2;
+
     /**
      * What real app screens do, distilled from the labelled reference library.
      *
@@ -238,10 +245,27 @@ class PrototypeWriter
         return is_file($path) ? "\n\n".trim((string) file_get_contents($path)) : '';
     }
 
-    /** @return array{title:string,html:string} */
+    /**
+     * @param  ?\Closure(string):void  $progress  told the stage as it changes: writing, auditing,
+     *                                            repairing, photos
+     * @return array{title:string,html:string,qa:array<string,mixed>}
+     */
     public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null,
-        ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null): array
+        ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null,
+        ?\Closure $progress = null): array
     {
+        // Where the minutes go, by step, kept with the audit. Every argument about speed so far
+        // was settled by a stopwatch held by hand; this is the stopwatch.
+        $t0 = microtime(true);
+        $timing = [];
+        $lap = function (string $step) use (&$timing, &$t0): void {
+            $now = microtime(true);
+            $timing[$step] = round($now - $t0, 1) + ($timing[$step] ?? 0);
+            $t0 = $now;
+        };
+        $stage = fn (string $s) => $progress?->__invoke($s);
+        $stage('writing');
+
         // Every kind writes its own CSS now and carries the laws and the photo contract. The ad
         // prototype was the last on the house stylesheet, and what it got for that was a landing
         // page hero above five text boxes: the sizes were right and nothing else was.
@@ -317,41 +341,57 @@ class PrototypeWriter
         if ($markup === '') {
             throw new RuntimeException('AI không trả về HTML dùng được.');
         }
+        $lap('generate');
+        $stage('auditing');
 
         // The page is whole as it comes back: the model wrote the stylesheet, so there is nothing
         // to inline, and every fault the audit finds is its own and worth one repair.
         $page = $markup;
         $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
+        $lap('audit');
 
-        $blocking = PageAudit::repairable($qa, ownsStyle: true);
-        if ($blocking !== []) {
-            [$fixed, $why] = $this->repair($request, $system, $prompt, $markup, $blocking);
+        // Up to two repairs, and the second only when the first helped: a model that took five
+        // faults to three is worth one more pass, one that went in circles is not. Each round is
+        // a generation the visitor waits through, so a round that changed nothing ends it.
+        $rounds = 0;
+        while (($blocking = PageAudit::repairable($qa, ownsStyle: true)) !== [] && $rounds < self::REPAIRS) {
+            $rounds++;
+            $stage('repairing');
+            [$fixed, $why] = $this->repair($request, $system, $prompt, $page, $blocking);
+            $lap('repair');
             $qa['repaired'] = false;
             if ($fixed === '') {
                 // Record why, not just that. "The gateway gave up at 180s" and "the model
                 // answered in prose" are the same empty string here and want opposite fixes.
                 $qa['repair_failed'] = $why;
-            } else {
-                $second = $fixed;
-                $after = $audit->run($second);
-
-                // Keep the repair only if it actually helped. A model asked to fix five things can
-                // come back with a shorter page and six, and shipping that would be worse than
-                // shipping the flaw we already knew about.
-                if (count(PageAudit::repairable($after, ownsStyle: true)) < count($blocking)) {
-                    $page = $second;
-                    $qa = $after;
-                }
-                $qa['repaired'] = $page === $second;
+                break;
             }
+
+            $after = $audit->run($fixed);
+            $lap('audit');
+
+            // Keep the repair only if it actually helped. A model asked to fix five things can
+            // come back with a shorter page and six, and shipping that would be worse than
+            // shipping the flaw we already knew about.
+            if (count(PageAudit::repairable($after, ownsStyle: true)) >= count($blocking)) {
+                break;
+            }
+            $page = $fixed;
+            $qa = $after;
+            $qa['repaired'] = true;
+        }
+        if ($rounds > 0) {
+            $qa['repairs'] = $rounds;
         }
 
         // Last: every slot names what it would show, so the photographs are fetched once, after
         // the page has settled. Doing it before the repair pass would risk fetching for markup the
         // repair then throws away.
         if ($photo !== null) {
+            $stage('photos');
             $shot = $photo->apply($page);
             $page = $shot['html'];
+            $lap('photos');
 
             // Audit again, because the page that was audited is no longer the page that ships. A
             // dentist app came back clean and then reached 273px past a 390px screen once five
@@ -359,8 +399,9 @@ class PrototypeWriter
             // to describe what the visitor actually gets.
             if ($shot['photo'] !== null) {
                 $after = $audit?->run($page);
+                $lap('audit');
                 if (($after['ok'] ?? null) !== null) {
-                    $qa = $after + array_intersect_key($qa, array_flip(['repaired', 'repair_failed']));
+                    $qa = $after + array_intersect_key($qa, array_flip(['repaired', 'repairs', 'repair_failed']));
                 }
             }
 
@@ -374,6 +415,12 @@ class PrototypeWriter
             $qa['photo_credit_url'] = $shot['credit_url'] ?? null;
             $qa['photo_credits'] = $shot['credits'] ?? [];
         }
+
+        $timing['total'] = round(array_sum($timing), 1);
+        $qa['timing'] = $timing;
+        // The page without its photographs, which is what the model actually wrote and what the
+        // minutes are spent on.
+        $qa['bytes'] = strlen($markup);
 
         return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];
     }

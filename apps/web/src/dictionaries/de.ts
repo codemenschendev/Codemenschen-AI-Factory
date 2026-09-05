@@ -564,6 +564,12 @@ export const de = {
     daysLeft: "noch {n} Tage",
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
+    stages: {
+      writing: "Schreibt gerade die Seite. Das dauert zwei bis vier Minuten.",
+      auditing: "Öffnet die Seite im Browser und prüft sie auf drei Bildschirmgrößen.",
+      repairing: "Bessert nach, was die Prüfung gefunden hat.",
+      photos: "Sucht passende Fotos.",
+    },
   },
   legal: {
     draft: "Entwurf. Das ist die Klartext-Fassung, geschrieben von uns und noch nicht anwaltlich freigegeben. Wir stellen sie trotzdem online, weil Vertrag und Werbung nie zwei verschiedene Geschichten erzählen dürfen.",

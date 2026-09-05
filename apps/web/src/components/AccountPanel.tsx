@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { getToken, setToken, useToken } from "@/lib/token";
 import Link from "next/link";
 import { api } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
@@ -19,20 +20,20 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // undefined = not looked at localStorage yet (server render + first paint):
   // render a quiet placeholder then, never the sign-in form — otherwise every
   // reload flashes "enter your e-mail" before the projects appear.
-  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const token = useToken();
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [me, setMe] = useState<{ email: string; admin?: boolean; projects: ProjectRow[] } | null>(null);
 
   // Pick up the token handed over by the signed verify redirect (#token=…).
   useEffect(() => {
+    // The magic link lands here with the token in the hash. Store it and take it off the URL.
     const fromHash = new URLSearchParams(window.location.hash.slice(1)).get("token");
     if (fromHash) {
-      localStorage.setItem("aifactory-token", fromHash);
+      setToken(fromHash);
       history.replaceState(null, "", window.location.pathname);
     }
-    const stored = localStorage.getItem("aifactory-token");
-    setToken(stored);
+    const stored = getToken();
     // A project page sent the visitor here to sign in: go back once a token exists.
     const next = localStorage.getItem("aifactory-next");
     if (stored && next && next.startsWith(`/${locale}/account/`)) {
@@ -45,10 +46,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
     if (!token) return;
     api<{ email: string; admin: boolean; projects: ProjectRow[] }>("/me/projects", { token })
       .then(setMe)
-      .catch(() => {
-        localStorage.removeItem("aifactory-token");
-        setToken(null);
-      });
+      .catch(() => setToken(null));
   }, [token]);
 
   const a = d.account;
@@ -109,7 +107,6 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
         <button
           className="lang-toggle"
           onClick={() => {
-            localStorage.removeItem("aifactory-token");
             setToken(null);
             setMe(null);
           }}

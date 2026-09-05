@@ -66,6 +66,8 @@ class PrototypeController extends Controller
         return response()->json([
             'id' => $prototype->id,
             'status' => $expired ? 'expired' : $prototype->status,
+            // Which step a build is on, so the wait says what is happening rather than "moment".
+            'stage' => $prototype->stage,
             // The share page frames an app in a phone and a site in a window.
             'kind' => $prototype->kind,
             'title' => $prototype->title,

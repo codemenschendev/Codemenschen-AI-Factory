@@ -12,6 +12,8 @@ interface Meta {
   photo_credit_url?: string | null;
   id: string;
   status: "queued" | "building" | "ready" | "failed" | "expired";
+  /** Which step a build is on: writing, auditing, repairing, photos. */
+  stage?: string | null;
   title: string | null;
   error: string | null;
 }
@@ -53,7 +55,20 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   if (!meta) return <p className="est-empty">{p.building}</p>;
 
   if (meta.status === "queued" || meta.status === "building") {
-    return <p className="est-empty">{p.building}</p>;
+    // "One moment" for four minutes reads as broken. The step it is on reads as progress.
+    const stage = meta.stage && meta.stage in p.stages ? p.stages[meta.stage as keyof typeof p.stages] : null;
+
+    return (
+      <p className="est-empty" aria-live="polite">
+        {p.building}
+        {stage && (
+          <>
+            <br />
+            <span className="small">{stage}</span>
+          </>
+        )}
+      </p>
+    );
   }
   if (meta.status === "expired") return <p className="est-empty">{p.expired}</p>;
   if (meta.status === "failed") {

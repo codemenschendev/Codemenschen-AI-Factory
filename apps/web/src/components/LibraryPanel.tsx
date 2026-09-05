@@ -57,6 +57,7 @@ export function LibraryPanel({ token, d }: { token: string; locale: Locale; d: D
   );
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the state is set after an await inside the loader, not in the effect body
     void load("");
     // Once, on mount: afterwards the search button and the actions below decide when to reload.
     // eslint-disable-next-line react-hooks/exhaustive-deps

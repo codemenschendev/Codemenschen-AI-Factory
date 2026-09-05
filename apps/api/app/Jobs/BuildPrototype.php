@@ -40,9 +40,10 @@ class BuildPrototype implements ShouldQueue
         $proto->update(['status' => 'building', 'error' => null]);
 
         try {
-            $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit, $library, $photo);
+            $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit, $library, $photo,
+                fn (string $stage) => $proto->update(['stage' => $stage]));
             $proto->update([
-                'status' => 'ready', 'title' => $out['title'], 'html' => $out['html'],
+                'status' => 'ready', 'stage' => null, 'title' => $out['title'], 'html' => $out['html'],
                 'qa' => $out['qa'] ?? null,
             ]);
 
@@ -56,7 +57,7 @@ class BuildPrototype implements ShouldQueue
             }
         } catch (Throwable $e) {
             Log::error('build prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);
-            $proto->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
+            $proto->update(['status' => 'failed', 'stage' => null, 'error' => mb_substr($e->getMessage(), 0, 400)]);
         }
     }
 

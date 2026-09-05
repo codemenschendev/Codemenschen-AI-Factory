@@ -61,8 +61,9 @@ class PrototypePhoto
      */
     public function apply(string $html): array
     {
-        $photos = $sources = $credits = $urls = [];
-
+        // First every slot worth filling, then every photograph at once, then the page. Reading
+        // the slots and fetching for each in turn made six photographs cost six times the wait.
+        $slots = [];
         foreach (self::SLOTS as $class => $width) {
             // The slot name among whatever else the model put in the class attribute. Requiring
             // the attribute to be exactly the slot name meant class="photo-thumb avatar" never
@@ -71,7 +72,7 @@ class PrototypePhoto
             preg_match_all($pattern, $html, $all, PREG_SET_ORDER);
 
             foreach ($all as $m) {
-                if (count($photos) >= self::MAX) {
+                if (count($slots) >= self::MAX) {
                     break 2;
                 }
 
@@ -95,25 +96,30 @@ class PrototypePhoto
                     ? trim(html_entity_decode($q[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'))
                     : null;
 
-                $found = $this->dataUri($brief, $width, $search);
-                if ($found === null) {
-                    continue;   // this slot keeps its gradient; the next one still gets a try
-                }
+                $slots[] = ['m' => $m, 'width' => $width, 'brief' => $brief, 'search' => $search];
+            }
+        }
 
-                // The model's own attributes are kept, so a slot it styled keeps its styling and
-                // only gains the marker class and the picture.
-                $alt = htmlspecialchars($brief, ENT_QUOTES, 'UTF-8');
-                $open = preg_replace('~(\sclass=")~', '$1has-photo ', $m[2], 1);
-                $html = str_replace($m[0],
-                    '<'.$m[1].$open.'><img src="'.$found['data'].'" alt="'.$alt.'"></'.$m[1].'>',
-                    $html);
+        $photos = $sources = $credits = $urls = [];
+        foreach ($this->resolve($slots) as $i => $found) {
+            if ($found === null) {
+                continue;   // this slot keeps its gradient
+            }
+            $m = $slots[$i]['m'];
 
-                $photos[] = $brief;
-                $sources[] = $found['source'];
-                if ($found['credit'] !== null) {
-                    $credits[] = $found['credit'];
-                    $urls[] = $found['url'];
-                }
+            // The model's own attributes are kept, so a slot it styled keeps its styling and
+            // only gains the marker class and the picture.
+            $alt = htmlspecialchars($slots[$i]['brief'], ENT_QUOTES, 'UTF-8');
+            $open = preg_replace('~(\sclass=")~', '$1has-photo ', $m[2], 1);
+            $html = str_replace($m[0],
+                '<'.$m[1].$open.'><img src="'.$found['data'].'" alt="'.$alt.'"></'.$m[1].'>',
+                $html);
+
+            $photos[] = $slots[$i]['brief'];
+            $sources[] = $found['source'];
+            if ($found['credit'] !== null) {
+                $credits[] = $found['credit'];
+                $urls[] = $found['url'];
             }
         }
 
@@ -177,34 +183,54 @@ class PrototypePhoto
         return ! str_contains(strtolower($inner), '<img') && preg_match_all('~<\w~', $inner) <= 1;
     }
 
-    private function dataUri(string $brief, int $width, ?string $search = null): ?array
+    /**
+     * A picture for each slot: the shared library first, which is local and instant, then one
+     * pooled trip to Pexels for whatever the library did not have.
+     *
+     * @param  list<array{m:array,width:int,brief:string,search:?string}>  $slots
+     * @return array<int,array{data:string,source:string,credit:?string,url:?string}|null>
+     */
+    private function resolve(array $slots): array
     {
-        try {
-            $hit = $this->library->find($brief, self::PROJECT);
-            if ($hit !== null) {
-                $path = $this->library->path($hit['id']);
-                $uri = $path === null ? null : $this->encode($path, $width);
+        $out = array_fill(0, count($slots), null);
+        $wanted = [];
+
+        foreach ($slots as $i => $slot) {
+            try {
+                $hit = $this->library->find($slot['brief'], self::PROJECT);
+                $path = $hit === null ? null : $this->library->path($hit['id']);
+                $uri = $path === null ? null : $this->encode($path, $slot['width']);
                 if ($uri !== null) {
-                    return ['data' => $uri, 'source' => 'library', 'credit' => null, 'url' => null];
+                    $out[$i] = ['data' => $uri, 'source' => 'library', 'credit' => null, 'url' => null];
+
+                    continue;
                 }
+            } catch (\Throwable $e) {
+                Log::warning('prototype photo: library skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
             }
-
-            $shot = $this->stock->find($brief, 'de-DE', $search);
-            if ($shot !== null) {
-                $found = $this->file($shot['bytes'], '.jpg', $brief, $width);
-                if ($found !== null) {
-                    return ['data' => $found, 'source' => 'stock', 'credit' => $shot['credit'], 'url' => $shot['url']];
-                }
-            }
-
-            Log::info('prototype photo: nothing free matched, the slot keeps its gradient', ['brief' => $brief]);
-
-            return null;
-        } catch (\Throwable $e) {
-            Log::warning('prototype photo skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
-
-            return null;
+            $wanted[$i] = ['brief' => $slot['brief'], 'search' => $slot['search']];
         }
+
+        if ($wanted === []) {
+            return $out;
+        }
+
+        try {
+            foreach ($this->stock->findMany(array_values($wanted)) as $k => $shot) {
+                $i = array_keys($wanted)[$k];
+                $found = $shot === null ? null : $this->file($shot['bytes'], '.jpg', $slots[$i]['brief'], $slots[$i]['width']);
+                if ($found === null) {
+                    Log::info('prototype photo: nothing free matched, the slot keeps its gradient', ['brief' => $slots[$i]['brief']]);
+
+                    continue;
+                }
+                $out[$i] = ['data' => $found, 'source' => 'stock', 'credit' => $shot['credit'], 'url' => $shot['url']];
+            }
+        } catch (\Throwable $e) {
+            Log::warning('prototype photo: stock skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
+        }
+
+        return $out;
     }
 
     /**

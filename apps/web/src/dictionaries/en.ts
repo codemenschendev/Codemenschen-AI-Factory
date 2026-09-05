@@ -562,6 +562,12 @@ export const en = {
     daysLeft: "{n} days left",
     oneDayLeft: "1 day left",
     forget: "Remove",
+    stages: {
+      writing: "Writing the page. This takes two to four minutes.",
+      auditing: "Opening the page in a browser and checking it at three screen sizes.",
+      repairing: "Fixing what the check found.",
+      photos: "Finding photographs.",
+    },
   },
   legal: {
     draft: "Draft. This is the plain-language version, written by us and not yet cleared by counsel. We publish it anyway, because the contract and the marketing must never tell two different stories.",

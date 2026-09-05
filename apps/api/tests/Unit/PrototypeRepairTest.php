@@ -104,6 +104,41 @@ class PrototypeRepairTest extends TestCase
         });
     }
 
+    public function test_a_second_repair_runs_only_when_the_first_helped(): void
+    {
+        // Five faults to three is progress worth one more generation; the round after a clean
+        // page never happens. Two rounds, then it ships whatever it has.
+        $this->answers('<h1>Drei Fehler</h1>', '<h1>Ein Fehler</h1>', '<h1>Sauber</h1>', '<h1>Nie</h1>');
+        $three = ['ok' => false, 'findings' => array_fill(0, 3, $this->fault()['findings'][0])];
+        $audit = $this->auditor([$three, $this->fault(), $this->clean()]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+
+        Http::assertSentCount(3);
+        $this->assertTrue($out['qa']['ok']);
+        $this->assertSame(2, $out['qa']['repairs']);
+        $this->assertStringContainsString('Sauber', $out['html']);
+    }
+
+    public function test_the_build_keeps_a_stopwatch_and_tells_the_stage(): void
+    {
+        $this->answers('<h1>Original</h1>', '<h1>Repariert</h1>');
+        $audit = $this->auditor([$this->fault(), $this->clean()]);
+        $stages = [];
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit,
+            progress: function (string $s) use (&$stages) {
+                $stages[] = $s;
+            });
+
+        // Writing, checking, repairing, in that order; photos only when a photo pass is given.
+        $this->assertSame(['writing', 'auditing', 'repairing'], $stages);
+        $t = $out['qa']['timing'];
+        $this->assertSame(['generate', 'audit', 'repair', 'total'], array_keys($t));
+        $this->assertEqualsWithDelta(array_sum(array_slice($t, 0, 3)), $t['total'], 0.2);
+        $this->assertSame(strlen($this->page('<h1>Original</h1>')), $out['qa']['bytes']);
+    }
+
     public function test_a_repair_that_did_not_help_is_thrown_away(): void
     {
         // Two faults in, two faults out: the repair bought nothing, so the first page stands.

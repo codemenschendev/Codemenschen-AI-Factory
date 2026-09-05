@@ -89,11 +89,15 @@ class PrototypePhotoTest extends TestCase
                 return true;
             }
 
-            public function find(string $brief, string $locale = 'de-DE', ?string $search = null): ?array
+            public function findMany(array $wants): array
             {
-                $this->searches[] = $search;
+                $out = [];
+                foreach ($wants as $i => $w) {
+                    $this->searches[] = $w['search'] ?? null;
+                    $out[$i] = ['bytes' => $this->png, 'credit' => $this->credit, 'url' => 'https://www.pexels.com/photo/1'];
+                }
 
-                return ['bytes' => $this->png, 'credit' => $this->credit, 'url' => 'https://www.pexels.com/photo/1'];
+                return $out;
             }
         };
     }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { setToken, useToken } from "@/lib/token";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
 import { CampaignsPanel } from "@/components/CampaignsPanel";
@@ -42,7 +43,7 @@ const mb = (n: number) => `${(n / 1e6).toFixed(1)} MB`;
 export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // undefined = localStorage not read yet (server render + first paint). Same convention as
   // AccountPanel: never flash the sign-in prompt at a visitor who is already signed in.
-  const [token, setToken] = useState<string | null | undefined>(undefined);
+  const token = useToken();
   const [ads, setAds] = useState<AdRow[] | null>(null);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [playing, setPlaying] = useState<{ id: number; url: string; kind: string } | null>(null);
@@ -66,10 +67,6 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   const l = d.lab;
 
-  useEffect(() => {
-    setToken(localStorage.getItem("aifactory-token"));
-  }, []);
-
   // The canvases need no login, so they are fetched once and do not wait on the token.
   useEffect(() => {
     api<Record<string, AdFormat[]>>("/ad-formats")
@@ -80,12 +77,12 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // Switching between film and still changes which canvases exist: a still may go on a Google
   // responsive square, a film may not. Keeping a now-invalid choice would only earn a 422 at
   // submit, so fall back to the first canvas the new kind actually offers.
-  useEffect(() => {
-    const list = formats[kind];
-    if (list?.length && !list.some((f) => f.key === format)) {
-      setFormat(list[0].key);
-    }
-  }, [kind, formats, format]);
+  // Adjusted during render rather than in an effect: React applies the change before the
+  // paint, so the invalid choice is never on screen for a frame.
+  const offered = formats[kind];
+  if (offered?.length && !offered.some((f) => f.key === format)) {
+    setFormat(offered[0].key);
+  }
 
   const load = useCallback(async () => {
     if (!token) return;
@@ -98,10 +95,8 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   useEffect(() => {
     if (!token) return;
-    load().catch(() => {
-      localStorage.removeItem("aifactory-token");
-      setToken(null);
-    });
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- the state is set after an await inside the loader, not in the effect body
+    load().catch(() => setToken(null));
     api<{ projects: ProjectRow[] }>("/me/projects", { token })
       .then((r) => {
         setProjects(r.projects);
@@ -277,6 +272,8 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
       {playing &&
         (playing.kind === "image" ? (
+          // A rendered ad from our own API, shown once at its own size: nothing for next/image to optimise.
+          // eslint-disable-next-line @next/next/no-img-element
           <img
             key={playing.id}
             src={playing.url}
@@ -330,7 +327,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
         </ul>
       )}
 
-      <CampaignsPanel locale={locale} d={d} token={token} />
+      <CampaignsPanel d={d} token={token} />
     </div>
   );
 }
