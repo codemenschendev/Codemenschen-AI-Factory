@@ -82,7 +82,10 @@ class PrototypeWriterTest extends TestCase
         $prompt = $this->systemPrompt('app');
 
         $this->assertStringContainsString('What real app screens do', $prompt);
-        $this->assertStringContainsString('.app-cta', $prompt);
+        // A number, not a class name: the file used to end in a list of stylesheet classes the
+        // model no longer writes against, and it was reading instructions for a page it was not
+        // building. What survives the stylesheet is what the library counted.
+        $this->assertStringContainsString('480 screens ended that way', $prompt);
     }
 
     public function test_a_landing_page_brief_does_not(): void
