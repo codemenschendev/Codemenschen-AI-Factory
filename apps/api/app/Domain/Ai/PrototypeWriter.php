@@ -296,7 +296,9 @@ class PrototypeWriter
             // Markup only now: the house stylesheet is inlined afterwards, so the model is not
             // paying tokens to invent CSS. That roughly halves what it has to write, which is the
             // difference between a visitor waiting and a visitor leaving.
-            'max_completion_tokens' => 8000,
+            // A page that writes its own CSS is roughly twice the output of one that only wrote
+            // markup, and 8000 had it fighting the cap and the gateway's own 180s at once.
+            'max_completion_tokens' => 16000,
         ]);
 
         if (! $res->successful()) {
