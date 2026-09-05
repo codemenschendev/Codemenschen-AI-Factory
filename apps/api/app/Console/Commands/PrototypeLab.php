@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\Ai\ChatBackend;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Qa\PageAudit;
@@ -110,7 +111,7 @@ class PrototypeLab extends Command
     {
         $res = Http::baseUrl(rtrim((string) config('services.ai_image.base_url'), '/'))
             ->withToken((string) config('services.ai_image.token'))
-            ->withHeaders(array_filter(['x-openclaw-model' => (string) config('services.ai_image.chat_backend_model')]))
+            ->withHeaders(array_filter(['x-openclaw-model' => ChatBackend::pin()]))
             ->acceptJson()->timeout(240)->connectTimeout(10)
             ->post('/v1/chat/completions', [
                 'model' => config('services.ai_image.chat_model', 'openclaw/main'),

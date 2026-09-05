@@ -203,8 +203,7 @@ class AdScriptWriter
 
         // `model` is the agent target; the model behind it is pinned with this header, the way
         // Codemenschen_OpenClaw's inference gateway does it.
-        $backend = (string) config('services.ai_image.chat_backend_model');
-        if ($backend !== '') {
+        if (($backend = ChatBackend::pin()) !== null) {
             $request = $request->withHeaders(['x-openclaw-model' => $backend]);
         }
 

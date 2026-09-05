@@ -286,8 +286,7 @@ class PrototypeWriter
         // this client can explain, so this waits a little longer, and the queue job longer still.
         // With the old 240 here, a slow generation surfaced as a connection exception instead.
         $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(330)->connectTimeout(10);
-        $backend = (string) config('services.ai_image.chat_backend_model');
-        if ($backend !== '') {
+        if (($backend = ChatBackend::pin()) !== null) {
             $request = $request->withHeaders(['x-openclaw-model' => $backend]);
         }
 
