@@ -93,7 +93,41 @@ function audit([placeholderSource, minTarget]) {
     }
   }
 
-  // 4. Anything a finger has to hit.
+  // 4. Navigation you have to scroll down to find is not navigation. A phone's tab bar belongs
+  // at the bottom of the SCREEN, not at the bottom of the document, and the difference is one
+  // CSS property that is easy to leave out and invisible until somebody looks at a real phone.
+  for (const bar of document.querySelectorAll('.tabbar, .app-tabs')) {
+    // A tab bar drawn inside a phone mock on a landing page is a picture of an app, not this
+    // page's navigation, and it is below the fold for the same reason the rest of the page is.
+    if (!visible(bar) || bar.closest('.phone-frame, .phone, .device')) continue;
+    const r = bar.getBoundingClientRect();
+    if (r.bottom > window.innerHeight + 1) {
+      out.push({
+        severity: 'blocking', check: 'nav-below-the-fold',
+        detail: `the tab bar ends ${Math.round(r.bottom - window.innerHeight)}px below the screen`,
+        elements: [sel(bar) + ' at position:' + getComputedStyle(bar).position],
+      });
+    }
+  }
+
+  // 5. Emoji standing in for icons. They are a different size, a different colour and a different
+  // shape on every platform, and a row of them reads as a placeholder rather than a design.
+  const EMOJI = /^[\p{Extended_Pictographic}\uFE0F\u200D\s]+$/u;
+  const emoji = [];
+  for (const el of document.querySelectorAll('body *')) {
+    if (el.children.length || !visible(el)) continue;
+    const t = (el.textContent || '').trim();
+    if (t && t.length <= 8 && EMOJI.test(t)) emoji.push(`${sel(el)} "${t}"`);
+  }
+  if (emoji.length >= 3) {
+    out.push({
+      severity: 'advisory', check: 'emoji-as-icon',
+      detail: `${emoji.length} emoji used where an icon belongs`,
+      elements: emoji.slice(0, 5),
+    });
+  }
+
+  // 6. Anything a finger has to hit.
   const small = [];
   for (const el of document.querySelectorAll('a, button, input, select, textarea, [role="button"]')) {
     if (!visible(el)) continue;
@@ -106,7 +140,7 @@ function audit([placeholderSource, minTarget]) {
     out.push({ severity: 'advisory', check: 'tap-target', detail: `${small.length} below ${minTarget}px`, elements: small.slice(0, 5) });
   }
 
-  // 5. Contrast. Walked up the tree for the first opaque background, which is what the eye does
+  // 7. Contrast. Walked up the tree for the first opaque background, which is what the eye does
   // too; a gradient or a photo behind the text defeats it, hence advisory.
   const lum = (c) => {
     const [r, g, b] = c.map((v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
