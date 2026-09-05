@@ -429,11 +429,14 @@ class PrototypeWriter
             $shot = $photo->apply($page);
             $page = $shot['html'];
             $qa['photo'] = $shot['photo'];
+            $qa['photos'] = $shot['photos'] ?? [];
             $qa['photo_source'] = $shot['source'] ?? null;
+            $qa['photo_sources'] = $shot['sources'] ?? [];
             // Pexels asks for a visible credit when their API is used. It rides here and the share
             // page prints it under the phone, outside the mockup, where a credit belongs.
             $qa['photo_credit'] = $shot['credit'] ?? null;
             $qa['photo_credit_url'] = $shot['credit_url'] ?? null;
+            $qa['photo_credits'] = $shot['credits'] ?? [];
         }
 
         return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];

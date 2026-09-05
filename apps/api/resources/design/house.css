@@ -365,7 +365,7 @@ body.app-page {
 .screen .app-row span { font-size: var(--fs-sm); }
 .screen .app-field { padding: var(--sp-4); border-radius: var(--r-lg); font-size: var(--fs-base); }
 .screen .app-cta { padding: var(--sp-4); border-radius: var(--r-lg); font-size: var(--fs-base); }
-.screen .app-stat { padding: var(--sp-4); border-radius: var(--r-lg); }
+.screen .app-stat { padding: var(--sp-4); border-radius: var(--r-lg); min-width: 0; overflow-wrap: anywhere; }
 .screen .app-stat b { font-size: var(--fs-2xl); letter-spacing: -.03em; }
 /* A picture band. Real screens open with one. The gradient is what it looks like before a photo
    arrives, and what it keeps if none does: a flat accent reads as a deliberate design, a grey
@@ -456,6 +456,10 @@ body.app-page {
   position: relative; display: grid; gap: var(--sp-2); justify-items: center; text-align: center;
   background: var(--surface); border-radius: var(--r); padding: var(--sp-3) var(--sp-2);
   font-size: var(--fs-xs); color: var(--ink-soft); line-height: 1.25;
+  /* A grid item will not shrink below its longest word unless told to, and German supplies words
+     like "Reservieren" for a 62px column. That was 67px of sideways scroll on a 320px phone,
+     which is the same fault the .grid columns had, in a different place. */
+  min-width: 0; overflow-wrap: anywhere; hyphens: auto;
 }
 .screen .app-tile svg { width: 24px; height: 24px; stroke: var(--accent-on); fill: none; stroke-width: 1.7; }
 .screen .app-tile .app-tag { position: absolute; top: -7px; right: -4px; margin: 0; }
