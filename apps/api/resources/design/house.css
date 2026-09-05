@@ -377,7 +377,28 @@ body.app-page {
 }
 /* With a photograph in it the band carries no words: the screen around it already has them. */
 .screen .app-art.has-photo { padding: 0; display: block; }
-.screen .app-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+/* Two smaller slots, because 65 percent of the labelled screens carry a picture and a fifth of
+   them carry one in more than one place. A list of dishes or of furniture is photographs with
+   prices next to them; ours was icons in coloured squares. Each has its own class rather than one
+   class read by position, so the size fetched matches the size drawn. */
+.screen .app-thumb {
+  flex: 0 0 58px; height: 58px; border-radius: var(--r); overflow: hidden;
+  background: var(--accent-soft); display: grid; place-items: center;
+  font-size: 10px; color: var(--accent-on); text-align: center; line-height: 1.15; padding: 4px;
+}
+.screen .app-card > .app-cover {
+  aspect-ratio: 16 / 10; overflow: hidden;
+  margin: calc(var(--sp-4) * -1) calc(var(--sp-4) * -1) var(--sp-2);
+  border-radius: var(--r-lg) var(--r-lg) 0 0;
+  background: linear-gradient(150deg, var(--accent) 0%, color-mix(in srgb, var(--accent) 55%, #000) 100%);
+  display: grid; place-items: end start; padding: var(--sp-3);
+  color: var(--accent-ink); font-size: var(--fs-xs); font-weight: 620;
+}
+.screen .app-thumb.has-photo, .screen .app-card > .app-cover.has-photo { padding: 0; display: block; }
+.screen .app-art img, .screen .app-thumb img, .screen .app-cover img {
+  width: 100%; height: 100%; object-fit: cover; display: block;
+}
 
 /* The five patterns the reference library counted most often and this vocabulary could not draw.
    Card grids appeared on 443 of the labelled screens, carousels on 275, avatar rows on 207,

@@ -154,18 +154,30 @@ class PrototypeWriter
         .app-row is a stack of boxes, and that is the difference between this and a real app.
 
             <div class="app-art">A line naming what the picture would show</div>
-              ^ that line is a photo brief: a real photograph is generated from it and put in the
-                band. Write what a photographer would be told, in the visitor's own trade and
-                place: "Lena am Waschbecken, warmes Licht". Use it AT MOST ONCE in the whole app,
-                on the screen where a picture earns its place, usually the first or the last.
+            <i class="app-thumb">…</i>          inside an .app-line, in place of the <i><svg></i>
+            <div class="app-cover">…</div>      the first thing inside an .app-card
+
+              ^ each of those three is a PHOTO SLOT, and the line inside it is the brief. A real
+                photograph is fetched for it. Write what a photographer would be told, in the
+                visitor's own trade and place: "Lena am Waschbecken, warmes Licht".
+
+                Two thirds of real app screens carry a picture and a fifth carry one in more than
+                one place, so use up to FOUR across the whole app: one band, and thumbnails on the
+                rows of a list where the thing itself is worth seeing, a dish, a haircut, a table.
+                A list of things people choose by looking is photographs with prices beside them.
+                Rows about an action rather than a thing keep the <i><svg></i> icon.
 
             <div class="app-search"><svg …></svg>Wohin? <span class="app-tag">Jetzt</span></div>
             <div class="app-seg"><span class="on">Fahrten</span><span>Essen</span></div>
             <div class="app-tiles"><div class="app-tile"><svg …></svg>Fahrt</div> … four …</div>
-            <div class="app-scroll"><div class="app-card"><b>Name</b><span>detail</span></div> … </div>
+            <div class="app-scroll"><div class="app-card"><div class="app-cover">Was zu sehen ist</div>
+              <b>Name</b><span>detail</span></div> … </div>
             <div class="app-line"><i><svg …></svg></i>
               <div><b>UberX</b><span>19:41, 2 Minuten entfernt</span></div>
               <b class="app-val">7,81 €</b></div>
+            <div class="app-line"><i class="app-thumb">Wiener Schnitzel auf weissem Teller</i>
+              <div><b>Wiener Schnitzel</b><span>mit Erdäpfelsalat</span></div>
+              <b class="app-val">18,50 €</b></div>
             <div class="app-line on"> … the one the user has chosen … </div>
             <div class="app-people"><span class="who">LM</span><span class="who">MS</span>
               <div><b>Lena und Mert</b><span>antworten meist in einer Stunde</span></div></div>

@@ -1,7 +1,17 @@
 # Photographs in a prototype
 
-The picture band in an app prototype holds a real photograph. The line the model wrote there is
-the photo brief, and the picture comes from the first of these that answers, in this order:
+An app prototype carries up to four real photographs. The model marks a slot and writes inside it
+what the picture would show; that line is the brief.
+
+    .app-art      the band across a screen          encoded at 720px
+    .app-cover    the top of a card in a carousel   encoded at 420px
+    .app-thumb    the stamp on a row of a list      encoded at 180px
+
+Sized to what is drawn: a 58px stamp encoded at the band's width is ten times the bytes for the
+same pixels. Four is the ceiling, because two thirds of real app screens carry a picture and a
+fifth carry one in more than one place, but those are a handful and never a gallery.
+
+Each picture comes from the first of these that answers, in this order:
 
 1. **The shared photo library** on the host, under the project key `prototype`. Whatever an earlier
    prototype fetched or bought is already there, so a second bakery in the same week costs nothing.

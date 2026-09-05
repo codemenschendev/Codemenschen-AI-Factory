@@ -123,13 +123,52 @@ class PrototypePhotoTest extends TestCase
         $this->assertNull($out['source']);
     }
 
-    public function test_a_second_band_is_left_alone(): void
+    public function test_every_slot_in_the_app_gets_a_picture(): void
     {
-        $page = $this->page('<div class="app-art">Erste</div><div class="app-art">Zweite</div>');
+        // Two thirds of real app screens carry a picture and a fifth carry one in more than one
+        // place. A list of dishes is photographs with prices beside them, not icons in squares.
+        $page = $this->page(
+            '<div class="app-art">Die Backstube am Morgen</div>'
+            .'<div class="app-line"><i class="app-thumb">Kaisersemmel</i><div><b>Semmel</b></div></div>'
+            .'<div class="app-card"><div class="app-cover">Mohnzopf auf dem Tresen</div><b>Zopf</b></div>'
+        );
 
         $out = $this->photo($this->stock($this->png()))->apply($page);
 
-        $this->assertStringContainsString('<div class="app-art">Zweite</div>', $out['html']);
+        $this->assertCount(3, $out['photos']);
+        $this->assertStringContainsString('class="app-art has-photo"', $out['html']);
+        $this->assertStringContainsString('class="app-thumb has-photo"', $out['html']);
+        $this->assertStringContainsString('class="app-cover has-photo"', $out['html']);
+        // The tag is preserved, so an <i> in a row stays an <i> and the layout does not shift.
+        $this->assertStringContainsString('<i class="app-thumb has-photo">', $out['html']);
+    }
+
+    public function test_a_fifth_slot_keeps_its_gradient(): void
+    {
+        // Every one of these is bytes in a page served on every view, so four is the ceiling.
+        $bands = '';
+        foreach (range(1, 6) as $n) {
+            $bands .= '<div class="app-art">Aufnahme Nummer '.$n.'</div>';
+        }
+
+        $out = $this->photo($this->stock($this->png()))->apply($this->page($bands));
+
+        $this->assertCount(4, $out['photos']);
+        $this->assertStringContainsString('<div class="app-art">Aufnahme Nummer 5</div>', $out['html']);
+    }
+
+    public function test_a_thumbnail_is_encoded_smaller_than_a_band(): void
+    {
+        // A 58px stamp encoded at the band's width is ten times the bytes for the same pixels.
+        $png = $this->png();
+        $band = $this->photo($this->stock($png))->apply($this->page());
+        $thumb = $this->photo($this->stock($png))->apply(
+            $this->page('<i class="app-thumb">Kaisersemmel im Korb</i>')
+        );
+
+        $sizeOf = fn (string $html) => strlen(explode('"', explode('src="', $html)[1])[0]);
+
+        $this->assertLessThan($sizeOf($band['html']) / 2, $sizeOf($thumb['html']));
     }
 
     public function test_a_page_without_a_band_asks_for_nothing(): void
