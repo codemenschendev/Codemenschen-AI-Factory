@@ -349,6 +349,11 @@ class PrototypeWriter
         $page = $markup;
         $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
         $lap('audit');
+        // What the model got wrong before anyone helped it. The repair overwrites the report, so
+        // without this line the faults it makes most often, the ones a prompt could prevent, are
+        // the ones nobody ever sees.
+        $first = array_map(fn (array $f) => $f['check'].(($f['elements'][0] ?? '') !== '' ? ': '.$f['elements'][0] : ''),
+            PageAudit::blocking($qa));
 
         // Up to two repairs, and the second only when the first helped: a model that took five
         // faults to three is worth one more pass, one that went in circles is not. Each round is
@@ -418,6 +423,9 @@ class PrototypeWriter
 
         $timing['total'] = round(array_sum($timing), 1);
         $qa['timing'] = $timing;
+        if ($first !== []) {
+            $qa['first_faults'] = $first;
+        }
         // The page without its photographs, which is what the model actually wrote and what the
         // minutes are spent on.
         $qa['bytes'] = strlen($markup);

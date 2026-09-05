@@ -137,6 +137,8 @@ class PrototypeRepairTest extends TestCase
         $this->assertSame(['generate', 'audit', 'repair', 'total'], array_keys($t));
         $this->assertEqualsWithDelta(array_sum(array_slice($t, 0, 3)), $t['total'], 0.2);
         $this->assertSame(strlen($this->page('<h1>Original</h1>')), $out['qa']['bytes']);
+        // The fault the repair removed is still on record, with the element it was on.
+        $this->assertSame(['placeholder: div.hero > p'], $out['qa']['first_faults']);
     }
 
     public function test_a_repair_that_did_not_help_is_thrown_away(): void
