@@ -58,9 +58,13 @@ class PrototypeWriter
     private const PHOTO_SLOTS = <<<'TXT'
         Photographs. Write the brief INSIDE the element and a real photograph replaces it:
 
-          <div class="photo-wide">what a wide picture would show</div>
-          <div class="photo-card">what a card's picture would show</div>
-          <span class="photo-thumb">what a small square picture would show</span>
+          <div class="photo-wide" data-q="bakery bread basket">what a wide picture would show</div>
+          <div class="photo-card" data-q="…">what a card's picture would show</div>
+          <span class="photo-thumb" data-q="…">what a small square picture would show</span>
+
+        data-q is the search: two to four ENGLISH nouns naming what is in the picture, the way a
+        stock library files it. "laptop advent wreath", "carpenter workshop", "dentist chair".
+        No adjectives, no mood, no verbs: those go in the sentence, which is for a photographer.
 
         Each of those holds THE SENTENCE AND NOTHING ELSE: no heading, no price, no other element.
         The whole element is replaced by the photograph, so anything else inside it disappears.
@@ -174,7 +178,9 @@ class PrototypeWriter
         or under it; the slot holds the brief and nothing else.
 
         Five different angles on the same business, not five wordings of one idea, in this order:
-        the problem, the result, the proof, the offer, the reminder.
+        the problem, the result, the proof, the offer, the reminder. Proof is something the reader
+        can check: a finished example, a before and after, a named trade that is already live.
+        Never a count of customers, years or stars the brief did not give you.
 
         Words:
           - The headline is at most 6 words and never opens with the company name. The line under

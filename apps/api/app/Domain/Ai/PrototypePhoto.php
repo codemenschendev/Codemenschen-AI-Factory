@@ -88,7 +88,12 @@ class PrototypePhoto
                     continue;
                 }
 
-                $found = $this->dataUri($brief, $width);
+                // The search phrase the model wrote for this slot, if it wrote one.
+                $search = preg_match('~\sdata-q="([^"]*)"~i', $m[2], $q) === 1
+                    ? trim(html_entity_decode($q[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'))
+                    : null;
+
+                $found = $this->dataUri($brief, $width, $search);
                 if ($found === null) {
                     continue;   // this slot keeps its gradient; the next one still gets a try
                 }
@@ -157,7 +162,7 @@ class PrototypePhoto
      *
      * @return array{data:string,source:string,credit:?string,url:?string}|null
      */
-    private function dataUri(string $brief, int $width): ?array
+    private function dataUri(string $brief, int $width, ?string $search = null): ?array
     {
         try {
             $hit = $this->library->find($brief, self::PROJECT);
@@ -169,7 +174,7 @@ class PrototypePhoto
                 }
             }
 
-            $shot = $this->stock->find($brief);
+            $shot = $this->stock->find($brief, 'de-DE', $search);
             if ($shot !== null) {
                 $found = $this->file($shot['bytes'], '.jpg', $brief, $width);
                 if ($found !== null) {

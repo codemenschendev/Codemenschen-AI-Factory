@@ -79,6 +79,9 @@ class PrototypePhotoTest extends TestCase
     {
         return new class($png, $credit) extends StockPhotos
         {
+            /** @var list<?string> the search phrase handed over per call, null when there was none */
+            public array $searches = [];
+
             public function __construct(private string $png, private string $credit) {}
 
             public function configured(): bool
@@ -86,8 +89,10 @@ class PrototypePhotoTest extends TestCase
                 return true;
             }
 
-            public function find(string $brief, string $locale = 'de-DE'): ?array
+            public function find(string $brief, string $locale = 'de-DE', ?string $search = null): ?array
             {
+                $this->searches[] = $search;
+
                 return ['bytes' => $this->png, 'credit' => $this->credit, 'url' => 'https://www.pexels.com/photo/1'];
             }
         };
@@ -225,6 +230,22 @@ class PrototypePhotoTest extends TestCase
         // The words survive only as alt text on the six that became photographs.
         $this->assertStringNotContainsString('>Porträt Nummer', $out['html']);
         $this->assertStringContainsString('<i class="photo-thumb pt-7"></i>', $out['html']);
+    }
+
+    public function test_the_search_phrase_on_the_slot_reaches_the_stock_source(): void
+    {
+        // "Tischlerin steht abends allein in ihrer" found a woman in a dark alley. The model
+        // now writes the nouns a stock library is filed under, and the sentence stays for the alt.
+        $stock = $this->stock($this->png());
+        $out = $this->photo($stock)->apply($this->page(
+            '<div class="photo-wide" data-q="carpenter workshop phone">Tischlerin steht abends allein in ihrer Werkstatt</div>'
+            .'<div class="photo-card">Adventkranz auf dem Tresen</div>'
+        ));
+
+        $this->assertCount(2, $out['photos']);
+        $this->assertSame(['carpenter workshop phone', null], $stock->searches);
+        $this->assertStringContainsString('alt="Tischlerin steht abends allein in ihrer Werkstatt"', $out['html']);
+        $this->assertStringContainsString('data-q="carpenter workshop phone"', $out['html'], 'the attribute survives');
     }
 
     public function test_a_page_without_a_band_asks_for_nothing(): void

@@ -32,17 +32,29 @@ class StockPhotos
     /**
      * @return array{bytes:string,credit:string,url:string}|null
      */
-    public function find(string $brief, string $locale = 'de-DE'): ?array
+    /**
+     * `$search`, when the model wrote one, is a few English nouns naming the subject: "laptop
+     * advent wreath". It beats anything cut down from the German sentence by machine, because a
+     * stock index is filed by nouns and the sentence is written for a photographer. "Tischlerin
+     * steht abends allein in ihrer" found a woman in a dark alley; "carpenter workshop phone"
+     * finds a carpenter.
+     */
+    public function find(string $brief, string $locale = 'de-DE', ?string $search = null): ?array
     {
         if (! $this->configured()) {
             return null;
+        }
+
+        $search = trim((string) $search);
+        if ($search !== '') {
+            $locale = 'en-US';
         }
 
         try {
             $res = Http::withHeaders(['Authorization' => (string) config('services.stock.pexels_key')])
                 ->timeout(20)->connectTimeout(8)
                 ->get('https://api.pexels.com/v1/search', [
-                    'query' => $this->query($brief),
+                    'query' => $search !== '' ? mb_substr($search, 0, 80) : $this->query($brief),
                     'per_page' => self::POOL,
                     'orientation' => 'landscape',
                     'locale' => $locale,
