@@ -244,4 +244,22 @@ class CommerceFlowTest extends TestCase
         $this->assertStringStartsWith('Approval received', $subjects[2]);
         $this->assertStringStartsWith('We saw a problem', $subjects[3]);
     }
+
+    public function test_project_mails_speak_the_language_of_the_order(): void
+    {
+        // The customer record said English, the order said German, and the preview mail came in
+        // English. The order is what the customer chose this time.
+        Mail::fake();
+        config(['services.stripe.secret' => null]);
+        $orderId = $this->postJson('/api/checkout', [
+            'quote_id' => $this->makeQuote(), 'email' => 'lena@example.com', 'fagg_waiver' => true, 'terms' => true, 'locale' => 'de',
+        ])->json('order_id');
+        $project = app(OrderFulfillment::class)->markPaid(Order::find($orderId), 'pi_test', 400, []);
+        $project->customer->update(['locale' => 'en']);
+
+        app(Notify::class)->projectStatus($project->fresh(), 'TESTING', 'REVIEW');
+
+        Mail::assertSent(CustomerNotice::class, fn (CustomerNotice $m) => $m->hasTo('lena@example.com')
+            && str_starts_with($m->subjectLine, 'Deine Vorschau ist fertig'));
+    }
 }

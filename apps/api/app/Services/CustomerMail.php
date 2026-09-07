@@ -93,7 +93,9 @@ class CustomerMail
         if ($customer === null || ! in_array($to, ['REVIEW', 'READY', 'FAILED'], true)) {
             return;
         }
-        $de = $this->german($customer->locale);
+        // The language of the order, not of the customer record: a customer who ordered in
+        // German on an account created in English got "Your preview is ready".
+        $de = $this->german($project->order?->locale ?? $customer->locale);
         $link = $this->signIn($customer, $de ? 'de' : 'en');
         $name = $project->name;
 
