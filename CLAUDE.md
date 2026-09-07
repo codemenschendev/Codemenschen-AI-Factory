@@ -23,6 +23,10 @@
   `up -d --remove-orphans api horizon scheduler [web]`, then `exec -T api php artisan migrate --force`
   when a migration was added. Verify by grepping the new code inside the container, not by uptime.
 - After every commit and push/deploy, post it to Teams with `~/.openclaw/workspace/ops/teams-commit.sh`.
+- Mail goes out through the company's world4you SMTP (`smtp.world4you.com:587`, STARTTLS) as
+  `developerweb@codemenschen.at`, DKIM-signed for codemenschen.at. Not Resend (its Tokyo IPs
+  landed the sign-in mail in spam, 2026-09-07) and not the host's sendmail (generic rDNS, no DKIM).
+  The password is in the server `.env` only; a mail says "reply to this e-mail" and that mailbox is read.
 
 ## Prototypes
 
