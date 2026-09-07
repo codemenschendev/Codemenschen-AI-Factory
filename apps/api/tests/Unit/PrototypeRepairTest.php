@@ -184,10 +184,20 @@ class PrototypeRepairTest extends TestCase
 
         Http::assertSentCount(2);
         $this->assertStringContainsString('Doch', $out['html']);
+    }
 
+    public function test_two_replies_without_a_page_are_a_failed_build(): void
+    {
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
         Http::fake(['*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => 'Nein.']]]])]);
-        $this->expectExceptionMessage('AI không trả về HTML dùng được.');
-        app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
+
+        try {
+            app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
+            $this->fail('built a page from prose');
+        } catch (\RuntimeException $e) {
+            $this->assertSame('AI không trả về HTML dùng được.', $e->getMessage());
+        }
+        Http::assertSentCount(2);
     }
 
     public function test_a_repair_that_did_not_help_is_thrown_away(): void
