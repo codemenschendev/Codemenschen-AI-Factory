@@ -409,14 +409,23 @@ class PrototypeWriter
             'max_completion_tokens' => 16000,
         ];
 
-        // Once more if the reply holds no page. An agent that answers in prose, or is cut off
-        // before </html>, is a lost roll of the dice and not a broken service; a study and two
-        // minutes of a visitor's wait are worth one more roll before the build is called failed.
+        // Once more if the reply holds no page, or if the gateway fell over under it. An agent
+        // that answers in prose, or is cut off before </html>, is a lost roll of the dice; a
+        // gateway that answers 500 is, four times out of four so far, one that another session
+        // restarted while this page was being written, and it is back five seconds later. A study
+        // and minutes of a visitor's wait are worth one more roll before the build is called
+        // failed. Not on 502: that is the sidecar's own timeout, and doubling it helps nobody.
         $markup = '';
         foreach ([1, 2] as $attempt) {
             $res = $request->post('/v1/chat/completions', $body);
 
             if (! $res->successful()) {
+                if ($res->status() !== 502 && $attempt === 1) {
+                    Log::info('prototype: the gateway answered '.$res->status().', trying once more', ['kind' => $kind]);
+                    sleep(8);
+
+                    continue;
+                }
                 // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS and answers 502. That is
                 // a slow generation, not a broken service, and it is worth saying so plainly.
                 $msg = $res->status() === 502

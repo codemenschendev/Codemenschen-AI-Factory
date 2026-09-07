@@ -186,6 +186,37 @@ class PrototypeRepairTest extends TestCase
         $this->assertStringContainsString('Doch', $out['html']);
     }
 
+    public function test_a_gateway_that_fell_over_is_asked_once_more_but_a_timeout_is_not(): void
+    {
+        // Another session restarting the OpenClaw gateway answered 500 in the middle of a page
+        // and cost a whole build. It is back in seconds, so the writer tries once more. The
+        // sidecar's 502 is its own timeout and is not retried: doubling ten minutes helps nobody.
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        $seq = Http::sequence()
+            ->pushResponse(Http::response(['error' => 'Upstream request failed.'], 500))
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => $this->page('<h1>Wieder da</h1>')]]]]));
+        Http::fake(['*/v1/chat/completions' => $seq]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
+
+        Http::assertSentCount(2);
+        $this->assertStringContainsString('Wieder da', $out['html']);
+    }
+
+    public function test_the_sidecar_s_timeout_is_not_retried(): void
+    {
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        Http::fake(['*/v1/chat/completions' => Http::response(null, 502)]);
+
+        try {
+            app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
+            $this->fail('built a page from a 502');
+        } catch (\RuntimeException $e) {
+            $this->assertStringContainsString('lâu hơn giới hạn', $e->getMessage());
+        }
+        Http::assertSentCount(1);
+    }
+
     public function test_two_replies_without_a_page_are_a_failed_build(): void
     {
         config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
