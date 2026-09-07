@@ -357,6 +357,43 @@ function audit([placeholderSource, minTarget]) {
     }
   }
 
+  // 8c. A story that is not tall, a link ad that is not wide. The class says which platform
+  // slot a creative is cut for and the frame has to be that shape, or five "1080 x 1080"
+  // squares go out labelled as stories and link ads, which is what one build did. Measured on
+  // the picture inside each frame, and on the size printed under it.
+  const SHAPES = {
+    'ad-story': { label: '1080 × 1920', min: 1.4, max: 2.2, name: 'a story, portrait 9:16' },
+    'ad-square': { label: '1080 × 1080', min: 0.8, max: 1.25, name: 'a square' },
+    'ad-link': { label: '1200 × 628', min: 0.4, max: 0.7, name: 'a link ad, landscape 1.91:1' },
+  };
+  const wrong = [];
+  for (const ad of document.querySelectorAll('.ad')) {
+    if (!visible(ad)) continue;
+    const kind = Object.keys(SHAPES).find((k) => ad.classList.contains(k));
+    if (!kind) continue;
+    const want = SHAPES[kind];
+    const pic = ad.querySelector('.photo-wide, .photo-card, .has-photo, img');
+    if (pic && visible(pic)) {
+      const r = pic.getBoundingClientRect();
+      const ratio = r.height / Math.max(r.width, 1);
+      if (ratio < want.min || ratio > want.max) {
+        wrong.push(`${sel(ad)}: picture is ${Math.round(r.width)}x${Math.round(r.height)}, not ${want.name}`);
+      }
+    }
+    const size = (ad.querySelector('.ad-size') || ad.nextElementSibling)?.textContent?.replace(/\s+/g, ' ').trim() || '';
+    if (size && !size.replace(/[x×]/g, '×').includes(want.label)) {
+      wrong.push(`${sel(ad)}: labelled "${size.slice(0, 20)}", should be ${want.label}`);
+    }
+    if (wrong.length >= 6) break;
+  }
+  if (wrong.length) {
+    out.push({
+      severity: 'blocking', check: 'ad-formats',
+      detail: `${wrong.length} creative(s) are not the shape their class says`,
+      elements: wrong.slice(0, 5),
+    });
+  }
+
   // 9. Something under the Dynamic Island. An app page is shown inside a phone whose frame paints
   // a status bar and an island over its top 54px. A search bar drawn at y=12 sits under a black
   // pill, and a customer sees that before anything else. Only app pages; a website has no island.

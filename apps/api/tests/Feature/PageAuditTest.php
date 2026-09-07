@@ -158,6 +158,30 @@ class PageAuditTest extends TestCase
         $this->assertNotContains('ads-in-a-column', array_column($grid['findings'], 'check'));
     }
 
+    public function test_a_creative_must_be_the_shape_its_class_says(): void
+    {
+        // One build drew five identical squares and labelled every one "1080 x 1080", story and
+        // link ad included. The class is the contract; the picture's ratio and the label prove it.
+        $ad = fn (string $kind, string $w, string $h, string $label) => '<article class="ad '.$kind.'">'
+            .'<div class="photo-card" style="width:'.$w.';height:'.$h.';background:#ccc"></div>'
+            .'<span class="ad-size">'.$label.'</span></article>';
+        $page = fn (string $ads) => '<!doctype html><meta charset="utf-8"><title>Anzeigen</title>'
+            .'<style>body{margin:0}.ads{display:flex;flex-wrap:wrap;gap:8px}</style><main class="ads">'.$ads.'</main>';
+
+        $squares = $this->audit()->run($page(
+            $ad('ad-story', '300px', '300px', '1080 × 1080').$ad('ad-square', '300px', '300px', '1080 × 1080').$ad('ad-link', '300px', '300px', '1080 × 1080')
+        ));
+        $f = collect(PageAudit::blocking($squares))->firstWhere('check', 'ad-formats');
+        $this->assertNotNull($f, json_encode($squares['findings']));
+        $this->assertCount(4, $f['elements'], 'story picture and label, link picture and label');
+        $this->assertContains('ad-formats', array_column(PageAudit::repairable($squares, ownsStyle: true), 'check'));
+
+        $right = $this->audit()->run($page(
+            $ad('ad-story', '270px', '480px', '1080 × 1920').$ad('ad-square', '300px', '300px', '1080 × 1080').$ad('ad-link', '300px', '157px', '1200 × 628')
+        ));
+        $this->assertNotContains('ad-formats', array_column($right['findings'], 'check'));
+    }
+
     public function test_text_the_model_did_not_write_is_blocking(): void
     {
         $report = $this->audit()->run(
