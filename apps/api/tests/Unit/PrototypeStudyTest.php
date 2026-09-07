@@ -4,6 +4,7 @@ namespace Tests\Unit;
 
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Design\DesignLibrary;
+use App\Domain\Qa\PageAudit;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -30,6 +31,14 @@ class PrototypeStudyTest extends TestCase
                     'density' => 'medium', 'palette' => ['scheme' => 'dark', 'accent' => 'green'], 'notes' => "note $type"]];
             File::put($this->dir."/images/app-screen/detail/r$i.webp", "bytes-$i");
         }
+        // One landing page too, so a site study has something to look at.
+        File::makeDirectory($this->dir.'/images/web-screen/detail', 0755, true);
+        $recs[] = ['id' => 'w0', 'medium' => 'web', 'file' => 'images/web-screen/detail/w0.webp', 'byte_size' => 10,
+            'visual' => ['category' => 'web-screen', 'grade' => 'detail', 'width' => 1440, 'height' => 4000, 'orientation' => 'portrait'],
+            'sources' => [], 'ai_index' => ['search_text' => 'w0'],
+            'labels' => ['page_type' => 'landing', 'industry' => 'agency', 'hero_style' => 'centered_text', 'hero_visual' => 'none',
+                'sections' => ['feature_grid'], 'density' => 'medium', 'palette' => ['scheme' => 'light', 'accent' => 'green'], 'nav_cta' => true, 'notes' => 'w0']];
+        File::put($this->dir.'/images/web-screen/detail/w0.webp', 'bytes-w0');
         File::put($this->dir.'/catalog.json', json_encode(['images' => $recs]));
         config([
             'services.media.design_library_path' => $this->dir,
@@ -105,5 +114,50 @@ class PrototypeStudyTest extends TestCase
         Http::assertSentCount(2);
         $this->assertArrayNotHasKey('study', $out['qa']);
         $this->assertSame('Xe', $out['title']);
+    }
+
+    public function test_a_competitor_the_study_looked_at_never_stays_in_the_page(): void
+    {
+        // The link ad of one build printed the three agencies the study had looked at as if
+        // they were the customer's references. The builder is told, and the page is checked.
+        $this->sidecar(
+            '{"industry":"agency","sites":["wixx.at","webdorf.at"],"country":"at"}',
+            'Brief: cream and green.',
+            '<!doctype html><html><head><title>Agentur</title></head><body><p>Gebaut wie wixx.at und webdorf.at.</p></body></html>',
+            '<!doctype html><html><head><title>Agentur</title></head><body><p>Gebaut von uns.</p></body></html>',
+        );
+        Http::fake(['sidecar.test/v1/pages/check' => Http::response(['results' => []])]);
+        $audit = new class('/dev/null', null) extends PageAudit
+        {
+            public function run(string $html): array
+            {
+                return ['ok' => true, 'findings' => []];
+            }
+        };
+
+        $out = app(PrototypeWriter::class)->build('Eine Website für eine Webagentur in Linz', 'site', null, $audit, new DesignLibrary($this->dir));
+
+        $this->assertStringNotContainsString('wixx.at', $out['html']);
+        $this->assertSame(['competitor-named: wixx.at'], $out['qa']['first_faults']);
+        $this->assertTrue($out['qa']['repaired']);
+        Http::assertSent(fn ($r) => is_array($r['messages'][1]['content'] ?? null)
+            && str_contains(json_encode($r['messages'][1]['content']), 'COMPETITORS the designer looked at'));
+        Http::assertSent(fn ($r) => count($r['messages'] ?? []) === 4 && str_contains((string) $r['messages'][3]['content'], 'competitor-named'));
+    }
+
+    public function test_a_site_whose_study_finds_no_pictures_still_builds_the_old_way(): void
+    {
+        // Shadowing the DesignRefs parameter with the library's references crashed exactly here:
+        // no pictures, no brief, and the fallback called pick() on an array.
+        File::put($this->dir.'/catalog.json', json_encode(['images' => []]));
+        $this->sidecar(
+            '{"industry":"agency","sites":[],"country":"at"}',
+            '<!doctype html><html><head><title>Agentur</title></head><body><p>Ohne Studie.</p></body></html>',
+        );
+
+        $out = app(PrototypeWriter::class)->build('Eine Website für eine Webagentur', 'site', null, null, new DesignLibrary($this->dir));
+
+        $this->assertStringContainsString('Ohne Studie', $out['html']);
+        $this->assertNull($out['qa']['study']['brief'] ?? null);
     }
 }

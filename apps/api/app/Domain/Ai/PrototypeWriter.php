@@ -307,7 +307,9 @@ class PrototypeWriter
                 // The library's own pictures of the trade, then the world's: the apps' store
                 // screenshots for an app, the best-known businesses' live homepages for a
                 // website or an ad.
-                [$refs, $shots, $stats] = match ($kind) {
+                // Not $refs: that is the DesignRefs parameter the no-study path still uses, and
+                // shadowing it crashed every site build whose study found no pictures.
+                [$fromLibrary, $shots, $stats] = match ($kind) {
                     'app' => [
                         $library->references($plan['industry'], $plan['screens'], 4),
                         $this->store->forApps($plan['apps'], $plan['country'], 2),
@@ -324,7 +326,7 @@ class PrototypeWriter
                         $library->webStats($plan['industry']),
                     ],
                 };
-                $studied = array_slice(array_merge($refs, $shots), 0, self::STUDY_SCREENS);
+                $studied = array_slice(array_merge($fromLibrary, $shots), 0, self::STUDY_SCREENS);
                 $brief = $this->study->study($prompt, $plan, $studied, $stats, $kind);
                 $meta = $plan + ['references' => array_column($studied, 'id'), 'brief' => $brief];
             }
@@ -374,7 +376,7 @@ class PrototypeWriter
             $what = match ($kind) {
                 'app' => 'screens of the leading apps', 'ads' => 'ads and homepages of the leading names', default => 'pages of the leading names'
             };
-            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} {$what} of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\n{$brief}"];
+            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} {$what} of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\nThe businesses and apps the brief names are COMPETITORS the designer looked at. They never appear in the page: not their names, domains, logos, colours or products. They are not the customer's clients, partners or references, and a competitor printed as proof is the one line a customer will not forgive.\n\n{$brief}"];
             $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThree of the images the brief was written from:"];
             foreach ($this->forBuilder($studied) as $i => $shot) {
                 $label = 'Image '.($i + 1).': '.str_replace('_', ' ', $shot['screen_type']).($shot['note'] !== '' ? " ({$shot['note']})" : '');
@@ -447,6 +449,15 @@ class PrototypeWriter
         $page = $markup;
         $qa = $audit?->run($page) ?? ['ok' => null, 'findings' => [], 'skipped' => 'no auditor'];
         $lap('audit');
+        // A competitor's name in the page. The link ad of one build read "Gebaut von
+        // codemenschen.at. wixx.at · tante-emma-shop.at · webdorf.at": the agencies the study had
+        // looked at, printed as the customer's references. Found here, repaired like any fault.
+        if (($named = $this->competitorsNamed($page, $meta)) !== []) {
+            $qa['findings'][] = ['severity' => 'blocking', 'check' => 'competitor-named', 'viewports' => [],
+                'detail' => 'the page names competitors the study looked at; they are not the customer\'s clients or references, remove every mention',
+                'elements' => $named];
+            $qa['ok'] = false;
+        }
         // What the model got wrong before anyone helped it. The repair overwrites the report, so
         // without this line the faults it makes most often, the ones a prompt could prevent, are
         // the ones nobody ever sees.
@@ -472,6 +483,11 @@ class PrototypeWriter
 
             $after = $audit->run($fixed);
             $lap('audit');
+            if (($named = $this->competitorsNamed($fixed, $meta)) !== []) {
+                $after['findings'][] = ['severity' => 'blocking', 'check' => 'competitor-named', 'viewports' => [],
+                    'detail' => 'the page still names competitors the study looked at; remove every mention', 'elements' => $named];
+                $after['ok'] = false;
+            }
 
             // Keep the repair only if it actually helped. A model asked to fix five things can
             // come back with a shorter page and six, and shipping that would be worse than
@@ -565,6 +581,8 @@ class PrototypeWriter
                     cannot break. Placeholder text means write the real thing for this business.
                     A broken image means remove the tag, not point it somewhere else. A dash means
                     rewrite that sentence with a comma, a colon or a full stop, in the title too.
+                    A competitor named means delete the name, the domain and the sentence around
+                    it: those businesses were studied, they are not the customer's references.
                     TXT],
             ],
             'max_completion_tokens' => 8000,
@@ -615,6 +633,33 @@ class PrototypeWriter
         }
 
         return trim(substr($text, $start, $end - $start + strlen('</html>')));
+    }
+
+    /**
+     * The competitors the study looked at that the page mentions.
+     *
+     * Domains are matched whole ("wixx.at"), app and business names by word, four letters or
+     * more: "Be" would match half the German copy, so "Be" goes unchecked, the cheaper mistake.
+     *
+     * @return list<string>
+     */
+    private function competitorsNamed(string $html, array $meta): array
+    {
+        $text = html_entity_decode(strip_tags(preg_replace('~<(script|style)\b.*?</\1>~is', ' ', $html) ?? $html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $found = [];
+        foreach (array_merge($meta['sites'] ?? [], $meta['apps'] ?? []) as $name) {
+            $name = trim((string) $name);
+            $host = (string) parse_url(str_contains($name, '://') ? $name : 'https://'.$name, PHP_URL_HOST);
+            $needle = str_contains($host, '.') ? $host : $name;
+            if (mb_strlen($needle) < 4) {
+                continue;
+            }
+            if (preg_match('/(?<![\p{L}\p{N}.-])'.preg_quote($needle, '/').'(?![\p{L}\p{N}-])/iu', $text) === 1) {
+                $found[] = $needle;
+            }
+        }
+
+        return array_values(array_unique($found));
     }
 
     /** " – " and " — " in the <title> become ": ", which is how every other line here breaks. */
