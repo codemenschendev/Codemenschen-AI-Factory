@@ -9,6 +9,7 @@ use App\Domain\Design\WebShots;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use RuntimeException;
 
 /**
@@ -395,30 +396,40 @@ class PrototypeWriter
             }
         }
 
-        $res = $request->post('/v1/chat/completions', [
+        $body = [
             'model' => config('services.ai_image.chat_model', 'openclaw/main'),
             'messages' => [
                 ['role' => 'system', 'content' => $system],
                 ['role' => 'user', 'content' => $user],
             ],
-            // Markup only now: the house stylesheet is inlined afterwards, so the model is not
-            // paying tokens to invent CSS. That roughly halves what it has to write, which is the
-            // difference between a visitor waiting and a visitor leaving.
             // A page that writes its own CSS is roughly twice the output of one that only wrote
             // markup, and 8000 had it fighting the cap and the gateway's own 180s at once.
             'max_completion_tokens' => 16000,
-        ]);
+        ];
 
-        if (! $res->successful()) {
-            // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS (300s) and answers 502. That
-            // is a slow generation, not a broken service, and it is worth saying so plainly.
-            $msg = $res->status() === 502
-                ? 'Bản mô tả quá lớn nên dựng lâu hơn giới hạn. Thử mô tả ngắn gọn hơn.'
-                : 'Dựng prototype thất bại ('.$res->status().').';
-            throw new RuntimeException($msg);
+        // Once more if the reply holds no page. An agent that answers in prose, or is cut off
+        // before </html>, is a lost roll of the dice and not a broken service; a study and two
+        // minutes of a visitor's wait are worth one more roll before the build is called failed.
+        $markup = '';
+        foreach ([1, 2] as $attempt) {
+            $res = $request->post('/v1/chat/completions', $body);
+
+            if (! $res->successful()) {
+                // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS and answers 502. That is
+                // a slow generation, not a broken service, and it is worth saying so plainly.
+                $msg = $res->status() === 502
+                    ? 'Bản mô tả quá lớn nên dựng lâu hơn giới hạn. Thử mô tả ngắn gọn hơn.'
+                    : 'Dựng prototype thất bại ('.$res->status().').';
+                throw new RuntimeException($msg);
+            }
+
+            $markup = $this->extractHtml((string) $res->json('choices.0.message.content'));
+            if ($markup !== '') {
+                break;
+            }
+            Log::info('prototype: the reply held no html', ['attempt' => $attempt, 'kind' => $kind,
+                'head' => mb_substr((string) $res->json('choices.0.message.content'), 0, 160)]);
         }
-
-        $markup = $this->extractHtml((string) $res->json('choices.0.message.content'));
         if ($markup === '') {
             throw new RuntimeException('AI không trả về HTML dùng được.');
         }

@@ -170,6 +170,26 @@ class PrototypeRepairTest extends TestCase
         $this->assertStringContainsString('<title>Bäckerei Wimmer: Frisches Brot: in Salzburg</title>', $audit->seen[0]);
     }
 
+    public function test_a_reply_without_a_page_is_asked_for_once_more(): void
+    {
+        // An ad build died after 109 seconds because the agent answered in prose. One more roll
+        // before a study and a visitor's wait are thrown away; two misses are a failed build.
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        $seq = Http::sequence()
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => 'Ich kann diese Seite gerne bauen. Soll ich?']]]]))
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => $this->page('<h1>Doch</h1>')]]]]));
+        Http::fake(['*/v1/chat/completions' => $seq]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
+
+        Http::assertSentCount(2);
+        $this->assertStringContainsString('Doch', $out['html']);
+
+        Http::fake(['*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => 'Nein.']]]])]);
+        $this->expectExceptionMessage('AI không trả về HTML dùng được.');
+        app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
+    }
+
     public function test_a_repair_that_did_not_help_is_thrown_away(): void
     {
         // Two faults in, two faults out: the repair bought nothing, so the first page stands.
