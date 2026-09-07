@@ -144,6 +144,20 @@ class PageAuditTest extends TestCase
         $this->assertNotContains('icon-blob', array_column($glyph['findings'], 'check'));
     }
 
+    public function test_five_ads_in_one_column_on_a_desktop_is_blocking(): void
+    {
+        $page = fn (string $css) => '<!doctype html><meta charset="utf-8"><title>Anzeigen</title>'
+            .'<style>body{margin:0}.ad{width:300px;height:200px;background:#eee;margin:8px}'.$css.'</style>'
+            .'<main class="ads">'.str_repeat('<article class="ad">Anzeige</article>', 5).'</main>';
+
+        $column = $this->audit()->run($page(''));
+        $this->assertContains('ads-in-a-column', array_column(PageAudit::blocking($column), 'check'));
+        $this->assertContains('ads-in-a-column', array_column(PageAudit::repairable($column, ownsStyle: true), 'check'));
+
+        $grid = $this->audit()->run($page('.ads{display:flex;flex-wrap:wrap}'));
+        $this->assertNotContains('ads-in-a-column', array_column($grid['findings'], 'check'));
+    }
+
     public function test_text_the_model_did_not_write_is_blocking(): void
     {
         $report = $this->audit()->run(

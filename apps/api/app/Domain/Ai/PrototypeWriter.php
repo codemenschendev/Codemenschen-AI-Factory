@@ -163,7 +163,9 @@ class PrototypeWriter
         platform would show it, and that is the whole document. No navigation bar, no marketing
         hero, no sections that explain the campaign, no footer. One line at the top is allowed:
         whom these ads are for and where they run. Then the creatives, big, all five in view on a
-        laptop.
+        laptop: a grid, three and two or all five in one row, that wraps to one column only below
+        700px. Five frames stacked in a single column on a 1280px screen is a phone layout on a
+        desktop, and the audit rejects it.
 
         YOU WRITE THE CSS. One <style> block, and design it properly: a quiet neutral page so the
         creatives are the only colour on it, and inside each creative the type, colour and rhythm

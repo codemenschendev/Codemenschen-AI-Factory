@@ -31,6 +31,17 @@ class DesignLibrary
         'utilities', 'business_saas', 'other',
     ];
 
+    /**
+     * The trades the web and ad labellers know. Wider than the app list where it matters for a
+     * page or an ad: a web agency, a joinery, an event are trades a website is built for.
+     * MUST match INDUSTRIES in tools/label-web-library.py.
+     */
+    public const WEB_INDUSTRIES = [
+        'food_delivery', 'restaurant', 'retail_ecommerce', 'fashion', 'beauty_salon', 'health_fitness',
+        'medical', 'finance_banking', 'travel', 'transport_mobility', 'real_estate', 'education',
+        'productivity', 'events_culture', 'trades_crafts', 'business_saas', 'agency', 'other',
+    ];
+
     /** MUST match SCREEN_TYPES in tools/label-design-library.py; a test fails if they drift. */
     public const SCREEN_TYPES = [
         'onboarding', 'signup_login', 'home_dashboard', 'list_feed', 'detail', 'search', 'filter',

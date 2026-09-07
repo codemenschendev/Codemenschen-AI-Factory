@@ -36,7 +36,8 @@ class DesignStudy
      */
     public function plan(string $brief, string $kind = 'app'): ?array
     {
-        $industries = implode(', ', DesignLibrary::INDUSTRIES);
+        $vocabulary = $kind === 'app' ? DesignLibrary::INDUSTRIES : DesignLibrary::WEB_INDUSTRIES;
+        $industries = implode(', ', $vocabulary);
         $types = implode(', ', DesignLibrary::SCREEN_TYPES);
         // What is asked of the model differs by what is being drawn: an app is compared with the
         // apps a user already has on the phone, a website and an ad with the businesses a
@@ -66,13 +67,16 @@ class DesignStudy
 
                 Answer with ONE JSON object and nothing else, no prose, no code fence:
                 {"industry": one of [{$industries}],
-                 "sites": ["the websites of the three best-known businesses of this trade WHERE THE
-                           CUSTOMER IS, as bare domains like stroeck.at, best-known first; real
-                           businesses whose sites exist, never a made-up domain"],
+                 "sites": ["the websites of the three best-known businesses that SELL THE SAME THING
+                           to the same people WHERE THE CUSTOMER IS, as bare domains like stroeck.at,
+                           best-known first. Competitors, not context: never a public body, a chamber,
+                           a directory, a portal or a marketplace the customer would be listed on.
+                           Real businesses whose sites exist, never a made-up domain"],
                  "country": "ISO 3166-1 alpha-2 of where the customer's customers are, from the brief's
                              language and places; Vietnamese means vn, Austrian places mean at"}
 
-                Pick "other" only when nothing fits.
+                A web agency, a design studio or a software house that builds for others is "agency";
+                a joinery, a plumber, a roofer is "trades_crafts". Pick "other" only when nothing fits.
                 TXT,
         };
 
@@ -88,7 +92,7 @@ class DesignStudy
         }
 
         $industry = (string) ($json['industry'] ?? '');
-        if (! in_array($industry, DesignLibrary::INDUSTRIES, true)) {
+        if (! in_array($industry, $vocabulary, true)) {
             $industry = $this->library->industryFor($brief) ?? 'other';
         }
         $screens = array_values(array_filter(

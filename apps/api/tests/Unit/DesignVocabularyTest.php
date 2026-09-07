@@ -9,9 +9,9 @@ use Tests\TestCase;
 class DesignVocabularyTest extends TestCase
 {
     /** @return list<string> */
-    private function pythonList(string $name): array
+    private function pythonList(string $name, string $script = 'label-design-library.py'): array
     {
-        $src = (string) file_get_contents(base_path('tools/label-design-library.py'));
+        $src = (string) file_get_contents(base_path('tools/'.$script));
         $this->assertSame(1, preg_match('/^'.$name.' = \[(.*?)\]/ms', $src, $m), "$name in the script");
         preg_match_all("/'([a-z_]+)'/", $m[1], $words);
 
@@ -21,6 +21,12 @@ class DesignVocabularyTest extends TestCase
     public function test_industries_match_the_labeller(): void
     {
         $this->assertSame($this->pythonList('INDUSTRIES'), DesignLibrary::INDUSTRIES);
+    }
+
+    public function test_web_industries_match_the_web_labeller(): void
+    {
+        // A page or an ad may be for a trade the app labeller never meets: an agency, a joinery.
+        $this->assertSame($this->pythonList('INDUSTRIES', 'label-web-library.py'), DesignLibrary::WEB_INDUSTRIES);
     }
 
     public function test_screen_types_match_the_labeller(): void

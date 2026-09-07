@@ -336,6 +336,27 @@ function audit([placeholderSource, minTarget]) {
     });
   }
 
+  // 8b. Five ads stacked in one column on a desktop. The ad page is a gallery of creatives and
+  // the whole point of it is seeing them side by side; a first build put them under each other
+  // at 1280px, which reads as a phone page opened on a laptop. Three or more .ad elements that
+  // all start at the same x on a wide viewport is that.
+  if (window.innerWidth >= 1000) {
+    const ads = [...document.querySelectorAll('.ad')].filter(visible);
+    if (ads.length >= 3) {
+      // A column is every creative below the one before it, whatever their widths: centred
+      // frames of different widths do not share a left edge, but they never share a row.
+      const boxes = ads.map((a) => a.getBoundingClientRect()).sort((a, b) => a.top - b.top);
+      const stacked = boxes.every((b, i) => i === 0 || b.top >= boxes[i - 1].bottom - 10);
+      if (stacked) {
+        out.push({
+          severity: 'blocking', check: 'ads-in-a-column',
+          detail: `${ads.length} creatives stacked in one column at ${window.innerWidth}px; lay them out in a grid`,
+          elements: [sel(ads[0].parentElement || ads[0])],
+        });
+      }
+    }
+  }
+
   // 9. Something under the Dynamic Island. An app page is shown inside a phone whose frame paints
   // a status bar and an island over its top 54px. A search bar drawn at y=12 sits under a black
   // pill, and a customer sees that before anything else. Only app pages; a website has no island.

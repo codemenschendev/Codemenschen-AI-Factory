@@ -56,7 +56,20 @@ class DesignStudyTest extends TestCase
         $this->assertSame([], $plan['screens'], 'a page has sections, not screens');
         $this->assertSame(['figlmueller.at', 'https://plachutta.at/', 'Café Sacher'], $plan['sites']);
         $this->assertSame('at', $plan['country']);
-        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'], 'bare domains'));
+        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'], 'bare domains')
+            && str_contains($r['messages'][0]['content'], 'never a public body'));
+    }
+
+    public function test_a_page_or_an_ad_may_be_for_a_trade_the_app_library_does_not_know(): void
+    {
+        // The Christmas ads for a web agency were filed under business_saas and compared with
+        // wko.at, because "agency" was not on the list offered. It is, for pages and ads.
+        $this->answer('{"industry":"agency","sites":["dieagentur.at"],"country":"at"}');
+
+        $plan = app(DesignStudy::class)->plan('Weihnachtskampagne für codemenschen.at, Websites für kleine Betriebe', 'ads');
+
+        $this->assertSame('agency', $plan['industry']);
+        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'], 'agency, other'));
     }
 
     public function test_the_study_speaks_the_language_of_what_is_being_drawn(): void
