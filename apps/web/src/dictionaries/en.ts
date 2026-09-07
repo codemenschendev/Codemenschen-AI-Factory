@@ -219,7 +219,7 @@ export const en = {
     termsLink: "Read the terms",
     withdrawalLink: "Withdrawal information",
     waiverTitle: "Build start & right of withdrawal",
-    waiverLabel: "I expressly request that work starts immediately, and I acknowledge that I lose my right of withdrawal once performance has begun. [COUNSEL REVIEW]",
+    waiverLabel: "I expressly request that work starts immediately, and I acknowledge that I lose my right of withdrawal once performance has begun.",
     waiverOff: "Without this consent your build starts after the 14-day withdrawal period. Your withdrawal right stays fully intact.",
     hostingLine: "Hosting & maintenance (monthly, from delivery)",
     totalToday: "Due today",

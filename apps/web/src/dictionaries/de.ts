@@ -219,7 +219,7 @@ export const de = {
     termsLink: "Bedingungen lesen",
     withdrawalLink: "Widerrufsbelehrung",
     waiverTitle: "Baustart & Widerrufsrecht",
-    waiverLabel: "Ich verlange ausdrücklich, dass mit der Arbeit sofort begonnen wird, und nehme zur Kenntnis, dass ich mein Widerrufsrecht mit Beginn der Leistung verliere. [RECHTSPRÜFUNG]",
+    waiverLabel: "Ich verlange ausdrücklich, dass mit der Arbeit sofort begonnen wird, und nehme zur Kenntnis, dass ich mein Widerrufsrecht mit Beginn der Leistung verliere.",
     waiverOff: "Ohne diese Zustimmung startet der Bau nach der 14-tägigen Widerrufsfrist. Dein Widerrufsrecht bleibt vollständig erhalten.",
     hostingLine: "Hosting & Wartung (monatlich, ab Lieferung)",
     totalToday: "Heute fällig",
