@@ -141,6 +141,35 @@ class PrototypeRepairTest extends TestCase
         $this->assertSame(['placeholder: div.hero > p'], $out['qa']['first_faults']);
     }
 
+    public function test_a_dash_in_the_title_is_fixed_by_hand_before_the_audit_sees_it(): void
+    {
+        // Two studied builds in a row were clean except for the title's dash and each bought a
+        // repair generation for that one character. The colon is put in before the audit runs.
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        Http::fake(['*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => '<!doctype html><html><head><title>Bäckerei Wimmer – Frisches Brot — in Salzburg</title></head><body><h1>Brot</h1></body></html>']]]])]);
+        $seen = [];
+        $audit = new class('/dev/null', null, $seen) extends PageAudit
+        {
+            public function __construct(string $s, ?string $n, public array &$seen)
+            {
+                parent::__construct($s, $n);
+            }
+
+            public function run(string $html): array
+            {
+                $this->seen[] = $html;
+
+                return ['ok' => true, 'findings' => []];
+            }
+        };
+
+        $out = app(PrototypeWriter::class)->build('Eine Bäckerei', 'site', null, $audit);
+
+        Http::assertSentCount(1);
+        $this->assertSame('Bäckerei Wimmer: Frisches Brot: in Salzburg', $out['title']);
+        $this->assertStringContainsString('<title>Bäckerei Wimmer: Frisches Brot: in Salzburg</title>', $audit->seen[0]);
+    }
+
     public function test_a_repair_that_did_not_help_is_thrown_away(): void
     {
         // Two faults in, two faults out: the repair bought nothing, so the first page stands.

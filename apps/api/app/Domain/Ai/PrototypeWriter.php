@@ -421,6 +421,12 @@ class PrototypeWriter
             throw new RuntimeException('AI không trả về HTML dùng được.');
         }
         $lap('generate');
+        // The title with a colon where the model put a dash. Both studied builds today were
+        // clean except for "Bäckerei Wimmer – Frisches Brot in Salzburg", and each spent a
+        // repair generation, a minute and a half, on that one character. The law stays and the
+        // audit still catches a dash in the page; the title is the one place a machine fixes it
+        // better than a model.
+        $markup = $this->titleWithoutDash($markup);
         $stage('auditing');
 
         // The page is whole as it comes back: the model wrote the stylesheet, so there is nothing
@@ -596,6 +602,16 @@ class PrototypeWriter
         }
 
         return trim(substr($text, $start, $end - $start + strlen('</html>')));
+    }
+
+    /** " – " and " — " in the <title> become ": ", which is how every other line here breaks. */
+    private function titleWithoutDash(string $html): string
+    {
+        return preg_replace_callback('~(<title[^>]*>)(.*?)(</title>)~is', function (array $m): string {
+            $t = preg_replace('~\s*[\x{2013}\x{2014}]\s*~u', ': ', $m[2]) ?? $m[2];
+
+            return $m[1].$t.$m[3];
+        }, $html) ?? $html;
     }
 
     private function titleOf(string $html): string
