@@ -15,7 +15,7 @@ class OrderFulfillment
      */
     public function markPaid(Order $order, ?string $paymentIntent, int $amountEur, array $rawEvent): Project
     {
-        return DB::transaction(function () use ($order, $paymentIntent, $amountEur, $rawEvent) {
+        $project = DB::transaction(function () use ($order, $paymentIntent, $amountEur, $rawEvent) {
             $order->update(['status' => 'paid']);
             $order->payments()->create([
                 'stripe_payment_intent' => $paymentIntent,
@@ -52,5 +52,12 @@ class OrderFulfillment
 
             return $project;
         });
+
+        // After the commit, so the mail never names a project the database does not have. The
+        // success page has promised this mail since the first order; it was sent for the first
+        // time on 2026-09-07.
+        app(CustomerMail::class)->orderPaid($order->fresh(), $project);
+
+        return $project;
     }
 }

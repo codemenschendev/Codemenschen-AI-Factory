@@ -2,10 +2,13 @@
 
 namespace Tests\Feature;
 
+use App\Mail\CustomerNotice;
 use App\Models\Order;
+use App\Services\Notify;
 use App\Services\OrderFulfillment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 class CommerceFlowTest extends TestCase
@@ -186,5 +189,59 @@ class CommerceFlowTest extends TestCase
         $this->postJson('/api/checkout', [
             'quote_id' => $quote(), 'email' => 'loc@example.com', 'fagg_waiver' => false, 'terms' => true, 'store_locales' => [],
         ])->assertUnprocessable();
+    }
+
+    public function test_a_paid_customer_hears_from_us_with_a_way_in(): void
+    {
+        // The success page promised "an e-mail with a sign-in link" from the first order on, and
+        // the webhook created the project in silence while the operator got every mail.
+        Mail::fake();
+        config(['services.stripe.secret' => null]);
+        $quoteId = $this->makeQuote();
+        $orderId = $this->postJson('/api/checkout', [
+            'quote_id' => $quoteId, 'email' => 'patrick@example.com', 'name' => 'Patrick',
+            'fagg_waiver' => true, 'terms' => true, 'locale' => 'de',
+        ])->json('order_id');
+
+        app(OrderFulfillment::class)->markPaid(Order::find($orderId), 'pi_test', 400, []);
+
+        Mail::assertSent(CustomerNotice::class, function (CustomerNotice $m) {
+            return $m->hasTo('patrick@example.com')
+                && str_starts_with($m->subjectLine, 'Deine Bestellung bei Appwerk')
+                && str_contains($m->body, 'Hallo Patrick,')
+                && str_contains($m->body, '/api/auth/verify/')
+                && str_contains($m->body, 'Baustart: sofort')
+                && ! str_contains($m->body, '\u{2014}') && ! str_contains($m->body, ' \u{2013} ');
+        });
+    }
+
+    public function test_a_customer_is_told_when_the_preview_is_ready_and_when_it_failed(): void
+    {
+        Mail::fake();
+        config(['services.stripe.secret' => null]);
+        $orderId = $this->postJson('/api/checkout', [
+            'quote_id' => $this->makeQuote(['locale' => 'en']), 'email' => 'anna@example.com',
+            'fagg_waiver' => true, 'terms' => true, 'locale' => 'en',
+        ])->json('order_id');
+        $project = app(OrderFulfillment::class)->markPaid(Order::find($orderId), 'pi_test', 400, []);
+
+        app(Notify::class)->projectStatus($project, 'TESTING', 'REVIEW');
+        app(Notify::class)->projectStatus($project, 'REVIEW', 'READY');
+        app(Notify::class)->projectStatus($project, 'BUILDING', 'FAILED');
+        app(Notify::class)->projectStatus($project, 'PAID', 'SPECIFICATION');
+
+        $subjects = [];
+        Mail::assertSent(CustomerNotice::class, function (CustomerNotice $m) use (&$subjects) {
+            if ($m->hasTo('anna@example.com')) {
+                $subjects[] = $m->subjectLine;
+            }
+
+            return true;
+        });
+        $this->assertSame(4, count($subjects), 'paid, review, ready, failed; nothing for specification');
+        $this->assertStringStartsWith('Your Appwerk order', $subjects[0]);
+        $this->assertStringStartsWith('Your preview is ready', $subjects[1]);
+        $this->assertStringStartsWith('Approval received', $subjects[2]);
+        $this->assertStringStartsWith('We saw a problem', $subjects[3]);
     }
 }

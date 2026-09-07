@@ -20,6 +20,9 @@ class Notify
 
     public function projectStatus(Project $project, string $from, string $to): void
     {
+        // The customer first: a preview to look at, an approval received, a failure we are on.
+        app(CustomerMail::class)->projectStatus($project, $to);
+
         if (in_array($to, self::MAIL_WORTHY, true)) {
             $this->mailAdmin(
                 "[AI Factory] {$project->name}: {$from} → {$to}",
