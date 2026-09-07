@@ -5,6 +5,7 @@ namespace App\Domain\Ai;
 use App\Domain\Design\AppStoreShots;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
+use App\Domain\Design\WebShots;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
@@ -29,6 +30,7 @@ class PrototypeWriter
     public function __construct(
         private readonly DesignStudy $study,
         private readonly AppStoreShots $store,
+        private readonly WebShots $web,
     ) {}
 
     /**
@@ -52,6 +54,9 @@ class PrototypeWriter
             takes twice as long to arrive, and the visitor is waiting.
           - Icons are inline <svg>, one simple stroked glyph, viewBox="0 0 24 24". NEVER emoji:
             they are a different size, colour and shape on every platform and read as a placeholder.
+            Put the paint on the svg itself: fill="none" stroke="currentColor" stroke-width="2" on
+            every <svg> (or on .icon in CSS). A rule on ".icon path" does not reach shapes cloned
+            through <use>, and an unpainted stroke icon fills black: a dot where the clock was.
           - Body text at least 4.5:1 against what is behind it.
           - Real content everywhere: actual names, times, prices and places from the idea. No
             "Item 1", no lorem ipsum, no placeholder rectangles.
@@ -292,14 +297,32 @@ class PrototypeWriter
         $brief = null;
         $studied = [];
         $meta = [];
-        if ($kind === 'app' && $library !== null) {
+        if ($library !== null) {
             $stage('studying');
             $plan = $this->study->plan($prompt, $kind);
             if ($plan !== null) {
-                $refs = $library->references($plan['industry'], $plan['screens'], 4);
-                $shots = $this->store->forApps($plan['apps'], $plan['country'], 2);
+                // The library's own pictures of the trade, then the world's: the apps' store
+                // screenshots for an app, the best-known businesses' live homepages for a
+                // website or an ad.
+                [$refs, $shots, $stats] = match ($kind) {
+                    'app' => [
+                        $library->references($plan['industry'], $plan['screens'], 4),
+                        $this->store->forApps($plan['apps'], $plan['country'], 2),
+                        $library->industryStats($plan['industry']),
+                    ],
+                    'ads' => [
+                        $library->adReferences($plan['industry'], 4),
+                        $this->web->forSites($plan['sites'], 2),
+                        $library->adStats($plan['industry']),
+                    ],
+                    default => [
+                        $library->siteReferences($plan['industry'], 4),
+                        $this->web->forSites($plan['sites'], 3),
+                        $library->webStats($plan['industry']),
+                    ],
+                };
                 $studied = array_slice(array_merge($refs, $shots), 0, self::STUDY_SCREENS);
-                $brief = $this->study->study($prompt, $plan, $studied, $library->industryStats($plan['industry']));
+                $brief = $this->study->study($prompt, $plan, $studied, $stats, $kind);
                 $meta = $plan + ['references' => array_column($studied, 'id'), 'brief' => $brief];
             }
             $lap('study');
@@ -345,10 +368,13 @@ class PrototypeWriter
             // The study's brief is the requirement, and the screens it was written from travel
             // along so the builder sees what "like the leading apps" looks like.
             $n = count($studied);
-            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} screens of the leading apps of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\n{$brief}"];
-            $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThree of the screens the brief was written from:"];
+            $what = match ($kind) {
+                'app' => 'screens of the leading apps', 'ads' => 'ads and homepages of the leading names', default => 'pages of the leading names'
+            };
+            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} {$what} of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\n{$brief}"];
+            $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThree of the images the brief was written from:"];
             foreach ($this->forBuilder($studied) as $i => $shot) {
-                $label = 'Screen '.($i + 1).': '.str_replace('_', ' ', $shot['screen_type']).($shot['note'] !== '' ? " ({$shot['note']})" : '');
+                $label = 'Image '.($i + 1).': '.str_replace('_', ' ', $shot['screen_type']).($shot['note'] !== '' ? " ({$shot['note']})" : '');
                 $user[] = ['type' => 'text', 'text' => $label];
                 $user[] = ['type' => 'image_url', 'image_url' => ['url' => $shot['data']]];
             }

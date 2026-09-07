@@ -119,6 +119,31 @@ class PageAuditTest extends TestCase
         $this->assertNotContains('under-the-island', array_column($site['findings'], 'check'));
     }
 
+    public function test_a_stroke_icon_that_paints_as_a_block_is_blocking(): void
+    {
+        // The second ride app: icons in a <symbol> sprite, drawn as strokes, and a rule on
+        // ".icon path" that never reaches shapes cloned through <use>, so every circle was a dot.
+        $page = fn (string $css) => '<!doctype html><meta charset="utf-8"><title>Icons</title>'
+            .'<style>body{margin:0}.icon{width:20px;height:20px;display:block}'.$css.'</style>'
+            .'<svg style="display:none"><symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></symbol></svg>'
+            .'<button><svg class="icon"><use href="#i-clock"/></svg> Chuyến đi</button>';
+
+        $dots = $this->audit()->run($page('.icon path,.icon circle{fill:none;stroke:currentColor}'));
+        $blob = collect(PageAudit::blocking($dots))->firstWhere('check', 'icon-blob');
+        $this->assertNotNull($blob, json_encode($dots['findings']));
+        $this->assertStringContainsString('painted with fill and no stroke', $blob['elements'][0]);
+        $this->assertContains('icon-blob', array_column(PageAudit::repairable($dots, ownsStyle: true), 'check'));
+
+        // The fix the finding names: inherited paint on the svg itself reaches the clone.
+        $ok = $this->audit()->run($page('.icon{fill:none;stroke:currentColor;stroke-width:2}'));
+        $this->assertNotContains('icon-blob', array_column($ok['findings'], 'check'));
+
+        // A glyph meant to be filled carries no stroke and is left alone.
+        $glyph = $this->audit()->run('<!doctype html><meta charset="utf-8"><title>Glyph</title>'
+            .'<button><svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2l3 7h7l-5.5 4 2 7-6.5-4.5L5.5 20l2-7L2 9h7z"/></svg> Punkte</button>');
+        $this->assertNotContains('icon-blob', array_column($glyph['findings'], 'check'));
+    }
+
     public function test_text_the_model_did_not_write_is_blocking(): void
     {
         $report = $this->audit()->run(

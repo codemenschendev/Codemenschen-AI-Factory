@@ -198,6 +198,71 @@ function audit([placeholderSource, minTarget]) {
     });
   }
 
+  // 5b. An icon that paints as a block. A ride app drew its icons the Feather way, thin strokes
+  // on a 24px grid, and never said fill: none, so the browser filled every circle and path with
+  // black: a dot where the magnifier should be, a solid pin the size of a thumb. Measured on the
+  // shapes themselves, through <use> into the sprite's <symbol>: a shape that is both stroked and
+  // filled is a blob, because a glyph meant to be filled carries no stroke. An svg that has its
+  // own shapes and no viewBox is the other block: it renders at the browser's 300x150 default.
+  const shapesOf = (svg) => {
+    const own = [...svg.querySelectorAll('circle, rect, ellipse, path, line, polyline, polygon')];
+    const viaUse = [];
+    for (const use of svg.querySelectorAll('use')) {
+      const ref = (use.getAttribute('href') || use.getAttribute('xlink:href') || '').replace(/^#/, '');
+      const target = ref && document.getElementById(ref);
+      if (!target) continue;
+      const inner = target.matches('circle, rect, ellipse, path, line, polyline, polygon') ? [target]
+        : [...target.querySelectorAll('circle, rect, ellipse, path, line, polyline, polygon')];
+      for (const sh of inner) viaUse.push({ shape: sh, via: use });
+    }
+    return own.map((shape) => ({ shape, via: null })).concat(viaUse);
+  };
+  const painted = (v) => v && v !== 'none' && !/^rgba\(\d+, \d+, \d+, 0\)$/.test(v) && v !== 'transparent';
+  const blobs = [];
+  for (const svg of document.querySelectorAll('svg')) {
+    if (!visible(svg)) continue;
+    const r = svg.getBoundingClientRect();
+    const shapes = shapesOf(svg);
+    if (!shapes.length) continue;
+    if (!svg.hasAttribute('viewBox') && !svg.querySelector('use') && (r.width >= 200 || r.height >= 100)) {
+      blobs.push(`${sel(svg)} has no viewBox and renders at ${Math.round(r.width)}x${Math.round(r.height)}`);
+      continue;
+    }
+    // Through <use>, only INHERITED style reaches the cloned shapes: a rule like ".icon path
+    // { fill: none }" never matches them, which is exactly how the second ride app got its dots.
+    // So a shape's paint is its own attribute, else what the host (the <use> or the svg) inherits.
+    let both = 0;
+    let filledStroke = 0;
+    for (const { shape, via } of shapes) {
+      const host = via || svg;
+      const hostStyle = getComputedStyle(host);
+      const own = via ? { fill: shape.getAttribute('fill') || shape.style.fill, stroke: shape.getAttribute('stroke') || shape.style.stroke }
+        : { fill: getComputedStyle(shape).fill, stroke: getComputedStyle(shape).stroke };
+      const fill = own.fill || hostStyle.fill;
+      const stroke = own.stroke || hostStyle.stroke;
+      if (painted(fill) && painted(stroke)) both++;
+      // A stroke icon painted with fill only: a big circle becomes a dot, an open path a sliver.
+      const tag = shape.tagName.toLowerCase();
+      const openPath = tag === 'path' && !/[zZ]\s*$/.test((shape.getAttribute('d') || '').trim());
+      const bigCircle = (tag === 'circle' || tag === 'ellipse') && (Number(shape.getAttribute('r') || shape.getAttribute('rx')) || 0) >= 4;
+      const lineish = tag === 'line' || tag === 'polyline';
+      if (painted(fill) && !painted(stroke) && (openPath || bigCircle || lineish)) filledStroke++;
+    }
+    if (both && both >= shapes.length / 2) {
+      blobs.push(`${sel(svg)}: ${both} of ${shapes.length} shapes are stroked AND filled, so they paint as blocks (set fill: none on stroke icons)`);
+    } else if (filledStroke && filledStroke >= shapes.length / 2) {
+      blobs.push(`${sel(svg)}: ${filledStroke} of ${shapes.length} shapes are stroke icons painted with fill and no stroke, so they paint as dots (put fill: none and stroke: currentColor on the svg itself; a rule on ".icon path" does not reach shapes cloned through <use>)`);
+    }
+    if (blobs.length >= 6) break;
+  }
+  if (blobs.length) {
+    out.push({
+      severity: 'blocking', check: 'icon-blob',
+      detail: `${blobs.length} icon(s) paint as a block instead of a glyph`,
+      elements: blobs.slice(0, 5),
+    });
+  }
+
   // 6. Anything a finger has to hit.
   const small = [];
   for (const el of document.querySelectorAll('a, button, input, select, textarea, [role="button"]')) {

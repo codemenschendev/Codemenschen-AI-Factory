@@ -422,6 +422,185 @@ class DesignLibrary
         return implode("\n", $lines);
     }
 
+    /**
+     * Pages a site build studies: the trade's own landing pages first, then anyone's.
+     *
+     * The web half of the library is 788 legible pages, 504 of them landing pages. A bakery's
+     * study wants bakery pages; the library has thirteen beauty salons and no bakery at all, so
+     * a thin trade is filled with the best landing pages of any trade, which still teach where
+     * the headline goes and what sits under the hero.
+     *
+     * @return list<array{id:string,note:string,data:string,screen_type:string,grade:string,industry:string}>
+     */
+    public function siteReferences(string $industry, int $max = 6): array
+    {
+        $pages = array_values(array_filter($this->records(), fn (array $r) => ($r['medium'] ?? null) === 'web'
+            && is_array($r['labels'] ?? null) && ($r['labels']['page_type'] ?? null) !== null));
+        $landing = fn (array $r) => in_array($r['labels']['page_type'], ['landing', 'product'], true);
+        $own = array_values(array_filter($pages, fn (array $r) => ($r['labels']['industry'] ?? null) === $industry));
+
+        $taken = [];
+        $pick = function (array $pool, callable $keep) use (&$taken): ?array {
+            $hits = array_values(array_filter($pool, fn (array $r) => $keep($r) && ! isset($taken[$r['id']])));
+            if ($hits === []) {
+                return null;
+            }
+            $r = $hits[array_rand($hits)];
+            $taken[$r['id']] = true;
+
+            return $r;
+        };
+
+        $chosen = [];
+        foreach ([[$own, $landing], [$own, fn () => true], [$pages, $landing]] as [$pool, $keep]) {
+            while (count($chosen) < $max && ($r = $pick($pool, $keep)) !== null) {
+                $chosen[] = $r;
+            }
+        }
+
+        $out = [];
+        foreach ($chosen as $r) {
+            $image = $this->image($r);
+            if ($image !== null) {
+                $out[] = $image + [
+                    'screen_type' => (string) $r['labels']['page_type'].' page',
+                    'grade' => (string) ($r['visual']['grade'] ?? ''),
+                    'industry' => (string) ($r['labels']['industry'] ?? ''),
+                ];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * Ads an ad build studies: the trade's own first, then anyone's, every angle represented
+     * before the same angle repeats. Thirty-two labelled ads is a small wall; the point of the
+     * wall is the range of angles on it.
+     *
+     * @return list<array{id:string,note:string,data:string,screen_type:string,grade:string,industry:string}>
+     */
+    public function adReferences(string $industry, int $max = 6): array
+    {
+        $ads = array_values(array_filter($this->records(), fn (array $r) => in_array($r['visual']['category'] ?? '', ['advertisement', 'banner'], true)
+            && is_array($r['labels'] ?? null) && ($r['labels']['angle'] ?? null) !== null));
+        $own = array_values(array_filter($ads, fn (array $r) => ($r['labels']['industry'] ?? null) === $industry));
+
+        $taken = [];
+        $angles = [];
+        $pick = function (array $pool) use (&$taken, &$angles): ?array {
+            $fresh = array_values(array_filter($pool, fn (array $r) => ! isset($taken[$r['id']]) && ! isset($angles[$r['labels']['angle']])));
+            $hits = $fresh !== [] ? $fresh : array_values(array_filter($pool, fn (array $r) => ! isset($taken[$r['id']])));
+            if ($hits === []) {
+                return null;
+            }
+            $r = $hits[array_rand($hits)];
+            $taken[$r['id']] = true;
+            $angles[$r['labels']['angle']] = true;
+
+            return $r;
+        };
+
+        $chosen = [];
+        foreach ([$own, $ads] as $pool) {
+            while (count($chosen) < $max && ($r = $pick($pool)) !== null) {
+                $chosen[] = $r;
+            }
+        }
+
+        $out = [];
+        foreach ($chosen as $r) {
+            $image = $this->image($r);
+            if ($image !== null) {
+                $l = $r['labels'];
+                $out[] = $image + [
+                    'screen_type' => str_replace('_', ' ', (string) $l['angle']).' ad, '.str_replace('_', ' ', (string) ($l['format'] ?? 'feed')),
+                    'grade' => (string) ($r['visual']['grade'] ?? ''),
+                    'industry' => (string) ($l['industry'] ?? ''),
+                ];
+            }
+        }
+
+        return $out;
+    }
+
+    /**
+     * What the trade's landing pages do, counted. Below five pages of the trade, the whole
+     * library's landing pages are counted instead and the paragraph says so.
+     */
+    public function webStats(string $industry): string
+    {
+        $pages = array_values(array_filter($this->records(), fn (array $r) => ($r['medium'] ?? null) === 'web'
+            && is_array($r['labels'] ?? null) && in_array($r['labels']['page_type'] ?? null, ['landing', 'product'], true)));
+        $own = array_values(array_filter($pages, fn (array $r) => ($r['labels']['industry'] ?? null) === $industry));
+        $label = str_replace('_', ' ', $industry);
+        $pool = count($own) >= 5 ? $own : $pages;
+        $n = count($pool);
+        if ($n < 5) {
+            return '';
+        }
+        $head = count($own) >= 5
+            ? "{$n} landing pages of {$label} businesses in the reference library, counted:"
+            : "The library has too few {$label} pages to count, so here are all {$n} landing pages of every trade, counted:";
+
+        $top = $this->counter($pool);
+        $lines = [$head];
+        $lines[] = '- First screen: '.$top(fn ($r) => $r['labels']['hero_style'] ?? null, 4).'; its visual: '.$top(fn ($r) => $r['labels']['hero_visual'] ?? null, 4).'.';
+        $lines[] = '- Sections under it: '.$top(fn ($r) => $r['labels']['sections'] ?? [], 7).'.';
+        $lines[] = '- Colour scheme: '.$top(fn ($r) => $r['labels']['palette']['scheme'] ?? null, 2).'; accent colours: '.$top(fn ($r) => $r['labels']['palette']['accent'] ?? null, 4).'.';
+        $lines[] = '- Density: '.$top(fn ($r) => $r['labels']['density'] ?? null, 3).'. A button in the navigation: '
+            .count(array_filter($pool, fn ($r) => ($r['labels']['nav_cta'] ?? false) === true))." of {$n}.";
+
+        return implode("\n", $lines);
+    }
+
+    /** What the trade's ads do, counted; below five, all labelled ads, and the paragraph says so. */
+    public function adStats(string $industry): string
+    {
+        $ads = array_values(array_filter($this->records(), fn (array $r) => in_array($r['visual']['category'] ?? '', ['advertisement', 'banner'], true)
+            && is_array($r['labels'] ?? null) && ($r['labels']['angle'] ?? null) !== null));
+        $own = array_values(array_filter($ads, fn (array $r) => ($r['labels']['industry'] ?? null) === $industry));
+        $label = str_replace('_', ' ', $industry);
+        $pool = count($own) >= 5 ? $own : $ads;
+        $n = count($pool);
+        if ($n < 5) {
+            return '';
+        }
+        $head = count($own) >= 5
+            ? "{$n} paid social ads of {$label} businesses in the reference library, counted:"
+            : "The library has too few {$label} ads to count, so here are all {$n} labelled ads of every trade, counted:";
+
+        $top = $this->counter($pool);
+        $yes = fn (string $k) => count(array_filter($pool, fn ($r) => ($r['labels'][$k] ?? false) === true));
+        $lines = [$head];
+        $lines[] = '- Angles: '.$top(fn ($r) => $r['labels']['angle'] ?? null, 5).'.';
+        $lines[] = '- The hook sits: '.$top(fn ($r) => $r['labels']['hook_position'] ?? null, 3).'; text load: '.$top(fn ($r) => $r['labels']['text_load'] ?? null, 3).'.';
+        $lines[] = "- A person in the picture: {$yes('has_people')} of {$n}; a price printed: {$yes('has_price')} of {$n}.";
+        $lines[] = '- Formats: '.$top(fn ($r) => $r['labels']['format'] ?? null, 4).'.';
+
+        return implode("\n", $lines);
+    }
+
+    /** A counter over a pool of records: `$top(key, k)` names the k most frequent values with counts. */
+    private function counter(array $pool): \Closure
+    {
+        return function (callable $key, int $k) use ($pool): string {
+            $c = [];
+            foreach ($pool as $r) {
+                foreach ((array) $key($r) as $v) {
+                    if (is_string($v) && $v !== '') {
+                        $c[$v] = ($c[$v] ?? 0) + 1;
+                    }
+                }
+            }
+            arsort($c);
+            $slice = array_slice($c, 0, $k, true);
+
+            return $slice === [] ? 'not counted' : implode(', ', array_map(
+                fn ($v, $cnt) => str_replace('_', ' ', $v)." ($cnt)", array_keys($slice), $slice));
+        };
+    }
+
     /** @return array{id:string,note:string,data:string}|null */
     private function image(array $r): ?array
     {

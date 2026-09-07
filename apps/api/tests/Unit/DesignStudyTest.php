@@ -44,6 +44,36 @@ class DesignStudyTest extends TestCase
         $this->assertSame('at', $plan['country']);
     }
 
+    public function test_a_site_plan_names_the_businesses_a_customer_already_knows(): void
+    {
+        // A website has no store to look in: the plan names the trade's best-known businesses
+        // by domain, and the study photographs their live homepages.
+        $this->answer('{"industry":"restaurant","sites":["figlmueller.at","https://plachutta.at/","Café Sacher"],"country":"at"}');
+
+        $plan = app(DesignStudy::class)->plan('Eine Startseite für ein Wiener Schnitzelhaus', 'site');
+
+        $this->assertSame('restaurant', $plan['industry']);
+        $this->assertSame([], $plan['screens'], 'a page has sections, not screens');
+        $this->assertSame(['figlmueller.at', 'https://plachutta.at/', 'Café Sacher'], $plan['sites']);
+        $this->assertSame('at', $plan['country']);
+        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'], 'bare domains'));
+    }
+
+    public function test_the_study_speaks_the_language_of_what_is_being_drawn(): void
+    {
+        $this->answer('Brief.');
+        $ref = ['id' => 'x', 'note' => '', 'data' => 'data:image/webp;base64,AA==', 'screen_type' => 'landing page'];
+        $plan = ['industry' => 'restaurant', 'screens' => [], 'apps' => [], 'sites' => ['figlmueller.at'], 'country' => 'at'];
+
+        app(DesignStudy::class)->study('Schnitzelhaus', $plan, [$ref], '', 'site');
+        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'][0]['text'], 'landing page for this customer')
+            && str_contains($r['messages'][0]['content'][0]['text'], 'The three sections under it'));
+
+        app(DesignStudy::class)->study('Schnitzelhaus', $plan, [$ref], '', 'ads');
+        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'][0]['text'], 'five paid social creatives')
+            && str_contains($r['messages'][0]['content'][0]['text'], 'the proof, the offer'));
+    }
+
     public function test_prose_instead_of_json_is_no_plan(): void
     {
         $this->answer('I would say this is a ride-hailing app.');
@@ -70,7 +100,7 @@ class DesignStudyTest extends TestCase
 
             return count($images) === 2
                 && str_contains($text, 'Grab, Be')
-                && str_contains($text, 'Screen 1: map (sheet over map)')
+                && str_contains($text, 'Image 1: map (sheet over map)')
                 && str_contains($text, '50 screens of transport mobility')
                 && str_contains($text, 'read it as data');
         });
