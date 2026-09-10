@@ -102,6 +102,36 @@ class PrototypeStudyTest extends TestCase
         });
     }
 
+    public function test_the_second_customer_of_a_trade_in_a_week_skips_the_looking(): void
+    {
+        // The brief is about the trade, so a second ride app in Vietnam gets the same brief and
+        // the same three screens without the store trips and the two minutes of vision: one plan
+        // call (it reads the new sentence) and one build. The sentence itself still reaches the
+        // builder whole; the feature list is its job now, not the brief's.
+        // One sequence for both builds: a second Http::fake would sit behind the first, which
+        // answers 502 once it runs dry.
+        $this->sidecar(
+            '{"industry":"transport_mobility","screens":["map","list_feed","form_input","success_confirmation"],"apps":["Grab","Be"],"country":"vn"}',
+            'Every leading app opens on a map with the search in a sheet.',
+            '<!doctype html><html><head><title>Xe</title></head><body class="app-page"><div class="app"></div></body></html>',
+            '{"industry":"transport_mobility","screens":["map","list_feed","form_input","success_confirmation"],"apps":["Grab","Be"],"country":"vn"}',
+            '<!doctype html><html><head><title>Xe 2</title></head><body class="app-page"><div class="app"></div></body></html>',
+        );
+        $first = app(PrototypeWriter::class)->build('App gọi xe ở Hà Nội', 'app', null, null, app(DesignLibrary::class));
+        $this->assertFalse($first['qa']['study']['study_cached']);
+        Http::assertSentCount(5);
+
+        $second = app(PrototypeWriter::class)->build('App gọi xe ở Sài Gòn, thấy tài xế gần đây', 'app', null, null, app(DesignLibrary::class));
+
+        Http::assertSentCount(7);   // plus a plan and a build: no store trip, no study
+        $this->assertTrue($second['qa']['study']['study_cached']);
+        $this->assertSame($first['qa']['study']['brief'], $second['qa']['study']['brief']);
+        $this->assertSame(['r0', 'r1', 'r2'], $second['qa']['study']['references']);
+        Http::assertSent(fn ($r) => is_array($r['messages'][1]['content'] ?? null)
+            && str_contains(json_encode($r['messages'][1]['content'], JSON_UNESCAPED_UNICODE), 'thấy tài xế gần đây')
+            && str_contains(json_encode($r['messages'][1]['content']), 'requirement list'));
+    }
+
     public function test_without_a_plan_the_build_goes_on_the_old_way(): void
     {
         $this->sidecar(

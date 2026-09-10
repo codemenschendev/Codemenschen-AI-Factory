@@ -2,6 +2,8 @@
 
 namespace App\Domain\Design;
 
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
@@ -33,25 +35,71 @@ class AppStoreShots
      */
     public function forApps(array $names, string $country, int $maxApps = 3): array
     {
-        $out = [];
-        foreach (array_slice(array_values(array_filter(array_map('trim', $names))), 0, $maxApps) as $name) {
-            $app = $this->lookup($name, $country);
-            if ($app === null) {
-                continue;
+        $names = array_slice(array_values(array_filter(array_map('trim', $names))), 0, $maxApps);
+        if ($names === []) {
+            return [];
+        }
+
+        // Every store search at once, then every screenshot at once. Two apps were two
+        // searches and six downloads in a row, twenty seconds of the study; now they are two
+        // round trips.
+        $apps = array_values(array_filter($this->lookupMany($names, $country)));
+        $urls = [];
+        foreach ($apps as $app) {
+            foreach (array_slice($app['screenshots'], 0, self::PER_APP) as $url) {
+                $urls[] = $url;
             }
+        }
+        $data = $this->fetchMany($urls);
+
+        $out = [];
+        foreach ($apps as $app) {
             foreach (array_slice($app['screenshots'], 0, self::PER_APP) as $i => $url) {
-                $data = $this->fetch($url);
-                if ($data === null) {
+                if (! isset($data[$url])) {
                     continue;
                 }
                 $out[] = [
                     'id' => 'store:'.$app['id'].':'.$i,
                     'note' => "{$app['name']}, App Store {$country}, {$app['ratings']} ratings",
-                    'data' => $data,
+                    'data' => $data[$url],
                     'screen_type' => 'store screenshot '.($i + 1),
                     'app' => $app['name'],
                 ];
             }
+        }
+
+        return $out;
+    }
+
+    /**
+     * @param  list<string>  $names
+     * @return list<array{id:string,name:string,ratings:int,screenshots:list<string>}|null>
+     */
+    private function lookupMany(array $names, string $country): array
+    {
+        try {
+            $responses = Http::pool(fn (Pool $pool) => array_map(
+                fn (string $name) => $pool->as($name)->timeout(15)->connectTimeout(8)->get('https://itunes.apple.com/search', [
+                    'term' => $name, 'entity' => 'software', 'country' => $country, 'limit' => 5,
+                ]),
+                $names,
+            ));
+        } catch (\Throwable $e) {
+            Log::info('app store: search skipped', ['error' => mb_substr($e->getMessage(), 0, 120)]);
+
+            return [];
+        }
+
+        $out = [];
+        foreach ($names as $name) {
+            $res = $responses[$name] ?? null;
+            if (! $res instanceof Response || ! $res->successful()) {
+                Log::info('app store: search skipped', ['app' => $name]);
+                $out[] = null;
+
+                continue;
+            }
+            $out[] = $this->pick($name, $res->json('results') ?? []);
         }
 
         return $out;
@@ -66,17 +114,12 @@ class AppStoreShots
      */
     public function lookup(string $name, string $country): ?array
     {
-        try {
-            $res = Http::timeout(15)->connectTimeout(8)->get('https://itunes.apple.com/search', [
-                'term' => $name, 'entity' => 'software', 'country' => $country, 'limit' => 5,
-            ]);
-            $results = $res->successful() ? ($res->json('results') ?? []) : [];
-        } catch (\Throwable $e) {
-            Log::info('app store: search skipped', ['app' => $name, 'error' => mb_substr($e->getMessage(), 0, 120)]);
+        return $this->lookupMany([$name], $country)[0] ?? null;
+    }
 
-            return null;
-        }
-
+    /** @param  list<array<string,mixed>>  $results */
+    private function pick(string $name, array $results): ?array
+    {
         $rows = [];
         foreach ($results as $r) {
             $shots = array_values(array_filter($r['screenshotUrls'] ?? [], 'is_string'));
@@ -101,43 +144,58 @@ class AppStoreShots
         return $rows[0];
     }
 
-    /** One screenshot as a data URI at study size, cached on disk under its URL's hash. */
-    private function fetch(string $url): ?string
+    /**
+     * Every screenshot not on disk yet, downloaded together; each as a data URI at study size,
+     * cached on disk under its URL's hash.
+     *
+     * @param  list<string>  $urls
+     * @return array<string,string> url => data URI
+     */
+    private function fetchMany(array $urls): array
     {
         $dir = storage_path('app/store-shots');
         if (! is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }
-        $cached = $dir.'/'.sha1($url).'.webp';
+        $file = fn (string $url) => $dir.'/'.sha1($url).'.webp';
+        $urls = array_values(array_unique($urls));
 
-        if (! is_file($cached)) {
+        $missing = array_values(array_filter($urls, fn (string $u) => ! is_file($file($u))));
+        if ($missing !== []) {
             try {
-                $res = Http::timeout(20)->get($url);
-                if (! $res->successful() || strlen($res->body()) < 5000) {
-                    return null;
-                }
+                $responses = Http::pool(fn (Pool $pool) => array_map(
+                    fn (string $u) => $pool->as($u)->timeout(20)->get($u), $missing,
+                ));
             } catch (\Throwable) {
-                return null;
+                $responses = [];
             }
-            $tmp = tempnam(sys_get_temp_dir(), 'store-shot-').'.png';
-            file_put_contents($tmp, $res->body());
-            try {
-                $bin = collect(['/usr/bin/magick', '/usr/bin/convert', '/opt/homebrew/bin/magick'])
-                    ->first(fn (string $p) => is_executable($p));
-                if ($bin === null) {
-                    return null;
+            $bin = collect(['/usr/bin/magick', '/usr/bin/convert', '/opt/homebrew/bin/magick'])
+                ->first(fn (string $p) => is_executable($p));
+            foreach ($missing as $u) {
+                $res = $responses[$u] ?? null;
+                if ($bin === null || ! $res instanceof Response || ! $res->successful() || strlen($res->body()) < 5000) {
+                    continue;
                 }
-                (new Process([$bin, $tmp, '-resize', self::WIDTH.'x>', '-quality', '75', '-strip', $cached], null, null, null, 60))->run();
-                if (! is_file($cached) || filesize($cached) < 1000) {
-                    @unlink($cached);
-
-                    return null;
+                $tmp = tempnam(sys_get_temp_dir(), 'store-shot-').'.png';
+                file_put_contents($tmp, $res->body());
+                try {
+                    (new Process([$bin, $tmp, '-resize', self::WIDTH.'x>', '-quality', '75', '-strip', $file($u)], null, null, null, 60))->run();
+                    if (! is_file($file($u)) || filesize($file($u)) < 1000) {
+                        @unlink($file($u));
+                    }
+                } finally {
+                    @unlink($tmp);
                 }
-            } finally {
-                @unlink($tmp);
             }
         }
 
-        return 'data:image/webp;base64,'.base64_encode((string) file_get_contents($cached));
+        $out = [];
+        foreach ($urls as $u) {
+            if (is_file($file($u))) {
+                $out[$u] = 'data:image/webp;base64,'.base64_encode((string) file_get_contents($file($u)));
+            }
+        }
+
+        return $out;
     }
 }

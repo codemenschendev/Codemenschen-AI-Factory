@@ -2,6 +2,8 @@
 
 namespace App\Domain\Design;
 
+use Illuminate\Http\Client\Pool;
+use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\Process\Process;
@@ -113,7 +115,12 @@ class WebShots
     }
 
     /**
-     * One trip to the sidecar for every page not on disk yet.
+     * One sidecar call PER page, all in flight together.
+     *
+     * The sidecar photographs the pages of one request one after another, a fresh Chromium
+     * context each, and a homepage takes ten to thirty seconds to load, settle and scroll. Three
+     * competitors in one request were ninety seconds of the study; three requests at once are
+     * thirty. The sidecar launches a browser per request, which is what makes them independent.
      *
      * @param  list<string>  $urls
      * @return array<string,string> url => data URI
@@ -130,15 +137,12 @@ class WebShots
         }
 
         try {
-            $res = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()
-                ->timeout(20 + 35 * count($urls))->connectTimeout(10)
-                ->post('/v1/pages/check', ['urls' => $urls, 'width' => 1280, 'quality' => 60, 'timeout_ms' => 30000]);
-            if (! $res->successful()) {
-                Log::info('web shots: sidecar answered', ['status' => $res->status()]);
-
-                return [];
-            }
-            $results = $res->json('results') ?? [];
+            $responses = Http::pool(fn (Pool $pool) => array_map(
+                fn (string $u) => $pool->as($u)->baseUrl($baseUrl)->withToken($token)->acceptJson()
+                    ->timeout(55)->connectTimeout(10)
+                    ->post('/v1/pages/check', ['urls' => [$u], 'width' => 1280, 'quality' => 60, 'timeout_ms' => 30000]),
+                $urls,
+            ));
         } catch (\Throwable $e) {
             Log::info('web shots: skipped', ['error' => mb_substr($e->getMessage(), 0, 160)]);
 
@@ -146,15 +150,28 @@ class WebShots
         }
 
         $out = [];
-        foreach ($results as $r) {
-            $url = (string) ($r['url'] ?? '');
-            $b64 = $r['screenshot_base64'] ?? null;
-            if ($url === '' || ! is_string($b64) || $b64 === '') {
+        foreach ($responses as $u => $res) {
+            // A pool hands back the exception itself for a request that never got an answer.
+            if (! $res instanceof Response) {
+                Log::info('web shots: no answer', ['url' => $u, 'error' => mb_substr($res->getMessage(), 0, 160)]);
+
                 continue;
             }
-            $data = $this->encode((string) base64_decode($b64, true), $this->file($url));
-            if ($data !== null) {
-                $out[$url] = $data;
+            if (! $res->successful()) {
+                Log::info('web shots: sidecar answered', ['url' => $u, 'status' => $res->status()]);
+
+                continue;
+            }
+            foreach ($res->json('results') ?? [] as $r) {
+                $url = (string) ($r['url'] ?? '');
+                $b64 = $r['screenshot_base64'] ?? null;
+                if ($url === '' || ! is_string($b64) || $b64 === '') {
+                    continue;
+                }
+                $data = $this->encode((string) base64_decode($b64, true), $this->file($url));
+                if ($data !== null) {
+                    $out[$url] = $data;
+                }
             }
         }
 

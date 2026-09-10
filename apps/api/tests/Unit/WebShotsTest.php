@@ -35,15 +35,23 @@ class WebShotsTest extends TestCase
     public function test_domains_become_homepages_and_the_top_of_each_page_comes_back(): void
     {
         $jpeg = base64_encode($this->jpeg());
-        Http::fake(['sidecar.test/v1/pages/check' => Http::response(['results' => [
-            ['url' => 'https://figlmueller.at/', 'screenshot_base64' => $jpeg, 'error' => null],
-            ['url' => 'https://plachutta.at/', 'screenshot_base64' => null, 'error' => 'timeout'],
-        ]])]);
+        // One request per page, so three homepages load side by side instead of one after another.
+        Http::fake(['sidecar.test/v1/pages/check' => function ($request) use ($jpeg) {
+            $u = $request['urls'][0];
+
+            return Http::response(['results' => [
+                $u === 'https://figlmueller.at/'
+                    ? ['url' => $u, 'screenshot_base64' => $jpeg, 'error' => null]
+                    : ['url' => $u, 'screenshot_base64' => null, 'error' => 'timeout'],
+            ]]);
+        }]);
 
         $shots = app(WebShots::class)->forSites(['figlmueller.at', 'https://plachutta.at/menu', 'Café Sacher', ''], 3);
 
         // The name that is not a domain is dropped, the page that failed is dropped, the rest is a picture.
-        Http::assertSent(fn ($r) => $r['urls'] === ['https://figlmueller.at/', 'https://plachutta.at/']);
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($r) => $r['urls'] === ['https://figlmueller.at/']);
+        Http::assertSent(fn ($r) => $r['urls'] === ['https://plachutta.at/']);
         $this->assertCount(1, $shots);
         $this->assertSame('web:figlmueller.at', $shots[0]['id']);
         $this->assertSame('live homepage', $shots[0]['screen_type']);

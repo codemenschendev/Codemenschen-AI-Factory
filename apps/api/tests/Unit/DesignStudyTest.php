@@ -78,11 +78,11 @@ class DesignStudyTest extends TestCase
         $ref = ['id' => 'x', 'note' => '', 'data' => 'data:image/webp;base64,AA==', 'screen_type' => 'landing page'];
         $plan = ['industry' => 'restaurant', 'screens' => [], 'apps' => [], 'sites' => ['figlmueller.at'], 'country' => 'at'];
 
-        app(DesignStudy::class)->study('Schnitzelhaus', $plan, [$ref], '', 'site');
-        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'][0]['text'], 'landing page for this customer')
+        app(DesignStudy::class)->study($plan, [$ref], '', 'site');
+        Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'][0]['text'], 'landing page for a business in this trade')
             && str_contains($r['messages'][0]['content'][0]['text'], 'The three sections under it'));
 
-        app(DesignStudy::class)->study('Schnitzelhaus', $plan, [$ref], '', 'ads');
+        app(DesignStudy::class)->study($plan, [$ref], '', 'ads');
         Http::assertSent(fn ($r) => str_contains($r['messages'][0]['content'][0]['text'], 'five paid social creatives')
             && str_contains($r['messages'][0]['content'][0]['text'], 'the proof, the offer'));
     }
@@ -103,7 +103,7 @@ class DesignStudyTest extends TestCase
         ];
         $plan = ['industry' => 'transport_mobility', 'screens' => ['map', 'list_feed'], 'apps' => ['Grab', 'Be'], 'country' => 'vn'];
 
-        $brief = app(DesignStudy::class)->study('App gọi xe ở Hà Nội', $plan, $refs, '50 screens of transport mobility apps, counted:');
+        $brief = app(DesignStudy::class)->study($plan, $refs, '50 screens of transport mobility apps, counted:');
 
         $this->assertSame('Every one of these opens on a map.', $brief);
         Http::assertSent(function ($request) {
@@ -125,6 +125,6 @@ class DesignStudyTest extends TestCase
         $plan = ['industry' => 'other', 'screens' => ['map'], 'apps' => [], 'country' => 'at'];
 
         $this->assertNull(app(DesignStudy::class)->plan('x'));
-        $this->assertNull(app(DesignStudy::class)->study('x', $plan, [['id' => 'a', 'note' => '', 'data' => 'd', 'screen_type' => 'map']], ''));
+        $this->assertNull(app(DesignStudy::class)->study($plan, [['id' => 'a', 'note' => '', 'data' => 'd', 'screen_type' => 'map']], ''));
     }
 }

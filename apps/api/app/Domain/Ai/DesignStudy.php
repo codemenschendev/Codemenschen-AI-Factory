@@ -128,9 +128,13 @@ class DesignStudy
      * well, but a paragraph that says "every one of these opens on a map with the search in a
      * sheet over it" is what turns six pictures into a requirement.
      *
+     * The brief is about the TRADE and never about one customer: it does not see the customer's
+     * sentence, so it can be kept and reused for the next customer of the same trade, and the
+     * builder, which reads the sentence whole, is the one that places what it names.
+     *
      * @param  list<array{id:string,note:string,data:string,screen_type:string}>  $refs
      */
-    public function study(string $brief, array $plan, array $refs, string $stats, string $kind = 'app'): ?string
+    public function study(array $plan, array $refs, string $stats, string $kind = 'app'): ?string
     {
         if ($refs === []) {
             return null;
@@ -144,11 +148,8 @@ class DesignStudy
 
         $text = match ($kind) {
             'app' => <<<TXT
-                You are a product designer preparing to design an app for this customer:
-
-                {$brief}
-
-                Trade: {$plan['industry']}. Apps the customer will compare it with: {$peers}.
+                You are a product designer preparing to design an app in this trade: {$plan['industry']}.
+                Apps its users already have on the phone and will compare it with: {$peers}.
                 The four screens to be drawn, in order: {$this->list($plan['screens'])}.
 
                 {$stats}
@@ -161,24 +162,20 @@ class DesignStudy
                 first screen, where the primary action sits, how dense they are, what colour and type
                 they lean on, what they show a photograph of and what they never would.
 
-                Then write the design brief for OUR app, 250 to 400 words, {$rules}:
-                  1. What the customer will expect on each of the four screens, one paragraph each,
+                Then write the design brief for a NEW app of this trade, 250 to 400 words, {$rules}:
+                  1. What a user will expect on each of the four screens, one paragraph each,
                      concrete: elements, order, the one primary action.
-                  2. The look: colour, type, radius, density, in one paragraph, chosen for THIS trade.
+                  2. The look: colour, type, radius, density, in one paragraph, chosen for THIS trade
+                     and unlike the apps above.
                   3. The three mistakes that would make it look like a template instead of this trade.
-                  4. Every feature the customer's own sentence names, one line each, with the screen it
-                     lives on and how it shows. "See nearby drivers" is car markers on the map before
-                     anything is typed, not a sentence in a list. A feature the customer asked for and
-                     cannot see is the first thing they will ask about.
+                Write about the trade, not about one business: the brief is reused for the next
+                customer of the same trade, whose own requirements are handled separately.
 
                 {$looking}
                 TXT,
             'ads' => <<<TXT
-                You are an art director preparing five paid social creatives for this customer:
-
-                {$brief}
-
-                Trade: {$plan['industry']}. Businesses the customer's customers already know: {$peers}.
+                You are an art director preparing five paid social creatives for a business in this
+                trade: {$plan['industry']}. Businesses its customers already know: {$peers}.
 
                 {$stats}
 
@@ -190,26 +187,23 @@ class DesignStudy
                 picture shows and never would, which colour and type the trade leans on and which
                 the big names already own.
 
-                Then write the creative brief for OUR five ads, 250 to 400 words, {$rules}:
+                Then write the creative brief for five NEW ads of this trade, 250 to 400 words, {$rules}:
                   1. The five angles in order (the problem, the result, the proof, the offer, the
                      reminder): for each, in two sentences, what the picture shows and what the
-                     headline does. Concrete, for this business and this town.
+                     headline does. Concrete for the trade; the place, the offer and the product
+                     come from the customer later and are not invented here.
                   2. The look: a colour nobody in the list owns, the type, the frame treatment, how
                      much text on the picture, in one paragraph.
                   3. The three mistakes that would make these look like stock templates instead of
                      ads for this trade.
-                  4. Every fact the customer's own sentence gives (place, offer, deadline, product),
-                     one line each, and which of the five ads carries it. Nothing the sentence does
-                     not give is invented.
+                Write about the trade, not about one business: the brief is reused for the next
+                customer of the same trade, whose own facts are handled separately.
 
                 {$looking}
                 TXT,
             default => <<<TXT
-                You are a web designer preparing a landing page for this customer:
-
-                {$brief}
-
-                Trade: {$plan['industry']}. Businesses the customer's customers already know: {$peers}.
+                You are a web designer preparing a landing page for a business in this trade:
+                {$plan['industry']}. Businesses its customers already know: {$peers}.
 
                 {$stats}
 
@@ -221,7 +215,7 @@ class DesignStudy
                 where the one action is, how dense they are, what they show a photograph of and what
                 they never would, which colour the big names already own.
 
-                Then write the design brief for OUR page, 250 to 400 words, {$rules}:
+                Then write the design brief for a NEW page of this trade, 250 to 400 words, {$rules}:
                   1. The first screen: what it shows, the shape of the headline, the one action, in
                      one paragraph.
                   2. The three sections under it, in order, one paragraph each: what each proves and
@@ -230,9 +224,8 @@ class DesignStudy
                   4. The look: colour, type, radius, density, chosen for THIS trade and unlike the
                      names above.
                   5. The three mistakes that would make it look like a template instead of this trade.
-                  6. Every feature and fact the customer's own sentence names, one line each, with the
-                     section it lives in and how it shows. Nothing the sentence does not give is
-                     invented.
+                Write about the trade, not about one business: the brief is reused for the next
+                customer of the same trade, whose own features and facts are handled separately.
 
                 {$looking}
                 TXT,

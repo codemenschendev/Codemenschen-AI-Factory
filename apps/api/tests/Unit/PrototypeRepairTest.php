@@ -104,20 +104,65 @@ class PrototypeRepairTest extends TestCase
         });
     }
 
-    public function test_a_second_repair_runs_only_when_the_first_helped(): void
+    public function test_a_repair_is_one_round_and_what_it_still_gets_wrong_ships_on_record(): void
     {
-        // Five faults to three is progress worth one more generation; the round after a clean
-        // page never happens. Two rounds, then it ships whatever it has.
-        $this->answers('<h1>Drei Fehler</h1>', '<h1>Ein Fehler</h1>', '<h1>Sauber</h1>', '<h1>Nie</h1>');
+        // Three faults to one is progress, and it used to buy a second round: a whole page
+        // written again, up to two minutes more of the visitor's wait. One round now; the page
+        // ships with the remaining fault in the audit, where the operator sees it.
+        $this->answers('<h1>Drei Fehler</h1>', '<h1>Ein Fehler</h1>', '<h1>Nie</h1>');
         $three = ['ok' => false, 'findings' => array_fill(0, 3, $this->fault()['findings'][0])];
         $audit = $this->auditor([$three, $this->fault(), $this->clean()]);
 
         $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
 
-        Http::assertSentCount(3);
+        Http::assertSentCount(2);
+        $this->assertFalse($out['qa']['ok']);
+        $this->assertSame(1, $out['qa']['repairs']);
+        $this->assertTrue($out['qa']['repaired']);
+        $this->assertStringContainsString('Ein Fehler', $out['html']);
+    }
+
+    public function test_a_repair_arrives_as_patches_and_is_applied_by_hand(): void
+    {
+        // The model is asked for FIND/=== blocks, a fraction of the tokens of a page written
+        // again. Exact copies apply, copies with the indentation off apply, one that matches
+        // nothing is skipped and the others still count.
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        $page = $this->page("<style>\n  .hero { width: 1400px; }\n</style>\n<section class=\"hero\">\n  <h1>Lorem ipsum</h1>\n  <p>Wien – seit 1990</p>\n</section>");
+        $patches = "Here are the fixes.\n\n<<<FIND\n  .hero { width: 1400px; }\n===\n  .hero { width: 100%; }\n>>>\n\n<<<FIND\n<h1>Lorem ipsum</h1>\n<p>Wien – seit 1990</p>\n===\n<h1>Friseur Amsel</h1>\n<p>Wien, seit 1990</p>\n>>>\n\n<<<FIND\n<footer>never there</footer>\n===\n\n>>>\n";
+        $seq = Http::sequence()
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => $page]]]]))
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => $patches]]]]));
+        Http::fake(['*/v1/chat/completions' => $seq]);
+        $audit = $this->auditor([$this->fault('overflow'), $this->clean()]);
+
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+
+        Http::assertSentCount(2);
+        Http::assertSent(fn ($r) => count($r['messages'] ?? []) === 4 && str_contains((string) $r['messages'][3]['content'], '<<<FIND'));
         $this->assertTrue($out['qa']['ok']);
-        $this->assertSame(2, $out['qa']['repairs']);
-        $this->assertStringContainsString('Sauber', $out['html']);
+        $this->assertTrue($out['qa']['repaired']);
+        $this->assertStringContainsString('.hero { width: 100%; }', $out['html']);
+        $this->assertStringContainsString('<h1>Friseur Amsel</h1>', $out['html']);
+        $this->assertStringContainsString('<p>Wien, seit 1990</p>', $out['html']);
+        $this->assertStringNotContainsString('Lorem', $out['html']);
+    }
+
+    public function test_patches_that_match_nothing_are_no_repair(): void
+    {
+        [$html, $applied, $missed] = PrototypeWriter::patch('<p>a</p><p>a</p>', "<<<FIND\n<p>a</p>\n===\n<p>b</p>\n>>>");
+        // Two places match: applying to either is a guess, so neither is touched.
+        $this->assertSame('<p>a</p><p>a</p>', $html);
+        $this->assertSame([0, 1], [$applied, $missed]);
+
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        Http::fake(['*/v1/chat/completions' => Http::sequence()
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => $this->page('<h1>Kaputt</h1>')]]]]))
+            ->pushResponse(Http::response(['choices' => [['message' => ['content' => "<<<FIND\n<h1>Gibt es nicht</h1>\n===\n<h1>Egal</h1>\n>>>"]]]]))]);
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $this->auditor([$this->fault()]));
+
+        $this->assertStringContainsString('Kaputt', $out['html']);
+        $this->assertSame('no patch matched the page', $out['qa']['repair_failed']);
     }
 
     public function test_the_build_keeps_a_stopwatch_and_tells_the_stage(): void

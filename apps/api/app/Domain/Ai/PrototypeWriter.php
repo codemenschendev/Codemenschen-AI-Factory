@@ -8,6 +8,7 @@ use App\Domain\Design\DesignRefs;
 use App\Domain\Design\WebShots;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -242,7 +243,20 @@ class PrototypeWriter
     public const KINDS = ['site', 'app', 'ads'];
 
     /** Repair rounds at most. The second runs only if the first reduced the faults. */
-    private const REPAIRS = 2;
+    /**
+     * One. A repair used to be a whole page written again, 100 to 115 seconds a round, and the
+     * second round on a bad build was four minutes of the visitor's wait for two faults. Now a
+     * repair is a set of patches, a fraction of the tokens, and one round of it is what a build
+     * gets; what it still gets wrong after that ships with the audit on record.
+     */
+    private const REPAIRS = 1;
+
+    /**
+     * How long a trade's study is kept. The brief describes the trade, not the customer: what
+     * every bakery site does, which colour Ankerbrot owns. Bakeries do not change in a week,
+     * and the first build of the second bakery skips two minutes of looking.
+     */
+    private const STUDY_DAYS = 7;
 
     /** Screens a build studies: library screens plus store shots. */
     private const STUDY_SCREENS = 8;
@@ -304,31 +318,48 @@ class PrototypeWriter
             $stage('studying');
             $plan = $this->study->plan($prompt, $kind);
             if ($plan !== null) {
-                // The library's own pictures of the trade, then the world's: the apps' store
-                // screenshots for an app, the best-known businesses' live homepages for a
-                // website or an ad.
-                // Not $refs: that is the DesignRefs parameter the no-study path still uses, and
-                // shadowing it crashed every site build whose study found no pictures.
-                [$fromLibrary, $shots, $stats] = match ($kind) {
-                    'app' => [
-                        $library->references($plan['industry'], $plan['screens'], 4),
-                        $this->store->forApps($plan['apps'], $plan['country'], 2),
-                        $library->industryStats($plan['industry']),
-                    ],
-                    'ads' => [
-                        $library->adReferences($plan['industry'], 4),
-                        $this->web->forSites($plan['sites'], 2),
-                        $library->adStats($plan['industry']),
-                    ],
-                    default => [
-                        $library->siteReferences($plan['industry'], 4),
-                        $this->web->forSites($plan['sites'], 3),
-                        $library->webStats($plan['industry']),
-                    ],
-                };
-                $studied = array_slice(array_merge($fromLibrary, $shots), 0, self::STUDY_SCREENS);
-                $brief = $this->study->study($prompt, $plan, $studied, $stats, $kind);
-                $meta = $plan + ['references' => array_column($studied, 'id'), 'brief' => $brief];
+                // The study is of the trade, so it is kept per trade: same kind, industry,
+                // country and screens means the same competitors, the same pictures and the
+                // same brief, and the second customer of a trade in a week skips the looking.
+                // The customer's own sentence is not in the brief; the builder reads it whole.
+                $key = 'prototype-study:'.sha1(implode('|', [$kind, $plan['industry'], $plan['country'], implode(',', $plan['screens'])]));
+                $cached = Cache::get($key);
+                if (is_array($cached) && isset($cached['brief'], $cached['studied'])) {
+                    $studied = $cached['studied'];
+                    $brief = $cached['brief'];
+                    $meta = $plan + ['references' => array_column($studied, 'id'), 'brief' => $brief, 'study_cached' => true];
+                } else {
+                    // The library's own pictures of the trade, then the world's: the apps' store
+                    // screenshots for an app, the best-known businesses' live homepages for a
+                    // website or an ad.
+                    // Not $refs: that is the DesignRefs parameter the no-study path still uses, and
+                    // shadowing it crashed every site build whose study found no pictures.
+                    [$fromLibrary, $shots, $stats] = match ($kind) {
+                        'app' => [
+                            $library->references($plan['industry'], $plan['screens'], 4),
+                            $this->store->forApps($plan['apps'], $plan['country'], 2),
+                            $library->industryStats($plan['industry']),
+                        ],
+                        'ads' => [
+                            $library->adReferences($plan['industry'], 4),
+                            $this->web->forSites($plan['sites'], 2),
+                            $library->adStats($plan['industry']),
+                        ],
+                        default => [
+                            $library->siteReferences($plan['industry'], 4),
+                            $this->web->forSites($plan['sites'], 3),
+                            $library->webStats($plan['industry']),
+                        ],
+                    };
+                    $studied = array_slice(array_merge($fromLibrary, $shots), 0, self::STUDY_SCREENS);
+                    $brief = $this->study->study($plan, $studied, $stats, $kind);
+                    $meta = $plan + ['references' => array_column($studied, 'id'), 'brief' => $brief, 'study_cached' => false];
+                    if ($brief !== null) {
+                        // Only the pictures the builder will be shown travel into the cache: the
+                        // eight the study looked at are a megabyte, the three it hands on are not.
+                        Cache::put($key, ['brief' => $brief, 'studied' => $this->forBuilder($studied)], now()->addDays(self::STUDY_DAYS));
+                    }
+                }
             }
             $lap('study');
         }
@@ -376,7 +407,7 @@ class PrototypeWriter
             $what = match ($kind) {
                 'app' => 'screens of the leading apps', 'ads' => 'ads and homepages of the leading names', default => 'pages of the leading names'
             };
-            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} {$what} of this trade and wrote this brief. It says what the customer will expect. Follow it; where it and your own habit differ, the brief wins.\n\nThe businesses and apps the brief names are COMPETITORS the designer looked at. They never appear in the page: not their names, domains, logos, colours or products. They are not the customer's clients, partners or references, and a competitor printed as proof is the one line a customer will not forgive.\n\n{$brief}"];
+            $user[] = ['type' => 'text', 'text' => "A designer studied {$n} {$what} of this trade and wrote this brief. It says what a customer of this trade will expect. Follow it; where it and your own habit differ, the brief wins.\n\nThe brief is about the trade. The customer's own sentence above is the requirement list: every feature, place, offer and fact it names must be VISIBLE, on the screen or in the section it belongs to, shown the way the trade shows it and not as a line in a list. \"See nearby drivers\" is car markers on the map before anything is typed. A feature the customer asked for and cannot see is the first thing they will ask about. Nothing the sentence does not give is invented.\n\nThe businesses and apps the brief names are COMPETITORS the designer looked at. They never appear in the page: not their names, domains, logos, colours or products. They are not the customer's clients, partners or references, and a competitor printed as proof is the one line a customer will not forgive.\n\n{$brief}"];
             $user[] = ['type' => 'text', 'text' => self::REFERENCE."\n\nThree of the images the brief was written from:"];
             foreach ($this->forBuilder($studied) as $i => $shot) {
                 $label = 'Image '.($i + 1).': '.str_replace('_', ' ', $shot['screen_type']).($shot['note'] !== '' ? " ({$shot['note']})" : '');
@@ -562,11 +593,15 @@ class PrototypeWriter
     /**
      * One more pass at the same page, with the browser's complaints attached.
      *
-     * One only. A second repair on a page the first did not fix is a model going in circles, and
-     * every round costs a generation the visitor is waiting through.
+     * The model answers with patches, not with the page: blocks of "the lines as they are" and
+     * "the lines as they should be", which are applied here. A page written again from the top
+     * was 100 to 115 seconds for faults that touch three lines; the patches are ten to twenty.
+     * A model that sends the whole page anyway still gets its page used, and one that sends
+     * patches that match nothing has repaired nothing.
+     *
+     * @param  array<int,array<string,mixed>>  $user  the first user turn, replayed as it was
+     * @return array{0:string,1:?string} the repaired markup, or '' plus why there is none
      */
-    /** @return array{0:string,1:?string} the repaired markup, or '' plus why there is none */
-    /** @param  array<int,array<string,mixed>>  $user  the first user turn, replayed as it was */
     private function repair(PendingRequest $request, string $system,
         array $user, string $markup, array $blocking): array
     {
@@ -580,11 +615,23 @@ class PrototypeWriter
                 ['role' => 'assistant', 'content' => $markup],
                 ['role' => 'user', 'content' => <<<TXT
                     A browser opened your page at 320, 768 and 1280 pixels wide and found these
-                    faults. Fix every one of them and reply with the whole HTML file again, nothing
-                    else. Change as little as possible: keep the same sections, the same words and
-                    the same structure, and do not add a style block.
+                    faults. Fix every one of them with PATCHES, not by writing the page again.
 
                     {$brief}
+
+                    Reply with one or more blocks in exactly this form and nothing else:
+
+                    <<<FIND
+                    the lines to replace, copied from your page exactly, character for character
+                    ===
+                    the lines that replace them
+                    >>>
+
+                    Each FIND must be a short, unique passage of the page as you wrote it: whole
+                    lines, three to ten of them, never a whole section. Leave the replacement empty
+                    to delete the passage. Change as little as possible: same sections, same words
+                    where they are not the fault, no new style block; put a CSS fix inside the
+                    existing style block by patching the rule.
 
                     Overflow is almost always one element wider than the screen or one word that
                     cannot break. Placeholder text means write the real thing for this business.
@@ -594,16 +641,71 @@ class PrototypeWriter
                     it: those businesses were studied, they are not the customer's references.
                     TXT],
             ],
-            'max_completion_tokens' => 8000,
+            'max_completion_tokens' => 4000,
         ]);
 
         if (! $res->successful()) {
             return ['', 'http '.$res->status()];
         }
+        $reply = (string) $res->json('choices.0.message.content');
 
-        $html = $this->extractHtml((string) $res->json('choices.0.message.content'));
+        [$patched, $applied, $missed] = self::patch($markup, $reply);
+        if ($applied > 0) {
+            if ($missed > 0) {
+                Log::info('prototype: some patches matched nothing', ['applied' => $applied, 'missed' => $missed]);
+            }
 
-        return $html === '' ? ['', 'no html in the reply'] : [$html, null];
+            return [$patched, null];
+        }
+
+        $html = $this->extractHtml($reply);
+        if ($html !== '') {
+            return [$html, null];
+        }
+
+        return ['', $missed > 0 ? 'no patch matched the page' : 'no patch in the reply'];
+    }
+
+    /**
+     * The patches of a repair reply applied to the page.
+     *
+     * A FIND is matched exactly first, then with every run of whitespace allowed to differ,
+     * because a model copies its own indentation imperfectly and a patch that fails on a tab is
+     * a repair thrown away. A FIND that matches nothing, or more than one place, is skipped:
+     * guessing where a patch goes is how a page gets a second footer.
+     *
+     * @return array{0:string,1:int,2:int} the page, patches applied, patches that matched nothing
+     */
+    public static function patch(string $html, string $reply): array
+    {
+        if (preg_match_all('/<<<FIND\R(.*?)\R===\R?(.*?)\R?>>>/s', $reply, $m, PREG_SET_ORDER) === 0) {
+            return [$html, 0, 0];
+        }
+        $applied = 0;
+        $missed = 0;
+        foreach ($m as [, $find, $with]) {
+            $find = rtrim($find, "\r\n");
+            if (trim($find) === '') {
+                $missed++;
+
+                continue;
+            }
+            if (substr_count($html, $find) === 1) {
+                $html = str_replace($find, $with, $html);
+                $applied++;
+
+                continue;
+            }
+            $loose = '/'.implode('\s+', array_map(fn (string $w) => preg_quote($w, '/'), preg_split('/\s+/', trim($find)))).'/';
+            if (preg_match_all($loose, $html, $hits) === 1) {
+                $html = preg_replace($loose, str_replace(['\\', '$'], ['\\\\', '\$'], $with), $html, 1);
+                $applied++;
+            } else {
+                $missed++;
+            }
+        }
+
+        return [$html, $applied, $missed];
     }
 
     /**
