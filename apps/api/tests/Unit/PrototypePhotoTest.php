@@ -120,6 +120,25 @@ class PrototypePhotoTest extends TestCase
         $this->assertSame('Anna Fotografin', $out['credit']);
     }
 
+    public function test_a_slot_the_model_named_itself_is_still_a_slot(): void
+    {
+        // The Linz bakery's hero: class="photo-hero", a search phrase, a brief, and no picture,
+        // because only the three names were looked for. Anything "photo-…" with a data-q is one.
+        $stock = $this->stock($this->png());
+        $out = $this->photo($stock)->apply($this->page(
+            '<header class="hero"><div class="photo-hero" data-q="fresh bread rolls basket steam">Korb voller warmer Weckerl</div><h1>Frisch</h1></header>'
+            .'<div class="photo-grid"><div class="photo-card" data-q="bakery counter">Theke</div></div>'
+        ));
+
+        $this->assertStringContainsString('class="has-photo photo-hero"', $out['html']);
+        $this->assertStringNotContainsString('Korb voller warmer Weckerl</div>', $out['html']);
+        $this->assertStringContainsString('alt="Korb voller warmer Weckerl"', $out['html']);
+        // The grid around the card is a layout, not a picture: no data-q, no slot.
+        $this->assertStringContainsString('<div class="photo-grid">', $out['html']);
+        $this->assertCount(2, $out['photos']);
+        $this->assertEqualsCanonicalizing(['fresh bread rolls basket steam', 'bakery counter'], $stock->searches);
+    }
+
     public function test_a_wide_band_nobody_could_fill_keeps_its_caption(): void
     {
         // The band is a deliberate design and wide enough to carry a line of text. A prototype

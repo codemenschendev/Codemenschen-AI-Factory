@@ -64,17 +64,31 @@ class PrototypePhoto
         // First every slot worth filling, then every photograph at once, then the page. Reading
         // the slots and fetching for each in turn made six photographs cost six times the wait.
         $slots = [];
-        foreach (self::SLOTS as $class => $width) {
+        // The three slot names, then any other "photo-something" the model made up. A Linz
+        // bakery got <div class="photo-hero" data-q="fresh bread rolls basket steam">: the model
+        // wrote the search phrase and the brief exactly as told and named the slot for where it
+        // sat, and the hero shipped as a brown gradient with the brief printed across its top.
+        // A slot the model invents is a wide one; it is where the biggest picture goes.
+        $wanted = self::SLOTS + ['photo-(?!wide\b|card\b|thumb\b)[\w-]+' => 720];
+        $seen = [];
+        foreach ($wanted as $class => $width) {
             // The slot name among whatever else the model put in the class attribute. Requiring
             // the attribute to be exactly the slot name meant class="photo-thumb avatar" never
             // matched, and a free page styles every slot, so almost none of them did.
-            $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.preg_quote($class, '~').'\b[^"]*"[^>]*)>(.*?)</\1>~is';
+            $name = isset(self::SLOTS[$class]) ? preg_quote($class, '~') : $class;
+            $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.$name.'\b[^"]*"[^>]*)>(.*?)</\1>~is';
             preg_match_all($pattern, $html, $all, PREG_SET_ORDER);
 
             foreach ($all as $m) {
                 if (count($slots) >= self::MAX) {
                     break 2;
                 }
+                // The catch-all must not take a slot a name already took, nor one without a
+                // search phrase: "photo-grid" around four cards is a layout, not a picture.
+                if (isset($seen[$m[0]]) || (! isset(self::SLOTS[$class]) && ! str_contains($m[2], 'data-q='))) {
+                    continue;
+                }
+                $seen[$m[0]] = true;
 
                 // A slot holds a sentence and nothing else. When it holds a card's worth of
                 // elements, the model has wrapped a whole card in the class instead of putting a
