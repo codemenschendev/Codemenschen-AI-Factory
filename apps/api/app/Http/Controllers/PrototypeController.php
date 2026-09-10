@@ -47,7 +47,7 @@ class PrototypeController extends Controller
         if (! ($request->user('sanctum')?->isAdmin() ?? false)) {
             $today = Prototype::where('ip', $ip)->where('created_at', '>=', now()->startOfDay())->count();
             if ($today >= self::PER_IP_PER_DAY) {
-                return response()->json(['error' => 'Bạn đã tạo tối đa số prototype miễn phí hôm nay. Thử lại ngày mai hoặc liên hệ chúng tôi.'], 429);
+                return response()->json(['error' => 'Daily limit of free prototypes reached for this address. Come back tomorrow or get in touch.'], 429);
             }
         }
 
@@ -95,7 +95,7 @@ class PrototypeController extends Controller
     /** The generated page itself. Untrusted content, locked down by CSP; framed by the share page. */
     public function raw(Prototype $prototype): Response
     {
-        abort_unless($prototype->isLive(), 410, 'Prototype đã hết hạn hoặc chưa sẵn sàng.');
+        abort_unless($prototype->isLive(), 410, 'This prototype has expired or is not ready yet.');
 
         $csp = implode('; ', [
             "default-src 'none'",

@@ -262,7 +262,7 @@ class PrototypeRepairTest extends TestCase
             app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
             $this->fail('built a page from a 502');
         } catch (\RuntimeException $e) {
-            $this->assertStringContainsString('lâu hơn giới hạn', $e->getMessage());
+            $this->assertStringContainsString('sidecar timeout (502)', $e->getMessage());
         }
         Http::assertSentCount(1);
     }
@@ -276,7 +276,7 @@ class PrototypeRepairTest extends TestCase
             app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site');
             $this->fail('built a page from prose');
         } catch (\RuntimeException $e) {
-            $this->assertSame('AI không trả về HTML dùng được.', $e->getMessage());
+            $this->assertStringStartsWith('The agent answered twice without HTML. Last reply: "', $e->getMessage());
         }
         Http::assertSentCount(2);
     }

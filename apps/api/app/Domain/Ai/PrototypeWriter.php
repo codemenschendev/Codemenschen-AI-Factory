@@ -379,7 +379,7 @@ class PrototypeWriter
         $token = (string) config('services.ai_image.token');
 
         if ($baseUrl === '' || $token === '') {
-            throw new RuntimeException('Chưa cấu hình dịch vụ AI.');
+            throw new RuntimeException('The AI sidecar is not configured (services.ai_image).');
         }
 
         // The chain has to fire in order: the sidecar gives up at 300s and answers a clean 502
@@ -472,9 +472,11 @@ class PrototypeWriter
                 }
                 // The sidecar gives up on the gateway at CHAT_TIMEOUT_MS and answers 502. That is
                 // a slow generation, not a broken service, and it is worth saying so plainly.
+                // Operator-facing: the visitor sees the dictionary's "that did not work", the
+                // admin tab shows this string, and the admin reads English.
                 $msg = $res->status() === 502
-                    ? 'Bản mô tả quá lớn nên dựng lâu hơn giới hạn. Thử mô tả ngắn gọn hơn.'
-                    : 'Dựng prototype thất bại ('.$res->status().').';
+                    ? 'The generation ran past the sidecar timeout (502): the page was too big for the time allowed.'
+                    : 'The gateway answered '.$res->status().' twice.';
                 throw new RuntimeException($msg);
             }
 
@@ -487,7 +489,7 @@ class PrototypeWriter
                 'head' => mb_substr($lastReply, 0, 160)]);
         }
         if ($markup === '') {
-            throw new RuntimeException('AI không trả về HTML dùng được.');
+            throw new RuntimeException('The agent answered twice without HTML. Last reply: "'.mb_substr(trim($lastReply), 0, 120).'"');
         }
         $lap('generate');
         // The title with a colon where the model put a dash. Both studied builds today were

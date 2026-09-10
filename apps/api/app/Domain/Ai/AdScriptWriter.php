@@ -168,7 +168,7 @@ class AdScriptWriter
             }
         }
 
-        throw new RuntimeException('AI không trả về kịch bản dùng được.');
+        throw new RuntimeException('The agent answered without a usable script.');
     }
 
     /**
