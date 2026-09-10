@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Http\Controllers\PrototypeController;
 use App\Jobs\BuildPrototype;
 use App\Models\Customer;
 use App\Models\Prototype;
@@ -94,5 +95,23 @@ class PrototypeCapTest extends TestCase
         $this->build(['X-Forwarded-For' => '198.51.100.22'])->assertStatus(202);
 
         $this->assertSame('198.51.100.22', Prototype::latest()->first()->ip);
+    }
+
+    /**
+     * A visitor who pastes the whole story of the shop must get a prototype, not "try again".
+     * The first ceiling (1200) was hit by exactly those visitors, and the form could not say why.
+     */
+    public function test_a_page_long_brief_is_accepted_and_one_over_the_ceiling_names_the_field(): void
+    {
+        $sentence = 'Bäckerei in Salzburg mit drei Filialen, Brot, Gebäck und Vorbestellung im Onlineshop. ';
+        $long = mb_substr(str_repeat($sentence, 60), 0, PrototypeController::MAX_PROMPT);
+
+        $this->postJson('/api/prototypes', ['prompt' => $long, 'kind' => 'site'])->assertStatus(202);
+        Queue::assertPushed(BuildPrototype::class, 1);
+
+        $this->postJson('/api/prototypes', ['prompt' => $long.'x', 'kind' => 'site'])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['prompt']);
+        $this->assertSame(1, Prototype::count());
     }
 }

@@ -23,10 +23,18 @@ class PrototypeController extends Controller
 
     private const LIVE_DAYS = 7;
 
+    /**
+     * How much a visitor may write. The first ceiling was 1200 characters and it was hit by
+     * exactly the people the study stage was built for: a bakery owner pasting the whole
+     * story of the shop. A long brief makes a better prototype, not a slower one; 4000
+     * characters is about a page and well inside what the model reads in one go.
+     */
+    public const MAX_PROMPT = 4000;
+
     public function store(Request $request): JsonResponse
     {
         $data = $request->validate([
-            'prompt' => 'required|string|min:12|max:1200',
+            'prompt' => 'required|string|min:12|max:'.self::MAX_PROMPT,
             // What to draw: the app itself, the ads for it, or a landing page.
             'kind' => 'nullable|in:'.implode(',', PrototypeWriter::KINDS),
         ]);

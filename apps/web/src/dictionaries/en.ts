@@ -557,6 +557,7 @@ export const en = {
     makeReal: "Turn it into a real app",
     another: "Build another",
     limit: "Daily limit reached. Come back tomorrow or get in touch.",
+    tooLong: "That is more than {max} characters. Shorten it a little and try again.",
     mine: "Your prototypes",
     mineHint: "Kept on this device only. We store nothing for it and send nothing away.",
     daysLeft: "{n} days left",

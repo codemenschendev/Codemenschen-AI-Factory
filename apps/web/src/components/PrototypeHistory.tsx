@@ -12,6 +12,13 @@ import type { Dict, Locale } from "@/lib/i18n";
  * useSyncExternalStore: the server renders nothing, the browser renders the list, and React knows
  * the two are meant to differ.
  */
+/** Until the build names itself, the first line of what was typed stands in. A page-long brief is not a label. */
+function label(prompt: string): string {
+  const first = prompt.split(/\n/, 1)[0].trim();
+
+  return first.length > 120 ? first.slice(0, 117).trimEnd() + "…" : first;
+}
+
 export function PrototypeHistory({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
   const mine = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
@@ -42,7 +49,7 @@ export function PrototypeHistory({ locale, d }: { locale: Locale; d: Dict }) {
             >
               <div style={{ minWidth: 0 }}>
                 <Link href={`/${locale}/p/${e.id}`} style={{ fontWeight: 600 }}>
-                  {e.title ?? e.prompt}
+                  {e.title ?? label(e.prompt)}
                 </Link>
                 <p className="small muted" style={{ margin: "4px 0 0" }}>
                   {p.kinds[e.kind]}

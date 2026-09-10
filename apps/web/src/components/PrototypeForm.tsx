@@ -18,6 +18,9 @@ import type { Dict, Locale } from "@/lib/i18n";
  * funnel is not stopped by the daily cap meant for anonymous visitors. A customer's token changes
  * nothing: the API caps everyone who is not an admin.
  */
+/** Mirrors PrototypeController::MAX_PROMPT. The API is the one that refuses; this only warns first. */
+const MAX_PROMPT = 4000;
+
 export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
   const router = useRouter();
@@ -43,9 +46,10 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       remember({ id: r.id, kind, prompt: prompt.trim() });
       router.push(`/${locale}/p/${r.id}`);
     } catch (err) {
-      // 429 from the per-IP cap is the common one; show its message.
-      const msg = err && typeof err === "object" && "status" in err && (err as { status: number }).status === 429;
-      setError(msg ? p.limit : p.failed);
+      // 429 is the per-IP cap, 422 is a brief the API would not take (too long, in practice).
+      // Both used to fall through to "try again", which is the one thing that does not help.
+      const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
+      setError(status === 429 ? p.limit : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
       setBusy(false);
     }
   }
@@ -80,12 +84,20 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
         {p.label}
         <textarea
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value)}
-          rows={4}
+          onChange={(e) => setPrompt(e.target.value.slice(0, MAX_PROMPT))}
+          rows={prompt.length > 400 ? 10 : 4}
+          maxLength={MAX_PROMPT}
           placeholder={p.hints[kind]}
           style={{ width: "100%", marginTop: 8, fontSize: "1rem", padding: 12 }}
         />
       </label>
+      {/* The count only appears once there is something to count against: a visitor typing one
+          sentence should not be told about a ceiling they will never reach. */}
+      {prompt.length >= MAX_PROMPT / 2 && (
+        <p className="small muted" style={{ margin: "-8px 0 0", textAlign: "right" }}>
+          {prompt.length} / {MAX_PROMPT}
+        </p>
+      )}
       {error && <p className="est-empty">{error}</p>}
       <button type="submit" disabled={busy || prompt.trim().length < 12} style={{ justifySelf: "start" }}>
         {busy ? p.building : p.go}
