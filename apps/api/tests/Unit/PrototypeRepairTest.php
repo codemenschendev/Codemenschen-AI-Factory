@@ -229,6 +229,11 @@ class PrototypeRepairTest extends TestCase
 
         Http::assertSentCount(2);
         $this->assertStringContainsString('Doch', $out['html']);
+        // The second roll is not the same request: the agent is shown its own "Done." and told
+        // that a file on its disk is not a reply. Twice the identical request got "Done." twice.
+        Http::assertSent(fn ($r) => count($r['messages'] ?? []) === 4
+            && str_contains((string) $r['messages'][2]['content'], 'Soll ich?')
+            && str_contains((string) $r['messages'][3]['content'], 'held no HTML'));
     }
 
     public function test_a_gateway_that_fell_over_is_asked_once_more_but_a_timeout_is_not(): void

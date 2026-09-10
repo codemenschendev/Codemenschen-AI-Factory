@@ -399,7 +399,10 @@ class PrototypeWriter
         // text is legible, picked by the trade the brief is about. Until this line existed the app
         // prompt travelled with no picture at all, because every reference filed by hand is a
         // website. Anything else still uses those.
-        $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only."]];
+        // "Reply with the file" has to say where: the agent behind the gateway has a disk, and a
+        // bakery build in Salzburg wrote baeckerei-steiner-salzburg.html to it, twice, and
+        // answered "Done." Nothing on that disk ever reaches the visitor.
+        $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only: the complete file, from <!doctype html> to </html>, as the TEXT of your reply. Do not use any tool, do not write a file to disk, do not describe what you did. The reply itself is the deliverable."]];
         if ($brief !== null) {
             // The study's brief is the requirement, and the screens it was written from travel
             // along so the builder sees what "like the leading apps" looks like.
@@ -447,7 +450,17 @@ class PrototypeWriter
         // and minutes of a visitor's wait are worth one more roll before the build is called
         // failed. Not on 502: that is the sidecar's own timeout, and doubling it helps nobody.
         $markup = '';
+        $lastReply = '';
         foreach ([1, 2] as $attempt) {
+            if ($attempt === 2 && $lastReply !== '') {
+                // The same request again gets the same "Done." from an agent that believes it
+                // delivered. It is shown what it answered and told, once, where the file goes.
+                $body['messages'] = [
+                    ...$body['messages'],
+                    ['role' => 'assistant', 'content' => mb_substr($lastReply, 0, 2000)],
+                    ['role' => 'user', 'content' => 'Your reply held no HTML. Whatever you wrote to disk is not delivered; only the text of your reply is. Reply now with the complete HTML file, from <!doctype html> to </html>, and nothing else.'],
+                ];
+            }
             $res = $request->post('/v1/chat/completions', $body);
 
             if (! $res->successful()) {
@@ -465,12 +478,13 @@ class PrototypeWriter
                 throw new RuntimeException($msg);
             }
 
-            $markup = $this->extractHtml((string) $res->json('choices.0.message.content'));
+            $lastReply = (string) $res->json('choices.0.message.content');
+            $markup = $this->extractHtml($lastReply);
             if ($markup !== '') {
                 break;
             }
             Log::info('prototype: the reply held no html', ['attempt' => $attempt, 'kind' => $kind,
-                'head' => mb_substr((string) $res->json('choices.0.message.content'), 0, 160)]);
+                'head' => mb_substr($lastReply, 0, 160)]);
         }
         if ($markup === '') {
             throw new RuntimeException('AI không trả về HTML dùng được.');
