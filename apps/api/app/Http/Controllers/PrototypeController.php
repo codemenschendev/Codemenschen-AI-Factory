@@ -76,6 +76,8 @@ class PrototypeController extends Controller
             'status' => $expired ? 'expired' : $prototype->status,
             // Which step a build is on, so the wait says what is happening rather than "moment".
             'stage' => $prototype->stage,
+            // When it was asked for, so the wait can show a clock instead of feeling endless.
+            'created_at' => $prototype->created_at->toIso8601String(),
             // The share page frames an app in a phone and a site in a window.
             'kind' => $prototype->kind,
             'title' => $prototype->title,

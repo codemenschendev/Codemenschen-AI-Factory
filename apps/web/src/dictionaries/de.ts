@@ -583,6 +583,14 @@ export const de = {
       repairing: "Bessert nach, was die Prüfung gefunden hat.",
       photos: "Sucht passende Fotos.",
     },
+    steps: {
+      studying: "Branche anschauen",
+      writing: "Seite schreiben",
+      auditing: "Prüfen",
+      repairing: "Nachbessern",
+      photos: "Fotos einsetzen",
+    },
+    elapsed: "{t} vergangen, insgesamt meist 4 bis 6 Minuten.",
   },
   legal: {
     draft: "Entwurf. Das ist die Klartext-Fassung, geschrieben von uns und noch nicht anwaltlich freigegeben. Wir stellen sie trotzdem online, weil Vertrag und Werbung nie zwei verschiedene Geschichten erzählen dürfen.",

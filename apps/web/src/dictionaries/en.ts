@@ -581,6 +581,14 @@ export const en = {
       repairing: "Fixing what the check found.",
       photos: "Finding photographs.",
     },
+    steps: {
+      studying: "Study the trade",
+      writing: "Write the page",
+      auditing: "Check it",
+      repairing: "Fix it",
+      photos: "Add photos",
+    },
+    elapsed: "{t} elapsed, usually 4 to 6 minutes in total.",
   },
   legal: {
     draft: "Draft. This is the plain-language version, written by us and not yet cleared by counsel. We publish it anyway, because the contract and the marketing must never tell two different stories.",
