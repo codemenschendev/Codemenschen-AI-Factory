@@ -68,6 +68,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::get('/projects/{project}', [AdminController::class, 'project']);
     Route::get('/customers', [AdminController::class, 'customers']);
     Route::get('/ads', [AdminController::class, 'ads']);
+    // Every prototype a visitor ever asked for, the free lead magnet included: what was typed,
+    // what came of it and how long it took. The owner tests through the public box like a
+    // visitor and wants to see the result without hunting for the share link.
+    Route::get('/prototypes', [AdminController::class, 'prototypes']);
 
     // The rescue actions. Everything here is also possible from artisan; nothing here spends money.
     Route::post('/projects/{project}/stage', [AdminController::class, 'dispatchStage']);

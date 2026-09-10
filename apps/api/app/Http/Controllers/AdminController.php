@@ -255,6 +255,40 @@ class AdminController extends Controller
     }
 
     /**
+     * Every prototype, newest first, with the numbers a build leaves behind.
+     *
+     * The public box is anonymous, so this is the only place a prototype is ever listed. The
+     * prompt travels whole: the owner reads it to judge whether the page answered it.
+     */
+    public function prototypes(Request $request): JsonResponse
+    {
+        $data = $request->validate(['status' => 'nullable|in:queued,building,ready,failed']);
+
+        $list = Prototype::query()
+            ->select(['id', 'kind', 'status', 'stage', 'title', 'prompt', 'error', 'ip', 'qa', 'project_id', 'expires_at', 'created_at', 'updated_at'])
+            ->when($data['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
+            ->latest()->limit(200)->get()
+            ->map(fn (Prototype $p) => [
+                'id' => $p->id,
+                'kind' => $p->kind,
+                'status' => $p->expires_at->isPast() && $p->status === 'ready' ? 'expired' : $p->status,
+                'stage' => $p->stage,
+                'title' => $p->title,
+                'prompt' => $p->prompt,
+                'error' => $p->error,
+                'ip' => $p->ip,
+                'project_id' => $p->project_id,
+                'qa_ok' => $p->qa['ok'] ?? null,
+                'repairs' => (int) ($p->qa['repairs'] ?? 0),
+                'seconds' => isset($p->qa['timing']['total']) ? (int) round($p->qa['timing']['total']) : null,
+                'created_at' => $p->created_at->toIso8601String(),
+                'expires_at' => $p->expires_at->toIso8601String(),
+            ]);
+
+        return response()->json(['prototypes' => $list]);
+    }
+
+    /**
      * Re-dispatch one stage, the way `factory:stage` does. The refusal while another stage is
      * running is the same one the command has: two workers in the same repo overwrite each other.
      */

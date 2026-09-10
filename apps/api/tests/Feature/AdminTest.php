@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Models\ProjectAd;
+use App\Models\Prototype;
 use App\Services\OrderFulfillment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -64,6 +65,7 @@ class AdminTest extends TestCase
         $this->getJson('/api/admin/overview', $auth)->assertForbidden();
         $this->getJson('/api/admin/projects', $auth)->assertForbidden();
         $this->getJson('/api/admin/customers', $auth)->assertForbidden();
+        $this->getJson('/api/admin/prototypes', $auth)->assertForbidden();
         $this->postJson("/api/admin/projects/{$this->project->id}/status", ['status' => 'READY'], $auth)->assertForbidden();
     }
 
@@ -161,5 +163,28 @@ class AdminTest extends TestCase
     {
         $this->getJson('/api/me/projects', ['Authorization' => 'Bearer '.$this->customerToken])
             ->assertOk()->assertJsonPath('admin', false);
+    }
+
+    public function test_the_operator_sees_every_visitors_prototype_with_what_the_build_left_behind(): void
+    {
+        Prototype::create([
+            'status' => 'ready', 'kind' => 'site', 'prompt' => 'Bäckerei in Salzburg mit Vorbestellung',
+            'title' => 'Bäckerei Steiner', 'ip' => '203.0.113.9', 'expires_at' => now()->addDays(7),
+            'qa' => ['ok' => true, 'repairs' => 1, 'timing' => ['total' => 281.6]],
+        ]);
+        Prototype::create([
+            'status' => 'ready', 'kind' => 'ads', 'prompt' => 'Anzeigen für ein Friseurstudio in Wien',
+            'ip' => '203.0.113.10', 'expires_at' => now()->subDay(),
+        ]);
+
+        $res = $this->getJson('/api/admin/prototypes', $this->asAdmin())->assertOk();
+        $rows = collect($res->json('prototypes'))->keyBy('kind');
+        $this->assertCount(2, $rows);
+        $this->assertSame(282, $rows['site']['seconds']);
+        $this->assertSame(1, $rows['site']['repairs']);
+        $this->assertTrue($rows['site']['qa_ok']);
+        $this->assertSame('203.0.113.9', $rows['site']['ip']);
+        // A page the server has already thrown away is listed as such, not as "ready".
+        $this->assertSame('expired', $rows['ads']['status']);
     }
 }

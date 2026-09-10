@@ -90,7 +90,23 @@ interface ProjectDetail {
   events: { type: string; actor: string; created_at: string }[];
 }
 
-type Tab = "overview" | "projects" | "ads" | "customers" | "library" | "references";
+interface PrototypeRow {
+  id: string;
+  kind: "site" | "app" | "ads";
+  status: string;
+  stage: string | null;
+  title: string | null;
+  prompt: string;
+  error: string | null;
+  ip: string | null;
+  project_id: string | null;
+  qa_ok: boolean | null;
+  repairs: number;
+  seconds: number | null;
+  created_at: string;
+}
+
+type Tab = "overview" | "projects" | "ads" | "prototypes" | "customers" | "library" | "references";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -113,6 +129,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [stages, setStages] = useState<string[]>([]);
   const [ads, setAds] = useState<AdRow[]>([]);
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
+  const [prototypes, setPrototypes] = useState<PrototypeRow[]>([]);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
@@ -177,6 +194,10 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       const r = await call<{ customers: CustomerRow[] }>("/admin/customers");
       if (r) setCustomers(r.customers);
     }
+    if (t === "prototypes") {
+      const r = await call<{ prototypes: PrototypeRow[] }>("/admin/prototypes");
+      if (r) setPrototypes(r.prototypes);
+    }
   }
 
   async function openProject(id: string) {
@@ -235,7 +256,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   return (
     <div>
       <div className="tabs" role="tablist">
-        {(["overview", "projects", "ads", "customers", "library", "references"] as Tab[]).map((t) => (
+        {(["overview", "projects", "ads", "prototypes", "customers", "library", "references"] as Tab[]).map((t) => (
           <button
             key={t}
             className="tab"
@@ -603,6 +624,70 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
               )}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {tab === "prototypes" && (
+        <div className="tbl-wrap">
+          {prototypes.length === 0 && <p className="est-empty">{a.protoEmpty}</p>}
+          {prototypes.length > 0 && (
+            <table>
+              <thead>
+                <tr>
+                  <th>{a.protoWhen}</th>
+                  <th>{a.protoKind}</th>
+                  <th>{a.protoStatus}</th>
+                  <th>{a.protoPrompt}</th>
+                  <th>{a.protoTook}</th>
+                  <th>{a.protoQa}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {prototypes.map((p) => (
+                  <tr key={p.id}>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {dt(p.created_at, locale)}
+                      {p.ip && (
+                        <span className="small muted" style={{ display: "block" }}>{p.ip}</span>
+                      )}
+                    </td>
+                    <td>{d.proto.kinds[p.kind]}</td>
+                    <td>
+                      <span className={`badge badge-${p.status}`}>{p.status === "expired" ? a.protoExpired : p.status}</span>
+                      {p.status === "building" && p.stage && (
+                        <span className="small muted" style={{ display: "block" }}>{p.stage}</span>
+                      )}
+                      {p.error && (
+                        <span className="small" style={{ display: "block", color: "var(--danger, #b00020)" }}>{p.error}</span>
+                      )}
+                    </td>
+                    <td style={{ maxWidth: 420 }}>
+                      {p.title && <strong style={{ display: "block" }}>{p.title}</strong>}
+                      <span className="small" title={p.prompt}>
+                        {p.prompt.length > 220 ? p.prompt.slice(0, 217).trimEnd() + "…" : p.prompt}
+                      </span>
+                    </td>
+                    <td className="num" style={{ whiteSpace: "nowrap" }}>
+                      {p.seconds !== null ? `${Math.floor(p.seconds / 60)}:${String(p.seconds % 60).padStart(2, "0")}` : ""}
+                    </td>
+                    <td style={{ whiteSpace: "nowrap" }}>
+                      {p.qa_ok === true && "✓"}
+                      {p.qa_ok === false && "✗"}
+                      {p.repairs > 0 && (
+                        <span className="small muted" style={{ marginLeft: 6 }}>{a.protoRepairs.replace("{n}", String(p.repairs))}</span>
+                      )}
+                    </td>
+                    <td>
+                      {(p.status === "ready" || p.status === "building") && (
+                        <a href={`/${locale}/p/${p.id}`} target="_blank" rel="noreferrer">{a.protoOpen}</a>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
         </div>
       )}
 
