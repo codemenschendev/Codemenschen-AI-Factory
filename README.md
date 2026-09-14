@@ -3,6 +3,8 @@
 "Choose an app. Pay. We build, publish and market it." — see [PLAN.md](PLAN.md)
 for the full architecture and roadmap.
 
+The team also works in the Buzz channel #appwerk-agents.
+
 ## Layout
 
 | Path | What |
