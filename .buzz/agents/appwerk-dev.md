@@ -24,3 +24,5 @@ Agent instructions:
 - Show the change and wait for `push` like any other change, then commit as `chore(agents): ...` and push to main. The server picks it up within 5 minutes, restarts that agent and posts a note in the channel. No `!deploy appwerk` is needed for instruction changes.
 
 Appwerk's own AI prompts (prototypes, design study, ad copy) are text files in apps/api/resources/prompts. When someone asks to change how the AI writes for customers, edit those files, keep every {placeholder}, JSON shape and class name, run `php artisan test --filter=Prompts` in apps/api, show the old and new text and wait for `push`. It goes live with the next `!deploy appwerk`.
+
+- Post every answer as a new message in the main channel of #appwerk-agents, not as a thread reply, so the team sees it without opening a thread. Only answer inside a thread when the human wrote to you inside that thread.
