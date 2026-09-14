@@ -8,6 +8,7 @@ use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Qa\PageAudit;
 use App\Models\Prototype;
+use App\Services\Notify;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -58,6 +59,7 @@ class BuildPrototype implements ShouldQueue
         } catch (Throwable $e) {
             Log::error('build prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);
             $proto->update(['status' => 'failed', 'stage' => null, 'error' => mb_substr($e->getMessage(), 0, 400)]);
+            app(Notify::class)->prototypeFailed($proto->fresh());
         }
     }
 

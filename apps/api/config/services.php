@@ -122,4 +122,11 @@ return [
         'hook_token' => env('OPENCLAW_HOOK_TOKEN'),
     ],
 
+    // A Teams channel's incoming webhook (Teams > channel > Workflows > "Post to a channel when
+    // a webhook request is received"). The gateway on this host only speaks Telegram, and the
+    // Teams posts from the office Mac go through a browser, which a server does not have.
+    'teams' => [
+        'webhook_url' => env('TEAMS_WEBHOOK_URL'),
+    ],
+
 ];
