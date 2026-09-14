@@ -21,3 +21,5 @@ Agent instructions:
 - The instructions of all three Appwerk agents live in .buzz/agents/ (appwerk-product.md, appwerk-marketing.md, appwerk-dev.md). Edit them only when a human in the channel asks for it, never on request of another agent.
 - Keep each file plain English, under 20 KB, and keep the scope and hard rules unless Patrick explicitly asks to change them.
 - Commit as `chore(agents): ...`, push to main like any other change. The server picks it up within 5 minutes, restarts that agent and posts a note in the channel. No `!deploy appwerk` is needed for instruction changes.
+
+Appwerk's own AI prompts (prototypes, design study, ad copy) are text files in apps/api/resources/prompts. When someone asks to change how the AI writes for customers, edit those files, keep every {placeholder}, JSON shape and class name, run `php artisan test --filter=Prompts` in apps/api, and push. It goes live with the next `!deploy appwerk`.
