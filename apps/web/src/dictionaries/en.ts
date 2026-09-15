@@ -432,6 +432,7 @@ export const en = {
     analytics: {
       range: "Period",
       days: "{n} days",
+      day1: "1 day",
       failed: "The numbers could not be loaded.",
       visitors: "Visitors",
       pageViews: "Page views",

@@ -45,8 +45,10 @@ class AnalyticsReport
             'daily' => $daily,
             'funnel' => [
                 ['step' => 'visit', 'visitors' => $visitorsWith(['page_view'])],
-                ['step' => 'interest', 'visitors' => $visitorsWith(['wizard_step', 'cta_click', 'prototype_requested'])],
-                ['step' => 'quote', 'visitors' => $visitorsWith(['quote_created'])],
+                // Each step includes the later ones: a visitor who picks a listing goes straight to a
+                // quote without a wizard step, and still showed interest.
+                ['step' => 'interest', 'visitors' => $visitorsWith(['wizard_step', 'cta_click', 'prototype_requested', 'quote_created', 'checkout_started'])],
+                ['step' => 'quote', 'visitors' => $visitorsWith(['quote_created', 'checkout_started'])],
                 ['step' => 'checkout', 'visitors' => $visitorsWith(['checkout_started'])],
                 ['step' => 'paid', 'visitors' => $paid->count()],
             ],

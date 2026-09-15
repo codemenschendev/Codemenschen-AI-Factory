@@ -63,7 +63,7 @@ export function AnalyticsPanel({ token, locale, d }: { token: string; locale: Lo
       <div className="tabs" role="tablist" aria-label={t.range}>
         {RANGES.map((r) => (
           <button key={r} className="tab" role="tab" aria-selected={days === r} onClick={() => setDays(r)}>
-            {t.days.replace("{n}", String(r))}
+            {r === 1 ? t.day1 : t.days.replace("{n}", String(r))}
           </button>
         ))}
       </div>

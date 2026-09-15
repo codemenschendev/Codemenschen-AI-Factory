@@ -132,19 +132,32 @@ class Notify
             }
         }
 
+        $this->buzz('Appwerk: '.$message);
+    }
+
+    /**
+     * A message for Buzz through the drop folder. `alerts` goes to #appwerk-alerts, `agents` to
+     * #appwerk-agents, where the team and the agent read it (the analytics digest goes there).
+     */
+    public function buzz(string $message, string $channel = 'alerts'): void
+    {
         $dir = config('services.buzz.alert_dir');
-        if ($dir && is_dir($dir)) {
-            try {
-                // Written under a dot name and renamed, so the bot never reads half a file.
-                $name = now()->format('Ymd-His-v').'-'.bin2hex(random_bytes(3)).'.json';
-                $tmp = $dir.'/.'.$name;
-                $body = json_encode(['message' => 'Appwerk: '.$message, 'at' => now()->toIso8601String()], JSON_UNESCAPED_UNICODE);
-                if (file_put_contents($tmp, $body) === false || ! rename($tmp, $dir.'/'.$name)) {
-                    Log::warning('notify.buzz_failed', ['dir' => $dir]);
-                }
-            } catch (\Throwable $e) {
-                Log::warning('notify.buzz_failed', ['error' => $e->getMessage()]);
+        if (! $dir || ! is_dir($dir)) {
+            return;
+        }
+        try {
+            // Written under a dot name and renamed, so the bot never reads half a file.
+            $name = now()->format('Ymd-His-v').'-'.bin2hex(random_bytes(3)).'.json';
+            $tmp = $dir.'/.'.$name;
+            $payload = ['message' => $message, 'at' => now()->toIso8601String()];
+            if ($channel !== 'alerts') {
+                $payload['channel'] = $channel;
             }
+            if (file_put_contents($tmp, json_encode($payload, JSON_UNESCAPED_UNICODE)) === false || ! rename($tmp, $dir.'/'.$name)) {
+                Log::warning('notify.buzz_failed', ['dir' => $dir]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('notify.buzz_failed', ['error' => $e->getMessage()]);
         }
     }
 }

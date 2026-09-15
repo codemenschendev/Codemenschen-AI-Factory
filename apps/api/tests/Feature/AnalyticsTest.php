@@ -66,7 +66,7 @@ class AnalyticsTest extends TestCase
         $this->assertSame(1, AnalyticsEvent::whereIn('name', ['page_view', 'quote_created', 'checkout_started'])->distinct()->count('visitor'), 'one visitor through the day');
 
         $report = app(AnalyticsReport::class)->summary(7);
-        $this->assertSame([1, 0, 1, 1, 1], array_column($report['funnel'], 'visitors'));
+        $this->assertSame([1, 1, 1, 1, 1], array_column($report['funnel'], 'visitors'), 'a quote counts as interest, steps never grow');
         $this->assertSame(400, $report['totals']['revenue_eur']);
         $this->assertSame([['key' => 'google', 'orders' => 1]], $report['paid_sources']);
     }
