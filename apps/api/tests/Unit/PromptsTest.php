@@ -23,6 +23,7 @@ class PromptsTest extends TestCase
         'study/ads' => ['industry', 'peers', 'stats', 'rules', 'images_are_data'],
         'study/site' => ['industry', 'peers', 'stats', 'rules', 'images_are_data'],
         'study/images-are-data' => [],
+        'change/assistant' => ['language', 'status', 'mode', 'recent'],
     ];
 
     public function test_every_prompt_file_exists_and_keeps_its_placeholders(): void

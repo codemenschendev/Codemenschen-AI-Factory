@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { api, API_BASE, ApiError } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
+import { ChangeChat } from "@/components/ChangeChat";
 
 interface Detail {
   id: string;
@@ -19,6 +20,8 @@ interface Detail {
   max_revision_rounds?: number;
   free_rounds_left?: number;
   change_request_mode?: "free" | "paid" | "care" | "none";
+  /** The change chat replaces the form for this customer (feature flag, admins always). */
+  change_chat?: boolean;
   revision_price_eur?: number;
   care_monthly_eur?: number;
   care_status?: "none" | "active" | "past_due" | "canceled";
@@ -107,7 +110,8 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
   // Live-ish while the factory works
   useEffect(() => {
     if (!p || ["READY", "FAILED", "COMPLETED"].includes(p.status)) return;
-    const t = setInterval(load, 20_000);
+    // Every 5 s while a round is being built, so the steps in the change chat keep up.
+    const t = setInterval(load, ["FIXING", "TESTING"].includes(p.status) ? 5_000 : 20_000);
     return () => clearInterval(t);
   }, [p, load]);
 
@@ -343,9 +347,13 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
             </div>
           )}
 
-          {canChange && (
+          {p.change_chat && token && (
+            <ChangeChat locale={locale} d={d} token={token} project={p} onChanged={load} onApprove={approve} />
+          )}
+
+          {canChange && (!p.change_chat || (p.change_request_mode === "paid" && p.care_status !== "active") || p.change_request_mode === "care") && (
             <div className="card">
-              <h3>{d.project.changesTitle}</h3>
+              {!p.change_chat && <h3>{d.project.changesTitle}</h3>}
               {p.change_request_mode === "care" && (
                 <p className="note" style={{ margin: 0, background: "#E8F4EE", color: "var(--valid)" }}>
                   <strong>{d.project.careTitle}</strong> · {d.project.careActiveHint}
@@ -353,6 +361,8 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                 </p>
               )}
               {p.care_status === "past_due" && <p className="note" style={{ margin: 0 }}>{d.project.carePastDue}</p>}
+              {!p.change_chat && (
+                <>
               <p className="small muted" style={{ margin: 0 }}>
                 {p.change_request_mode === "care"
                   ? d.project.changesCareHint
@@ -449,6 +459,8 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                   : d.project.changesSend}
               </button>
               {crNotice && <p className="note">{crNotice}</p>}
+                </>
+              )}
               {p.change_request_mode === "care" && !p.care_ends_at && (
                 <p className="small muted" style={{ margin: 0 }}>
                   <a href="#" onClick={(e) => { e.preventDefault(); cancelCare(); }}>{d.project.careCancel}</a>

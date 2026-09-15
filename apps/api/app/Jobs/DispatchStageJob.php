@@ -53,6 +53,8 @@ class DispatchStageJob implements ShouldQueue
                 'fix_attempt' => $project->fix_attempts,
                 'revision_round' => $project->revision_rounds,
                 'change_request' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->value('text'),
+                // The confirmed checklist from the change chat; the revise agent reports on each item.
+                'change_items' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->first()?->items,
                 'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status'])->toArray(),
                 'last_test_report' => $project->testReports()->latest()->first()?->report,
             ],

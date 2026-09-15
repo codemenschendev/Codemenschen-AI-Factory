@@ -78,6 +78,12 @@ class Notify
         $this->send($line);
     }
 
+    /** One chat line and no mail: for things an operator should see soon, but not in the inbox. */
+    public function alert(Project $project, string $line): void
+    {
+        $this->send(sprintf('Project %s (%s) %s', substr($project->id, 0, 8), $project->name, $line));
+    }
+
     /** One-line operator note (mail + chat) for events that are not status transitions. */
     public function note(Project $project, string $note): void
     {

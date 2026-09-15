@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Pricing\Estimator;
 use App\Models\Project;
 use App\Services\CareService;
+use App\Services\ChangeChat;
 use App\Services\PipelineOrchestrator;
 use App\Services\PublishingService;
 use App\Services\Refiner;
@@ -41,7 +42,8 @@ class MeController extends Controller
             'care_status' => $project->care_status ?? 'none',
             'care_ends_at' => $project->care_ends_at?->toIso8601String(),
             'change_requests' => $project->changeRequests()->latest('id')
-                ->get(['id', 'round', 'text', 'status', 'agent_summary', 'price_eur', 'checkout_url', 'created_at']),
+                ->get(['id', 'round', 'text', 'items', 'status', 'agent_summary', 'result_items', 'price_eur', 'checkout_url', 'created_at']),
+            'change_chat' => ChangeChat::enabledFor($request->user()),
             'failed_reason' => $project->failed_reason,
             'build_starts_at' => $project->build_starts_at?->toIso8601String(),
             'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status']),
@@ -131,6 +133,46 @@ class MeController extends Controller
         ], $request->user(), (string) $request->ip());
 
         return response()->json($res['body'], $res['status']);
+    }
+
+    /** The change chat thread. `after` = last message id the portal has, for polling. */
+    public function changeMessages(Request $request, Project $project, ChangeChat $chat): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        abort_unless(ChangeChat::enabledFor($request->user()), 404);
+
+        return response()->json(['messages' => $chat->thread($project, (int) $request->query('after', 0))]);
+    }
+
+    public function sendChangeMessage(Request $request, Project $project, ChangeChat $chat): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        abort_unless(ChangeChat::enabledFor($request->user()), 404);
+        $data = $request->validate(['body' => 'required|string|min:1|max:2000']);
+
+        $res = $chat->customerSays($project, $request->user(), trim($data['body']));
+
+        return response()->json([
+            'messages' => $chat->thread($project, $res['messages'][0]->id - 1),
+            'assistant' => $res['status'] === 503 ? 'unavailable' : 'ok',
+        ], $res['status']);
+    }
+
+    /** "Umsetzen" on the newest summary card: starts the round (or the payment for it). */
+    public function confirmChange(Request $request, Project $project, ChangeChat $chat): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id, 404);
+        abort_unless(ChangeChat::enabledFor($request->user()), 404);
+        $data = $request->validate(['fagg_waiver' => 'nullable|boolean']);
+
+        $cr = $chat->confirm($project, $request->user(), (bool) ($data['fagg_waiver'] ?? false), $request->ip());
+
+        return response()->json([
+            'change_request_id' => $cr->id,
+            'status' => $cr->status,
+            'checkout_url' => $cr->status === 'awaiting_payment' ? $cr->checkout_url : null,
+            'payment' => $cr->status === 'awaiting_payment' && ! $cr->checkout_url ? 'unconfigured' : null,
+        ], 201);
     }
 
     /** Customer asks for changes to the preview build: REVIEW → FIXING (revise). */

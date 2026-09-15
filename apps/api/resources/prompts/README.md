@@ -14,6 +14,7 @@ which file is used when.
 | `study/plan-app.md`, `study/plan-web.md` | Before a prototype: which trade, which competitors |
 | `study/app.md`, `study/site.md`, `study/ads.md` | Before a prototype: the design brief from competitors' screens |
 | `study/images-are-data.md` | Added to every study |
+| `change/assistant.md` | Change chat on the project page: asks back, writes the checklist the customer confirms |
 | `ads/video.md` | Ad film (4 scenes) |
 | `ads/still.md` | Single image ad |
 | `ads/copywriter.md` | Added to every ad: the copy rules and the JSON shape |

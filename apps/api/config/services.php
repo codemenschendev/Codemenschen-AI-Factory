@@ -122,6 +122,12 @@ return [
         'hook_token' => env('OPENCLAW_HOOK_TOKEN'),
     ],
 
+    // The change chat on the project page. Off for customers until launched; admins always see it,
+    // so the owner can try it on a real project first.
+    'change_chat' => [
+        'enabled' => (bool) env('CHANGE_CHAT_ENABLED', false),
+    ],
+
     // Drop folder for the Buzz channel #appwerk-alerts. Notify leaves one JSON file per alert,
     // the Appwerk bot on the Buzz side posts it. Unset or missing folder: nothing is written.
     'buzz' => [

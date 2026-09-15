@@ -20,7 +20,7 @@ class Project extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime'];
+    protected $casts = ['build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean'];
 
     public function customer(): BelongsTo
     {
@@ -80,6 +80,11 @@ class Project extends Model
     public function changeRequests(): HasMany
     {
         return $this->hasMany(ChangeRequest::class);
+    }
+
+    public function changeMessages(): HasMany
+    {
+        return $this->hasMany(ChangeMessage::class);
     }
 
     /** Browser preview of the latest build, when the release stage exported one. */

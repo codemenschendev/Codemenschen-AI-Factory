@@ -7,6 +7,7 @@ import { createServer } from "node:http";
 import { AGENT_MODE, runStage } from "./stages.ts";
 import { GATEWAY_MODE, RELAY_MODE } from "./gateway.ts";
 import { REFINE_AVAILABLE, refineIdea } from "./refine.ts";
+import { changeChat } from "./changechat.ts";
 import type { StageJob, StageResult } from "./types.ts";
 
 const PORT = Number(process.env.PORT ?? 8300);
@@ -69,13 +70,45 @@ createServer((req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/healthz") return reply(200, { ok: true });
-  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine")) return reply(404, { error: "not found" });
+  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine" && req.url !== "/change-chat")) return reply(404, { error: "not found" });
   if (!TOKEN || req.headers.authorization !== `Bearer ${TOKEN}`) {
     return reply(403, { error: "forbidden" });
   }
 
   let raw = "";
   req.on("data", (c) => (raw += c));
+
+  if (req.url === "/change-chat") {
+    // Change chat assistant: synchronous, one completion without tools. The API holds the prompt.
+    req.on("end", () => {
+      if (!REFINE_AVAILABLE) return reply(503, { error: "gateway unavailable" });
+      let input: { system?: unknown; transcript?: unknown; project_id?: unknown; features?: unknown };
+      try {
+        input = JSON.parse(raw);
+      } catch {
+        return reply(422, { error: "invalid payload" });
+      }
+      const project_id = typeof input.project_id === "string" && /^[0-9a-f-]{36}$/.test(input.project_id) ? input.project_id : "";
+      if (typeof input.system !== "string" || !input.system.trim() || !project_id || !Array.isArray(input.transcript)) {
+        return reply(422, { error: "invalid payload" });
+      }
+      const transcript = input.transcript.flatMap((m) => {
+        const t = m as { role?: unknown; body?: unknown; card?: unknown };
+        if (typeof t.role !== "string" || typeof t.body !== "string") return [];
+        const card = Array.isArray(t.card) ? t.card.filter((c): c is string => typeof c === "string") : null;
+        return [{ role: t.role, body: t.body, card }];
+      });
+      if (!transcript.length) return reply(422, { error: "empty transcript" });
+      const features = Array.isArray(input.features) ? input.features.filter((f): f is string => typeof f === "string").slice(0, 12) : [];
+      changeChat({ system: input.system, transcript, project_id, features })
+        .then((out) => reply(200, out))
+        .catch((e) => {
+          console.error("change-chat failed:", e);
+          reply(502, { error: e instanceof Error ? e.message : String(e) });
+        });
+    });
+    return;
+  }
 
   if (req.url === "/refine") {
     // Wizard idea refinement: synchronous, one short gateway completion.

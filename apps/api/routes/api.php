@@ -39,6 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
     Route::post('/me/projects/{project}/change-requests', [MeController::class, 'requestChanges']);
     Route::post('/me/projects/{project}/change-requests/refine', [MeController::class, 'refineChangeRequest'])->middleware('throttle:5,1');
+    // The change chat (docs/specs/change-chat.md). The assistant's own limits are in ChangeChat;
+    // the throttle only stops a stuck client from hammering the endpoint.
+    Route::get('/me/projects/{project}/messages', [MeController::class, 'changeMessages']);
+    Route::post('/me/projects/{project}/messages', [MeController::class, 'sendChangeMessage'])->middleware('throttle:20,1');
+    Route::post('/me/projects/{project}/messages/confirm', [MeController::class, 'confirmChange'])->middleware('throttle:10,1');
     Route::post('/me/projects/{project}/care/checkout', [MeController::class, 'startCare']);
     Route::post('/me/projects/{project}/care/cancel', [MeController::class, 'cancelCare']);
     Route::post('/me/projects/{project}/publishing/start', [MeController::class, 'startPublishing']);
@@ -76,6 +81,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // The rescue actions. Everything here is also possible from artisan; nothing here spends money.
     Route::post('/projects/{project}/stage', [AdminController::class, 'dispatchStage']);
     Route::post('/projects/{project}/status', [AdminController::class, 'setStatus']);
+    Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
+    Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
+    Route::post('/projects/{project}/assistant', [AdminController::class, 'assistant']);
     Route::post('/ads/{ad}/rerender', [AdminController::class, 'rerenderAd']);
 
     // The photo library. Same catalog ops/library.sh works on from the shell.
