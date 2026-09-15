@@ -75,7 +75,10 @@ return [
             'token' => env('META_ADS_TOKEN'),            // long-lived System User token
             'ad_account_id' => env('META_ADS_ACCOUNT_ID'), // act_1234567890
             'page_id' => env('META_ADS_PAGE_ID'),
-            'api_version' => env('META_ADS_API_VERSION', 'v21.0'),
+            'api_version' => env('META_ADS_API_VERSION', 'v26.0'),
+            // EU Digital Services Act: every ad set that reaches the EU names who benefits and who pays.
+            'dsa_beneficiary' => env('META_ADS_DSA_BENEFICIARY', 'Codemenschen GmbH'),
+            'dsa_payor' => env('META_ADS_DSA_PAYOR', 'Codemenschen GmbH'),
         ],
         'google' => [
             'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'), // Google approves this by hand
@@ -84,7 +87,7 @@ return [
             'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
             'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
             'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
-            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v18'),
+            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v26'), // v18 to v21 answer 404 since 2026
         ],
     ],
 
