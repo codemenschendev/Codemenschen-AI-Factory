@@ -119,6 +119,8 @@ class GoogleAdsPublisher implements Publisher
                 'campaignBudget' => "customers/{$cid}/campaignBudgets/-1",
                 'networkSettings' => ['targetGoogleSearch' => true, 'targetSearchNetwork' => true],
                 'manualCpc' => new \stdClass,
+                // Required for every new campaign since the EU political advertising rules.
+                'containsEuPoliticalAdvertising' => 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
             ]]],
             ['adGroupOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/adGroups/-3",
@@ -228,7 +230,7 @@ class GoogleAdsPublisher implements Publisher
 
     private function endpoint(string $path): string
     {
-        $v = $this->cfg('api_version') ?: 'v18';
+        $v = $this->cfg('api_version') ?: 'v26';
 
         return "https://googleads.googleapis.com/{$v}/{$path}";
     }

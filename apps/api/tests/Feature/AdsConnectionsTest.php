@@ -5,7 +5,10 @@ namespace Tests\Feature;
 use App\Domain\Ads\GoogleAdsPublisher;
 use App\Domain\Ads\MetaAdsPublisher;
 use App\Domain\Ads\PublisherRegistry;
+use App\Models\Creative;
 use App\Models\Customer;
+use App\Models\MarketingCampaign;
+use App\Models\ProjectAd;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -25,14 +28,14 @@ class AdsConnectionsTest extends TestCase
     {
         config(['services.ads.google' => $over + [
             'developer_token' => 'dev', 'customer_id' => '1234567890', 'login_customer_id' => '',
-            'client_id' => 'cid', 'client_secret' => 'sec', 'refresh_token' => 'rt', 'api_version' => 'v18',
+            'client_id' => 'cid', 'client_secret' => 'sec', 'refresh_token' => 'rt', 'api_version' => 'v26',
         ]]);
     }
 
     private function meta(array $over = []): void
     {
         config(['services.ads.meta' => $over + [
-            'token' => 'tok', 'ad_account_id' => 'act_1', 'page_id' => '99', 'api_version' => 'v21.0',
+            'token' => 'tok', 'ad_account_id' => 'act_1', 'page_id' => '99', 'api_version' => 'v26.0',
         ]]);
     }
 
@@ -86,8 +89,8 @@ class AdsConnectionsTest extends TestCase
     {
         $this->meta();
         Http::fake([
-            'graph.facebook.com/v21.0/act_1*' => Http::response(['name' => 'Codemenschen Ads', 'currency' => 'EUR', 'account_status' => 1]),
-            'graph.facebook.com/v21.0/99*' => Http::response(['name' => 'Appwerk']),
+            'graph.facebook.com/v26.0/act_1*' => Http::response(['name' => 'Codemenschen Ads', 'currency' => 'EUR', 'account_status' => 1]),
+            'graph.facebook.com/v26.0/99*' => Http::response(['name' => 'Appwerk']),
         ]);
 
         $v = app(MetaAdsPublisher::class)->verify();
@@ -100,8 +103,8 @@ class AdsConnectionsTest extends TestCase
     {
         $this->meta();
         Http::fake([
-            'graph.facebook.com/v21.0/act_1*' => Http::response(['name' => 'X', 'currency' => 'EUR', 'account_status' => 2]),
-            'graph.facebook.com/v21.0/99*' => Http::response(['name' => 'Appwerk']),
+            'graph.facebook.com/v26.0/act_1*' => Http::response(['name' => 'X', 'currency' => 'EUR', 'account_status' => 2]),
+            'graph.facebook.com/v26.0/99*' => Http::response(['name' => 'Appwerk']),
         ]);
 
         $v = app(MetaAdsPublisher::class)->verify();
@@ -146,5 +149,63 @@ class AdsConnectionsTest extends TestCase
             ->expectsOutputToContain('META_ADS_TOKEN')
             ->expectsOutputToContain('Codemenschen (EUR)')
             ->assertExitCode(1); // meta is not configured, so the whole check is not green
+    }
+
+    private function campaign(): MarketingCampaign
+    {
+        $campaign = new MarketingCampaign(['ad_budget_monthly_eur' => 300, 'strategy' => ['landing_url' => 'https://example.com']]);
+        $campaign->id = 7;
+        $creatives = collect([
+            ['headline', 'Tisch reservieren'], ['headline', 'Kaffee und Kuchen'], ['headline', 'Wiener Kaffeehaus'],
+            ['ad_copy', 'Reservier deinen Tisch in Sekunden.'], ['ad_copy', 'Karte ansehen und Punkte sammeln.'],
+        ])->map(fn ($c) => new Creative(['kind' => $c[0], 'content' => $c[1]]));
+        $campaign->setRelation('creatives', $creatives);
+        $campaign->setRelation('project', null);
+
+        return $campaign;
+    }
+
+    public function test_google_publish_uses_a_live_api_version_and_declares_no_eu_political_ads(): void
+    {
+        $this->google(['api_version' => '']);
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*' => Http::response(['mutateOperationResponses' => []]),
+        ]);
+
+        app(GoogleAdsPublisher::class)->publish($this->campaign());
+
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://googleads.googleapis.com/v26/')
+            && ($r['mutateOperations'][1]['campaignOperation']['create']['containsEuPoliticalAdvertising'] ?? null) === 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING'
+            && $r['mutateOperations'][1]['campaignOperation']['create']['status'] === 'PAUSED');
+    }
+
+    public function test_meta_publish_names_who_benefits_and_who_pays_for_eu_ad_sets(): void
+    {
+        $this->meta(['api_version' => '', 'dsa_beneficiary' => 'Codemenschen GmbH', 'dsa_payor' => 'Codemenschen GmbH']);
+        $file = tempnam(sys_get_temp_dir(), 'ad').'.png';
+        file_put_contents($file, 'png');
+        $ad = new class extends ProjectAd
+        {
+            public string $file = '';
+
+            public function absolutePath(): string
+            {
+                return $this->file;
+            }
+        };
+        $ad->file = $file;
+        $ad->kind = 'image';
+        $campaign = $this->campaign();
+        $campaign->setRelation('projectAd', $ad);
+        Http::fake([
+            '*/adimages' => Http::response(['images' => ['a' => ['hash' => 'h1']]]),
+            '*' => Http::response(['id' => '123']),
+        ]);
+
+        app(MetaAdsPublisher::class)->publish($campaign);
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'graph.facebook.com/v26.0/act_1/campaigns') && $r['is_adset_budget_sharing_enabled'] === 'false');
+        Http::assertSent(fn ($r) => str_contains($r->url(), '/act_1/adsets') && $r['dsa_beneficiary'] === 'Codemenschen GmbH' && $r['dsa_payor'] === 'Codemenschen GmbH');
     }
 }

@@ -23,6 +23,10 @@ To write a secret without it echoing or landing in shell history:
 
 ## Google Ads
 
+Everything runs under **codemenschenapp@gmail.com** (decision 2026-09-15): the Cloud project
+`cm-ops`, the OAuth client, the refresh token and the Manager account. The refresh token belongs to
+the Google account that signs in, so that account must own or have access to the Manager account.
+
 Two accounts are involved and they are not the same thing.
 
 **Google Cloud** holds the OAuth client. **Google Ads** (a Manager account, "MCC") holds the
@@ -31,12 +35,16 @@ developer token and the ad account. The API refuses without both.
 1. Google Cloud console: one project, name it `codemenschen-ads`. APIs & Services, enable
    **Google Ads API**.
 2. OAuth consent screen: External, app name Appwerk, add your own Google account as a test user.
-   Scope `https://www.googleapis.com/auth/adwords`. It can stay in Testing; only our own account
-   ever signs in.
+   Scope `https://www.googleapis.com/auth/adwords`. Then press **Publish app** (In production).
+   In Testing a refresh token dies after 7 days (`invalid_grant: Token has been expired or
+   revoked`); that killed the token from 2026-09-04. The adwords scope is not sensitive, so
+   publishing needs no review; the consent page only warns that the app is unverified.
 3. Credentials, create **OAuth client ID**, type **Desktop app**. Note the client id and secret.
 4. Refresh token: on the Mac, with the client id and secret in the environment,
 
         GOOGLE_ADS_CLIENT_ID=... GOOGLE_ADS_CLIENT_SECRET=... python3 apps/api/tools/google-ads-oauth.py
+
+   Sign in as codemenschenapp@gmail.com.
 
    It opens the consent page, catches the redirect on localhost, and prints the refresh token to
    your terminal and nowhere else.
@@ -55,6 +63,9 @@ Env keys:
     GOOGLE_ADS_CLIENT_ID
     GOOGLE_ADS_CLIENT_SECRET
     GOOGLE_ADS_REFRESH_TOKEN
+
+API version: `GOOGLE_ADS_API_VERSION`, default v26. Google retires a version about a year after
+release and then answers 404 (v18 to v21 did by 2026-09); bump the default when that happens.
 
 ## Meta (Facebook and Instagram)
 

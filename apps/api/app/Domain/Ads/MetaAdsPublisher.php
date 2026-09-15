@@ -105,6 +105,8 @@ class MetaAdsPublisher implements Publisher
             'objective' => 'OUTCOME_TRAFFIC',
             'status' => 'PAUSED',
             'special_ad_categories' => json_encode([]),
+            // No campaign budget: each ad set spends its own. The API wants that said out loud.
+            'is_adset_budget_sharing_enabled' => 'false',
         ]);
         $ref['campaign_id'] = $created['id'] ?? null;
 
@@ -118,6 +120,8 @@ class MetaAdsPublisher implements Publisher
             'optimization_goal' => 'LINK_CLICKS',
             'bid_strategy' => 'LOWEST_COST_WITHOUT_CAP',
             'targeting' => json_encode(['geo_locations' => ['countries' => ['AT', 'DE']]]),
+            'dsa_beneficiary' => $this->cfg('dsa_beneficiary'),
+            'dsa_payor' => $this->cfg('dsa_payor'),
             'status' => 'PAUSED',
         ]);
         $ref['adset_id'] = $adset['id'] ?? null;
@@ -199,7 +203,7 @@ class MetaAdsPublisher implements Publisher
 
     private function base(): PendingRequest
     {
-        $v = $this->cfg('api_version') ?: 'v21.0';
+        $v = $this->cfg('api_version') ?: 'v26.0';
 
         return Http::baseUrl("https://graph.facebook.com/{$v}")->timeout(60)->connectTimeout(10);
     }
