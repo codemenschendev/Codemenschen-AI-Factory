@@ -42,13 +42,13 @@ class AdsConnectionsTest extends TestCase
     public function test_status_names_the_missing_env_keys_and_never_their_values(): void
     {
         config(['services.ads.google' => ['developer_token' => '', 'customer_id' => '1234567890',
-            'client_id' => 'cid', 'client_secret' => 'top-secret', 'refresh_token' => 'rt']]);
+            'client_id' => 'cid', 'client_secret' => 'top-secret', 'refresh_token' => '']]);
         config(['services.ads.meta' => ['token' => 'tok', 'ad_account_id' => '', 'page_id' => '']]);
 
         $status = app(PublisherRegistry::class)->status();
 
         $this->assertFalse($status['google']['configured']);
-        $this->assertSame(['GOOGLE_ADS_DEVELOPER_TOKEN'], $status['google']['missing']);
+        $this->assertSame(['GOOGLE_ADS_REFRESH_TOKEN'], $status['google']['missing'], 'the developer token is no longer required');
         $this->assertSame(['META_ADS_ACCOUNT_ID', 'META_ADS_PAGE_ID'], $status['meta']['missing']);
         $this->assertStringNotContainsString('top-secret', json_encode($status));
     }
@@ -71,7 +71,19 @@ class AdsConnectionsTest extends TestCase
             && $r->hasHeader('developer-token', 'dev') && $r->hasHeader('login-customer-id', '1234567890'));
     }
 
-    public function test_an_unapproved_developer_token_is_reported_not_swallowed(): void
+    public function test_google_works_without_a_developer_token(): void
+    {
+        $this->google(['developer_token' => '']);
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*' => Http::response(['results' => [['customer' => ['descriptiveName' => 'Appwerk', 'currencyCode' => 'EUR']]]]),
+        ]);
+
+        $this->assertTrue(app(GoogleAdsPublisher::class)->verify()['ok']);
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'googleAds:search') && ! $r->hasHeader('developer-token'));
+    }
+
+    public function test_an_api_refusal_is_reported_not_swallowed(): void
     {
         $this->google();
         Http::fake([
