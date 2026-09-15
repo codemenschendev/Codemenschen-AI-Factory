@@ -79,7 +79,8 @@ class AdminTest extends TestCase
         $res = $this->getJson('/api/admin/overview', $this->asAdmin())->assertOk();
 
         $this->assertSame(1, $res->json('projects.total'));
-        $this->assertSame(1, $res->json('revenue.paid_orders'));
+        $this->assertSame(0, $res->json('revenue.paid_orders'), 'a sandbox order is not revenue');
+        $this->assertSame(1, $res->json('revenue.test_orders'));
         // the customer, this test's admin, and developerweb@codemenschen.at from the migration
         $this->assertSame(3, $res->json('customers'));
     }

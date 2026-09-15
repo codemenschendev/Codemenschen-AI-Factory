@@ -38,6 +38,9 @@ return [
     'stripe' => [
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
+        // Real money. Used only while the admin switch says live (App\Domain\Payments\StripeKeys).
+        'live_secret' => env('STRIPE_LIVE_SECRET'),
+        'live_webhook_secret' => env('STRIPE_LIVE_WEBHOOK_SECRET'),
     ],
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),

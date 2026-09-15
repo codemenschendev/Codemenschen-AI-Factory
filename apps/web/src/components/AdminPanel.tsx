@@ -17,8 +17,11 @@ interface Overview {
   /** Names of empty env keys only, never values: the tile says what is missing, not what is set. */
   connections: Record<string, { configured: boolean; missing: string[] }>;
   customers: number;
+  /** Stripe sandbox or live, switched here; live_missing names empty .env keys, never values. */
+  payments: { mode: "sandbox" | "live"; sandbox_configured: boolean; live_missing: string[] };
   revenue: {
     paid_orders: number;
+    test_orders: number;
     paid_eur: number;
     hosting_monthly_eur: number;
     ad_budget_monthly_eur: number;
@@ -231,6 +234,19 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     setBusy(false);
   }
 
+  /** Live asks for the word LIVE, typed: from that moment checkouts charge real cards. */
+  async function switchPayments(mode: "sandbox" | "live") {
+    let confirm: string | null = null;
+    if (mode === "live") {
+      confirm = window.prompt(a.paymentsConfirm);
+      if (confirm !== "LIVE") return;
+    }
+    setBusy(true);
+    const r = await call<Overview["payments"]>("/admin/payments/mode", { method: "POST", body: JSON.stringify({ mode, confirm }) });
+    if (r) setOverview((o) => (o ? { ...o, payments: r } : o));
+    setBusy(false);
+  }
+
   async function setAssistantPaused(projectId: string, paused: boolean) {
     setBusy(true);
     const r = await call<{ assistant_paused: boolean }>(`/admin/projects/${projectId}/assistant`, {
@@ -374,6 +390,9 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 <div>
                   {a.paidEur}: <span className="num">{overview.revenue.paid_eur} €</span>
                 </div>
+                <div className="muted">
+                  {a.testOrders}: <span className="num">{overview.revenue.test_orders}</span>
+                </div>
                 <div>
                   {a.hosting}: <span className="num">{overview.revenue.hosting_monthly_eur} €</span>
                 </div>
@@ -381,6 +400,34 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   {a.customersTile}: <span className="num">{overview.customers}</span>
                 </div>
               </div>
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26, borderColor: overview.payments.mode === "live" ? "var(--valid)" : undefined }}>
+            <span className="cat">{a.paymentsTile}</span>
+            <strong style={{ fontSize: 22 }}>{overview.payments.mode === "live" ? a.paymentsLive : a.paymentsSandbox}</strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>
+              {overview.payments.mode === "live" ? a.paymentsLiveHint : a.paymentsSandboxHint}
+            </p>
+            {overview.payments.mode === "sandbox" && overview.payments.live_missing.length > 0 && (
+              <p className="small" style={{ margin: "0 0 10px" }}>
+                {a.missing}: {overview.payments.live_missing.join(", ")}
+              </p>
+            )}
+            <div>
+              {overview.payments.mode === "sandbox" ? (
+                <button
+                  className="btn btn-primary btn-sm"
+                  disabled={busy || overview.payments.live_missing.length > 0}
+                  onClick={() => void switchPayments("live")}
+                >
+                  {a.paymentsGoLive}
+                </button>
+              ) : (
+                <button className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void switchPayments("sandbox")}>
+                  {a.paymentsBackToSandbox}
+                </button>
+              )}
             </div>
           </div>
 

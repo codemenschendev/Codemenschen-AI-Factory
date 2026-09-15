@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
+use App\Domain\Payments\StripeKeys;
 use App\Domain\Pricing\Estimator;
 use App\Models\Customer;
 use App\Models\Order;
@@ -72,7 +73,9 @@ class CheckoutController extends Controller
             'total_eur' => $order->total_one_time_eur,
         ]);
 
-        $secret = config('services.stripe.secret');
+        $stripeKeys = app(StripeKeys::class);
+        $order->update(['livemode' => $stripeKeys->live()]);
+        $secret = $stripeKeys->secret();
         if (! $secret) {
             // Staging: everything except the actual charge works end-to-end.
             return response()->json([
