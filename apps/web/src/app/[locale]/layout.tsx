@@ -63,9 +63,8 @@ export default async function LocaleLayout({
               <p className="footer-small">{dict.footer.by}</p>
             </div>
             <div className="footer-links">
-              <a href="https://www.codemenschen.at/impressum" target="_blank" rel="noopener">
-                {dict.footer.imprint}
-              </a>
+              <Link href={`/${locale}/imprint`}>{dict.footer.imprint}</Link>
+              <Link href={`/${locale}/privacy`}>{dict.legal.privacy.title}</Link>
               <Link href={`/${locale}/terms`}>{dict.legal.terms.title}</Link>
               <Link href={`/${locale}/withdrawal`}>{dict.legal.withdrawal.title}</Link>
             </div>
