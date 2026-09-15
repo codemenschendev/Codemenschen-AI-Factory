@@ -12,6 +12,7 @@ use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Models\ProjectAd;
 use App\Models\Prototype;
+use App\Services\ChangeChat;
 use App\Services\PipelineOrchestrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -205,6 +206,35 @@ class AdminController extends Controller
             'events' => $project->events()->latest('created_at')->limit(80)
                 ->get(['type', 'payload', 'actor', 'created_at']),
         ]);
+    }
+
+    /** The customer's change chat, as the customer sees it, plus whether the assistant is paused. */
+    public function changeMessages(Project $project, ChangeChat $chat): JsonResponse
+    {
+        return response()->json([
+            'messages' => $chat->thread($project),
+            'assistant_paused' => (bool) $project->assistant_paused,
+        ]);
+    }
+
+    /** An operator answers in the thread, shown to the customer as the Codemenschen team. */
+    public function sendChangeMessage(Request $request, Project $project, ChangeChat $chat): JsonResponse
+    {
+        $data = $request->validate(['body' => 'required|string|min:1|max:4000']);
+        $chat->operatorSays($project, (string) $request->user()->email, trim($data['body']));
+        $project->recordEvent('changes.operator_reply', [], $this->actor($request));
+
+        return response()->json(['messages' => $chat->thread($project)], 201);
+    }
+
+    /** Pause or resume the assistant for one project: the customer still writes, a person answers. */
+    public function assistant(Request $request, Project $project): JsonResponse
+    {
+        $data = $request->validate(['paused' => 'required|boolean']);
+        $project->update(['assistant_paused' => $data['paused']]);
+        $project->recordEvent($data['paused'] ? 'changes.assistant_paused' : 'changes.assistant_resumed', [], $this->actor($request));
+
+        return response()->json(['assistant_paused' => (bool) $project->assistant_paused]);
     }
 
     /** Customers with what they are worth and how much of the factory they are using. */

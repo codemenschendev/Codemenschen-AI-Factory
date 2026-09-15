@@ -33,6 +33,8 @@ export interface StageJob {
     revision_round: number;
     /** The customer's change request being worked on by the revise stage, else null. */
     change_request: string | null;
+    /** The checklist the customer confirmed in the change chat, when the round came from there. */
+    change_items?: { text: string }[] | null;
     criteria: { key: string; criterion: string; kind: string; status: string }[];
     last_test_report: Record<string, unknown> | null;
   };

@@ -9,7 +9,7 @@ class ChangeRequest extends Model
 {
     protected $guarded = [];
 
-    protected $casts = ['paid_at' => 'datetime', 'fagg_waiver_at' => 'datetime'];
+    protected $casts = ['paid_at' => 'datetime', 'fagg_waiver_at' => 'datetime', 'items' => 'array', 'result_items' => 'array'];
 
     public function project(): BelongsTo
     {

@@ -134,7 +134,7 @@ class PipelineOrchestrator
      * agent implements it inside the paid scope, then the normal test → release
      * chain produces a fresh preview and the project returns to REVIEW.
      */
-    public function requestChanges(Project $project, string $text, string $actor, bool $faggWaiver = false, ?string $ip = null): ChangeRequest
+    public function requestChanges(Project $project, string $text, string $actor, bool $faggWaiver = false, ?string $ip = null, ?array $items = null): ChangeRequest
     {
         $mode = $this->changeRequestMode($project);
         abort_if($mode === 'none', 409, 'Project cannot take change requests right now');
@@ -143,6 +143,7 @@ class PipelineOrchestrator
             $cr = $project->changeRequests()->create([
                 'round' => $project->revision_rounds + 1,
                 'text' => $text,
+                'items' => $items,
                 'covered_by' => $mode === 'care' ? 'care' : null,
             ]);
             $this->startRevision($project, $cr, $actor);
@@ -156,6 +157,7 @@ class PipelineOrchestrator
         $cr = $project->changeRequests()->create([
             'round' => $project->revision_rounds + 1,
             'text' => $text,
+            'items' => $items,
             'status' => 'awaiting_payment',
             'price_eur' => Estimator::REVISION_PRICE_EUR,
             'fagg_waiver_at' => now(),
@@ -182,6 +184,7 @@ class PipelineOrchestrator
             return;
         }
         $this->startRevision($project, $cr, 'system:stripe');
+        $this->chat(fn (ChangeChat $chat) => $chat->onPaid($cr->fresh()));
     }
 
     private function startRevision(Project $project, ChangeRequest $cr, string $actor): void
@@ -319,18 +322,23 @@ class PipelineOrchestrator
 
             return;
         }
-        $this->closeChangeRequest($project, 'done', (string) ($run->output['summary'] ?? ''));
+        $this->closeChangeRequest($project, 'done', (string) ($run->output['summary'] ?? ''), $this->resultItems($run->output['items'] ?? null));
         $this->transition($project, 'TESTING');
         $this->dispatchStage($project, 'test');
     }
 
-    private function closeChangeRequest(Project $project, string $status, string $summary): void
+    private function closeChangeRequest(Project $project, string $status, string $summary, ?array $resultItems = null): void
     {
         $cr = $project->changeRequests()->where('status', 'in_progress')->latest('id')->first();
         if (! $cr) {
             return;
         }
-        $cr->update(['status' => $status, 'agent_summary' => $summary ?: null]);
+        $cr->update([
+            'status' => $status,
+            'agent_summary' => $summary !== '' ? ChangeChat::undash($summary) : null,
+            'result_items' => $resultItems,
+        ]);
+        $this->chat(fn (ChangeChat $chat) => $chat->onClosed($cr->fresh()));
         $project->recordEvent('changes.'.$status, ['change_request_id' => $cr->id, 'round' => $cr->round]);
         if ($status !== 'done' && $cr->price_eur > 0) {
             // The customer paid for a round that produced nothing: refund by hand.
@@ -406,6 +414,7 @@ class PipelineOrchestrator
         $this->recordBuilds($project, $run->output['builds'] ?? [], 'preview');
         if (in_array($project->status, self::PRE_REVIEW, true)) {
             $this->transition($project, 'REVIEW');
+            $this->chat(fn (ChangeChat $chat) => $chat->onProjectSettled($project->fresh()));
 
             return;
         }
@@ -464,5 +473,43 @@ class PipelineOrchestrator
     {
         $project->update(['failed_reason' => $reason]);
         $this->transition($project, 'FAILED');
+        $this->chat(fn (ChangeChat $chat) => $chat->onProjectSettled($project->fresh()));
+    }
+
+    /**
+     * What the revise agent reports per confirmed item. Only shapes we can show: text, done, note.
+     *
+     * @return list<array{text:string,done:bool,note:string}>|null
+     */
+    private function resultItems(mixed $items): ?array
+    {
+        if (! is_array($items)) {
+            return null;
+        }
+        $out = [];
+        foreach (array_slice($items, 0, 12) as $item) {
+            if (is_array($item) && trim((string) ($item['text'] ?? '')) !== '') {
+                $out[] = [
+                    'text' => mb_substr(ChangeChat::undash(trim((string) $item['text'])), 0, 300),
+                    'done' => ($item['done'] ?? false) === true,
+                    'note' => mb_substr(ChangeChat::undash(trim((string) ($item['note'] ?? ''))), 0, 300),
+                ];
+            }
+        }
+
+        return $out ?: null;
+    }
+
+    /**
+     * The change chat hears about the round, and never breaks the pipeline doing so. Resolved late:
+     * ChangeChat needs this orchestrator itself.
+     */
+    private function chat(callable $call): void
+    {
+        try {
+            $call(app(ChangeChat::class));
+        } catch (\Throwable $e) {
+            report($e);
+        }
     }
 }

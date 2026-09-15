@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
+import type { ChatMessage } from "@/components/ChangeChat";
 import { useToken } from "@/lib/token";
 import { LibraryPanel } from "./LibraryPanel";
 import { ReferencePanel } from "./ReferencePanel";
@@ -131,6 +132,8 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [customers, setCustomers] = useState<CustomerRow[]>([]);
   const [prototypes, setPrototypes] = useState<PrototypeRow[]>([]);
   const [detail, setDetail] = useState<ProjectDetail | null>(null);
+  const [chat, setChat] = useState<{ messages: ChatMessage[]; assistant_paused: boolean } | null>(null);
+  const [chatReply, setChatReply] = useState("");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [busy, setBusy] = useState(false);
@@ -202,11 +205,39 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   async function openProject(id: string) {
     setNote(null);
-    const r = await call<ProjectDetail>(`/admin/projects/${id}`);
+    const [r, thread] = await Promise.all([
+      call<ProjectDetail>(`/admin/projects/${id}`),
+      call<{ messages: ChatMessage[]; assistant_paused: boolean }>(`/admin/projects/${id}/messages`),
+    ]);
     if (r) {
       setDetail(r);
+      setChat(thread);
       setTab("projects");
     }
+  }
+
+  async function replyInChat(projectId: string) {
+    if (!chatReply.trim()) return;
+    setBusy(true);
+    const r = await call<{ messages: ChatMessage[] }>(`/admin/projects/${projectId}/messages`, {
+      method: "POST",
+      body: JSON.stringify({ body: chatReply }),
+    });
+    if (r) {
+      setChat((c) => ({ messages: r.messages, assistant_paused: c?.assistant_paused ?? false }));
+      setChatReply("");
+    }
+    setBusy(false);
+  }
+
+  async function setAssistantPaused(projectId: string, paused: boolean) {
+    setBusy(true);
+    const r = await call<{ assistant_paused: boolean }>(`/admin/projects/${projectId}/assistant`, {
+      method: "POST",
+      body: JSON.stringify({ paused }),
+    });
+    if (r) setChat((c) => (c ? { ...c, assistant_paused: r.assistant_paused } : c));
+    setBusy(false);
   }
 
   async function runStage(projectId: string, stage: string) {
@@ -556,6 +587,57 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                         ))}
                       </tbody>
                     </table>
+                  </div>
+                </>
+              )}
+
+              {chat && (
+                <>
+                  <div className="detail-head" style={{ marginTop: 8 }}>
+                    <h3 style={{ margin: 0, fontSize: "1rem" }}>{a.chat}</h3>
+                    <button
+                      className="lang-toggle"
+                      disabled={busy}
+                      onClick={() => void setAssistantPaused(detail.id, !chat.assistant_paused)}
+                    >
+                      {chat.assistant_paused ? a.chatResume : a.chatPause}
+                    </button>
+                  </div>
+                  {chat.assistant_paused && <p className="note" style={{ margin: 0 }}>{a.chatPaused}</p>}
+                  <div className="small" style={{ maxHeight: 360, overflowY: "auto", display: "grid", gap: 8 }}>
+                    {chat.messages.length === 0 && <span className="muted">{a.chatEmpty}</span>}
+                    {chat.messages.map((m) => (
+                      <div key={m.id} style={{ borderLeft: `3px solid ${m.role === "customer" ? "var(--accent)" : m.role === "operator" ? "var(--valid)" : "var(--border)"}`, paddingLeft: 10 }}>
+                        <span className="muted">
+                          {dt(m.created_at, locale)} · {m.role}
+                          {m.meta.type ? ` · ${m.meta.type}` : ""}
+                        </span>
+                        <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
+                        {m.meta.card && (
+                          <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                            {m.meta.card.items.map((i, n) => <li key={n}>{i.text}</li>)}
+                          </ol>
+                        )}
+                        {m.meta.items && (
+                          <ul style={{ margin: "4px 0 0", paddingLeft: 18 }}>
+                            {m.meta.items.map((i, n) => <li key={n}>{i.done ? "✓" : "○"} {i.text}{i.note ? ` (${i.note})` : ""}</li>)}
+                          </ul>
+                        )}
+                        {m.meta.reason && <div className="muted">{m.meta.reason}</div>}
+                      </div>
+                    ))}
+                  </div>
+                  <textarea
+                    value={chatReply}
+                    onChange={(e) => setChatReply(e.target.value)}
+                    placeholder={a.chatReply}
+                    rows={2}
+                    style={{ width: "100%", padding: 10, font: "inherit", border: "1px solid var(--border)", borderRadius: "var(--radius)" }}
+                  />
+                  <div>
+                    <button className="btn btn-primary" disabled={busy || !chatReply.trim()} onClick={() => void replyInChat(detail.id)}>
+                      {a.chatSend}
+                    </button>
                   </div>
                 </>
               )}

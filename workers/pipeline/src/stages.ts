@@ -59,7 +59,7 @@ const GATEWAY_SCHEMAS: Record<string, string> = {
     'Use your file and shell tools to do the work DIRECTLY in the repository directory given below (it is on this machine). When finished, respond with ONLY {"done": true, "summary": "<what you implemented>", "files": ["..."]}.',
   fix: 'Use your file and shell tools to fix the code DIRECTLY in the repository directory given below. Never weaken tests or criteria. Re-run `npm test` there. Respond with ONLY {"done": true, "summary": "<what you fixed>"}.',
   revise:
-    'Use your file and shell tools to implement the change DIRECTLY in the repository directory given below. Respond with ONLY {"done": true, "summary": "<what you changed, addressed to the customer>"} — or, if the request is outside the paid scope, change nothing and respond with ONLY {"done": true, "declined": "<one sentence why, addressed to the customer>"}.',
+    'Use your file and shell tools to implement the change DIRECTLY in the repository directory given below. Respond with ONLY {"done": true, "summary": "<what you changed, addressed to the customer>", "items": [{"text": "<checklist item>", "done": true, "note": "<short, for the customer>"}]} (items only when the change request comes with a checklist) — or, if the request is outside the paid scope, change nothing and respond with ONLY {"done": true, "declined": "<one sentence why, addressed to the customer>"}.',
 };
 
 async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
@@ -69,7 +69,10 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const system = `${STAGE_PROMPTS[job.stage]}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const changeRequest = job.context.change_request
-    ? `\n\nCustomer change request (round ${job.context.revision_round}):\n${job.context.change_request}`
+    ? `\n\nCustomer change request (round ${job.context.revision_round}):\n${job.context.change_request}` +
+      (job.context.change_items?.length
+        ? `\n\nThe customer confirmed this as a checklist. Report on EVERY item in "items", in the same order and wording: done true only if it is really implemented, otherwise done false with a short note why. Notes and summary are read by the customer: plain short sentences in the customer's language, no dashes as sentence breaks.`
+        : "")
     : "";
   const user = `${isCode ? `Repository directory on this machine: ${hostDir}\n\n` : ""}Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}${isCode ? lastReport : ""}${job.stage === "revise" ? changeRequest : ""}`;
   // Code stages go through the host relay (full agent with shell/file tools);
@@ -127,9 +130,10 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
       break;
     }
     case "revise": {
-      const d = parse(res.text) as { done?: boolean; summary?: string; declined?: string };
+      const d = parse(res.text) as { done?: boolean; summary?: string; declined?: string; items?: unknown };
       if (!d.done) throw new Error(`gateway ${job.stage}: agent did not report done`);
       extra = { summary: d.summary ?? "", declined: d.declined ?? "" };
+      if (Array.isArray(d.items)) extra.items = d.items;
       break;
     }
   }
@@ -262,7 +266,11 @@ async function stubStage(job: StageJob, dir: string): Promise<StageResult> {
       return ok({});
     }
     case "revise":
-      return ok({ done: true, summary: `[stub] change request round ${c.revision_round} applied` });
+      return ok({
+        done: true,
+        summary: `[stub] change request round ${c.revision_round} applied`,
+        ...(c.change_items?.length ? { items: c.change_items.map((i) => ({ text: i.text, done: true, note: "" })) } : {}),
+      });
     case "coding":
     case "fix": {
       // Template repos ship test/run.mjs; add one always-passing case per
