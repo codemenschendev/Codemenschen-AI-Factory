@@ -33,7 +33,11 @@ services:
     depends_on: [postgres, redis]
     ports:
       - "127.0.0.1:8181:8000"
+    environment:
+      BUZZ_ALERT_DIR: /alerts
     volumes:
+      # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
+      - /var/lib/ai-factory/alerts:/alerts
       - artifacts:/artifacts
       # Marketing clips. The API only serves them, so read-only here; horizon renders and
       # therefore mounts the same directory writable.
@@ -57,7 +61,11 @@ services:
     command: ["php", "artisan", "horizon"]
     env_file: [../apps/api/.env]
     depends_on: [postgres, redis]
+    environment:
+      BUZZ_ALERT_DIR: /alerts
     volumes:
+      # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
+      - /var/lib/ai-factory/alerts:/alerts
       - artifacts:/artifacts
       # RenderProjectVideo runs here: it writes the finished clip and needs the scratch dir.
       - /var/appwerk-media/videos:/media/videos
@@ -79,6 +87,11 @@ services:
     command: ["php", "artisan", "schedule:work"]
     env_file: [../apps/api/.env]
     depends_on: [postgres, redis]
+    environment:
+      BUZZ_ALERT_DIR: /alerts
+    volumes:
+      # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
+      - /var/lib/ai-factory/alerts:/alerts
 
   worker:
     build:

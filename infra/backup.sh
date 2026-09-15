@@ -12,6 +12,19 @@ DEST=/var/backups/ai-factory
 KEEP_DAYS=14
 STAMP=$(date +%Y%m%d-%H%M)
 
+ALERTS=/var/lib/ai-factory/alerts
+
+# A backup that fails at 03:45 is only worth something if somebody hears about it before the
+# day they need it: the same drop folder Notify uses, posted to Buzz #appwerk-alerts.
+alert() {
+  [ -d "$ALERTS" ] || return 0
+  local name
+  name="$(date +%Y%m%d-%H%M%S)-backup.json"
+  printf '{"message":%s}\n' "$(printf 'Appwerk: nightly backup failed. %s See /var/log/ai-factory-backup.log on manager.' "$1" \
+    | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')" > "$ALERTS/.$name" && mv "$ALERTS/.$name" "$ALERTS/$name"
+}
+trap 'alert "Step failed at line $LINENO."' ERR
+
 mkdir -p "$DEST"
 chmod 700 "$DEST"
 
@@ -29,6 +42,7 @@ mv "$DEST/artifacts-$STAMP.tar.gz.part" "$DEST/artifacts-$STAMP.tar.gz"
 DB_BYTES=$(stat -c %s "$DEST/db-$STAMP.sql.gz")
 if [ "$DB_BYTES" -lt 20000 ]; then
   echo "backup: database dump is only $DB_BYTES bytes" >&2
+  alert "The database dump is only $DB_BYTES bytes."
   exit 1
 fi
 

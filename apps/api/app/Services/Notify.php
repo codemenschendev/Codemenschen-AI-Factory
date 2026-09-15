@@ -99,8 +99,11 @@ class Notify
     }
 
     /**
-     * One line to the operators' chat: the gateway hook if one is configured, the Teams
-     * webhook if one is. Both fail soft; a notification must never break the pipeline.
+     * One line to the operators' chat: the gateway hook if one is configured, and the Buzz
+     * channel #appwerk-alerts if its drop folder is mounted. Buzz speaks signed Nostr events,
+     * not webhooks, so the API only leaves a file; the Appwerk bot on the Buzz side posts it
+     * (buzz/appwerk-dev-kit/deploy/listener.mjs in the OpenClaw repo). Both fail soft: a
+     * notification must never break the pipeline.
      */
     private function send(string $message): void
     {
@@ -117,28 +120,18 @@ class Notify
             }
         }
 
-        $teams = config('services.teams.webhook_url');
-        if ($teams) {
+        $dir = config('services.buzz.alert_dir');
+        if ($dir && is_dir($dir)) {
             try {
-                // The shape a Teams workflow webhook accepts: one Adaptive Card. Plain "text"
-                // payloads are the retired Office 365 connector format and are dropped.
-                $res = Http::timeout(8)->post($teams, [
-                    'type' => 'message',
-                    'attachments' => [[
-                        'contentType' => 'application/vnd.microsoft.card.adaptive',
-                        'content' => [
-                            '$schema' => 'http://adaptivecards.io/schemas/adaptive-card.json',
-                            'type' => 'AdaptiveCard',
-                            'version' => '1.4',
-                            'body' => [['type' => 'TextBlock', 'text' => 'Appwerk: '.$message, 'wrap' => true]],
-                        ],
-                    ]],
-                ]);
-                if (! $res->successful()) {
-                    Log::warning('notify.teams_failed', ['status' => $res->status()]);
+                // Written under a dot name and renamed, so the bot never reads half a file.
+                $name = now()->format('Ymd-His-v').'-'.bin2hex(random_bytes(3)).'.json';
+                $tmp = $dir.'/.'.$name;
+                $body = json_encode(['message' => 'Appwerk: '.$message, 'at' => now()->toIso8601String()], JSON_UNESCAPED_UNICODE);
+                if (file_put_contents($tmp, $body) === false || ! rename($tmp, $dir.'/'.$name)) {
+                    Log::warning('notify.buzz_failed', ['dir' => $dir]);
                 }
             } catch (\Throwable $e) {
-                Log::warning('notify.teams_failed', ['error' => $e->getMessage()]);
+                Log::warning('notify.buzz_failed', ['error' => $e->getMessage()]);
             }
         }
     }
