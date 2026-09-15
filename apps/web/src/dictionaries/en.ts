@@ -754,9 +754,118 @@ export const en = {
         },
       ],
     },
+    privacy: {
+      title: "Privacy",
+      updated: "Last updated: 15 September 2026",
+      lede: "What data Appwerk processes, why, for how long, and who else sees it.",
+      sections: [
+        {
+          h: "1. Controller",
+          p: [
+            "Codemenschen GmbH, Anton Hubmann Platz 1/6, 8077 Gössendorf, Austria. Company register number FN 543274 h.",
+            "Questions about privacy and requests about your rights: office@codemenschen.at.",
+          ],
+        },
+        {
+          h: "2. When you visit the website",
+          p: [
+            "Our server logs the IP address, time, requested address and browser details of each request. This is for security and troubleshooting. The logs are deleted after 14 days. The legal basis is our legitimate interest in running the service securely (Art. 6(1)(f) GDPR).",
+            "The server and database are run by Hetzner Online GmbH (Germany) in a data centre in Finland, inside the EU.",
+          ],
+        },
+        {
+          h: "3. Audience measurement without cookies",
+          p: [
+            "We count ourselves which pages are visited and how far visitors get, for example from a quote to an order. For this we build a checksum from the IP address, browser details and a random value that is replaced every day. The IP address and browser details themselves are not stored, and on the next day nobody can be recognised.",
+            "We store the page, the language, the website you came from (its domain only), campaign details from the link (utm) and whether you came from an ad. There are no cookies, no third-party services and nothing is passed on. The data is deleted after 13 months. The legal basis is our legitimate interest in improving the service (Art. 6(1)(f) GDPR).",
+          ],
+        },
+        {
+          h: "4. What is stored in your browser",
+          p: [
+            "A cookie remembers your language. After you sign in, your sign-in key is kept in the browser's local storage, and so is the list of your free prototypes. All of this is needed for the site to work and is not used for analysis (§ 165(3) TKG 2021). You can delete it in your browser at any time.",
+          ],
+        },
+        {
+          h: "5. Free prototype",
+          p: [
+            "Your description is sent to an AI model that writes the prototype (see section 8). We store the IP address with the prototype so that nobody creates more than 5 prototypes a day. Prototype, description and IP address are deleted after 7 days, unless you order an app from it.",
+            "Photos in the prototype are searched at Pexels with a few keywords. Pexels receives no data about you.",
+          ],
+        },
+        {
+          h: "6. Quote, order and account",
+          p: [
+            "For an order we process your e-mail address, name, app description, chosen packages and the consents given at checkout. When you accept the terms and waive withdrawal under § 18 FAGG, we store the time and IP address as proof. The legal basis is the contract (Art. 6(1)(b) GDPR) and our legal duty to keep proof (point c).",
+            "You sign in with a link sent by e-mail, without a password. Order and invoice data is kept for seven years because tax law requires it (§ 132 BAO).",
+          ],
+        },
+        {
+          h: "7. Payment",
+          p: [
+            "Payments run through Stripe (Stripe Payments Europe, Ltd., Ireland). You enter card details directly at Stripe and we never see them. We only learn whether and how much was paid. Stripe also processes data in the USA, based on the EU standard contractual clauses.",
+          ],
+        },
+        {
+          h: "8. Building the app, changes and chat",
+          p: [
+            "To build your app we store the project with its code, preview and history. When you ask for changes, we store the messages in the project chat and any screenshots you attach. This stays stored as long as the project exists and is deleted with your account.",
+            "Text and code are written by the AI model Claude from Anthropic PBC (USA). Your description, your chat messages and attached screenshots are sent to Anthropic for this. Images for ads are made by an image model from OpenAI (USA) from a description of the app, without your contact details. The installable Android app is built by the Expo service (650 Industries, Inc., USA) from your app's code. Transfers to the USA rely on the EU-US Data Privacy Framework or the EU standard contractual clauses.",
+            "Please do not send passwords, health data or other people's data in the chat unless the change really needs it.",
+          ],
+        },
+        {
+          h: "9. E-mails",
+          p: [
+            "E-mails about your order, preview and changes are sent through World4You Internet Services GmbH (Austria). If you reply, the message lands in our mailbox there.",
+          ],
+        },
+        {
+          h: "10. Advertising for Appwerk",
+          p: [
+            "We advertise Appwerk on Google and Meta. Our website has no pixels or tracking code from these providers. If you arrive through an ad, we only note that the visit came from an ad (see section 3). What Google and Meta process when showing and clicking ads is covered by their own privacy policies.",
+          ],
+        },
+        {
+          h: "11. Your rights",
+          p: [
+            "You have the right to access, rectification, erasure, restriction of processing, data portability, and to object to processing based on our legitimate interest. Write to office@codemenschen.at.",
+            "If you think we handle your data wrongly, you can complain to the Austrian Data Protection Authority (dsb.gv.at).",
+          ],
+        },
+      ],
+    },
+    imprint: {
+      title: "Imprint",
+      updated: "Last updated: 15 September 2026",
+      lede: "Information under § 5 ECG and § 25 Austrian Media Act.",
+      sections: [
+        {
+          h: "Provider",
+          p: [
+            "Codemenschen GmbH",
+            "Anton Hubmann Platz 1/6, 8077 Gössendorf, Austria",
+            "Company register number: FN 543274 h",
+            "E-mail: office@codemenschen.at",
+          ],
+        },
+        {
+          h: "Service",
+          p: [
+            "Appwerk is a service of Codemenschen GmbH: apps and websites at a fixed price, built with AI support and checked by people.",
+          ],
+        },
+        {
+          h: "Dispute resolution",
+          p: [
+            "We are not obliged and not willing to take part in dispute resolution before a consumer arbitration board. For questions or complaints, just write to office@codemenschen.at.",
+          ],
+        },
+      ],
+    },
   },
   footer: {
-    legal: "Terms and withdrawal information are online as a plain-language draft, with counsel review under way. Privacy and imprint follow.",
+    legal: "Terms, withdrawal information and privacy are online as a plain-language draft, with counsel review under way.",
     by: "Operated by Codemenschen GmbH, Vienna, Austria.",
     imprint: "Imprint (Impressum)",
   },

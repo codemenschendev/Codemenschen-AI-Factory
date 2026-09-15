@@ -756,9 +756,118 @@ export const de = {
         },
       ],
     },
+    privacy: {
+      title: "Datenschutz",
+      updated: "Stand: 15. September 2026",
+      lede: "Welche Daten Appwerk verarbeitet, wofür, wie lange und wer sie noch sieht.",
+      sections: [
+        {
+          h: "1. Verantwortlich",
+          p: [
+            "Codemenschen GmbH, Anton Hubmann Platz 1/6, 8077 Gössendorf, Österreich. Firmenbuchnummer FN 543274 h.",
+            "Fragen zum Datenschutz und Anfragen zu deinen Rechten: office@codemenschen.at.",
+          ],
+        },
+        {
+          h: "2. Beim Besuch der Website",
+          p: [
+            "Unser Server speichert für jede Anfrage IP-Adresse, Zeitpunkt, aufgerufene Adresse und Browserangabe in einem Protokoll. Das dient der Sicherheit und der Fehlersuche. Die Protokolle werden nach 14 Tagen gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse an einem sicheren Betrieb (Art. 6 Abs. 1 lit. f DSGVO).",
+            "Server und Datenbank betreibt Hetzner Online GmbH (Deutschland) in einem Rechenzentrum in Finnland, also in der EU.",
+          ],
+        },
+        {
+          h: "3. Reichweitenmessung ohne Cookies",
+          p: [
+            "Wir zählen selbst, welche Seiten besucht werden und wie weit Besucher kommen, zum Beispiel vom Angebot bis zur Bestellung. Dafür bilden wir aus IP-Adresse, Browserangabe und einem Zufallswert, der jeden Tag neu erzeugt wird, eine Prüfsumme. Die IP-Adresse und die Browserangabe selbst speichern wir dabei nicht, und am nächsten Tag lässt sich niemand mehr wiedererkennen.",
+            "Gespeichert werden die aufgerufene Seite, die Sprache, die Website, von der du kommst (nur deren Domain), Kampagnenangaben aus dem Link (utm) und ob du über eine Anzeige kamst. Es gibt keine Cookies, keine Dienste Dritter und keine Weitergabe. Die Daten werden nach 13 Monaten gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse, das Angebot zu verbessern (Art. 6 Abs. 1 lit. f DSGVO).",
+          ],
+        },
+        {
+          h: "4. Was im Browser gespeichert wird",
+          p: [
+            "Ein Cookie merkt sich deine Sprache. Nach der Anmeldung liegt dein Anmeldeschlüssel im lokalen Speicher des Browsers, und die Liste deiner kostenlosen Prototypen ebenfalls. Das alles ist nötig, damit die Seite funktioniert, und wird nicht zur Analyse verwendet (§ 165 Abs. 3 TKG 2021). Du kannst es jederzeit im Browser löschen.",
+          ],
+        },
+        {
+          h: "5. Kostenloser Prototyp",
+          p: [
+            "Deine Beschreibung schicken wir an ein KI-Modell, das daraus den Prototyp schreibt (siehe Punkt 8). Die IP-Adresse speichern wir zum Prototyp, damit niemand mehr als 5 Prototypen am Tag erzeugt. Prototyp, Beschreibung und IP-Adresse werden nach 7 Tagen gelöscht, außer du bestellst daraus eine App.",
+            "Fotos im Prototyp suchen wir mit wenigen Stichworten bei Pexels. Pexels erhält dabei keine Daten von dir.",
+          ],
+        },
+        {
+          h: "6. Angebot, Bestellung und Konto",
+          p: [
+            "Für eine Bestellung verarbeiten wir E-Mail-Adresse, Name, deine App-Beschreibung, die gewählten Pakete und die Zustimmungen im Checkout. Bei der Zustimmung zu den Bedingungen und beim Verzicht nach § 18 FAGG speichern wir Zeitpunkt und IP-Adresse als Nachweis. Rechtsgrundlage ist der Vertrag (Art. 6 Abs. 1 lit. b DSGVO) und unsere gesetzliche Nachweispflicht (lit. c).",
+            "Die Anmeldung läuft über einen Link per E-Mail, ohne Passwort. Bestell- und Rechnungsdaten bewahren wir sieben Jahre auf, weil das Steuerrecht es verlangt (§ 132 BAO).",
+          ],
+        },
+        {
+          h: "7. Zahlung",
+          p: [
+            "Bezahlt wird über Stripe (Stripe Payments Europe, Ltd., Irland). Kartendaten gibst du direkt bei Stripe ein, wir sehen sie nie. Wir erhalten nur, ob und wie viel bezahlt wurde. Stripe verarbeitet Daten auch in den USA, auf Grundlage der EU-Standardvertragsklauseln.",
+          ],
+        },
+        {
+          h: "8. Bau der App, Änderungen und Chat",
+          p: [
+            "Für den Bau deiner App speichern wir das Projekt mit Code, Vorschau und Verlauf. Wünschst du Änderungen, speichern wir die Nachrichten im Projekt-Chat und Screenshots, die du anhängst. Das bleibt gespeichert, solange das Projekt besteht, und wird mit deinem Konto gelöscht.",
+            "Texte und Code schreibt das KI-Modell Claude von Anthropic PBC (USA). Deine Beschreibung, deine Chat-Nachrichten und angehängte Screenshots werden dafür an Anthropic übermittelt. Bilder für Anzeigen erzeugt ein Bildmodell von OpenAI (USA) aus einer Beschreibung der App, ohne deine Kontaktdaten. Die installierbare Android-App baut der Dienst Expo (650 Industries, Inc., USA) aus dem Code deiner App. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework oder die EU-Standardvertragsklauseln.",
+            "Bitte schick im Chat keine Passwörter, Gesundheitsdaten oder Daten Dritter, die für die Änderung nicht nötig sind.",
+          ],
+        },
+        {
+          h: "9. E-Mails",
+          p: [
+            "E-Mails zu Bestellung, Vorschau und Änderungen verschicken wir über World4You Internet Services GmbH (Österreich). Antwortest du, landet die Nachricht in unserem Postfach dort.",
+          ],
+        },
+        {
+          h: "10. Werbung für Appwerk",
+          p: [
+            "Wir werben für Appwerk bei Google und Meta. Auf unserer Website gibt es keine Pixel oder Tracking-Codes dieser Anbieter. Kommst du über eine Anzeige, merken wir uns nur, dass der Besuch von einer Anzeige kam (siehe Punkt 3). Was Google und Meta beim Anzeigen und Klicken selbst verarbeiten, regeln deren Datenschutzerklärungen.",
+          ],
+        },
+        {
+          h: "11. Deine Rechte",
+          p: [
+            "Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch gegen Verarbeitungen, die auf unserem berechtigten Interesse beruhen. Schreib dazu an office@codemenschen.at.",
+            "Wenn du meinst, dass wir mit deinen Daten nicht richtig umgehen, kannst du dich bei der Österreichischen Datenschutzbehörde beschweren (dsb.gv.at).",
+          ],
+        },
+      ],
+    },
+    imprint: {
+      title: "Impressum",
+      updated: "Stand: 15. September 2026",
+      lede: "Angaben nach § 5 ECG und § 25 Mediengesetz.",
+      sections: [
+        {
+          h: "Anbieter",
+          p: [
+            "Codemenschen GmbH",
+            "Anton Hubmann Platz 1/6, 8077 Gössendorf, Österreich",
+            "Firmenbuchnummer: FN 543274 h",
+            "E-Mail: office@codemenschen.at",
+          ],
+        },
+        {
+          h: "Angebot",
+          p: [
+            "Appwerk ist ein Angebot der Codemenschen GmbH: Entwicklung von Apps und Websites zum Festpreis, mit KI-Unterstützung gebaut und von Menschen geprüft.",
+          ],
+        },
+        {
+          h: "Streitbeilegung",
+          p: [
+            "Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen. Bei Fragen oder Beschwerden schreib uns einfach an office@codemenschen.at.",
+          ],
+        },
+      ],
+    },
   },
   footer: {
-    legal: "Bedingungen und Widerrufsbelehrung stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft. Datenschutz und Impressum folgen.",
+    legal: "Bedingungen, Widerrufsbelehrung und Datenschutz stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft.",
     by: "Betrieben von der Codemenschen GmbH, Wien, Österreich.",
     imprint: "Impressum",
   },
