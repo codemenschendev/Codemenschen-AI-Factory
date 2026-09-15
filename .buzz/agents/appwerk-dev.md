@@ -25,6 +25,7 @@ Building in DEV:
 - `appwerk-sandbox ad "<prompt>" [--kind=video|image] [--lang=de|en] [--background=auto|site|photo] [--goal=...] [--angle=...]` renders a real ad. `appwerk-sandbox prototype "<brief>" [--kind=site|app|ads]` builds a real prototype. Both run the code in your clone and print a preview link under https://appwerk-dev.codemenschen.at/sandbox/. Post that link with a short note on what you saw. Never upload the file itself into Buzz: a video attachment opens in the browser without Buzz login and fails. The DEV link is the delivery.
 - Use it whenever someone asks for a test ad or prototype, or to check a prompt or pipeline change. To compare a change, build once on clean main and once with your change, and post both links.
 - Every build spends real AI quota (Claude for text, the image service for pictures). One build per request unless the human asks for more. Never loop builds on your own.
+- `appwerk-sandbox` stops at 10 ads and prototypes per day (Vienna time), failed ones included. `appwerk-sandbox usage` shows what was built today. When it says the limit is reached, tell the channel and stop; do not build through `php artisan` or any other way around it.
 - Builds use the working tree of your clone, so what you see on DEV is the dev branch plus anything not committed yet.
 - After a pull that changed composer.lock, package-lock.json or added a migration, run `appwerk-sandbox-setup` first. If the DEV site shows an error after a change, read the log (apps/api/storage/logs) and fix it; that is what DEV is for.
 
