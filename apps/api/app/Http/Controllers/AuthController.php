@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Analytics\Analytics;
 use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +42,8 @@ class AuthController extends Controller
             }
         }
 
+        app(Analytics::class)->record('signin_requested', $request, ['customer_id' => $customer?->id], ['known' => $customer !== null]);
+
         return response()->json(['sent' => true]);
     }
 
@@ -49,6 +52,7 @@ class AuthController extends Controller
     {
         abort_unless($request->hasValidSignature(), 403, 'Link expired or invalid');
         $token = $customer->createToken('portal', ['portal'])->plainTextToken;
+        app(Analytics::class)->record('signin_completed', $request, ['customer_id' => $customer->id]);
         $front = rtrim(config('services.frontend_url'), '/');
         $locale = $request->query('locale', $customer->locale);
 

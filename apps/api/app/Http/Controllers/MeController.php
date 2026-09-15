@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Analytics\Analytics;
 use App\Domain\Pricing\Estimator;
 use App\Models\ChangeMessage;
 use App\Models\Project;
@@ -108,6 +109,7 @@ class MeController extends Controller
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
         $orchestrator->approveReview($project, 'customer:'.$request->user()->email);
+        app(Analytics::class)->record('review_approved', $request, ['order_id' => $project->order_id, 'customer_id' => $project->customer_id]);
 
         return response()->json(['status' => $project->fresh()->status]);
     }
@@ -168,6 +170,9 @@ class MeController extends Controller
         ]);
 
         $res = $chat->customerSays($project, $request->user(), trim((string) ($data['body'] ?? '')), $data['images'] ?? []);
+        app(Analytics::class)->record('chat_message', $request, ['order_id' => $project->order_id, 'customer_id' => $project->customer_id], [
+            'images' => count($data['images'] ?? []), 'assistant' => $res['status'] === 503 ? 'unavailable' : 'ok',
+        ]);
 
         return response()->json([
             'messages' => $chat->thread($project, $res['messages'][0]->id - 1),
@@ -183,6 +188,9 @@ class MeController extends Controller
         $data = $request->validate(['fagg_waiver' => 'nullable|boolean']);
 
         $cr = $chat->confirm($project, $request->user(), (bool) ($data['fagg_waiver'] ?? false), $request->ip());
+        app(Analytics::class)->record('change_confirmed', $request, ['order_id' => $project->order_id, 'customer_id' => $project->customer_id], [
+            'round' => $cr->round, 'price_eur' => $cr->price_eur,
+        ]);
 
         return response()->json([
             'change_request_id' => $cr->id,

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { LOCALES, getDict, isLocale, type Locale } from "@/lib/i18n";
 import { AccountLink } from "@/components/AccountLink";
 import { LangSwitch } from "@/components/LangSwitch";
+import { PageViews } from "@/components/PageViews";
 import "../globals.css";
 
 export const metadata: Metadata = {
@@ -29,6 +30,7 @@ export default async function LocaleLayout({
   return (
     <html lang={locale}>
       <body>
+        <PageViews />
         {/* Sticky header, ported from the appwerk prototype (site/index.html:14-30) */}
         <header className="nav" id="top">
           <div className="wrap nav-inner">

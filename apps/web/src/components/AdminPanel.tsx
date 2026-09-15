@@ -1,5 +1,6 @@
 "use client";
 
+import { AnalyticsPanel } from "@/components/AnalyticsPanel";
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { ChatShots, type ChatMessage } from "@/components/ChangeChat";
@@ -107,7 +108,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "projects" | "ads" | "prototypes" | "customers" | "library" | "references";
+type Tab = "overview" | "analytics" | "projects" | "ads" | "prototypes" | "customers" | "library" | "references";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -287,7 +288,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   return (
     <div>
       <div className="tabs" role="tablist">
-        {(["overview", "projects", "ads", "prototypes", "customers", "library", "references"] as Tab[]).map((t) => (
+        {(["overview", "analytics", "projects", "ads", "prototypes", "customers", "library", "references"] as Tab[]).map((t) => (
           <button
             key={t}
             className="tab"
@@ -302,6 +303,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
       {note && <p className="note">{note}</p>}
 
+      {tab === "analytics" && token && <AnalyticsPanel token={token} locale={locale} d={d} />}
       {tab === "library" && token && <LibraryPanel token={token} locale={locale} d={d} />}
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
 
