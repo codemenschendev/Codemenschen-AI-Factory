@@ -29,8 +29,9 @@ the Google account that signs in, so that account must own or have access to the
 
 Two accounts are involved and they are not the same thing.
 
-**Google Cloud** holds the OAuth client. **Google Ads** (a Manager account, "MCC") holds the
-developer token and the ad account. The API refuses without both.
+**Google Cloud** holds the OAuth client and, since 2026-09-09, the API access level. **Google
+Ads** holds the ad account. There is no developer token any more: Google retired them and moved
+access onto the Cloud project that owns the OAuth client.
 
 1. Google Cloud console: one project, name it `codemenschen-ads`. APIs & Services, enable
    **Google Ads API**.
@@ -48,18 +49,22 @@ developer token and the ad account. The API refuses without both.
 
    It opens the consent page, catches the redirect on localhost, and prints the refresh token to
    your terminal and nowhere else.
-5. Google Ads, Manager account: Tools, API Center, apply for a **developer token**. A new token
-   has *test* access, which only works against test ad accounts. Apply for **Basic access** the
-   same day: Google reviews by hand and it takes days to weeks. Nothing in our code changes when
-   it lands; the same token simply starts working against the real account.
-6. Note the 10-digit **customer id** of the ad account that will run campaigns (no dashes), and
-   the customer id of the Manager account as `login_customer_id`.
+5. Cloud console, `cm-ops`, Google Ads API, **Access levels** (Manage). A project starts at
+   **Test**, which only reaches test accounts. Apply for **Explorer**: it reaches production
+   accounts, 2,880 operations a day, plenty for paused campaigns per order. Basic needs brand
+   verification of the Cloud project first. Nothing in our code changes when a level lands.
+   (API Center in Google Ads now only issues tokens for the App Conversion Tracking API.)
+6. Note the 10-digit **customer id** of the ad account that will run campaigns (no dashes). A
+   Manager account is optional: set its id as `login_customer_id` only when the signed-in Google
+   account reaches the ad account through the Manager.
+
+Accounts under codemenschenapp@gmail.com (2026-09-15): Manager 669-088-3495, ad account
+577-053-2500 "codemenschen gmbh".
 
 Env keys:
 
-    GOOGLE_ADS_DEVELOPER_TOKEN
     GOOGLE_ADS_CUSTOMER_ID            10 digits, the ad account
-    GOOGLE_ADS_LOGIN_CUSTOMER_ID      10 digits, the Manager account (optional if the same)
+    GOOGLE_ADS_LOGIN_CUSTOMER_ID      10 digits, the Manager account (optional)
     GOOGLE_ADS_CLIENT_ID
     GOOGLE_ADS_CLIENT_SECRET
     GOOGLE_ADS_REFRESH_TOKEN

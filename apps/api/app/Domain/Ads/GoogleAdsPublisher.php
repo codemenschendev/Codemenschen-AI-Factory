@@ -9,10 +9,11 @@ use RuntimeException;
 /**
  * Publishes to Google Ads on Codemenschen's own account.
  *
- * Google gates the Ads API behind a developer token it approves by hand, which takes days to
- * weeks. Until that token exists this stays unconfigured and says so plainly rather than failing
- * deep in an API call. The shape is here so the day the token arrives it is a config change, not
- * a build.
+ * Since 2026-09-09 Google no longer issues developer tokens: API access belongs to the Google
+ * Cloud project of the OAuth client (Test, Explorer, Basic, Standard, managed in the Cloud
+ * console under Google Ads API, access levels). A token that is still set is sent and ignored.
+ * Production accounts need at least Explorer; below that the API refuses, and verify() reports
+ * the refusal as it comes.
  *
  * A Search campaign is built paused: campaign_budget -> campaign (PAUSED) -> ad_group ->
  * responsive_search_ad. Budgets are in micros (EUR * 1_000_000); the customer's monthly budget
@@ -27,7 +28,6 @@ class GoogleAdsPublisher implements Publisher
 
     /** Env names behind the config keys, so a missing one can be named without being read. */
     private const ENV = [
-        'developer_token' => 'GOOGLE_ADS_DEVELOPER_TOKEN',
         'customer_id' => 'GOOGLE_ADS_CUSTOMER_ID',
         'client_id' => 'GOOGLE_ADS_CLIENT_ID',
         'client_secret' => 'GOOGLE_ADS_CLIENT_SECRET',
@@ -53,9 +53,9 @@ class GoogleAdsPublisher implements Publisher
 
     /**
      * One search on the configured customer. It exercises everything at once: the OAuth pair and
-     * refresh token (access token), the developer token and login-customer-id (headers), and the
-     * customer id (the resource). A developer token that Google has not approved yet fails here
-     * with DEVELOPER_TOKEN_NOT_APPROVED, which is the answer the operator actually needs.
+     * refresh token (access token), login-customer-id (header), and the customer id (the resource).
+     * A Cloud project below Explorer access, or a Google account without access, fails here
+     * with the refusal Google gives, which is the answer the operator actually needs.
      */
     public function verify(): array
     {
@@ -66,10 +66,7 @@ class GoogleAdsPublisher implements Publisher
         try {
             $cid = $this->cfg('customer_id');
             $res = Http::withToken($this->accessToken())
-                ->withHeaders([
-                    'developer-token' => $this->cfg('developer_token'),
-                    'login-customer-id' => $this->cfg('login_customer_id') ?: $cid,
-                ])
+                ->withHeaders($this->headers($cid))
                 ->timeout(30)
                 ->post($this->endpoint("customers/{$cid}/googleAds:search"), [
                     'query' => 'SELECT customer.descriptive_name, customer.currency_code, customer.test_account FROM customer LIMIT 1',
@@ -140,10 +137,7 @@ class GoogleAdsPublisher implements Publisher
         ];
 
         $res = Http::withToken($token)
-            ->withHeaders([
-                'developer-token' => $this->cfg('developer_token'),
-                'login-customer-id' => $this->cfg('login_customer_id') ?: $cid,
-            ])
+            ->withHeaders($this->headers($cid))
             ->timeout(60)
             ->post($this->endpoint("customers/{$cid}/googleAds:mutate"), ['mutateOperations' => $ops]);
 
@@ -182,10 +176,7 @@ class GoogleAdsPublisher implements Publisher
         $cid = $this->cfg('customer_id');
 
         $res = Http::withToken($this->accessToken())
-            ->withHeaders([
-                'developer-token' => $this->cfg('developer_token'),
-                'login-customer-id' => $this->cfg('login_customer_id') ?: $cid,
-            ])
+            ->withHeaders($this->headers($cid))
             ->timeout(30)
             ->post($this->endpoint("customers/{$cid}/campaigns:mutate"), [
                 'operations' => [['updateMask' => 'status', 'update' => ['resourceName' => $resource, 'status' => $status]]],
@@ -228,6 +219,17 @@ class GoogleAdsPublisher implements Publisher
         return $texts->map(fn ($t) => ['text' => $t])->all();
     }
 
+    /** login-customer-id always; developer-token only while one is still configured (Google ignores it). */
+    private function headers(string $cid): array
+    {
+        $headers = ['login-customer-id' => $this->cfg('login_customer_id') ?: $cid];
+        if ($this->cfg('developer_token') !== '') {
+            $headers['developer-token'] = $this->cfg('developer_token');
+        }
+
+        return $headers;
+    }
+
     private function endpoint(string $path): string
     {
         $v = $this->cfg('api_version') ?: 'v26';
@@ -243,7 +245,7 @@ class GoogleAdsPublisher implements Publisher
     private function assertConfigured(): void
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Google Ads chưa cấu hình (developer token của Google được duyệt tay, cần vài ngày).');
+            throw new RuntimeException('Google Ads chưa cấu hình (GOOGLE_ADS_CUSTOMER_ID / CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN).');
         }
     }
 }

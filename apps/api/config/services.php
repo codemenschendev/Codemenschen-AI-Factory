@@ -81,7 +81,7 @@ return [
             'dsa_payor' => env('META_ADS_DSA_PAYOR', 'Codemenschen GmbH'),
         ],
         'google' => [
-            'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'), // Google approves this by hand
+            'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'), // optional, retired by Google 2026-09-09
             'customer_id' => env('GOOGLE_ADS_CUSTOMER_ID'),         // 10 digits, no dashes
             'login_customer_id' => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
             'client_id' => env('GOOGLE_ADS_CLIENT_ID'),

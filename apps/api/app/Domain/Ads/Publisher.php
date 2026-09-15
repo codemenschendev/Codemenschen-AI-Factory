@@ -23,7 +23,7 @@ interface Publisher
 
     /**
      * One read-only call against the platform to prove the credentials work: the account exists,
-     * the token opens it, the developer token is accepted. Spends nothing, creates nothing.
+     * the token opens it, the platform accepts the call. Spends nothing, creates nothing.
      *
      * @return array{ok:bool,account:?string,detail:?string}
      */
