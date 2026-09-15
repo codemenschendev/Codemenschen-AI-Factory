@@ -13,6 +13,10 @@ use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('pipeline:tick')->everyMinute();
 
+// The analytics digest in #appwerk-agents: every Monday morning, and within a minute of "!stats appwerk".
+Schedule::command('factory:analytics --post --days=7')->weeklyOn(1, '08:00')->timezone('Europe/Vienna');
+Schedule::command('factory:analytics --requests')->everyMinute();
+
 // Analytics are for trends, not records: thirteen months, then gone.
 Schedule::call(fn () => AnalyticsEvent::where('created_at', '<', now()->subMonths(13))->delete())->dailyAt('03:40');
 

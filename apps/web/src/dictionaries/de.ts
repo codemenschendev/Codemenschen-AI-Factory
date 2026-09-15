@@ -432,6 +432,7 @@ export const de = {
     analytics: {
       range: "Zeitraum",
       days: "{n} Tage",
+      day1: "1 Tag",
       failed: "Die Zahlen konnten nicht geladen werden.",
       visitors: "Besucher",
       pageViews: "Seitenaufrufe",
