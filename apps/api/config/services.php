@@ -89,7 +89,7 @@ return [
             'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
             // Preferred over the refresh token: path to a service account key file, mounted read-only.
             'service_account_json' => env('GOOGLE_ADS_SERVICE_ACCOUNT_JSON'),
-            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v26'), // v18 to v21 answer 404 since 2026
+            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v25'), // v26 does not exist yet, v18 to v21 are retired (404)
         ],
     ],
 

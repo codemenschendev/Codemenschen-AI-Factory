@@ -83,8 +83,10 @@ Env keys:
     GOOGLE_ADS_CLIENT_SECRET
     GOOGLE_ADS_REFRESH_TOKEN
 
-API version: `GOOGLE_ADS_API_VERSION`, default v26. Google retires a version about a year after
+API version: `GOOGLE_ADS_API_VERSION`, default v25. Google retires a version about a year after
 release and then answers 404 (v18 to v21 did by 2026-09); bump the default when that happens.
+Check a version with a real token: without one, every version answers 401, even one that does
+not exist (v26 looked alive that way on 2026-09-15 and was a 404 "Method not found").
 
 ## Meta (Facebook and Instagram)
 

@@ -28,7 +28,7 @@ class AdsConnectionsTest extends TestCase
     {
         config(['services.ads.google' => $over + [
             'developer_token' => 'dev', 'customer_id' => '1234567890', 'login_customer_id' => '',
-            'client_id' => 'cid', 'client_secret' => 'sec', 'refresh_token' => 'rt', 'api_version' => 'v26',
+            'client_id' => 'cid', 'client_secret' => 'sec', 'refresh_token' => 'rt', 'api_version' => 'v25',
         ]]);
     }
 
@@ -187,7 +187,7 @@ class AdsConnectionsTest extends TestCase
 
         app(GoogleAdsPublisher::class)->publish($this->campaign());
 
-        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://googleads.googleapis.com/v26/')
+        Http::assertSent(fn ($r) => str_starts_with($r->url(), 'https://googleads.googleapis.com/v25/')
             && ($r['mutateOperations'][1]['campaignOperation']['create']['containsEuPoliticalAdvertising'] ?? null) === 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING'
             && $r['mutateOperations'][1]['campaignOperation']['create']['status'] === 'PAUSED');
     }

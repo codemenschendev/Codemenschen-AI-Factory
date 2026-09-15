@@ -293,7 +293,7 @@ class GoogleAdsPublisher implements Publisher
 
     private function endpoint(string $path): string
     {
-        $v = $this->cfg('api_version') ?: 'v26';
+        $v = $this->cfg('api_version') ?: 'v25';
 
         return "https://googleads.googleapis.com/{$v}/{$path}";
     }
