@@ -34,6 +34,9 @@ const ROLE_LABEL: Record<string, string> = {
 export async function changeChat(input: ChangeChatInput): Promise<ChangeChatOutput> {
   const file = path.join(repoDir(input.project_id), "SPEC.md");
   const spec = existsSync(file) ? (await readFile(file, "utf8")).slice(0, 8000) : "(no SPEC.md found)";
+  // Colours and sizes the app really uses, so a vague "our brown" becomes a hex code on the checklist.
+  const tokensFile = path.join(repoDir(input.project_id), "design-tokens.json");
+  const tokens = existsSync(tokensFile) ? (await readFile(tokensFile, "utf8")).slice(0, 4000) : "(none)";
   const features = input.features.length ? input.features.join(", ") : "none beyond the base app";
   const conversation = input.transcript
     .slice(-20)
@@ -44,7 +47,7 @@ export async function changeChat(input: ChangeChatInput): Promise<ChangeChatOutp
     })
     .join("\n\n");
 
-  const user = `Paid features: ${features}\n\nSPEC.md:\n${spec}\n\nConversation so far (the last line is the newest):\n${conversation}`;
+  const user = `Paid features: ${features}\n\nSPEC.md:\n${spec}\n\ndesign-tokens.json:\n${tokens}\n\nConversation so far (the last line is the newest):\n${conversation}`;
   const res = await gatewayComplete(input.system, user);
   const raw = extractJson(res.text) as Partial<Record<keyof ChangeChatOutput, unknown>> | null;
   if (!raw || typeof raw !== "object" || typeof raw.reply !== "string" || !raw.reply.trim()) {

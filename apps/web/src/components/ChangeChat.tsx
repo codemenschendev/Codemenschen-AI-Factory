@@ -180,6 +180,7 @@ export function ChangeChat({
             locale={locale}
             project={project}
             open={m.id === openCardId}
+            latest={m.id === talk[talk.length - 1]?.id}
             waiver={waiver}
             setWaiver={setWaiver}
             confirming={confirming || roundRunning}
@@ -241,6 +242,7 @@ function Message({
   locale,
   project,
   open,
+  latest,
   waiver,
   setWaiver,
   confirming,
@@ -255,6 +257,7 @@ function Message({
   locale: Locale;
   project: ChatProject;
   open: boolean;
+  latest: boolean;
   waiver: boolean;
   setWaiver: (v: boolean) => void;
   confirming: boolean;
@@ -323,18 +326,9 @@ function Message({
       <div className="chat-bubble">
         <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{m.body}</p>
 
-        {m.meta.questions?.map((q, i) => (
-          <div key={i} className="chat-question">
-            <p className="small" style={{ margin: "0 0 6px", fontWeight: 600 }}>{q.q}</p>
-            <div className="chat-options">
-              {q.options.map((o) => (
-                <button key={o} type="button" className="chat-option" disabled={sending} onClick={() => onPick(o)}>
-                  {o}
-                </button>
-              ))}
-            </div>
-          </div>
-        ))}
+        {!!m.meta.questions?.length && (
+          <Questions questions={m.meta.questions} active={latest && !sending} d={d} onSend={onPick} />
+        )}
 
         {m.meta.type === "declined" && (
           <p className="small" style={{ margin: 0 }}>
@@ -384,6 +378,62 @@ function Message({
         )}
       </div>
     </div>
+  );
+}
+
+/**
+ * Tap answers. One question sends on the tap; with two, the customer picks both and sends them
+ * together, so the assistant does not answer half a reply. Older questions stay visible, inactive.
+ */
+function Questions({
+  questions,
+  active,
+  d,
+  onSend,
+}: {
+  questions: { q: string; options: string[] }[];
+  active: boolean;
+  d: Dict;
+  onSend: (text: string) => void;
+}) {
+  const [picked, setPicked] = useState<Record<number, string>>({});
+  const single = questions.length === 1;
+  const complete = questions.every((_, i) => picked[i]);
+
+  return (
+    <>
+      {questions.map((q, i) => (
+        <div key={i} className="chat-question">
+          <p className="small" style={{ margin: "0 0 6px", fontWeight: 600 }}>{q.q}</p>
+          <div className="chat-options" role={single ? undefined : "radiogroup"} aria-label={q.q}>
+            {q.options.map((o) => (
+              <button
+                key={o}
+                type="button"
+                className="chat-option"
+                aria-pressed={picked[i] === o}
+                disabled={!active}
+                onClick={() => (single ? onSend(o) : setPicked((p) => ({ ...p, [i]: o })))}
+              >
+                {o}
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+      {!single && active && (
+        <div className="chat-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            disabled={!complete}
+            onClick={() => onSend(questions.map((q, i) => `${q.q} ${picked[i]}`).join("\n"))}
+          >
+            {d.project.chat.sendAnswers}
+          </button>
+        </div>
+      )}
+    </>
   );
 }
 

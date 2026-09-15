@@ -300,6 +300,7 @@ export const en = {
       intro: "Write what should be different in the app. We clarify the details with you. A round only starts once you confirm the summary.",
       placeholder: "e.g. The button on the booking page is too small",
       send: "Send",
+      sendAnswers: "Send answers",
       sending: "Sending …",
       thinking: "Appwerk is writing …",
       you: "You",
