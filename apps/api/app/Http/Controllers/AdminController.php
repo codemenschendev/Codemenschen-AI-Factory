@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Qa\PageAudit;
 use App\Jobs\RenderProjectAd;
+use App\Models\ChangeMessage;
 use App\Models\Customer;
 use App\Models\MarketingCampaign;
 use App\Models\Order;
@@ -13,9 +14,11 @@ use App\Models\Project;
 use App\Models\ProjectAd;
 use App\Models\Prototype;
 use App\Services\ChangeChat;
+use App\Services\ChangeShots;
 use App\Services\PipelineOrchestrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
  * The operator lane: one view of the whole factory, plus the few actions that get a stuck project
@@ -215,6 +218,15 @@ class AdminController extends Controller
             'messages' => $chat->thread($project),
             'assistant_paused' => (bool) $project->assistant_paused,
         ]);
+    }
+
+    public function changeMessageImage(Project $project, ChangeMessage $message, int $n, ChangeShots $shots): BinaryFileResponse
+    {
+        abort_unless($message->project_id === $project->id, 404);
+        $path = $shots->path($message, $n);
+        abort_if($path === null, 404);
+
+        return response()->file($path);
     }
 
     /** An operator answers in the thread, shown to the customer as the Codemenschen team. */

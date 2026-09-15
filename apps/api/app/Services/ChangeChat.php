@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Domain\Ai\Prompts;
 use App\Domain\Pricing\Estimator;
+use App\Jobs\MailOperatorReply;
 use App\Models\ChangeMessage;
 use App\Models\ChangeRequest;
 use App\Models\Customer;
@@ -36,11 +37,27 @@ class ChangeChat
 
     private const MAX_ITEMS = 8;
 
-    public function __construct(private PipelineOrchestrator $orchestrator, private Notify $notify) {}
+    /** A customer who has not looked at the thread this long hears about a team reply by mail. */
+    public const MAIL_AFTER_MINUTES = 15;
+
+    public function __construct(private PipelineOrchestrator $orchestrator, private Notify $notify, private ChangeShots $shots) {}
 
     public static function enabledFor(?Customer $customer): bool
     {
-        return (bool) config('services.change_chat.enabled') || (bool) $customer?->is_admin;
+        return (bool) config('services.change_chat.enabled')
+            || (bool) $customer?->is_admin
+            || ($customer !== null && in_array(strtolower((string) $customer->email), (array) config('services.change_chat.customers'), true));
+    }
+
+    /** The customer has the thread open (the portal polls it). Read by MailOperatorReply. */
+    public static function seen(Project $project): void
+    {
+        Cache::put("change-chat:seen:{$project->id}", now()->getTimestamp(), now()->addDay());
+    }
+
+    public static function lastSeen(Project $project): int
+    {
+        return (int) Cache::get("change-chat:seen:{$project->id}", 0);
     }
 
     /** The thread, oldest first. `$after` returns only newer messages, for polling. */
@@ -51,7 +68,10 @@ class ChangeChat
                 'id' => $m->id,
                 'role' => $m->role,
                 'body' => $m->body,
-                'meta' => $m->meta ?? (object) [],
+                // Stored file ids stay on the server; the portal asks for picture n of message id.
+                'meta' => isset($m->meta['images'])
+                    ? array_merge($m->meta, ['images' => count($m->meta['images'])])
+                    : ($m->meta ?? (object) []),
                 'change_request_id' => $m->change_request_id,
                 'created_at' => $m->created_at->toIso8601String(),
             ])->all();
@@ -62,9 +82,10 @@ class ChangeChat
      *
      * @return array{status:int, messages:list<ChangeMessage>}
      */
-    public function customerSays(Project $project, Customer $customer, string $body): array
+    public function customerSays(Project $project, Customer $customer, string $body, array $images = []): array
     {
-        $mine = $this->add($project, 'customer', $body);
+        $stored = $images ? $this->shots->store($project, $images) : [];
+        $mine = $this->add($project, 'customer', $body, $stored ? ['images' => $stored] : null);
 
         if ($project->assistant_paused) {
             $this->notify->alert($project, 'change chat: customer wrote while the assistant is paused: '.mb_substr($body, 0, 200));
@@ -152,7 +173,11 @@ class ChangeChat
 
     public function operatorSays(Project $project, string $email, string $body): ChangeMessage
     {
-        return $this->add($project, 'operator', $body, null, null, $email);
+        $message = $this->add($project, 'operator', $body, null, null, $email);
+        // Only if the customer has not had the thread open since: checked when the job runs.
+        MailOperatorReply::dispatch($message->id)->delay(now()->addMinutes(self::MAIL_AFTER_MINUTES));
+
+        return $message;
     }
 
     /* ---------------- pipeline events, called from PipelineOrchestrator ---------------- */
@@ -228,10 +253,12 @@ class ChangeChat
     {
         $draft = $project->changeMessages()->whereNull('change_request_id')->orderByDesc('id')->limit(20)->get()->reverse();
         $transcript = $draft->map(fn (ChangeMessage $m) => [
+            'id' => $m->id,
             'role' => $m->role,
             'body' => mb_substr($m->body, 0, 2000),
             'card' => ($m->meta['type'] ?? null) === 'card' ? array_column($m->meta['card']['items'], 'text') : null,
         ])->values()->all();
+        $images = $this->shots->inline($draft->where('role', 'customer'), ChangeShots::MAX_FOR_ASSISTANT);
 
         $recent = $project->changeRequests()->latest('id')->limit(3)->get()
             ->map(fn (ChangeRequest $cr) => "Round {$cr->round} ({$cr->status}): ".mb_substr($cr->text, 0, 400)
@@ -249,6 +276,7 @@ class ChangeChat
                         'recent' => $recent ?: 'none',
                     ]),
                     'transcript' => $transcript,
+                    'images' => $images,
                     'project_id' => $project->id,
                     'features' => array_values((array) ($project->order?->quote?->features ?? [])),
                 ]);

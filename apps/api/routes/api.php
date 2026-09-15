@@ -43,6 +43,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // the throttle only stops a stuck client from hammering the endpoint.
     Route::get('/me/projects/{project}/messages', [MeController::class, 'changeMessages']);
     Route::post('/me/projects/{project}/messages', [MeController::class, 'sendChangeMessage'])->middleware('throttle:20,1');
+    Route::get('/me/projects/{project}/messages/{message}/images/{n}', [MeController::class, 'changeMessageImage'])->whereNumber('n');
     Route::post('/me/projects/{project}/messages/confirm', [MeController::class, 'confirmChange'])->middleware('throttle:10,1');
     Route::post('/me/projects/{project}/care/checkout', [MeController::class, 'startCare']);
     Route::post('/me/projects/{project}/care/cancel', [MeController::class, 'cancelCare']);
@@ -83,6 +84,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/projects/{project}/status', [AdminController::class, 'setStatus']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
+    Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');
     Route::post('/projects/{project}/assistant', [AdminController::class, 'assistant']);
     Route::post('/ads/{ad}/rerender', [AdminController::class, 'rerenderAd']);
 

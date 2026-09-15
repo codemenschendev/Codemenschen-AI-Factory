@@ -226,6 +226,14 @@ assistant replies per round, preview approvals after the first round, tokens per
 - **2b** (about 3 to 4 days): screenshots in messages (sent to the assistant and to revise),
   assistant pause, first-20 hold window, the two new mails, removal of the old form.
 
+State 2026-09-15: 2a is live behind `CHANGE_CHAT_ENABLED`. From 2b, built: screenshots (up to 3
+per message, shrunk in the browser, seen by the assistant and saved as files for the revise agent
+outside the repository), the declined/failed mail (it replaces the misleading "preview ready" mail
+after a round that changed nothing), the team-reply mail after 15 minutes unseen, and
+`CHANGE_CHAT_CUSTOMERS` to try the chat with named customers first. The assistant pause shipped in
+2a. Still open: the hold window (needs question 5) and removing the old form (after the chat is on
+for everyone).
+
 Estimates, not promises. They assume the revise stage and Stripe flow stay as they are.
 
 ## 11. Open questions for Patrick

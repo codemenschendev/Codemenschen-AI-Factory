@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { api, ApiError } from "@/lib/api";
+import { api, ApiError, API_BASE } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 
 /** One line of the thread, as GET /me/projects/{id}/messages returns it. */
@@ -22,6 +22,8 @@ export interface ChatMessage {
     summary?: string;
     items?: { text: string; done: boolean; note: string }[];
     preview_url?: string | null;
+    /** How many screenshots the message carries; fetched one by one with the token. */
+    images?: number;
   };
 }
 
@@ -35,6 +37,81 @@ export interface ChatProject {
 }
 
 const WORKING = ["FIXING", "TESTING"];
+const MAX_SHOTS = 3;
+
+/**
+ * A picture as the API wants it: JPEG, longest side at most 1600 px. A phone screenshot is
+ * several megabytes as PNG and a few hundred kilobytes like this, and still sharp enough to read.
+ */
+function shrink(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      const scale = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.round(img.naturalWidth * scale));
+      canvas.height = Math.max(1, Math.round(img.naturalHeight * scale));
+      const ctx = canvas.getContext("2d");
+      URL.revokeObjectURL(url);
+      if (!ctx) return reject(new Error("no canvas"));
+      ctx.fillStyle = "#fff"; // transparent PNG areas would turn black in JPEG
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", 0.85));
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error("unreadable image"));
+    };
+    img.src = url;
+  });
+}
+
+/**
+ * Screenshots of one stored message. The image route needs the bearer token, which an <img> tag
+ * cannot send, so each picture is fetched and shown from a blob URL. A tap opens it full size.
+ */
+export function ChatShots({ path, count, token, label }: { path: string; count: number; token: string; label: string }) {
+  const [urls, setUrls] = useState<(string | null)[]>([]);
+
+  useEffect(() => {
+    let alive = true;
+    const made: string[] = [];
+    Promise.all(
+      Array.from({ length: count }, (_, n) =>
+        fetch(`${API_BASE}/api${path}/images/${n}`, { headers: { authorization: `Bearer ${token}` } })
+          .then((r) => (r.ok ? r.blob() : null))
+          .then((b) => {
+            if (!b) return null;
+            const u = URL.createObjectURL(b);
+            made.push(u);
+            return u;
+          })
+          .catch(() => null),
+      ),
+    ).then((list) => {
+      if (alive) setUrls(list);
+    });
+    return () => {
+      alive = false;
+      made.forEach((u) => URL.revokeObjectURL(u));
+    };
+  }, [path, count, token]);
+
+  return (
+    <div className="chat-shots">
+      {urls.map((u, n) =>
+        u ? (
+          <a key={n} className="chat-shot" href={u} target="_blank" rel="noopener noreferrer">
+            {/* eslint-disable-next-line @next/next/no-img-element -- blob URL, next/image cannot load it */}
+            <img src={u} alt={`${label} ${n + 1}`} />
+          </a>
+        ) : null,
+      )}
+    </div>
+  );
+}
 const STEP_STAGES = ["revise", "test", "release"] as const;
 
 /**
@@ -60,7 +137,8 @@ export function ChangeChat({
   const t = d.project.chat;
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState<string | null>(null); // the text on its way, shown at once
+  const [sending, setSending] = useState<{ text: string; shots: string[] } | null>(null); // on its way, shown at once
+  const [shots, setShots] = useState<string[]>([]); // attached, not sent yet
   const [notice, setNotice] = useState<string | null>(null);
   const [waiver, setWaiver] = useState(false); // FAGG § 18 for a paid round, never pre-ticked
   const [confirming, setConfirming] = useState(false);
@@ -112,26 +190,45 @@ export function ChangeChat({
     if (box) box.scrollTop = box.scrollHeight;
   }, [lastId, sending]);
 
-  const send = async (body: string) => {
+  const send = async (body: string, images: string[] = []) => {
     const text = body.trim();
-    if (!text || sending) return;
-    setSending(text);
+    if ((!text && !images.length) || sending) return;
+    setSending({ text, shots: images });
     setDraft("");
+    if (images.length) setShots([]);
     setNotice(null);
     try {
       const res = await api<{ messages: ChatMessage[] }>(`/me/projects/${project.id}/messages`, {
         method: "POST",
         token,
-        body: JSON.stringify({ body: text }),
+        body: JSON.stringify(images.length ? { body: text, images } : { body: text }),
       });
       merge(res.messages);
     } catch (e) {
       const saved = e instanceof ApiError && e.status === 503 ? (e.body as { messages?: ChatMessage[] } | null)?.messages : null;
       if (saved) merge(saved);
-      else setDraft(text); // not stored: give the text back
-      setNotice(t.unavailable);
+      else {
+        // not stored: give the text and the pictures back
+        setDraft(text);
+        setShots(images);
+      }
+      setNotice(e instanceof ApiError && e.status === 422 ? t.imageError : t.unavailable);
     } finally {
       setSending(null);
+    }
+  };
+
+  const attach = async (files: File[]) => {
+    const images = files.filter((f) => f.type.startsWith("image/"));
+    if (!images.length) return;
+    setNotice(null);
+    const room = MAX_SHOTS - shots.length;
+    if (images.length > room) setNotice(t.imageLimit);
+    try {
+      const shrunk = await Promise.all(images.slice(0, Math.max(0, room)).map(shrink));
+      setShots((old) => [...old, ...shrunk].slice(0, MAX_SHOTS));
+    } catch {
+      setNotice(t.imageError);
     }
   };
 
@@ -201,13 +298,26 @@ export function ChangeChat({
             onPick={(o) => void send(o)}
             onApprove={onApprove}
             sending={!!sending}
+            token={token}
           />
         ))}
         {sending && (
           <>
             <div className="chat-msg chat-customer">
               <span className="chat-who">{t.you}</span>
-              <div className="chat-bubble"><p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{sending}</p></div>
+              <div className="chat-bubble">
+                {sending.text && <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{sending.text}</p>}
+                {!!sending.shots.length && (
+                  <div className="chat-shots">
+                    {sending.shots.map((u, n) => (
+                      <span key={n} className="chat-shot">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- data URL preview */}
+                        <img src={u} alt={`${t.screenshot} ${n + 1}`} />
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <p className="small muted chat-thinking">{t.thinking}</p>
           </>
@@ -222,7 +332,7 @@ export function ChangeChat({
         className="chat-compose"
         onSubmit={(e) => {
           e.preventDefault();
-          void send(draft);
+          void send(draft, shots);
         }}
       >
         <textarea
@@ -232,17 +342,59 @@ export function ChangeChat({
           onKeyDown={(e) => {
             if (e.key === "Enter" && !e.shiftKey) {
               e.preventDefault();
-              void send(draft);
+              void send(draft, shots);
+            }
+          }}
+          onPaste={(e) => {
+            const files = [...e.clipboardData.files];
+            if (files.some((f) => f.type.startsWith("image/"))) {
+              e.preventDefault();
+              void attach(files);
             }
           }}
           placeholder={t.placeholder}
           rows={2}
           maxLength={2000}
         />
-        <button className="btn btn-primary" type="submit" disabled={!!sending || !draft.trim()}>
-          {sending ? t.sending : t.send}
-        </button>
+        <div className="chat-compose-side">
+          <label className="chat-attach" title={t.attach}>
+            <span aria-hidden>📎</span>
+            <span className="sr-only">{t.attach}</span>
+            <input
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              multiple
+              hidden
+              disabled={!!sending || shots.length >= MAX_SHOTS}
+              onChange={(e) => {
+                void attach([...(e.target.files ?? [])]);
+                e.target.value = "";
+              }}
+            />
+          </label>
+          <button className="btn btn-primary" type="submit" disabled={!!sending || (!draft.trim() && !shots.length)}>
+            {sending ? t.sending : t.send}
+          </button>
+        </div>
       </form>
+      {!!shots.length && (
+        <div className="chat-shots">
+          {shots.map((u, n) => (
+            <span key={n} className="chat-shot">
+              {/* eslint-disable-next-line @next/next/no-img-element -- data URL preview */}
+              <img src={u} alt={`${t.screenshot} ${n + 1}`} />
+              <button
+                type="button"
+                className="chat-shot-remove"
+                aria-label={t.removeImage}
+                onClick={() => setShots((old) => old.filter((_, i) => i !== n))}
+              >
+                ×
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -264,6 +416,7 @@ function Message({
   onPick,
   onApprove,
   sending,
+  token,
 }: {
   m: ChatMessage;
   d: Dict;
@@ -281,6 +434,7 @@ function Message({
   onPick: (option: string) => void;
   onApprove: () => void;
   sending: boolean;
+  token: string;
 }) {
   const t = d.project.chat;
   const who = m.role === "customer" ? t.you : m.role === "operator" ? t.team : t.assistant;
@@ -339,7 +493,10 @@ function Message({
     <div className={`chat-msg chat-${m.role}`}>
       <span className="chat-who">{who}</span>
       <div className="chat-bubble">
-        <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{m.body}</p>
+        {m.body && <p style={{ margin: 0, whiteSpace: "pre-wrap" }}>{m.body}</p>}
+        {!!m.meta.images && (
+          <ChatShots path={`/me/projects/${project.id}/messages/${m.id}`} count={m.meta.images} token={token} label={t.screenshot} />
+        )}
 
         {!!m.meta.questions?.length && (
           <Questions questions={m.meta.questions} active={latest && !sending} d={d} onSend={onPick} />

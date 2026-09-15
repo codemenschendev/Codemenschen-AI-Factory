@@ -17,6 +17,8 @@ export interface StageJob {
   attempt: number;
   callback_url: string;
   callback_token: string;
+  /** revise only: screenshots the customer attached in the chat for this round, base64. */
+  change_images?: { mime: string; data: string }[];
   context: {
     name: string;
     stack: "expo" | "nextjs";

@@ -126,6 +126,11 @@ return [
     // so the owner can try it on a real project first.
     'change_chat' => [
         'enabled' => (bool) env('CHANGE_CHAT_ENABLED', false),
+        // Comma-separated customer e-mails that get the chat before everyone does.
+        'customers' => array_values(array_filter(array_map(
+            fn ($e) => strtolower(trim($e)),
+            explode(',', (string) env('CHANGE_CHAT_CUSTOMERS', '')),
+        ))),
     ],
 
     // Drop folder for the Buzz channel #appwerk-alerts. Notify leaves one JSON file per alert,

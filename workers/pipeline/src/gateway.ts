@@ -39,7 +39,10 @@ const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms
  * text (the agent session was busy or aborted). Each retry waits longer so a
  * short outage at the gateway does not burn the stage's attempts.
  */
-export async function gatewayComplete(system: string, user: string): Promise<GatewayResult> {
+/** A user turn with pictures: text and image parts, as the OpenAI-compatible endpoint takes them. */
+export type UserContent = string | ({ type: "text"; text: string } | { type: "image_url"; image_url: { url: string } })[];
+
+export async function gatewayComplete(system: string, user: UserContent): Promise<GatewayResult> {
   let lastError: unknown;
   for (let attempt = 0; attempt <= RETRY_DELAYS_MS.length; attempt++) {
     try {
@@ -56,7 +59,7 @@ export async function gatewayComplete(system: string, user: string): Promise<Gat
   throw lastError instanceof Error ? lastError : new Error(String(lastError));
 }
 
-async function gatewayCompleteOnce(system: string, user: string): Promise<GatewayResult> {
+async function gatewayCompleteOnce(system: string, user: UserContent): Promise<GatewayResult> {
   const res = await fetch(`${GATEWAY_URL.replace(/\/$/, "")}/v1/chat/completions`, {
     method: "POST",
     headers: {

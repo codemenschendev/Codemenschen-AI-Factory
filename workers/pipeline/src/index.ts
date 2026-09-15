@@ -82,7 +82,7 @@ createServer((req, res) => {
     // Change chat assistant: synchronous, one completion without tools. The API holds the prompt.
     req.on("end", () => {
       if (!REFINE_AVAILABLE) return reply(503, { error: "gateway unavailable" });
-      let input: { system?: unknown; transcript?: unknown; project_id?: unknown; features?: unknown };
+      let input: { system?: unknown; transcript?: unknown; project_id?: unknown; features?: unknown; images?: unknown };
       try {
         input = JSON.parse(raw);
       } catch {
@@ -93,14 +93,20 @@ createServer((req, res) => {
         return reply(422, { error: "invalid payload" });
       }
       const transcript = input.transcript.flatMap((m) => {
-        const t = m as { role?: unknown; body?: unknown; card?: unknown };
+        const t = m as { id?: unknown; role?: unknown; body?: unknown; card?: unknown };
         if (typeof t.role !== "string" || typeof t.body !== "string") return [];
         const card = Array.isArray(t.card) ? t.card.filter((c): c is string => typeof c === "string") : null;
-        return [{ role: t.role, body: t.body, card }];
+        return [{ id: typeof t.id === "number" ? t.id : undefined, role: t.role, body: t.body, card }];
+      });
+      const images = (Array.isArray(input.images) ? input.images : []).slice(-4).flatMap((i) => {
+        const img = i as { message_id?: unknown; mime?: unknown; data?: unknown };
+        return typeof img.message_id === "number" && typeof img.mime === "string" && /^image\/(png|jpeg|webp)$/.test(img.mime) && typeof img.data === "string"
+          ? [{ message_id: img.message_id, mime: img.mime, data: img.data }]
+          : [];
       });
       if (!transcript.length) return reply(422, { error: "empty transcript" });
       const features = Array.isArray(input.features) ? input.features.filter((f): f is string => typeof f === "string").slice(0, 12) : [];
-      changeChat({ system: input.system, transcript, project_id, features })
+      changeChat({ system: input.system, transcript, project_id, features, images })
         .then((out) => reply(200, out))
         .catch((e) => {
           console.error("change-chat failed:", e);

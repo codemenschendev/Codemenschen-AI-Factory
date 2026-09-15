@@ -2,17 +2,21 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\MailOperatorReply;
+use App\Mail\CustomerNotice;
 use App\Models\ChangeMessage;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Services\ChangeChat;
+use App\Services\CustomerMail;
 use App\Services\OrderFulfillment;
 use App\Services\PipelineOrchestrator;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Mail;
 use Tests\TestCase;
 
 /**
@@ -34,7 +38,9 @@ class ChangeChatTest extends TestCase
         config([
             'services.stripe.secret' => null, 'services.worker.token' => 't', 'queue.default' => 'sync',
             'services.change_chat.enabled' => true, 'services.buzz.alert_dir' => null, 'services.openclaw.hook_url' => null,
+            'services.media.uploads_path' => sys_get_temp_dir().'/change-chat-test-'.uniqid(),
         ]);
+        Mail::fake();
         Http::fake([
             '*/run' => Http::response(['accepted' => true], 202),
             '*/change-chat' => function ($request) {
@@ -321,5 +327,112 @@ class ChangeChatTest extends TestCase
         $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Button'])
             ->assertStatus(503)->assertJsonPath('assistant', 'unavailable');
         $this->assertSame(1, ChangeMessage::where('role', 'customer')->count());
+    }
+
+    /** A real 1x1 PNG, as the portal would send it (it sends JPEG, the API takes both). */
+    private const PNG = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==';
+
+    public function test_a_screenshot_goes_to_the_assistant_and_to_the_revise_agent(): void
+    {
+        $project = $this->reviewedProject();
+        $headers = $this->as($project);
+        $this->replies = [$this->card(['Button "Reservieren" on the start page in #3E2414'])];
+
+        $res = $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Dieser Button', 'images' => [self::PNG]])
+            ->assertCreated()
+            ->assertJsonPath('messages.0.meta.images', 1);
+        $this->assertCount(1, $this->asked[0]['images']);
+        $this->assertSame('image/png', $this->asked[0]['images'][0]['mime']);
+        $this->assertSame($this->asked[0]['transcript'][0]['id'], $this->asked[0]['images'][0]['message_id']);
+
+        $id = $res->json('messages.0.id');
+        $this->withHeaders($headers)->get("/api/me/projects/{$project->id}/messages/{$id}/images/0")->assertOk();
+        $this->withHeaders($headers)->get("/api/me/projects/{$project->id}/messages/{$id}/images/1")->assertNotFound();
+        $stranger = Customer::create(['email' => 'x@example.com', 'locale' => 'de']);
+        $this->app['auth']->forgetGuards();
+        $this->withHeaders(['Authorization' => 'Bearer '.$stranger->createToken('portal')->plainTextToken])
+            ->get("/api/me/projects/{$project->id}/messages/{$id}/images/0")->assertNotFound();
+
+        $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages/confirm")->assertCreated();
+        Http::assertSent(fn ($r) => str_ends_with($r->url(), '/run') && $r['stage'] === 'revise'
+            && count($r['change_images'] ?? []) === 1 && ! isset($r['context']['change_images']));
+    }
+
+    public function test_something_that_is_not_an_image_is_refused_and_nothing_is_stored(): void
+    {
+        $project = $this->reviewedProject();
+
+        $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages", [
+            'body' => 'hier', 'images' => ['data:image/png;base64,'.base64_encode('<?php echo 1;')],
+        ])->assertStatus(422);
+
+        $this->assertSame(0, ChangeMessage::count());
+        $this->assertSame([], $this->asked);
+    }
+
+    public function test_a_declined_round_mails_what_happened_instead_of_a_preview_ready_mail(): void
+    {
+        $project = $this->reviewedProject();
+        $headers = $this->as($project);
+        $this->replies = [$this->card(['Add video calls'])];
+        $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Videoanrufe']);
+        $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages/confirm")->assertCreated();
+        Mail::fake(); // only what the round's end sends
+
+        $this->completeStage($project, 'revise', ['done' => true, 'declined' => 'Video calls are a new feature.']);
+
+        Mail::assertSent(CustomerNotice::class, 1);
+        Mail::assertSent(CustomerNotice::class, fn (CustomerNotice $m) => str_starts_with($m->subjectLine, 'Deine Änderung wurde nicht umgesetzt')
+            && ! str_contains($m->body, '—'));
+    }
+
+    public function test_the_preview_mail_after_a_round_says_the_change_is_done(): void
+    {
+        $project = $this->reviewedProject();
+        $headers = $this->as($project);
+        $this->replies = [$this->card()];
+        $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Button grün']);
+        $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages/confirm")->assertCreated();
+        $this->completeStage($project, 'revise', ['done' => true, 'summary' => 'ok']);
+        $this->completeStage($project, 'test', ['report' => ['passed' => 1, 'failed' => 0], 'criteria_results' => ['boots' => 'passed']]);
+        Mail::fake();
+
+        $this->completeStage($project, 'release', ['builds' => [['platform' => 'bundle', 'version' => '0.1.1', 'artifact_path' => 'x/b.tar.gz']]]);
+
+        Mail::assertSent(CustomerNotice::class, fn (CustomerNotice $m) => str_starts_with($m->subjectLine, 'Deine Änderung ist umgesetzt'));
+    }
+
+    public function test_a_team_reply_is_mailed_only_to_a_customer_who_did_not_see_it(): void
+    {
+        $project = $this->reviewedProject();
+        $message = app(ChangeChat::class)->operatorSays($project, 'ops@example.com', 'Wir schauen uns das an.');
+        Mail::fake();
+
+        // Looked at the thread after the reply: no mail.
+        Cache::put("change-chat:seen:{$project->id}", $message->created_at->getTimestamp() + 60, now()->addDay());
+        (new MailOperatorReply($message->id))->handle(app(CustomerMail::class));
+        Mail::assertNothingSent();
+
+        // Did not look: one mail with the reply quoted.
+        Cache::forget("change-chat:seen:{$project->id}");
+        (new MailOperatorReply($message->id))->handle(app(CustomerMail::class));
+        Mail::assertSent(CustomerNotice::class, fn (CustomerNotice $m) => str_contains($m->body, '> Wir schauen uns das an.'));
+
+        // A newer reply mails for itself; the older one stays quiet.
+        Mail::fake();
+        app(ChangeChat::class)->operatorSays($project, 'ops@example.com', 'Und noch etwas.');
+        Mail::fake();
+        (new MailOperatorReply($message->id))->handle(app(CustomerMail::class));
+        Mail::assertNothingSent();
+    }
+
+    public function test_listed_customers_get_the_chat_before_everyone(): void
+    {
+        config(['services.change_chat.enabled' => false, 'services.change_chat.customers' => ['c@example.com']]);
+        $project = $this->reviewedProject();
+
+        $this->withHeaders($this->as($project))->getJson("/api/me/projects/{$project->id}")->assertJsonPath('change_chat', true);
+        config(['services.change_chat.customers' => []]);
+        $this->withHeaders($this->as($project))->getJson("/api/me/projects/{$project->id}")->assertJsonPath('change_chat', false);
     }
 }

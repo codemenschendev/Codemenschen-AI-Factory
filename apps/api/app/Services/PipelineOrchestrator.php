@@ -339,6 +339,9 @@ class PipelineOrchestrator
             'result_items' => $resultItems,
         ]);
         $this->chat(fn (ChangeChat $chat) => $chat->onClosed($cr->fresh()));
+        if ($status !== 'done') {
+            app(CustomerMail::class)->roundEnded($project, $cr->fresh());
+        }
         $project->recordEvent('changes.'.$status, ['change_request_id' => $cr->id, 'round' => $cr->round]);
         if ($status !== 'done' && $cr->price_eur > 0) {
             // The customer paid for a round that produced nothing: refund by hand.

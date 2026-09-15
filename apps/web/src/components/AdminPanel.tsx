@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
-import type { ChatMessage } from "@/components/ChangeChat";
+import { ChatShots, type ChatMessage } from "@/components/ChangeChat";
 import { useToken } from "@/lib/token";
 import { LibraryPanel } from "./LibraryPanel";
 import { ReferencePanel } from "./ReferencePanel";
@@ -613,6 +613,9 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                           {m.meta.type ? ` · ${m.meta.type}` : ""}
                         </span>
                         <div style={{ whiteSpace: "pre-wrap" }}>{m.body}</div>
+                        {!!m.meta.images && token && (
+                          <ChatShots path={`/admin/projects/${detail.id}/messages/${m.id}`} count={m.meta.images} token={token} label="Screenshot" />
+                        )}
                         {m.meta.card && (
                           <ol style={{ margin: "4px 0 0", paddingLeft: 18 }}>
                             {m.meta.card.items.map((i, n) => <li key={n}>{i.text}</li>)}
