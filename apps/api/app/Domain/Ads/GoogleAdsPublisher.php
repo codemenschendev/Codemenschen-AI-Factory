@@ -3,6 +3,7 @@
 namespace App\Domain\Ads;
 
 use App\Models\MarketingCampaign;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -14,6 +15,11 @@ use RuntimeException;
  * console under Google Ads API, access levels). A token that is still set is sent and ignored.
  * Production accounts need at least Explorer; below that the API refuses, and verify() reports
  * the refusal as it comes.
+ *
+ * Two ways to sign in. Preferred: a service account (GOOGLE_ADS_SERVICE_ACCOUNT_JSON, a key file
+ * mounted read-only), added as a user in the Google Ads account; it never expires. Fallback: an
+ * OAuth refresh token of a person, which dies after 7 days while the consent screen is in
+ * Testing, and publishing it needs a privacy policy link Appwerk did not have (2026-09-15).
  *
  * A Search campaign is built paused: campaign_budget -> campaign (PAUSED) -> ad_group ->
  * responsive_search_ad. Budgets are in micros (EUR * 1_000_000); the customer's monthly budget
@@ -27,8 +33,7 @@ class GoogleAdsPublisher implements Publisher
     }
 
     /** Env names behind the config keys, so a missing one can be named without being read. */
-    private const ENV = [
-        'customer_id' => 'GOOGLE_ADS_CUSTOMER_ID',
+    private const OAUTH_ENV = [
         'client_id' => 'GOOGLE_ADS_CLIENT_ID',
         'client_secret' => 'GOOGLE_ADS_CLIENT_SECRET',
         'refresh_token' => 'GOOGLE_ADS_REFRESH_TOKEN',
@@ -41,8 +46,12 @@ class GoogleAdsPublisher implements Publisher
 
     public function missing(): array
     {
-        $out = [];
-        foreach (self::ENV as $k => $env) {
+        $out = $this->cfg('customer_id') === '' ? ['GOOGLE_ADS_CUSTOMER_ID'] : [];
+        if ($this->cfg('service_account_json') !== '') {
+            // Named, not read: a path that is set but not there is the usual mistake (mount missing).
+            return $this->serviceAccount() === null ? [...$out, 'GOOGLE_ADS_SERVICE_ACCOUNT_JSON'] : $out;
+        }
+        foreach (self::OAUTH_ENV as $k => $env) {
             if ($this->cfg($k) === '') {
                 $out[] = $env;
             }
@@ -187,9 +196,14 @@ class GoogleAdsPublisher implements Publisher
         }
     }
 
-    /** Exchange the long-lived refresh token for a short-lived access token. */
+    /** A short-lived access token, from the service account when there is one, else the refresh token. */
     private function accessToken(): string
     {
+        $sa = $this->serviceAccount();
+        if ($sa !== null) {
+            return Cache::remember('google-ads:sa-token:'.md5($sa['client_email']), 3000, fn () => $this->serviceAccountToken($sa));
+        }
+
         $res = Http::asForm()->timeout(20)->post('https://oauth2.googleapis.com/token', [
             'client_id' => $this->cfg('client_id'),
             'client_secret' => $this->cfg('client_secret'),
@@ -199,6 +213,53 @@ class GoogleAdsPublisher implements Publisher
         $token = (string) $res->json('access_token');
         if ($token === '') {
             throw new RuntimeException('Google OAuth: không lấy được access token.');
+        }
+
+        return $token;
+    }
+
+    /** @return array{client_email:string, private_key:string, token_uri:string}|null */
+    private function serviceAccount(): ?array
+    {
+        $path = $this->cfg('service_account_json');
+        if ($path === '' || ! is_readable($path)) {
+            return null;
+        }
+        $key = json_decode((string) file_get_contents($path), true);
+        if (! is_array($key) || ($key['type'] ?? '') !== 'service_account' || empty($key['client_email']) || empty($key['private_key'])) {
+            return null;
+        }
+
+        return [
+            'client_email' => (string) $key['client_email'],
+            'private_key' => (string) $key['private_key'],
+            'token_uri' => (string) ($key['token_uri'] ?? 'https://oauth2.googleapis.com/token'),
+        ];
+    }
+
+    /** JWT bearer grant (RFC 7523): a signed assertion for the adwords scope, exchanged for an access token. */
+    private function serviceAccountToken(array $sa): string
+    {
+        $b64 = fn (string $s) => rtrim(strtr(base64_encode($s), '+/', '-_'), '=');
+        $now = time();
+        $unsigned = $b64(json_encode(['alg' => 'RS256', 'typ' => 'JWT'])).'.'.$b64(json_encode([
+            'iss' => $sa['client_email'],
+            'scope' => 'https://www.googleapis.com/auth/adwords',
+            'aud' => $sa['token_uri'],
+            'iat' => $now,
+            'exp' => $now + 3600,
+        ]));
+        if (! openssl_sign($unsigned, $signature, $sa['private_key'], OPENSSL_ALGO_SHA256)) {
+            throw new RuntimeException('Google service account: the key file cannot sign.');
+        }
+
+        $res = Http::asForm()->timeout(20)->post($sa['token_uri'], [
+            'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+            'assertion' => $unsigned.'.'.$b64($signature),
+        ]);
+        $token = (string) $res->json('access_token');
+        if ($token === '') {
+            throw new RuntimeException('Google service account: no access token ('.mb_substr((string) $res->json('error_description', $res->body()), 0, 160).').');
         }
 
         return $token;

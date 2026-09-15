@@ -35,6 +35,7 @@ services:
       - "127.0.0.1:8181:8000"
     environment:
       BUZZ_ALERT_DIR: /alerts
+      GOOGLE_ADS_SERVICE_ACCOUNT_JSON: /secrets/google-ads-sa.json
     volumes:
       # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
       - /var/lib/ai-factory/alerts:/alerts
@@ -52,6 +53,8 @@ services:
       # The reference library of collected app screens. Read-only on purpose: the labelling
       # script on the host owns this directory, the panel only looks.
       - /var/lib/ai-factory/design-library:/media/design-library:ro
+      # Google Ads service account key (docs/ads-accounts.md). Outside the checkout, read-only.
+      - /var/lib/ai-factory/secrets:/secrets:ro
 
   horizon:
     build:
@@ -63,6 +66,7 @@ services:
     depends_on: [postgres, redis]
     environment:
       BUZZ_ALERT_DIR: /alerts
+      GOOGLE_ADS_SERVICE_ACCOUNT_JSON: /secrets/google-ads-sa.json
     volumes:
       # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
       - /var/lib/ai-factory/alerts:/alerts
@@ -78,6 +82,8 @@ services:
       # on this queue was drawn with no reference at all: DesignLibrary read an empty catalog
       # here and returned null, quietly. Read-only, the labelling script on the host owns it.
       - /var/lib/ai-factory/design-library:/media/design-library:ro
+      # Google Ads service account key (docs/ads-accounts.md). Outside the checkout, read-only.
+      - /var/lib/ai-factory/secrets:/secrets:ro
 
   scheduler:
     build:

@@ -220,4 +220,41 @@ class AdsConnectionsTest extends TestCase
         Http::assertSent(fn ($r) => str_contains($r->url(), 'graph.facebook.com/v26.0/act_1/campaigns') && $r['is_adset_budget_sharing_enabled'] === 'false');
         Http::assertSent(fn ($r) => str_contains($r->url(), '/act_1/adsets') && $r['dsa_beneficiary'] === 'Codemenschen GmbH' && $r['dsa_payor'] === 'Codemenschen GmbH');
     }
+
+    public function test_google_signs_in_with_a_service_account_instead_of_a_refresh_token(): void
+    {
+        $pem = '';
+        openssl_pkey_export(openssl_pkey_new(['private_key_bits' => 2048, 'private_key_type' => OPENSSL_KEYTYPE_RSA]), $pem);
+        $file = tempnam(sys_get_temp_dir(), 'sa');
+        file_put_contents($file, json_encode(['type' => 'service_account', 'client_email' => 'appwerk-ads@cm-ops.iam.gserviceaccount.com', 'private_key' => $pem, 'token_uri' => 'https://oauth2.googleapis.com/token']));
+        $this->google(['developer_token' => '', 'client_id' => '', 'client_secret' => '', 'refresh_token' => '', 'service_account_json' => $file]);
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'sa-at']),
+            'googleads.googleapis.com/*' => Http::response(['results' => [['customer' => ['descriptiveName' => 'codemenschen gmbh', 'currencyCode' => 'EUR']]]]),
+        ]);
+
+        $this->assertSame([], app(GoogleAdsPublisher::class)->missing());
+        $this->assertTrue(app(GoogleAdsPublisher::class)->verify()['ok']);
+
+        Http::assertSent(function ($r) use ($pem) {
+            if (! str_contains($r->url(), 'oauth2.googleapis.com/token')) {
+                return false;
+            }
+            [$head, $claims, $sig] = explode('.', $r['assertion']);
+            $d = fn ($x) => base64_decode(strtr($x, '-_', '+/'));
+            $public = openssl_pkey_get_details(openssl_pkey_get_private($pem))['key'];
+
+            return $r['grant_type'] === 'urn:ietf:params:oauth:grant-type:jwt-bearer'
+                && json_decode($d($claims), true)['scope'] === 'https://www.googleapis.com/auth/adwords'
+                && openssl_verify($head.'.'.$claims, $d($sig), $public, OPENSSL_ALGO_SHA256) === 1;
+        });
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'googleAds:search') && $r->hasHeader('Authorization', 'Bearer sa-at'));
+    }
+
+    public function test_a_service_account_path_without_a_file_is_named_as_missing(): void
+    {
+        $this->google(['service_account_json' => '/secrets/not-there.json', 'refresh_token' => '']);
+
+        $this->assertSame(['GOOGLE_ADS_SERVICE_ACCOUNT_JSON'], app(GoogleAdsPublisher::class)->missing());
+    }
 }
