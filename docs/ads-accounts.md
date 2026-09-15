@@ -27,6 +27,20 @@ Everything runs under **codemenschenapp@gmail.com** (decision 2026-09-15): the C
 `cm-ops`, the OAuth client, the refresh token and the Manager account. The refresh token belongs to
 the Google account that signs in, so that account must own or have access to the Manager account.
 
+**Sign-in: a service account** (decision 2026-09-15), not a person's refresh token. The OAuth
+consent screen cannot be published without a privacy policy link, and in Testing a refresh token
+dies after 7 days. The service account `appwerk-ads@cm-ops-507408.iam.gserviceaccount.com` never
+expires:
+
+1. Key file on the server, outside the checkout, `/var/lib/ai-factory/secrets/google-ads-sa.json`
+   (chmod 600). Compose mounts the directory read-only into api and horizon and sets
+   `GOOGLE_ADS_SERVICE_ACCOUNT_JSON`. The OAuth keys below are then ignored.
+2. Google Ads, ad account 577-053-2500, Admin, Access and security, Users, +: add the service
+   account e-mail with Standard access.
+3. `GOOGLE_ADS_CUSTOMER_ID=5770532500`, `GOOGLE_ADS_LOGIN_CUSTOMER_ID` empty.
+
+The ads are for Appwerk itself, not for customers' apps.
+
 Two accounts are involved and they are not the same thing.
 
 **Google Cloud** holds the OAuth client and, since 2026-09-09, the API access level. **Google
