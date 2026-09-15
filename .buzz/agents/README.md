@@ -4,9 +4,12 @@ Instructions for the agent in the Buzz channel #appwerk-agents (buzz.codemensche
 
 | File | Agent | Model |
 |---|---|---|
-| appwerk-dev.md | Appwerk AI | Opus |
+| appwerk-dev.md | Appwerk AI | Claude Opus |
+| appwerk-codex.md | Appwerk Codex | OpenAI Codex (subscription), review only |
 
-One agent covers product, marketing and development. It works on DEV
+Appwerk AI covers product, marketing and development. Appwerk Codex gives a
+second opinion: it reads the dev branch read-only and reviews, nothing else.
+Appwerk AI works on DEV
 (https://appwerk-dev.codemenschen.at, its own sandbox on the server) and never
 touches production. It has no GitHub credential: it commits on `dev`, and the bot
 (no AI) copies dev to GitHub. `!push appwerk` makes the bot open a pull request
