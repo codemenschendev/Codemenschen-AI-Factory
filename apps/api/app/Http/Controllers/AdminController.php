@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Ads\PublisherRegistry;
+use App\Domain\Analytics\AnalyticsReport;
 use App\Domain\Qa\PageAudit;
 use App\Jobs\RenderProjectAd;
 use App\Models\ChangeMessage;
@@ -209,6 +210,14 @@ class AdminController extends Controller
             'events' => $project->events()->latest('created_at')->limit(80)
                 ->get(['type', 'payload', 'actor', 'created_at']),
         ]);
+    }
+
+    /** Traffic, sources and the funnel from first visit to paid order. */
+    public function analytics(Request $request, AnalyticsReport $report): JsonResponse
+    {
+        $days = (int) $request->query('days', 30);
+
+        return response()->json($report->summary(in_array($days, [1, 7, 30, 90], true) ? $days : 30));
     }
 
     /** The customer's change chat, as the customer sees it, plus whether the assistant is paused. */

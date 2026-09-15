@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Analytics\Analytics;
 use App\Models\Order;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
@@ -15,6 +16,11 @@ class OrderFulfillment
      */
     public function markPaid(Order $order, ?string $paymentIntent, int $amountEur, array $rawEvent): Project
     {
+        // The webhook has no visitor; the quote ties the order back to the visit that made it.
+        app(Analytics::class)->record('order_paid', null, ['quote_id' => $order->quote_id, 'order_id' => $order->id, 'customer_id' => $order->customer_id, 'locale' => $order->locale], [
+            'amount_eur' => $amountEur, 'listing' => $order->quote?->listing_slug,
+        ]);
+
         $project = DB::transaction(function () use ($order, $paymentIntent, $amountEur, $rawEvent) {
             $order->update(['status' => 'paid']);
             $order->payments()->create([

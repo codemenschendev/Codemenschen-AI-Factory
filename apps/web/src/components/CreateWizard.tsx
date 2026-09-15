@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   FEATURES,
@@ -10,6 +10,7 @@ import {
   type FeatureKey,
   type Platform,
 } from "@ai-factory/pricing";
+import { trackOnce } from "@/lib/analytics";
 import { api, ApiError } from "@/lib/api";
 import { featureHints } from "@/lib/featureHints";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
@@ -47,6 +48,21 @@ export function CreateWizard({
   const [rounds, setRounds] = useState(0);
   const [accepted, setAccepted] = useState(false);
 
+  // How far visitors get in the wizard: each field once per page load.
+  const ideaStarted = idea.trim().length >= 20;
+  useEffect(() => {
+    if (ideaStarted) trackOnce("wizard-idea", "wizard_step", { step: "idea", prefilled: !!initialIdea });
+  }, [ideaStarted, initialIdea]);
+  useEffect(() => {
+    if (audience) trackOnce("wizard-audience", "wizard_step", { step: "audience" });
+  }, [audience]);
+  useEffect(() => {
+    if (platform) trackOnce("wizard-platform", "wizard_step", { step: "platform" });
+  }, [platform]);
+  useEffect(() => {
+    if (features.length) trackOnce("wizard-features", "wizard_step", { step: "features" });
+  }, [features.length]);
+
   const est = useMemo(
     () =>
       audience && platform
@@ -72,6 +88,7 @@ export function CreateWizard({
   const refine = async (withAnswers: boolean) => {
     setRefining(true);
     setRefineError(null);
+    trackOnce(`wizard-refine-${rounds}`, "wizard_step", { step: "refine", round: rounds + 1 });
     try {
       const answerList = withAnswers && refinement
         ? refinement.questions.map((q, i) => (answers[i] ? `${q.q}: ${answers[i]}` : null)).filter((a): a is string => !!a)

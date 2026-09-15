@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
+import { trackOnce } from "@/lib/analytics";
 import { forget, rename } from "@/lib/history";
 import type { Dict, Locale } from "@/lib/i18n";
 
@@ -94,6 +95,10 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   }, [id]);
 
   const building = meta?.status === "queued" || meta?.status === "building";
+  const readyKind = meta?.status === "ready" ? (meta.kind ?? "site") : null;
+  useEffect(() => {
+    if (readyKind) trackOnce(`proto-view-${id}`, "prototype_view", { kind: readyKind });
+  }, [readyKind, id]);
   useEffect(() => {
     if (!building) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -193,10 +198,10 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
           {p.shareHint}
         </p>
         <div style={{ display: "flex", gap: 12 }}>
-          <Link className="lang-toggle" href={`/${locale}/create?from=${id}`}>
+          <Link className="lang-toggle" href={`/${locale}/create?from=${id}`} onClick={() => trackOnce(`make-real-${id}`, "cta_click", { cta: "prototype_make_real", kind: meta.kind ?? null })}>
             {p.makeReal}
           </Link>
-          <Link className="lang-toggle" href={`/${locale}/prototype`}>
+          <Link className="lang-toggle" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${id}`, "cta_click", { cta: "prototype_another" })}>
             {p.another}
           </Link>
         </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Analytics\Analytics;
 use App\Domain\Catalog\Listings;
 use App\Domain\Pricing\Estimator;
 use App\Models\Order;
@@ -59,6 +60,12 @@ class QuoteController extends Controller
             'hosting_monthly_eur' => $breakdown['hostingMonthly'],
             'locale' => $data['locale'] ?? 'de',
             'valid_until' => now()->addDays(14),
+        ]);
+
+        app(Analytics::class)->record('quote_created', $request, ['quote_id' => $quote->id, 'locale' => $quote->locale], [
+            'source' => $quote->listing_slug ? 'listing' : 'custom',
+            'listing' => $quote->listing_slug,
+            'price_eur' => $quote->price_eur,
         ]);
 
         return response()->json($this->present($quote), 201);

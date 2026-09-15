@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Ai\PrototypeWriter;
+use App\Domain\Analytics\Analytics;
 use App\Jobs\BuildPrototype;
 use App\Models\Prototype;
 use Illuminate\Http\JsonResponse;
@@ -62,6 +63,7 @@ class PrototypeController extends Controller
         ]);
 
         BuildPrototype::dispatch($proto->id, $kind);
+        app(Analytics::class)->record('prototype_requested', $request, [], ['kind' => $kind, 'prototype' => $proto->id]);
 
         return response()->json(['id' => $proto->id, 'status' => 'queued'], 202);
     }

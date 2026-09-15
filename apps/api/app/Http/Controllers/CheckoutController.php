@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Analytics\Analytics;
 use App\Domain\Pricing\Estimator;
 use App\Models\Customer;
 use App\Models\Order;
@@ -65,6 +66,10 @@ class CheckoutController extends Controller
             'terms_accepted_ip' => $request->ip(),
             'locale' => $data['locale'] ?? $quote->locale,
             'store_locales' => array_values(array_unique($data['store_locales'] ?? Order::SUPPORTED_STORE_LOCALES)),
+        ]);
+
+        app(Analytics::class)->record('checkout_started', $request, ['quote_id' => $order->quote_id, 'order_id' => $order->id, 'customer_id' => $order->customer_id], [
+            'total_eur' => $order->total_one_time_eur,
         ]);
 
         $secret = config('services.stripe.secret');

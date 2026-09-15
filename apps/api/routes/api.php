@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdsController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DesignLibraryController;
@@ -15,6 +16,9 @@ use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\QuoteRefineController;
 use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
+
+// First-party analytics beacon from the portal (App\Domain\Analytics\Analytics). No cookies.
+Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:120,1');
 
 // Public prompt-to-prototype (lead magnet): no auth. Throttle on top of the per-IP daily cap.
 Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60');
@@ -82,6 +86,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // The rescue actions. Everything here is also possible from artisan; nothing here spends money.
     Route::post('/projects/{project}/stage', [AdminController::class, 'dispatchStage']);
     Route::post('/projects/{project}/status', [AdminController::class, 'setStatus']);
+    Route::get('/analytics', [AdminController::class, 'analytics']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');
