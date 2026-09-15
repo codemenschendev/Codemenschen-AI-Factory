@@ -5,7 +5,7 @@
  */
 import { createServer } from "node:http";
 import { AGENT_MODE, runStage } from "./stages.ts";
-import { GATEWAY_MODE, RELAY_MODE } from "./gateway.ts";
+import { GATEWAY_MODE, RELAY_MODE, gatewayComplete } from "./gateway.ts";
 import { REFINE_AVAILABLE, refineIdea } from "./refine.ts";
 import { changeChat } from "./changechat.ts";
 import type { StageJob, StageResult } from "./types.ts";
@@ -70,13 +70,35 @@ createServer((req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/healthz") return reply(200, { ok: true });
-  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine" && req.url !== "/change-chat")) return reply(404, { error: "not found" });
+  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine" && req.url !== "/change-chat" && req.url !== "/vision-check")) return reply(404, { error: "not found" });
   if (!TOKEN || req.headers.authorization !== `Bearer ${TOKEN}`) {
     return reply(403, { error: "forbidden" });
   }
 
   let raw = "";
   req.on("data", (c) => (raw += c));
+
+  if (req.url === "/vision-check") {
+    // Daily health check: can the model on the chat path see a picture? The gateway drops images
+    // silently when its chat backend has no imageArg (2026-09-15), and nothing else would notice.
+    req.on("end", () => {
+      if (!REFINE_AVAILABLE) return reply(503, { error: "gateway unavailable" });
+      let image = "";
+      try {
+        image = String((JSON.parse(raw) as { image?: unknown }).image ?? "");
+      } catch {
+        return reply(422, { error: "invalid payload" });
+      }
+      if (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(image) || image.length > 200_000) return reply(422, { error: "invalid image" });
+      gatewayComplete("Answer with only the large text you read in the picture. If there is no picture, answer NO IMAGE.", [
+        { type: "text", text: "What does the large text in this picture say?" },
+        { type: "image_url", image_url: { url: image } },
+      ])
+        .then((res) => reply(200, { text: res.text.trim().slice(0, 200) }))
+        .catch((e) => reply(502, { error: e instanceof Error ? e.message : String(e) }));
+    });
+    return;
+  }
 
   if (req.url === "/change-chat") {
     // Change chat assistant: synchronous, one completion without tools. The API holds the prompt.
