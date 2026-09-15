@@ -2,7 +2,9 @@
 
 namespace App\Jobs;
 
+use App\Models\ChangeMessage;
 use App\Models\PipelineRun;
+use App\Services\ChangeShots;
 use App\Services\PipelineOrchestrator;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -60,7 +62,22 @@ class DispatchStageJob implements ShouldQueue
             ],
         ];
 
-        $res = Http::timeout(20)
+        if ($run->stage === 'revise') {
+            // Screenshots from the chat that led to this round. Outside `context`, which the worker
+            // prints into the prompt; the worker saves these as files for the agent to open.
+            $cr = $project->changeRequests()->where('status', 'in_progress')->latest('id')->first();
+            $payload['change_images'] = $cr === null ? [] : app(ChangeShots::class)->inline(
+                // Confirming dispatches before the draft is tied to the round, so an untied draft
+                // line from before the round counts too.
+                ChangeMessage::where('project_id', $project->id)->where('role', 'customer')
+                    ->where(fn ($q) => $q->where('change_request_id', $cr->id)
+                        ->orWhere(fn ($q) => $q->whereNull('change_request_id')->where('created_at', '<=', $cr->created_at)))
+                    ->orderBy('id')->get(),
+                ChangeShots::MAX_FOR_ROUND,
+            );
+        }
+
+        $res = Http::timeout(30)
             ->withToken(config('services.worker.token'))
             ->post(rtrim(config('services.worker.url'), '/').'/run', $payload);
 

@@ -3,9 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Pricing\Estimator;
+use App\Models\ChangeMessage;
 use App\Models\Project;
 use App\Services\CareService;
 use App\Services\ChangeChat;
+use App\Services\ChangeShots;
 use App\Services\PipelineOrchestrator;
 use App\Services\PublishingService;
 use App\Services\Refiner;
@@ -140,17 +142,32 @@ class MeController extends Controller
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
         abort_unless(ChangeChat::enabledFor($request->user()), 404);
+        ChangeChat::seen($project);
 
         return response()->json(['messages' => $chat->thread($project, (int) $request->query('after', 0))]);
+    }
+
+    /** Picture n of a message in the thread; the portal fetches it with the token and shows a blob. */
+    public function changeMessageImage(Request $request, Project $project, ChangeMessage $message, int $n, ChangeShots $shots): BinaryFileResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id && $message->project_id === $project->id, 404);
+        $path = $shots->path($message, $n);
+        abort_if($path === null, 404);
+
+        return response()->file($path, ['Cache-Control' => 'private, max-age=86400']);
     }
 
     public function sendChangeMessage(Request $request, Project $project, ChangeChat $chat): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
         abort_unless(ChangeChat::enabledFor($request->user()), 404);
-        $data = $request->validate(['body' => 'required|string|min:1|max:2000']);
+        $data = $request->validate([
+            'body' => 'nullable|string|max:2000|required_without:images',
+            'images' => 'nullable|array|max:'.ChangeShots::MAX_PER_MESSAGE,
+            'images.*' => 'string|max:'.(int) ceil(ChangeShots::MAX_BYTES * 4 / 3 + 64),
+        ]);
 
-        $res = $chat->customerSays($project, $request->user(), trim($data['body']));
+        $res = $chat->customerSays($project, $request->user(), trim((string) ($data['body'] ?? '')), $data['images'] ?? []);
 
         return response()->json([
             'messages' => $chat->thread($project, $res['messages'][0]->id - 1),
