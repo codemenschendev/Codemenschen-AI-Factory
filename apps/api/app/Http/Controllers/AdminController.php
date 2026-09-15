@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Analytics\AnalyticsReport;
+use App\Domain\Payments\StripeKeys;
 use App\Domain\Qa\PageAudit;
 use App\Jobs\RenderProjectAd;
 use App\Models\ChangeMessage;
@@ -14,8 +15,10 @@ use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Models\ProjectAd;
 use App\Models\Prototype;
+use App\Models\Setting;
 use App\Services\ChangeChat;
 use App\Services\ChangeShots;
+use App\Services\Notify;
 use App\Services\PipelineOrchestrator;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -61,9 +64,12 @@ class AdminController extends Controller
             // live credential check is `factory:ads-check`, because an API call per page load is
             // the wrong price for a tile.
             'connections' => app(PublisherRegistry::class)->status(),
+            'payments' => app(StripeKeys::class)->status(),
             'revenue' => [
-                'paid_orders' => Order::where('status', 'paid')->count(),
-                'paid_eur' => (int) Order::where('status', 'paid')->sum('total_one_time_eur'),
+                // Real money only: sandbox orders (and those from before the switch, all test mode) stay out.
+                'paid_orders' => Order::where('status', 'paid')->where('livemode', true)->count(),
+                'paid_eur' => (int) Order::where('status', 'paid')->where('livemode', true)->sum('total_one_time_eur'),
+                'test_orders' => Order::where('status', 'paid')->where(fn ($q) => $q->where('livemode', false)->orWhereNull('livemode'))->count(),
                 'hosting_monthly_eur' => (int) Order::where('status', 'paid')->sum('hosting_monthly_eur'),
                 'ad_budget_monthly_eur' => (int) Order::where('status', 'paid')->sum('ad_budget_monthly_eur'),
             ],
@@ -210,6 +216,25 @@ class AdminController extends Controller
             'events' => $project->events()->latest('created_at')->limit(80)
                 ->get(['type', 'payload', 'actor', 'created_at']),
         ]);
+    }
+
+    /**
+     * Sandbox or live payments. Live needs both live keys in .env and the word LIVE typed as
+     * confirmation, because from that moment checkouts charge real cards.
+     */
+    public function paymentsMode(Request $request, StripeKeys $keys, Notify $notify): JsonResponse
+    {
+        $data = $request->validate(['mode' => 'required|in:sandbox,live', 'confirm' => 'nullable|string']);
+        if ($data['mode'] === StripeKeys::LIVE) {
+            abort_unless(($data['confirm'] ?? '') === 'LIVE', 422, 'Type LIVE to confirm real payments.');
+            $missing = $keys->liveMissing();
+            abort_if($missing !== [], 422, 'Live payments are not configured: '.implode(', ', $missing));
+        }
+        $by = (string) $request->user()->email;
+        Setting::write('payments.mode', $data['mode'], $by);
+        $notify->system("payments switched to {$data['mode']} by {$by}");
+
+        return response()->json($keys->status());
     }
 
     /** Traffic, sources and the funnel from first visit to paid order. */

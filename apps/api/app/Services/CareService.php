@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Payments\StripeKeys;
 use App\Domain\Pricing\Estimator;
 use App\Models\Project;
 use Stripe\StripeClient;
@@ -19,7 +20,7 @@ class CareService
     /** Stripe Checkout (subscription) for this app; null when Stripe is unconfigured (staging). */
     public function createCheckout(Project $project): ?string
     {
-        $secret = config('services.stripe.secret');
+        $secret = app(StripeKeys::class)->secret();
         if (! $secret) {
             return null;
         }
@@ -67,7 +68,7 @@ class CareService
     /** Customer cancels: Care stays active until the end of the paid month. */
     public function cancel(Project $project, string $actor): void
     {
-        $secret = config('services.stripe.secret');
+        $secret = app(StripeKeys::class)->secret();
         $endsAt = now()->addMonth();
         if ($secret && $project->care_stripe_subscription_id) {
             $sub = (new StripeClient($secret))->subscriptions->update(

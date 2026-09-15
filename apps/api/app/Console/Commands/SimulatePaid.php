@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\Payments\StripeKeys;
 use App\Models\Order;
 use App\Services\OrderFulfillment;
 use Illuminate\Console\Command;
@@ -19,7 +20,7 @@ class SimulatePaid extends Command
 
     public function handle(OrderFulfillment $fulfillment): int
     {
-        if (config('services.stripe.secret')) {
+        if (app(StripeKeys::class)->secret()) {
             $this->error('Stripe is configured — use real payments.');
 
             return self::FAILURE;

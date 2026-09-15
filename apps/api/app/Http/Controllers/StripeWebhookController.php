@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Payments\StripeKeys;
 use App\Models\ChangeRequest;
 use App\Models\Order;
 use App\Models\Project;
@@ -21,17 +22,21 @@ class StripeWebhookController extends Controller
      */
     public function __invoke(Request $request): Response
     {
-        $secret = config('services.stripe.webhook_secret');
-        abort_if(! $secret, 503, 'Webhook secret not configured');
+        $secrets = app(StripeKeys::class)->webhookSecrets();
+        abort_if($secrets === [], 503, 'Webhook secret not configured');
 
-        try {
-            $event = Webhook::constructEvent(
-                $request->getContent(),
-                $request->header('Stripe-Signature', ''),
-                $secret,
-            );
-        } catch (\Throwable $e) {
-            Log::warning('stripe.webhook.invalid', ['error' => $e->getMessage()]);
+        // Test and live endpoints sign with different secrets; an event is genuine if either matches.
+        $event = null;
+        foreach ($secrets as $secret) {
+            try {
+                $event = Webhook::constructEvent($request->getContent(), $request->header('Stripe-Signature', ''), $secret);
+                break;
+            } catch (\Throwable $e) {
+                $error = $e->getMessage();
+            }
+        }
+        if ($event === null) {
+            Log::warning('stripe.webhook.invalid', ['error' => $error ?? 'no match']);
             abort(400, 'Invalid signature');
         }
 

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Payments\StripeKeys;
 use App\Models\ChangeRequest;
 use Stripe\StripeClient;
 
@@ -15,7 +16,7 @@ class RevisionService
     /** Creates the Stripe Checkout Session for a quoted change request (no-op when Stripe is unconfigured). */
     public function createCheckout(ChangeRequest $cr): void
     {
-        $secret = config('services.stripe.secret');
+        $secret = app(StripeKeys::class)->secret();
         if (! $secret) {
             return; // staging: the portal shows the "payment not connected" notice
         }
