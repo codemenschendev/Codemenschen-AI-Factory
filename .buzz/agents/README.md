@@ -8,8 +8,10 @@ Instructions for the agent in the Buzz channel #appwerk-agents (buzz.codemensche
 
 One agent covers product, marketing and development. It works on DEV
 (https://appwerk-dev.codemenschen.at, its own sandbox on the server) and never
-touches production. Production changes only with `!deploy appwerk`, run by the
-Deploy Bot without any AI.
+touches production. It has no GitHub credential: it commits on `dev`, and the bot
+(no AI) copies dev to GitHub. `!push appwerk` makes the bot open a pull request
+dev -> main and merge it when CI is green. `!deploy appwerk` puts main live.
+Only Patrick and the Codemenschen dev can use either command.
 
 How to change the agent:
 
