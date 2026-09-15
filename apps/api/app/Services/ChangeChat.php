@@ -77,7 +77,7 @@ class ChangeChat
         if ((int) Cache::get($customerKey, 0) >= self::DAILY_REPLIES
             || $this->draftReplies($project) >= self::DRAFT_REPLIES
             || (int) Cache::get("change-chat:global:{$day}", 0) >= self::GLOBAL_DAILY) {
-            $limit = $this->add($project, 'system', $this->say($customer, 'limit'), ['type' => 'limit']);
+            $limit = $this->add($project, 'system', $this->say($project, 'limit'), ['type' => 'limit']);
             $this->notify->alert($project, 'change chat: limit reached, the customer waits for a person');
 
             return ['status' => 201, 'messages' => [$mine, $limit]];
@@ -142,9 +142,9 @@ class ChangeChat
 
         $cr = $cr->fresh();
         if ($cr->status === 'awaiting_payment') {
-            $this->add($project, 'system', $this->say($customer, 'payment'), ['type' => 'payment', 'checkout_url' => $cr->checkout_url], $cr);
+            $this->add($project, 'system', $this->say($project, 'payment'), ['type' => 'payment', 'checkout_url' => $cr->checkout_url], $cr);
         } else {
-            $this->add($project, 'system', $this->say($customer, 'started'), ['type' => 'started', 'round' => $cr->round], $cr);
+            $this->add($project, 'system', $this->say($project, 'started'), ['type' => 'started', 'round' => $cr->round], $cr);
         }
 
         return $cr;
@@ -243,7 +243,7 @@ class ChangeChat
                 ->withToken(config('services.worker.token'))
                 ->post(rtrim(config('services.worker.url'), '/').'/change-chat', [
                     'system' => Prompts::get('change/assistant', [
-                        'language' => $customer->locale === 'en' ? 'English' : 'German',
+                        'language' => self::locale($project) === 'en' ? 'English' : 'German',
                         'status' => $project->status,
                         'mode' => $mode,
                         'recent' => $recent ?: 'none',
@@ -306,8 +306,7 @@ class ChangeChat
 
     private function post(ChangeRequest $cr, string $type, array $extra = []): void
     {
-        $customer = $cr->project->customer;
-        $this->add($cr->project, 'system', $this->say($customer, $type), array_merge(['type' => $type, 'round' => $cr->round], $extra), $cr);
+        $this->add($cr->project, 'system', $this->say($cr->project, $type), array_merge(['type' => $type, 'round' => $cr->round], $extra), $cr);
     }
 
     /** @param list<string> $types */
@@ -334,8 +333,18 @@ class ChangeChat
         Cache::increment($key);
     }
 
-    /** System lines, in the customer's language. Short sentences, no dashes. */
-    private function say(?Customer $customer, string $type): string
+    /**
+     * The language of the thread: the order's, like the project mails, because that is what the
+     * customer chose for this app. The customer record can say something else (it did: English on
+     * a German order, and the chat greeted in German and answered the payment in English).
+     */
+    public static function locale(Project $project): string
+    {
+        return ($project->order?->locale ?? $project->customer?->locale) === 'en' ? 'en' : 'de';
+    }
+
+    /** System lines, in the thread's language. Short sentences, no dashes. */
+    private function say(Project $project, string $type): string
     {
         $de = [
             'limit' => 'Für heute ist das Kontingent erreicht. Deine Nachricht ist gespeichert, unser Team meldet sich bei dir.',
@@ -356,6 +365,6 @@ class ChangeChat
             'failed' => 'That did not work on our side. Our team knows and will get back to you.',
         ];
 
-        return ($customer?->locale === 'en' ? $en : $de)[$type];
+        return (self::locale($project) === 'en' ? $en : $de)[$type];
     }
 }

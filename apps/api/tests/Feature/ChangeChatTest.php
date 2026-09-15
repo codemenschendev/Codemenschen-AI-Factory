@@ -289,6 +289,20 @@ class ChangeChatTest extends TestCase
         $this->withHeaders($this->as($project))->getJson("/api/me/projects/{$project->id}")->assertJsonPath('change_chat', true);
     }
 
+    public function test_the_thread_speaks_the_language_of_the_order_not_of_the_customer_record(): void
+    {
+        $project = $this->reviewedProject();
+        $project->order->update(['locale' => 'de']);
+        $project->customer->update(['locale' => 'en']);
+        $this->replies = [$this->card()];
+        $headers = $this->as($project->fresh());
+        $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Button grün']);
+        $this->withHeaders($headers)->postJson("/api/me/projects/{$project->id}/messages/confirm")->assertCreated();
+
+        $this->assertStringContainsString('German', $this->asked[0]['system']);
+        $this->assertStringStartsWith('Wird umgesetzt', ChangeMessage::latest('id')->first()->body);
+    }
+
     public function test_assistant_text_loses_its_dashes(): void
     {
         $project = $this->reviewedProject();

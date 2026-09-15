@@ -65,7 +65,7 @@ export function ChangeChat({
   const [waiver, setWaiver] = useState(false); // FAGG § 18 for a paid round, never pre-ticked
   const [confirming, setConfirming] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const endRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
   const lastId = messages.length ? messages[messages.length - 1].id : 0;
 
   const merge = useCallback((incoming: ChatMessage[]) => {
@@ -106,9 +106,11 @@ export function ChangeChat({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lastSystem]);
 
+  // The thread scrolls inside its own box, to the newest line; the page itself stays where it is.
   useEffect(() => {
-    endRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [lastId]);
+    const box = threadRef.current;
+    if (box) box.scrollTop = box.scrollHeight;
+  }, [lastId, sending]);
 
   const send = async (body: string) => {
     const text = body.trim();
@@ -164,6 +166,14 @@ export function ChangeChat({
     return last?.meta.type === "card" && !last.meta.confirmed && !last.change_request_id ? last.id : null;
   })();
   const roundRunning = project.change_requests?.some((c) => c.status === "in_progress") ?? false;
+  // The steps hang under the line that started the work: "started" for a free round, "paid" for a
+  // paid one. Only the newest, and only until that round has its result.
+  const progressId = (() => {
+    const start = [...messages].reverse().find((m) => m.meta.type === "started" || m.meta.type === "paid");
+    if (!start) return null;
+    const ended = messages.some((m) => m.id > start.id && ["result", "failed", "declined"].includes(m.meta.type ?? ""));
+    return ended ? null : start.id;
+  })();
   const mode = project.change_request_mode ?? "none";
 
   return (
@@ -171,7 +181,7 @@ export function ChangeChat({
       <h3>{t.title}</h3>
       {messages.length === 0 && <p className="small muted" style={{ margin: 0 }}>{t.intro}</p>}
 
-      <div className="chat-thread" aria-live="polite">
+      <div className="chat-thread" aria-live="polite" ref={threadRef}>
         {messages.map((m) => (
           <Message
             key={m.id}
@@ -180,6 +190,8 @@ export function ChangeChat({
             locale={locale}
             project={project}
             open={m.id === openCardId}
+            paid={messages.some((x) => x.meta.type === "paid" && x.change_request_id === m.change_request_id)}
+            showProgress={m.id === progressId}
             latest={m.id === talk[talk.length - 1]?.id}
             waiver={waiver}
             setWaiver={setWaiver}
@@ -200,7 +212,6 @@ export function ChangeChat({
             <p className="small muted chat-thinking">{t.thinking}</p>
           </>
         )}
-        <div ref={endRef} />
       </div>
 
       {roundRunning && <p className="small muted" style={{ margin: 0 }}>{t.busy}</p>}
@@ -242,6 +253,8 @@ function Message({
   locale,
   project,
   open,
+  paid,
+  showProgress,
   latest,
   waiver,
   setWaiver,
@@ -257,6 +270,8 @@ function Message({
   locale: Locale;
   project: ChatProject;
   open: boolean;
+  paid: boolean;
+  showProgress: boolean;
   latest: boolean;
   waiver: boolean;
   setWaiver: (v: boolean) => void;
@@ -274,8 +289,8 @@ function Message({
     return (
       <div className={`chat-system${m.meta.type === "failed" || m.meta.type === "limit" ? " chat-system-warn" : ""}`}>
         <p style={{ margin: 0 }}>{m.body}</p>
-        {m.meta.type === "started" && <Progress project={project} since={m.created_at} d={d} />}
-        {m.meta.type === "payment" && m.meta.checkout_url && (
+        {showProgress && <Progress project={project} since={m.created_at} d={d} />}
+        {m.meta.type === "payment" && m.meta.checkout_url && !paid && (
           <a className="btn btn-primary" href={m.meta.checkout_url}>{t.pay}</a>
         )}
         {m.meta.type === "result" && (
