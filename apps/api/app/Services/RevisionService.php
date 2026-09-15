@@ -30,7 +30,7 @@ class RevisionService
                 'price_data' => [
                     'currency' => 'eur',
                     'unit_amount' => $cr->price_eur * 100,
-                    'product_data' => ['name' => "{$project->name} — change request round {$cr->round}"],
+                    'product_data' => ['name' => $project->name.', '.(ChangeChat::locale($project) === 'en' ? 'change round ' : 'Änderungsrunde ').$cr->round],
                 ],
             ]],
             'customer_email' => $project->customer->email,
