@@ -84,6 +84,12 @@ class Notify
         $this->send(sprintf('Project %s (%s) %s', substr($project->id, 0, 8), $project->name, $line));
     }
 
+    /** One chat line about the factory itself, not about a project. */
+    public function system(string $line): void
+    {
+        $this->send($line);
+    }
+
     /** One-line operator note (mail + chat) for events that are not status transitions. */
     public function note(Project $project, string $note): void
     {
