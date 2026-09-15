@@ -5,6 +5,7 @@ import Link from "next/link";
 import { api, API_BASE, ApiError } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 import { ChangeChat } from "@/components/ChangeChat";
+import { useToken } from "@/lib/token";
 
 interface Detail {
   id: string;
@@ -68,9 +69,9 @@ const runDot: Record<string, string> = {
 };
 
 export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dict; projectId: string }) {
-  const [token] = useState<string | null>(() =>
-    typeof window === "undefined" ? null : localStorage.getItem("aifactory-token"),
-  );
+  // A store, not a value read once: the magic link usually opens in a new tab, and this tab has to
+  // notice the token appearing there instead of asking to sign in until someone reloads it.
+  const token = useToken();
   const [p, setP] = useState<Detail | null | undefined>(undefined);
   const [crText, setCrText] = useState(""); // change-request draft
   const [crWaiver, setCrWaiver] = useState(false); // paid rounds: FAGG § 18, never pre-ticked
@@ -115,6 +116,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
     return () => clearInterval(t);
   }, [p, load]);
 
+  if (token === undefined) return <p className="est-empty">…</p>;
   if (!token)
     return (
       <div className="note" style={{ display: "grid", gap: 12 }}>
