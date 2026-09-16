@@ -177,6 +177,7 @@ class LayoutsTest extends TestCase
         });
         $this->assertStringContainsString('bakery-warm', $sent);
         $this->assertStringContainsString('Follow its structure', $sent);
+        $this->assertStringContainsString('KEEP EVERY SECTION AND EVERY DEVICE', $sent);
     }
 
     public function test_an_unknown_kind_is_refused(): void
