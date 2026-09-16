@@ -7,6 +7,7 @@ use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Design\Layouts;
 use App\Domain\Design\WebShots;
+use App\Domain\Qa\ContentClaims;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
@@ -323,6 +324,12 @@ class PrototypeWriter
                 'elements' => $named];
             $qa['ok'] = false;
         }
+        // Prices and credentials the customer never gave. The prompt forbids them and the model
+        // printed them anyway, so they are checked here and repaired like any other fault.
+        if (($claims = ContentClaims::findings($page, $prompt, $kind)) !== []) {
+            array_push($qa['findings'], ...$claims);
+            $qa['ok'] = false;
+        }
         // What the model got wrong before anyone helped it. The repair overwrites the report, so
         // without this line the faults it makes most often, the ones a prompt could prevent, are
         // the ones nobody ever sees.
@@ -351,6 +358,10 @@ class PrototypeWriter
             if (($named = $this->competitorsNamed($fixed, $meta)) !== []) {
                 $after['findings'][] = ['severity' => 'blocking', 'check' => 'competitor-named', 'viewports' => [],
                     'detail' => 'the page still names competitors the study looked at; remove every mention', 'elements' => $named];
+                $after['ok'] = false;
+            }
+            if (($claims = ContentClaims::findings($fixed, $prompt, $kind)) !== []) {
+                array_push($after['findings'], ...$claims);
                 $after['ok'] = false;
             }
 
