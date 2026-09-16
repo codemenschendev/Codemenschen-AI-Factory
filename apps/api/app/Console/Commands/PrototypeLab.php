@@ -5,6 +5,7 @@ namespace App\Console\Commands;
 use App\Domain\Ai\ChatBackend;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Design\DesignLibrary;
+use App\Domain\Design\Layouts;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
@@ -20,7 +21,7 @@ use Illuminate\Support\Facades\Http;
  */
 class PrototypeLab extends Command
 {
-    protected $signature = 'factory:prototype-lab {brief} {--kind=app} {--style=house} {--out=}';
+    protected $signature = 'factory:prototype-lab {brief} {--kind=app} {--style=house} {--out=} {--layouts : Follow the layout packs as switched in the admin panel}';
 
     protected $description = 'Build one prototype from a prompt variant and audit it (house|free)';
 
@@ -82,7 +83,8 @@ class PrototypeLab extends Command
         $started = microtime(true);
 
         if ($style === 'house') {
-            $result = $writer->build($brief, (string) $this->option('kind'), null, $audit, app(DesignLibrary::class));
+            $result = $writer->build($brief, (string) $this->option('kind'), null, $audit, app(DesignLibrary::class),
+                layouts: $this->option('layouts') ? app(Layouts::class) : null);
             $html = $result['html'];
             $qa = $result['qa'];
         } else {
@@ -98,6 +100,7 @@ class PrototypeLab extends Command
             ['style', $style],
             ['seconds', $seconds],
             ['size', round(strlen($html) / 1024).' KB'],
+            ['layout', $qa['layout']['slug'] ?? '-'],
             ['audit', ($qa['ok'] ?? null) === true ? 'clean' : count($blocking).' blocking'],
             ['findings', implode(', ', array_unique(array_column($blocking, 'check'))) ?: '-'],
             ['file', $out],
