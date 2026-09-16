@@ -136,7 +136,7 @@ class PrototypeRepairTest extends TestCase
         Http::fake(['*/v1/chat/completions' => $seq]);
         $audit = $this->auditor([$this->fault('overflow'), $this->clean()]);
 
-        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien', 'site', null, $audit);
+        $out = app(PrototypeWriter::class)->build('Ein Salon in Wien, seit 1990', 'site', null, $audit);
 
         Http::assertSentCount(2);
         Http::assertSent(fn ($r) => count($r['messages'] ?? []) === 4 && str_contains((string) $r['messages'][3]['content'], '<<<FIND'));
