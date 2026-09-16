@@ -118,6 +118,12 @@ return [
         'pexels_key' => env('PEXELS_API_KEY'),
     ],
 
+    // Layout packs for the free prototypes: skeletons the model follows for structure while it
+    // still writes its own CSS. On and off, and per kind, in the admin panel (App\Domain\Design\Layouts).
+    'layouts' => [
+        'path' => env('LAYOUTS_PATH', resource_path('layouts')),
+    ],
+
     // The browser that looks at a generated page before a visitor does. Both paths are inside the
     // api image; if either is missing the audit reports itself skipped and the build carries on.
     'qa' => [

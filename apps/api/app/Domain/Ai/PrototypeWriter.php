@@ -5,6 +5,7 @@ namespace App\Domain\Ai;
 use App\Domain\Design\AppStoreShots;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
+use App\Domain\Design\Layouts;
 use App\Domain\Design\WebShots;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
@@ -92,7 +93,7 @@ class PrototypeWriter
      */
     public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null,
         ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null,
-        ?\Closure $progress = null): array
+        ?\Closure $progress = null, ?Layouts $layouts = null): array
     {
         // Where the minutes go, by step, kept with the audit. Every argument about speed so far
         // was settled by a stopwatch held by hand; this is the stopwatch.
@@ -173,6 +174,15 @@ class PrototypeWriter
             'ads' => Prompts::get('prototype/ads').$laws.$this->conventions('ad-conventions.md'),
             default => Prompts::get('prototype/site').$laws.$this->conventions('web-conventions.md'),
         };
+
+        // A layout pack, when the operator has switched them on for this kind and this build did
+        // not fall into the control group. Null is the normal answer and the page is then written
+        // from nothing, exactly as before. The skeleton rides in the system prompt because it is
+        // about how the page is built, not about what this business sells.
+        $layout = $layouts?->pick($kind, $prompt);
+        if ($layout !== null) {
+            $system .= "\n\n".Prompts::get('prototype/layout')."\n\n".$layout['skeleton'];
+        }
 
         $baseUrl = rtrim((string) config('services.ai_image.base_url'), '/');
         $token = (string) config('services.ai_image.token');
@@ -392,6 +402,9 @@ class PrototypeWriter
 
         $timing['total'] = round(array_sum($timing), 1);
         $qa['timing'] = $timing;
+        // Which skeleton this page followed, or that it followed none. Without this line the
+        // comparison the switch exists for cannot be made after the fact.
+        $qa['layout'] = $layout === null ? null : ['slug' => $layout['slug'], 'source' => $layout['source']];
         if ($meta !== []) {
             $qa['study'] = $meta;
         }
