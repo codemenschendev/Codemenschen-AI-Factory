@@ -184,4 +184,33 @@ class LayoutsTest extends TestCase
         $this->postJson('/api/admin/layouts', ['kinds' => ['poster']], $this->auth())
             ->assertStatus(422);
     }
+
+    public function test_the_shipped_packs_are_on_disk_and_obey_the_page_laws(): void
+    {
+        $shipped = new Layouts(resource_path('layouts'));
+        $packs = $shipped->packs();
+        $this->assertSame(['bakery-warm', 'physio-calm'], array_column($packs, 'slug'));
+
+        foreach ($packs as $p) {
+            $html = (string) file_get_contents(resource_path('layouts/'.$p['slug'].'.html'));
+            $this->assertSame('site', $p['kind']);
+            $this->assertSame(1, substr_count($html, '<style>'), $p['slug']);
+            $this->assertStringNotContainsString('<script', $html, $p['slug']);
+            $this->assertDoesNotMatchRegularExpression('#(src|href)="(https?:)?//#', $html, $p['slug']);
+            $this->assertStringNotContainsString('—', $html, $p['slug']);
+            $this->assertStringContainsString('data-q="', $html, $p['slug']);
+            $this->assertLessThan(20000, strlen($html), $p['slug']);
+        }
+    }
+
+    public function test_a_bakery_sentence_gets_the_bakery_pack_and_a_practice_gets_the_practice(): void
+    {
+        Setting::write('layouts.enabled', true);
+        $shipped = new Layouts(resource_path('layouts'));
+
+        for ($i = 0; $i < 8; $i++) {
+            $this->assertSame('bakery-warm', $shipped->pick('site', 'Eine Bäckerei in Gössendorf mit Sonntagsbrot')['slug']);
+            $this->assertSame('physio-calm', $shipped->pick('site', 'Meine Physiotherapie Praxis in Linz')['slug']);
+        }
+    }
 }

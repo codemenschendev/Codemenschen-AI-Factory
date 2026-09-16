@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Physiotherapie am Park · Termin anfragen</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:16px/1.6 system-ui,sans-serif;color:#222;background:#fafafa;overflow-x:hidden}
+a{color:inherit}
+.wrap{max-width:76rem;margin:0 auto;padding:0 20px}
+.label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.18em;color:#555}
+h1,h2,h3{font-weight:600;line-height:1.05;letter-spacing:-.02em}
+h1{font-size:clamp(2.8rem,7vw,4.5rem);margin-top:20px}
+h2{font-size:clamp(2rem,4.5vw,3rem)}
+.muted{color:#666}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:48px;padding:0 24px;border:0;border-radius:6px;background:#333;color:#fff;font:600 1rem system-ui,sans-serif;text-decoration:none}
+.icon{width:16px;height:16px;flex-shrink:0}
+section{padding:72px 0}
+
+/* bar: mark and name left, nav with phone and one button on wide screens */
+.bar{border-bottom:1px solid #ddd}
+.bar .wrap{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:16px;height:72px}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;min-width:0}
+.mark{display:grid;place-items:center;width:36px;height:36px;border-radius:50%;background:#333;color:#fff;font-weight:700;flex-shrink:0}
+.brand span{min-width:0;font-size:.9rem;line-height:1.3}
+.brand small{display:block;color:#666}
+.bar nav{display:none;align-items:center;gap:20px;font-size:.9rem}
+.bar nav a{padding:6px 4px}
+.bar nav .btn{height:40px;padding:0 16px;font-size:.9rem}
+
+/* hero: promise left, a working booking form right, then a ruled row of three plain facts */
+.hero{background:#efefef;padding:0}
+.hero .top{display:grid;gap:40px;padding-top:48px;padding-bottom:48px;align-items:center}
+.hero .lead{font-size:1.15rem;max-width:34rem;margin-top:28px}
+.facts-inline{display:flex;flex-wrap:wrap;gap:12px 28px;margin-top:32px;font-size:.9rem}
+.facts-inline span{display:inline-flex;align-items:center;gap:8px}
+form{background:#fff;padding:24px;box-shadow:0 24px 60px rgba(0,0,0,.12)}
+form h2{font-size:1.5rem;margin-top:8px}
+form label{display:block;font-size:.875rem;font-weight:500;margin-top:20px}
+form select,form input{display:block;width:100%;height:48px;margin-top:8px;padding:0 14px;border:1px solid #ccc;border-radius:6px;background:#fafafa;font:inherit}
+.two{display:grid;gap:0 16px}
+form .btn{width:100%;margin-top:24px}
+form .fine{margin-top:12px;font-size:.75rem;text-align:center;color:#666}
+.proof{display:grid;gap:12px;padding-top:24px;padding-bottom:24px;border-top:1px solid #ccc;font-size:.9rem;color:#666}
+.proof strong{color:#222;margin-right:8px}
+
+/* section heading: heading left, intro right, on one baseline */
+.heading{display:grid;gap:20px}
+.heading h2{margin-top:14px}
+.heading>p{max-width:32rem;color:#666}
+
+/* services: one grid of hairline-ruled cells, a number, a name, a sentence */
+.ruled{display:grid;margin-top:56px;border-top:1px solid #ddd;border-left:1px solid #ddd}
+.ruled article{border-right:1px solid #ddd;border-bottom:1px solid #ddd;padding:32px 28px}
+.ruled span{font-size:.8rem;color:#666;font-variant-numeric:tabular-nums}
+.ruled h3{font-size:1.35rem;margin-top:24px}
+.ruled p{margin-top:12px;color:#666;font-size:.95rem}
+
+/* people: three portraits in a tinted band */
+.team{background:#ededed}
+.people{display:grid;gap:32px;margin-top:56px}
+.photo-card{display:flex;align-items:center;justify-content:center;aspect-ratio:4/5;background:#d6d6d6;padding:24px;text-align:center;color:#555}
+.people h3{font-size:1.25rem;margin-top:20px}
+.people .role{font-size:.875rem;color:#555;margin-top:4px}
+.people .focus{font-size:.875rem;color:#666;margin-top:12px}
+
+/* first visit: text and picture left, a ruled numbered list right */
+.visit .wrap{display:grid;gap:56px}
+.photo-wide{display:flex;align-items:center;justify-content:center;aspect-ratio:3/2;margin-top:36px;background:#e0e0e0;padding:24px;text-align:center;color:#555}
+.list{list-style:none;border-top:1px solid #ddd}
+.list li{display:grid;grid-template-columns:3.5rem 1fr;gap:16px;padding:28px 0;border-bottom:1px solid #ddd}
+.list li>span{font-size:2rem;font-weight:600;color:#8a8a8a;line-height:1}
+.list h3{font-size:1.25rem}
+.list p{margin-top:8px;color:#666}
+
+/* costs: heading left, two plain panels right */
+.costs{border-top:1px solid #ddd;border-bottom:1px solid #ddd}
+.costs .wrap{display:grid;gap:40px}
+.panels{display:grid;gap:20px}
+.panel{background:#fff;border:1px solid #ddd;padding:28px}
+.panel h3{font-size:1.15rem}
+.panel p{margin-top:12px;color:#666;font-size:.95rem}
+
+/* closing: a full-width colour band, centred */
+.band{background:#333;color:#fafafa;text-align:center}
+.band h2{max-width:48rem;margin:16px auto 0}
+.band p{max-width:36rem;margin:24px auto 0;color:#bbb}
+.band .label{color:#bbb}
+.band .btn{margin-top:32px;background:#fafafa;color:#222}
+
+footer{background:#1c1c1c;color:#ccc;padding:48px 0 0}
+footer .cols{display:grid;gap:40px}
+footer h2{font-size:.8rem;text-transform:uppercase;letter-spacing:.14em;color:#fff;margin-bottom:12px}
+footer p,footer a{display:block;font-size:.9rem;text-decoration:none;margin-top:4px}
+footer a{padding:4px 0}
+footer .copy{border-top:1px solid #333;margin-top:40px;padding:20px 0;font-size:.75rem;color:#888}
+
+@media (min-width:640px){
+  .two{grid-template-columns:1fr 1fr}
+  .proof{grid-template-columns:repeat(3,1fr)}
+  .ruled{grid-template-columns:1fr 1fr}
+  footer .cols{grid-template-columns:1fr 1fr}
+  form{padding:32px}
+}
+@media (min-width:768px){
+  .people{grid-template-columns:repeat(3,1fr);gap:20px}
+  .panels{grid-template-columns:1fr 1fr}
+  section{padding:104px 0}
+}
+@media (min-width:1024px){
+  .bar nav{display:flex}
+  .hero .top{grid-template-columns:minmax(0,1.08fr) minmax(22rem,.72fr);padding-top:80px;padding-bottom:80px}
+  .heading{grid-template-columns:1fr 1fr;align-items:end;gap:48px}
+  .ruled{grid-template-columns:repeat(3,1fr)}
+  .visit .wrap{grid-template-columns:.8fr 1.2fr;align-items:start}
+  .costs .wrap{grid-template-columns:.7fr 1.3fr;align-items:center}
+  footer .cols{grid-template-columns:repeat(4,1fr)}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a class="brand" href="#start"><span class="mark">+</span><span><strong>Physiotherapie am Park</strong><small>Musterstadt</small></span></a>
+    <nav><a href="#leistungen">Behandlungen</a><a href="#team">Team</a><a href="#ersttermin">Erster Termin</a><a href="#kosten">Kosten</a><a class="btn" href="#termin">Termin anfragen</a></nav>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="start">
+  <div class="wrap top">
+    <div>
+      <p class="label">Physiotherapie in der Stadt</p>
+      <h1>Bewegung, die sich wieder gut anfühlt.</h1>
+      <p class="lead muted">Wir nehmen uns Zeit für Ihre Beschwerden und planen eine Behandlung, die zu Ihrem Alltag passt.</p>
+      <div class="facts-inline">
+        <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Montag bis Freitag, 7:30 bis 19 Uhr</span>
+        <span><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-6.5-7-12a7 7 0 0 1 14 0c0 5.5-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>Fünf Minuten vom Hauptplatz</span>
+      </div>
+    </div>
+    <form id="termin" action="#termin">
+      <p class="label">Termin anfragen</p>
+      <h2>Wann dürfen wir Sie sehen?</h2>
+      <label>Behandlung
+        <select required><option value="">Bitte wählen</option><option>Physiotherapie</option><option>Manuelle Therapie</option><option>Lymphdrainage</option></select>
+      </label>
+      <div class="two">
+        <label>Wunschdatum<input type="date" required></label>
+        <label>Tageszeit<select required><option value="">Bitte wählen</option><option>Vormittag</option><option>Nachmittag</option><option>Abend</option></select></label>
+      </div>
+      <button class="btn" type="submit">Wunschtermin anfragen</button>
+      <p class="fine">Unverbindlich. Wir melden uns werktags innerhalb von 24 Stunden.</p>
+    </form>
+  </div>
+  <div class="wrap proof">
+    <p><strong>Persönlich.</strong>Eine feste Ansprechperson.</p>
+    <p><strong>Erfahren.</strong>Über 30 Jahre im Team.</p>
+    <p><strong>Gut erreichbar.</strong>Barrierefrei, mit Parkplätzen.</p>
+  </div>
+</section>
+
+<section id="leistungen">
+  <div class="wrap">
+    <div class="heading">
+      <div><p class="label">Was wir behandeln</p><h2>Therapie, die bei Ihnen beginnt.</h2></div>
+      <p>Vom akuten Schmerz bis zurück in den Sport. Wir verbinden einen gründlichen Befund mit verständlicher, aktiver Therapie.</p>
+    </div>
+    <div class="ruled">
+      <article><span>01</span><h3>Physiotherapie</h3><p>Bei Schmerzen, eingeschränkter Bewegung und nach Verletzungen oder Operationen.</p></article>
+      <article><span>02</span><h3>Manuelle Therapie</h3><p>Gezielte Handgriffe lösen Spannungen und machen Gelenke wieder beweglich.</p></article>
+      <article><span>03</span><h3>Sportphysiotherapie</h3><p>Sicher zurück ins Training, mit Belastungsaufbau und einem persönlichen Plan.</p></article>
+      <article><span>04</span><h3>Heilgymnastik</h3><p>Übungen für Kraft und Beweglichkeit, klar erklärt und passend für zu Hause.</p></article>
+      <article><span>05</span><h3>Lymphdrainage</h3><p>Sanfte Entstauung bei Schwellungen, etwa nach einer Operation.</p></article>
+      <article><span>06</span><h3>Beckenboden</h3><p>Diskrete Begleitung für Frauen und Männer, einzeln und in Ruhe.</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="team" id="team">
+  <div class="wrap">
+    <div class="heading">
+      <div><p class="label">Drei Menschen, ein Anspruch</p><h2>In guten Händen.</h2></div>
+      <p>Sie werden von Anfang bis Ende von derselben Person begleitet.</p>
+    </div>
+    <div class="people">
+      <article><div class="photo-card" data-q="physiotherapist portrait clinic">Porträt der Praxisleiterin im Behandlungsraum</div><h3>Eva M., BSc</h3><p class="role">Praxisleitung</p><p class="focus">Orthopädie, manuelle Therapie</p></article>
+      <article><div class="photo-card" data-q="physiotherapist portrait smiling">Porträt des Sportphysiotherapeuten</div><h3>Lukas K., BSc</h3><p class="role">Physiotherapeut</p><p class="focus">Sport, Rehabilitation</p></article>
+      <article><div class="photo-card" data-q="therapist portrait window light">Porträt der Therapeutin am Fenster</div><h3>Sophie H., MSc</h3><p class="role">Physiotherapeutin</p><p class="focus">Neurologie, Beckenboden</p></article>
+    </div>
+  </div>
+</section>
+
+<section class="visit" id="ersttermin">
+  <div class="wrap">
+    <div>
+      <p class="label">Ihr erster Termin</p>
+      <h2 style="margin-top:14px">Ankommen. Verstehen. Loslegen.</h2>
+      <p class="muted" style="margin-top:24px;max-width:28rem">Planen Sie 50 Minuten ein. Bringen Sie vorhandene Befunde und bequeme Kleidung mit.</p>
+      <div class="photo-wide" data-q="bright treatment room plants">Heller Behandlungsraum mit Blick ins Grüne</div>
+    </div>
+    <ol class="list">
+      <li><span>01</span><div><h3>Gespräch</h3><p>Wir hören zu. Was belastet Sie, was möchten Sie wieder können?</p></div></li>
+      <li><span>02</span><div><h3>Befund</h3><p>Wir prüfen Beweglichkeit, Kraft und wie Ihre Beschwerden zusammenhängen.</p></div></li>
+      <li><span>03</span><div><h3>Behandlung</h3><p>Die erste Behandlung beginnt gleich, klar erklärt und auf Sie abgestimmt.</p></div></li>
+      <li><span>04</span><div><h3>Ihr Plan</h3><p>Sie gehen mit konkreten nächsten Schritten und Übungen für zu Hause.</p></div></li>
+    </ol>
+  </div>
+</section>
+
+<section class="costs" id="kosten">
+  <div class="wrap">
+    <div><p class="label">Kosten und Kasse</p><h2 style="margin-top:14px">Gut informiert vor dem Start.</h2></div>
+    <div class="panels">
+      <div class="panel"><h3>Mit ärztlicher Verordnung</h3><p>Sie reichen unsere Honorarnote mit der Verordnung bei Ihrer Kasse ein. Ein Teil wird rückerstattet.</p></div>
+      <div class="panel"><h3>Klares Honorar</h3><p>50 Minuten kosten 98 Euro, 30 Minuten kosten 66 Euro. Wir erklären den Ablauf gern vorab.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <p class="label">Der nächste Schritt</p>
+    <h2>Lassen Sie uns gemeinsam Bewegung zurückgewinnen.</h2>
+    <p>Senden Sie uns Ihren Wunschtermin. Wir melden uns persönlich.</p>
+    <a class="btn" href="#termin">Termin anfragen</a>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap cols">
+    <div><h2>Praxis</h2><p>Physiotherapie am Park</p><p>Parkstraße 12, Musterstadt</p></div>
+    <div><h2>Kontakt</h2><a href="#termin">Termin anfragen</a><p>termin@beispiel.at</p></div>
+    <div><h2>Zeiten</h2><p>Montag bis Freitag</p><p>7:30 bis 19 Uhr</p></div>
+    <div><h2>Information</h2><a href="#kosten">Kosten</a><a href="#ersttermin">Erster Termin</a></div>
+  </div>
+  <p class="wrap copy">Physiotherapie am Park</p>
+</footer>
+
+</body>
+</html>
