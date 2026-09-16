@@ -75,8 +75,8 @@ class LayoutsTest extends TestCase
 
     public function test_a_kind_that_was_not_asked_for_writes_from_nothing(): void
     {
-        $this->pack('bakery-warm', 'site');
-        $this->pack('booking-app', 'app');
+        $this->pack('bakery-warm', 'site', ['Bäckerei']);
+        $this->pack('booking-app', 'app', ['Bäckerei']);
         Setting::write('layouts.enabled', true);
         Setting::write('layouts.kinds', ['site']);
 
@@ -95,9 +95,20 @@ class LayoutsTest extends TestCase
         }
     }
 
+    public function test_a_trade_no_pack_was_drawn_for_gets_no_pack(): void
+    {
+        $this->pack('bakery-warm', 'site', ['Bäckerei']);
+        $this->pack('generic', 'site');
+        Setting::write('layouts.enabled', true);
+
+        for ($i = 0; $i < 12; $i++) {
+            $this->assertNull($this->layouts()->pick('site', 'Eine Autowerkstatt in Graz'));
+        }
+    }
+
     public function test_a_share_of_zero_is_a_control_group_and_a_pack_can_be_held_back(): void
     {
-        $this->pack('bakery-warm', 'site');
+        $this->pack('bakery-warm', 'site', ['Bäckerei']);
         Setting::write('layouts.enabled', true);
 
         Setting::write('layouts.share', 0);
@@ -154,7 +165,7 @@ class LayoutsTest extends TestCase
 
     public function test_a_switched_on_pack_travels_with_the_prompt_and_is_recorded(): void
     {
-        $this->pack('bakery-warm', 'site');
+        $this->pack('bakery-warm', 'site', ['Salon']);
         config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
         Http::fake(['*/v1/chat/completions' => Http::response([
             'choices' => [['message' => ['content' => '<!doctype html><html><head><title>X</title></head><body><h1>X</h1></body></html>']]],
@@ -212,6 +223,8 @@ class LayoutsTest extends TestCase
         for ($i = 0; $i < 8; $i++) {
             $this->assertSame('bakery-warm', $shipped->pick('site', 'Eine Bäckerei in Gössendorf mit Sonntagsbrot')['slug']);
             $this->assertSame('physio-calm', $shipped->pick('site', 'Meine Physiotherapie Praxis in Linz')['slug']);
+            $this->assertNull($shipped->pick('site', 'Eine Zahnarzt Praxis mit Ordination in Wien'));
+            $this->assertNull($shipped->pick('site', 'Ein Friseursalon in Graz'));
         }
     }
 }
