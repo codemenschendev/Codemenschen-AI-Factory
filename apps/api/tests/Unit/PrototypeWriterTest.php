@@ -107,6 +107,29 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringNotContainsString('What real app screens do', $this->systemPrompt('site'));
     }
 
+    public function test_the_site_prompt_carries_the_composition_devices(): void
+    {
+        // Read off one Lovable page and one of ours, side by side, 2026-09-16. Every one of these
+        // is a choice our pages were quietly making the timid way: centred headings, rounded
+        // cards, boxed steps, one typeface, a small headline. They are offered, not ordered: a
+        // page that reaches for all of them has swapped one template for another.
+        $sent = $this->systemPrompt('site');
+
+        $this->assertStringContainsString('Two typefaces at most', $sent);
+        $this->assertStringContainsString('a dotted rule running between', $sent);
+        $this->assertStringContainsString('Six', $sent);
+        $this->assertStringContainsString('timid headline', $sent);
+        $this->assertStringContainsString('none is compulsory', $sent);
+    }
+
+    public function test_the_app_prompt_is_not_given_the_page_devices(): void
+    {
+        // A phone screen has no room for a 4 rem headline or a two-column section heading, and
+        // the ad page is five creatives in platform frames. Both would only be confused by them.
+        $this->assertStringNotContainsString('Two typefaces at most', $this->systemPrompt('app'));
+        $this->assertStringNotContainsString('Two typefaces at most', $this->systemPrompt('ads'));
+    }
+
     public function test_the_reference_prompt_never_asks_for_the_house_classes_again(): void
     {
         // It did, for months, while every kind prompt was telling the model to write its own CSS.
