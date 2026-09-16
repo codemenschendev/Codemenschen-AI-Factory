@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Analytics\AnalyticsReport;
+use App\Domain\Design\Layouts;
 use App\Domain\Payments\StripeKeys;
 use App\Domain\Qa\PageAudit;
 use App\Jobs\RenderProjectAd;
@@ -65,6 +66,7 @@ class AdminController extends Controller
             // the wrong price for a tile.
             'connections' => app(PublisherRegistry::class)->status(),
             'payments' => app(StripeKeys::class)->status(),
+            'layouts' => app(Layouts::class)->status(),
             'revenue' => [
                 // Real money only: sandbox orders (and those from before the switch, all test mode) stay out.
                 'paid_orders' => Order::where('status', 'paid')->where('livemode', true)->count(),
@@ -235,6 +237,42 @@ class AdminController extends Controller
         $notify->system("payments switched to {$data['mode']} by {$by}");
 
         return response()->json($keys->status());
+    }
+
+    /**
+     * The layout packs switch: on or off, which kinds use a pack, how many builds in a hundred
+     * get one, and which packs are held back.
+     *
+     * Everything here is a setting rather than an env value because the question the switch
+     * answers is whether packs make the pages better, and that is answered by turning them on,
+     * looking at what comes out, and turning them off again. A deploy in between would compare
+     * two different weeks instead of two kinds of build.
+     */
+    public function layoutsSettings(Request $request, Layouts $layouts, Notify $notify): JsonResponse
+    {
+        $data = $request->validate([
+            'enabled' => 'nullable|boolean',
+            'kinds' => 'nullable|array',
+            'kinds.*' => 'string|in:'.implode(',', Layouts::KINDS),
+            'share' => 'nullable|integer|min:0|max:100',
+            'off' => 'nullable|array',
+            'off.*' => 'string',
+        ]);
+        $by = (string) $request->user()->email;
+        $was = $layouts->enabled();
+
+        foreach (['enabled', 'kinds', 'share', 'off'] as $key) {
+            if (array_key_exists($key, $data) && $data[$key] !== null) {
+                Setting::write("layouts.{$key}", $key === 'enabled' ? (bool) $data[$key] : $data[$key], $by);
+            }
+        }
+
+        $now = $layouts->enabled();
+        if ($now !== $was) {
+            $notify->system('prototype layout packs switched '.($now ? 'on' : 'off')." by {$by}");
+        }
+
+        return response()->json($layouts->status());
     }
 
     /** Traffic, sources and the funnel from first visit to paid order. */

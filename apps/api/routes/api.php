@@ -88,6 +88,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/projects/{project}/status', [AdminController::class, 'setStatus']);
     Route::get('/analytics', [AdminController::class, 'analytics']);
     Route::post('/payments/mode', [AdminController::class, 'paymentsMode']);
+    Route::post('/layouts', [AdminController::class, 'layoutsSettings']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');

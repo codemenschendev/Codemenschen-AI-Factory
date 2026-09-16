@@ -6,6 +6,7 @@ use App\Domain\Ai\PrototypePhoto;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
+use App\Domain\Design\Layouts;
 use App\Domain\Qa\PageAudit;
 use App\Models\Prototype;
 use App\Services\Notify;
@@ -31,7 +32,7 @@ class BuildPrototype implements ShouldQueue
     public function __construct(public string $prototypeId, public string $kind = 'site') {}
 
     public function handle(PrototypeWriter $writer, DesignRefs $refs, PageAudit $audit,
-        DesignLibrary $library, PrototypePhoto $photo): void
+        DesignLibrary $library, PrototypePhoto $photo, Layouts $layouts): void
     {
         $proto = Prototype::find($this->prototypeId);
         if (! $proto || $proto->status === 'ready') {
@@ -42,7 +43,7 @@ class BuildPrototype implements ShouldQueue
 
         try {
             $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit, $library, $photo,
-                fn (string $stage) => $proto->update(['stage' => $stage]));
+                fn (string $stage) => $proto->update(['stage' => $stage]), $layouts);
             $proto->update([
                 'status' => 'ready', 'stage' => null, 'title' => $out['title'], 'html' => $out['html'],
                 'qa' => $out['qa'] ?? null,

@@ -19,6 +19,15 @@ interface Overview {
   customers: number;
   /** Stripe sandbox or live, switched here; live_missing names empty .env keys, never values. */
   payments: { mode: "sandbox" | "live"; sandbox_configured: boolean; live_missing: string[] };
+  /** Layout packs for the free prototypes: on or off, per kind, with a control group. */
+  layouts: {
+    enabled: boolean;
+    kinds: LayoutKind[];
+    share: number;
+    off: string[];
+    packs: { slug: string; kind: LayoutKind; industries: string[]; source: string; note: string; bytes: number }[];
+    by_kind: Record<LayoutKind, number>;
+  };
   revenue: {
     paid_orders: number;
     test_orders: number;
@@ -28,6 +37,10 @@ interface Overview {
   };
   attention: AttentionItem[];
 }
+
+type LayoutKind = "site" | "app" | "ads";
+
+const LAYOUT_KINDS: LayoutKind[] = ["site", "app", "ads"];
 
 interface AttentionItem {
   kind: "project_failed" | "run_failed" | "run_stalled" | "ad_failed" | "prototype_qa";
@@ -247,6 +260,17 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     setBusy(false);
   }
 
+  /**
+   * Every layout setting is saved here rather than deployed, because the question they answer is
+   * whether the packs make the pages better, and that needs them turned on and off in one week.
+   */
+  async function saveLayouts(patch: Partial<Pick<Overview["layouts"], "enabled" | "kinds" | "share" | "off">>) {
+    setBusy(true);
+    const r = await call<Overview["layouts"]>("/admin/layouts", { method: "POST", body: JSON.stringify(patch) });
+    if (r) setOverview((o) => (o ? { ...o, layouts: r } : o));
+    setBusy(false);
+  }
+
   async function setAssistantPaused(projectId: string, paused: boolean) {
     setBusy(true);
     const r = await call<{ assistant_paused: boolean }>(`/admin/projects/${projectId}/assistant`, {
@@ -429,6 +453,96 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26 }}>
+            <span className="cat">{a.layoutsTile}</span>
+            <strong style={{ fontSize: 22 }}>{overview.layouts.enabled ? a.layoutsOn : a.layoutsOff}</strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.layoutsHint}</p>
+
+            {overview.layouts.packs.length === 0 ? (
+              <p className="small" style={{ margin: "0 0 10px" }}>{a.layoutsNoPacks}</p>
+            ) : (
+              <div className="tbl-wrap" style={{ marginBottom: 10 }}>
+                <table>
+                  <tbody>
+                    {overview.layouts.packs.map((p) => {
+                      const held = overview.layouts.off.includes(p.slug);
+                      return (
+                        <tr key={p.slug}>
+                          <td>
+                            <strong>{p.slug}</strong>
+                            <div className="small muted">
+                              {p.kind} · {p.source} · {Math.round(p.bytes / 1024)} KB
+                              {p.industries.length > 0 && ` · ${p.industries.join(", ")}`}
+                            </div>
+                          </td>
+                          <td style={{ textAlign: "right" }}>
+                            <button
+                              className="btn btn-ghost btn-sm"
+                              disabled={busy}
+                              onClick={() =>
+                                void saveLayouts({
+                                  off: held
+                                    ? overview.layouts.off.filter((s) => s !== p.slug)
+                                    : [...overview.layouts.off, p.slug],
+                                })
+                              }
+                            >
+                              {held ? a.layoutsUse : a.layoutsHold}
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center", marginBottom: 10 }}>
+              {LAYOUT_KINDS.map((k) => (
+                <label key={k} className="small" style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  <input
+                    type="checkbox"
+                    checked={overview.layouts.kinds.includes(k)}
+                    disabled={busy}
+                    onChange={(e) =>
+                      void saveLayouts({
+                        kinds: e.target.checked
+                          ? [...overview.layouts.kinds, k]
+                          : overview.layouts.kinds.filter((x) => x !== k),
+                      })
+                    }
+                  />
+                  {k} <span className="muted">({overview.layouts.by_kind[k] ?? 0})</span>
+                </label>
+              ))}
+            </div>
+
+            <label className="small" style={{ display: "block", marginBottom: 10 }}>
+              {a.layoutsShare}: <span className="num">{overview.layouts.share}%</span>
+              <input
+                type="range"
+                min={0}
+                max={100}
+                step={10}
+                defaultValue={overview.layouts.share}
+                disabled={busy}
+                style={{ display: "block", width: "100%", maxWidth: 320 }}
+                onMouseUp={(e) => void saveLayouts({ share: Number((e.target as HTMLInputElement).value) })}
+                onTouchEnd={(e) => void saveLayouts({ share: Number((e.target as HTMLInputElement).value) })}
+              />
+              <span className="muted">{a.layoutsShareHint}</span>
+            </label>
+
+            <button
+              className={overview.layouts.enabled ? "btn btn-ghost btn-sm" : "btn btn-primary btn-sm"}
+              disabled={busy || (!overview.layouts.enabled && overview.layouts.packs.length === 0)}
+              onClick={() => void saveLayouts({ enabled: !overview.layouts.enabled })}
+            >
+              {overview.layouts.enabled ? a.layoutsTurnOff : a.layoutsTurnOn}
+            </button>
           </div>
 
           <h2 style={{ fontSize: "1.1rem" }}>{a.attention}</h2>

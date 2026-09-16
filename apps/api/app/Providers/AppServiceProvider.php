@@ -4,6 +4,7 @@ namespace App\Providers;
 
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
+use App\Domain\Design\Layouts;
 use App\Domain\Library\ImageLibrary;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Support\ServiceProvider;
@@ -30,6 +31,13 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(
             DesignLibrary::class,
             fn () => new DesignLibrary((string) config('services.media.design_library_path')),
+        );
+
+        // Ships with the directory empty: the switch exists before the packs do, so a pack can be
+        // put in and taken out again without a deploy.
+        $this->app->singleton(
+            Layouts::class,
+            fn () => new Layouts((string) config('services.layouts.path')),
         );
 
         $this->app->singleton(

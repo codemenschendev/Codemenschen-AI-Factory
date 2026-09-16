@@ -107,6 +107,17 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringNotContainsString('What real app screens do', $this->systemPrompt('site'));
     }
 
+    public function test_the_reference_prompt_never_asks_for_the_house_classes_again(): void
+    {
+        // It did, for months, while every kind prompt was telling the model to write its own CSS.
+        // Two orders in one prompt is how a page ends up with an opinion about nothing.
+        $reference = (string) file_get_contents(resource_path('prompts/prototype/reference.md'));
+
+        $this->assertStringNotContainsString('house classes', $reference);
+        $this->assertStringContainsString('COMPOSITION ONLY', $reference);
+        $this->assertStringContainsString('own decision, made for this trade', $reference);
+    }
+
     public function test_the_conventions_file_stays_small_enough_to_send_every_time(): void
     {
         // The whole page has to be written inside the sidecar's timeout; a brief that grows
