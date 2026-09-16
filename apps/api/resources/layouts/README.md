@@ -5,9 +5,9 @@ bones of a page: how many sections, what sits in the first screen, how the secti
 how dense they are. The model still picks the colour, the type scale, the radius and the rhythm.
 Bones from a designer, skin from the model.
 
-The directory ships empty on purpose. The switch in the admin panel exists first so a pack can be
-put in and taken out again without a deploy, which is the only way to find out whether packs make
-the pages better.
+The switch in the admin panel came first, so a pack can be put in and taken out again without a
+deploy, which is the only way to find out whether packs make the pages better. The first two packs
+are `bakery-warm` and `physio-calm`, both for `site`.
 
 ## Adding one
 

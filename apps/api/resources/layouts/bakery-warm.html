@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bäckerei am Dorfplatz · Sonntagsbrot auf Vorbestellung</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font:16px/1.6 system-ui,sans-serif;color:#222;background:#fafafa}
+a{color:inherit}
+.wrap{max-width:72rem;margin:0 auto;padding:0 20px}
+.label{font-size:.75rem;font-weight:600;text-transform:uppercase;letter-spacing:.22em;color:#555}
+h1,h2,h3{font-family:Georgia,serif;font-weight:600;line-height:1.05;letter-spacing:-.01em}
+h1{font-size:clamp(2.6rem,8vw,4.75rem);margin-top:20px}
+h2{font-size:clamp(1.9rem,4.5vw,3rem);margin-top:14px}
+h1 em{font-style:normal;color:#666}
+.muted{color:#666}
+.btn{display:inline-block;padding:16px 32px;border-radius:999px;background:#333;color:#fff;font-weight:600;text-decoration:none;text-align:center}
+.btn.ghost{background:#fff;color:#222;border:1px solid #ccc}
+
+/* bar: name left, one phone button right, nav only on wide screens */
+.bar{position:sticky;top:0;background:#fafafa;border-bottom:1px solid #ddd;z-index:5}
+.bar .wrap{display:flex;align-items:center;justify-content:space-between;gap:16px;height:56px}
+.bar nav{display:none;gap:20px;font-size:.9rem}
+.bar nav a{padding:6px 4px}
+.bar .btn{padding:8px 16px;font-size:.9rem;white-space:nowrap}
+
+/* hero: words first, picture second with a rotated badge over its corner */
+.hero .wrap{display:grid;gap:48px;padding-top:48px;padding-bottom:64px}
+.hero p.lead{font-size:1.15rem;max-width:28rem;margin-top:24px}
+.hero .actions{display:flex;flex-direction:column;gap:12px;margin-top:36px}
+.hero .fine{font-size:.875rem;margin-top:24px}
+.frame{position:relative}
+.photo-wide{display:flex;align-items:center;justify-content:center;aspect-ratio:4/3;border-radius:32px;background:#e4e4e4;padding:24px;text-align:center}
+.badge{position:absolute;top:-16px;left:16px;transform:rotate(-6deg);background:#bbb;border-radius:999px;padding:12px 20px;font-family:Georgia,serif;font-weight:600}
+
+/* prices: three cards, each a list with a dotted rule between name and price */
+section{padding:64px 0}
+.head{max-width:40rem}
+.cards{display:grid;gap:24px;margin-top:40px}
+.card{position:relative;border:1px solid #ddd;background:#fff;border-radius:24px;padding:24px}
+.card .tag{position:absolute;top:-12px;right:20px;background:#333;color:#fff;border-radius:999px;padding:4px 12px;font-size:.75rem;font-weight:600}
+.card h3{font-size:1.5rem}
+.card ul{list-style:none;margin-top:24px;display:grid;gap:20px}
+.card li{display:flex;align-items:baseline;gap:8px}
+.card li div{min-width:0}
+.card li small{display:block;color:#666;font-size:.85rem}
+.card li i{flex:1;border-bottom:1px dotted #bbb;margin:0 4px}
+.card li b{font-family:Georgia,serif;font-weight:400;font-size:1.1rem;white-space:nowrap}
+
+/* story: tinted band, portrait picture, quote at heading size, three numerals */
+.story{background:#ededed}
+.story .wrap{display:grid;gap:48px}
+.story .photo-card{display:flex;align-items:center;justify-content:center;aspect-ratio:4/5;max-width:24rem;margin:0 auto;width:100%;border-radius:32px;background:#d6d6d6;padding:32px;text-align:center}
+figure{margin-top:32px;border:1px solid #ddd;background:#fff;border-radius:24px;padding:24px}
+blockquote{font-family:Georgia,serif;font-size:1.25rem;line-height:1.5}
+figcaption{margin-top:12px;font-size:.875rem;color:#666}
+.nums{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:32px;text-align:center}
+.nums b{display:block;font-family:Georgia,serif;font-size:clamp(1.8rem,5vw,2.4rem);color:#555}
+.nums span{font-size:.8rem;color:#666}
+
+/* steps: three cards with large pale numerals */
+.steps{list-style:none;display:grid;gap:24px;margin-top:40px}
+.steps li{border:1px solid #ddd;background:#fff;border-radius:24px;padding:28px}
+.steps .n{font-family:Georgia,serif;font-size:3rem;font-weight:600;color:#8a8a8a;line-height:1}
+.steps h3{font-size:1.25rem;margin-top:20px}
+.steps p{margin-top:12px;color:#666}
+
+/* closing: an inset slab with inverted colours */
+.slab{background:#222;color:#fafafa;border-radius:40px;padding:64px 24px;text-align:center}
+.slab h2{max-width:40rem;margin:0 auto;font-size:clamp(2rem,5.5vw,3.5rem)}
+.slab p{max-width:28rem;margin:20px auto 0;color:#bbb}
+.slab .actions{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:36px}
+.slab .btn.ghost{background:transparent;color:#fafafa;border-color:#555}
+.closing{padding-top:0}
+
+footer{border-top:1px solid #ddd;padding:48px 0}
+footer .wrap{display:grid;gap:40px}
+footer dl div{display:flex;justify-content:space-between;gap:16px;font-size:.9rem;color:#666}
+footer .copy{margin-top:40px;font-size:.75rem;color:#666}
+
+@media (min-width:640px){
+  .hero .actions,.slab .actions{flex-direction:row;justify-content:flex-start}
+  .slab .actions{justify-content:center}
+}
+@media (min-width:768px){
+  .hero .wrap{grid-template-columns:1.05fr .95fr;align-items:center;gap:64px;padding-top:80px;padding-bottom:96px}
+  section{padding:96px 0}
+  .cards{grid-template-columns:1fr 1fr}
+  .cards .first{grid-column:span 2}
+  .story .wrap{grid-template-columns:.85fr 1.15fr;align-items:center;gap:64px}
+  .story .photo-card{max-width:none}
+  .steps{grid-template-columns:repeat(3,1fr)}
+  .slab{padding:96px 48px}
+  footer .wrap{grid-template-columns:repeat(3,1fr)}
+}
+@media (min-width:1024px){
+  .bar nav{display:flex}
+  .cards{grid-template-columns:repeat(3,1fr)}
+  .cards .first{grid-column:auto}
+}
+</style>
+</head>
+<body>
+
+<header class="bar">
+  <div class="wrap">
+    <a href="#top"><strong>Bäckerei am Dorfplatz</strong></a>
+    <nav><a href="#brot">Sonntagsbrot</a><a href="#backstube">Backstube</a><a href="#bestellen">Vorbestellen</a><a href="#kontakt">Kontakt</a></nav>
+    <a class="btn" href="#kontakt">Anrufen</a>
+  </div>
+</header>
+
+<main>
+<section class="hero" id="top" style="padding:0">
+  <div class="wrap">
+    <div>
+      <p class="label">Familienbäckerei im Ort</p>
+      <h1>Brot für den Sonntag. Gebacken, wenn <em>du</em> noch schläfst.</h1>
+      <p class="lead muted">Bestell dein Sonntagsbrot bis Samstag Mittag. Am Sonntag früh liegt es warm an der Theke.</p>
+      <div class="actions">
+        <a class="btn" href="#bestellen">Sonntagsbrot vorbestellen</a>
+        <a class="btn ghost" href="#brot">Diese Woche im Ofen</a>
+      </div>
+      <p class="fine muted">Abholung ab 6 Uhr, Kaffee zum Mitnehmen</p>
+    </div>
+    <div class="frame">
+      <div class="photo-wide" data-q="bread loaves wooden table">Frische Laibe auf dem Holztisch der Backstube</div>
+      <p class="badge">seit 1998</p>
+    </div>
+  </div>
+</section>
+
+<section id="brot">
+  <div class="wrap">
+    <div class="head">
+      <p class="label">Diese Woche aus dem Ofen</p>
+      <h2>Was wir backen und was es kostet</h2>
+      <p class="muted" style="margin-top:16px">Die Sonntagsbrote backen wir nur auf Bestellung. Alles andere gibt es einfach so, von früh an.</p>
+    </div>
+    <div class="cards">
+      <div class="card first">
+        <span class="tag">vorbestellen</span>
+        <h3>Sonntagsbrot</h3>
+        <p class="muted">Bestellung bis Samstag, 14 Uhr</p>
+        <ul>
+          <li><div>Roggenlaib<small>1.000 g, Sauerteig</small></div><i></i><b>4,80 €</b></li>
+          <li><div>Kürbiskernbrot<small>800 g, steirische Kerne</small></div><i></i><b>5,90 €</b></li>
+          <li><div>Dinkelbrot<small>900 g, mild und saftig</small></div><i></i><b>5,40 €</b></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Für jeden Tag</h3>
+        <p class="muted">ab 6 Uhr an der Theke</p>
+        <ul>
+          <li><div>Kernweckerl<small>aus dem Steinofen</small></div><i></i><b>1,30 €</b></li>
+          <li><div>Butterbreze<small>frisch gebuttert</small></div><i></i><b>1,90 €</b></li>
+          <li><div>Nusszopf<small>am Wochenende</small></div><i></i><b>6,50 €</b></li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3>Kaffee ab 6 Uhr</h3>
+        <p class="muted">hier trinken oder mitnehmen</p>
+        <ul>
+          <li><div>Melange<small>im Glas</small></div><i></i><b>3,30 €</b></li>
+          <li><div>Verlängerter<small>klassisch</small></div><i></i><b>3,10 €</b></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="story" id="backstube">
+  <div class="wrap">
+    <div class="photo-card" data-q="hands kneading dough">Bemehlte Hände beim Kneten, früh am Morgen</div>
+    <div>
+      <p class="label">Seit 1998</p>
+      <h2>Aus dem Dorf, fürs Dorf</h2>
+      <p class="muted" style="margin-top:20px;max-width:32rem">Zwei Generationen, dieselben Rezepte und derselbe Steinofen. Um halb fünf geht der Ofen an, um sechs wird aufgesperrt.</p>
+      <figure>
+        <blockquote>„Das Roggenbrot schmeckt wie bei meiner Oma. Dafür fahr ich gern ein Stück.“</blockquote>
+        <figcaption>Resi, Stammkundin seit dem ersten Sonntag</figcaption>
+      </figure>
+      <div class="nums">
+        <p><b>27</b><span>Jahre Backstube</span></p>
+        <p><b>2</b><span>Generationen</span></p>
+        <p><b>6 Uhr</b><span>aufgesperrt</span></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="bestellen">
+  <div class="wrap">
+    <div class="head">
+      <p class="label">So funktioniert es</p>
+      <h2>Vorbestellen in drei Schritten</h2>
+    </div>
+    <ol class="steps">
+      <li><p class="n">01</p><h3>Sag, was du willst</h3><p>Bis Samstag Mittag, am Telefon oder an der Theke.</p></li>
+      <li><p class="n">02</p><h3>Wir setzen den Teig an</h3><p>Dein Brot kommt in den Plan für den Ofen. Wir bestätigen kurz.</p></li>
+      <li><p class="n">03</p><h3>Sonntag früh abholen</h3><p>Ab halb sieben liegt es warm bereit. Bezahlt wird beim Abholen.</p></li>
+    </ol>
+  </div>
+</section>
+
+<section class="closing">
+  <div class="wrap">
+    <div class="slab">
+      <h2>Wir setzen den Teig an. Du sagst, für wen.</h2>
+      <p>Ruf durch oder komm vorbei, am besten bis Samstag Mittag.</p>
+      <div class="actions">
+        <a class="btn" style="background:#fafafa;color:#222" href="#kontakt">Jetzt vorbestellen</a>
+        <a class="btn ghost" href="#brot">Nochmal die Brote ansehen</a>
+      </div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer id="kontakt">
+  <div class="wrap">
+    <div><strong>Bäckerei am Dorfplatz</strong><p class="muted" style="margin-top:12px;font-size:.9rem">Dorfplatz 3<br>8000 Musterort</p></div>
+    <div><strong>Öffnungszeiten</strong><dl style="margin-top:12px"><div><dt>Montag bis Samstag</dt><dd>6 bis 12 Uhr</dd></div><div><dt>Sonntag</dt><dd>6:30 bis 10:30 Uhr</dd></div></dl></div>
+    <div><strong>Kontakt</strong><p class="muted" style="margin-top:12px;font-size:.9rem">Telefon an der Theke<br>backstube@beispiel.at</p></div>
+  </div>
+  <p class="wrap copy">Familienbetrieb seit 1998</p>
+</footer>
+
+</body>
+</html>
