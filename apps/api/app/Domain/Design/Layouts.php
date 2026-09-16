@@ -2,6 +2,7 @@
 
 namespace App\Domain\Design;
 
+use App\Domain\Qa\LayoutFit;
 use App\Models\Setting;
 
 /**
@@ -62,7 +63,7 @@ class Layouts
     /**
      * Every pack on disk, whether or not it is switched on.
      *
-     * @return list<array{slug:string,kind:string,industries:list<string>,source:string,note:string,bytes:int}>
+     * @return list<array{slug:string,kind:string,industries:list<string>,source:string,note:string,keeps:array{sections:int,devices:list<string>},bytes:int}>
      */
     public function packs(): array
     {
@@ -85,6 +86,11 @@ class Layouts
                 'industries' => array_values(array_filter((array) ($p['industries'] ?? []), 'is_string')),
                 'source' => in_array($p['source'] ?? '', self::SOURCES, true) ? $p['source'] : 'hand',
                 'note' => (string) ($p['note'] ?? ''),
+                // What a page built on this pack must keep; LayoutFit counts it after the build.
+                'keeps' => [
+                    'sections' => (int) ($p['keeps']['sections'] ?? 0),
+                    'devices' => array_values(array_intersect((array) ($p['keeps']['devices'] ?? []), array_keys(LayoutFit::DEVICES))),
+                ],
                 'bytes' => (int) filesize($this->file($slug)),
             ];
         }
@@ -98,7 +104,7 @@ class Layouts
      * Null is a normal answer, not a failure: the feature is off, the kind is not covered, the
      * coin fell into the control group, or no pack exists for this kind yet.
      *
-     * @return ?array{slug:string,source:string,skeleton:string}
+     * @return ?array{slug:string,source:string,keeps:array{sections:int,devices:list<string>},skeleton:string}
      */
     public function pick(string $kind, string $prompt): ?array
     {
@@ -131,6 +137,7 @@ class Layouts
         return [
             'slug' => $pack['slug'],
             'source' => $pack['source'],
+            'keeps' => $pack['keeps'],
             'skeleton' => trim((string) file_get_contents($this->file($pack['slug']))),
         ];
     }

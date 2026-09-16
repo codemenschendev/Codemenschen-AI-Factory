@@ -75,7 +75,7 @@ class PageAudit
      * wait and changes nothing. They stay in the report and in the admin list, which is how those
      * stylesheet bugs got found in the first place.
      */
-    private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error', 'dash', 'competitor-named', 'price-unmarked', 'claim-invented'];
+    private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error', 'dash', 'competitor-named', 'price-unmarked', 'claim-invented', 'layout-dropped'];
 
     /** Faults that belong to whoever wrote the CSS: the model on a free page, us on a house one. */
     private const STYLE_OWNED = ['overflow', 'nav-below-the-fold', 'sideways-scrollbar', 'under-the-island', 'icon-blob', 'ads-in-a-column', 'ad-formats'];
@@ -113,6 +113,23 @@ class PageAudit
     }
 
     /**
+     * How much is wrong, for deciding whether a repair helped.
+     *
+     * A count of findings, except that a dropped layout counts each part it dropped: a repair
+     * that put back two of three missing sections made progress, and counting it as one finding
+     * before and one after would throw that progress away.
+     *
+     * @param  array<int,array<string,mixed>>  $findings
+     */
+    public static function weight(array $findings): int
+    {
+        return array_sum(array_map(
+            fn (array $f) => ($f['check'] ?? '') === 'layout-dropped' ? max(1, count($f['elements'] ?? [])) : 1,
+            $findings,
+        ));
+    }
+
+    /**
      * The findings as a brief the model can act on.
      *
      * Deliberately terse and free of prose: it is prepended to a repair request, and every word
@@ -126,7 +143,7 @@ class PageAudit
             $what = trim(($f['check'] ?? '?').': '.($f['detail'] ?? ''));
             $on = $f['elements'] ?? [];
             $lines[] = '- '.$what.($where !== '' ? " (at {$where})" : '')
-                .($on ? "\n    ".implode("\n    ", array_slice($on, 0, 4)) : '');
+                .($on ? "\n    ".implode("\n    ", array_slice($on, 0, 6)) : '');
         }
 
         return implode("\n", $lines);
