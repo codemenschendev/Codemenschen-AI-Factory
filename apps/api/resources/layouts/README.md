@@ -19,9 +19,13 @@ are `bakery-warm` and `physio-calm`, both for `site`.
        {"slug": "bakery-warm", "kind": "site", "industries": ["Bäckerei", "Konditorei", "bakery"],
         "source": "lovable", "note": "opening screen is one photograph, three sections, order form last"}
 
-   `industries` are matched against the customer's own sentence, case-insensitively, so write the
-   words a customer would use, in German and in English. No match is not an error: the pack is
-   then simply one of the candidates for its kind.
+   `industries` are matched against the customer's own sentence, case-insensitively and as
+   substrings, so write the words a customer would use, in German and in English, and none so
+   broad that another trade contains it ("Praxis" is also a dentist). A sentence that matches no
+   pack gets no pack.
+
+   `keeps` is what a page built on the pack must keep: a minimum number of `sections` and a list
+   of `devices` from `LayoutFit::DEVICES`. A page that drops one goes to the repair pass.
 
    `source` is `lovable`, `hand` or `house`. It is recorded so a later comparison can tell a
    bought skeleton from a hand-written one.

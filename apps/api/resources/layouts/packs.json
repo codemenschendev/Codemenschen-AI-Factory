@@ -7,11 +7,11 @@
         "Bäckerei",
         "Bäcker",
         "Konditorei",
+        "Backstube",
         "Café",
         "Kaffeehaus",
-        "Backstube",
         "bakery",
-        "cafe",
+        "baker",
         "pastry"
       ],
       "source": "lovable",
@@ -31,16 +31,13 @@
       "kind": "site",
       "industries": [
         "Physiotherapie",
+        "Physiotherapeut",
         "Physio",
-        "Therapie",
-        "Praxis",
-        "Ordination",
         "Massage",
-        "Osteopathie",
+        "Osteopath",
         "Ergotherapie",
         "physiotherapy",
-        "therapy",
-        "clinic"
+        "physiotherapist"
       ],
       "source": "lovable",
       "note": "promise beside a working booking form, ruled row of three facts, heading and intro on one baseline, hairline-ruled service grid, ruled numbered first-visit list, full-width closing band",

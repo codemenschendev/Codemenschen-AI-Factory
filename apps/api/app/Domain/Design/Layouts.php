@@ -102,7 +102,7 @@ class Layouts
      * The pack this build should follow, or null to write from nothing.
      *
      * Null is a normal answer, not a failure: the feature is off, the kind is not covered, the
-     * coin fell into the control group, or no pack exists for this kind yet.
+     * coin fell into the control group, or no pack was drawn for this trade.
      *
      * @return ?array{slug:string,source:string,keeps:array{sections:int,devices:list<string>},skeleton:string}
      */
@@ -124,14 +124,17 @@ class Layouts
             return null;
         }
 
-        // A pack names the trades it was drawn for. A bakery skeleton on a dental practice is
-        // worse than no skeleton, so a trade match wins; with no match any pack of the kind is
-        // still a fair set of bones, because the laws and the proportions are the same.
-        $named = array_values(array_filter(
+        // A pack names the trades it was drawn for, and only those trades get it. Any pack of
+        // the kind used to be a fallback, which was harmless while a pack was a suggestion; since
+        // LayoutFit makes a page keep the pack's devices, a car workshop handed the bakery pack
+        // would be made to grow dotted bread prices. No match writes from nothing.
+        $pool = array_values(array_filter(
             $candidates,
             fn ($p) => $this->mentions($p['industries'], $prompt),
         ));
-        $pool = $named !== [] ? $named : $candidates;
+        if ($pool === []) {
+            return null;
+        }
         $pack = $pool[random_int(0, count($pool) - 1)];
 
         return [
