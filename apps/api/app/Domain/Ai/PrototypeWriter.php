@@ -8,6 +8,7 @@ use App\Domain\Design\DesignRefs;
 use App\Domain\Design\Layouts;
 use App\Domain\Design\WebShots;
 use App\Domain\Qa\ContentClaims;
+use App\Domain\Qa\LayoutFit;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
@@ -330,6 +331,11 @@ class PrototypeWriter
             array_push($qa['findings'], ...$claims);
             $qa['ok'] = false;
         }
+        // A page built on a pack that dropped what the pack was chosen for.
+        if ($layout !== null && ($dropped = LayoutFit::findings($page, $layout['keeps'] ?? [], $layout['slug'])) !== []) {
+            array_push($qa['findings'], ...$dropped);
+            $qa['ok'] = false;
+        }
         // What the model got wrong before anyone helped it. The repair overwrites the report, so
         // without this line the faults it makes most often, the ones a prompt could prevent, are
         // the ones nobody ever sees.
@@ -364,11 +370,15 @@ class PrototypeWriter
                 array_push($after['findings'], ...$claims);
                 $after['ok'] = false;
             }
+            if ($layout !== null && ($dropped = LayoutFit::findings($fixed, $layout['keeps'] ?? [], $layout['slug'])) !== []) {
+                array_push($after['findings'], ...$dropped);
+                $after['ok'] = false;
+            }
 
             // Keep the repair only if it actually helped. A model asked to fix five things can
             // come back with a shorter page and six, and shipping that would be worse than
             // shipping the flaw we already knew about.
-            if (count(PageAudit::repairable($after, ownsStyle: true)) >= count($blocking)) {
+            if (PageAudit::weight(PageAudit::repairable($after, ownsStyle: true)) >= PageAudit::weight($blocking)) {
                 break;
             }
             $page = $fixed;

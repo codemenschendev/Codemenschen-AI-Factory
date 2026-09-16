@@ -3,16 +3,54 @@
     {
       "slug": "bakery-warm",
       "kind": "site",
-      "industries": ["Bäckerei", "Bäcker", "Konditorei", "Café", "Kaffeehaus", "Backstube", "bakery", "cafe", "pastry"],
+      "industries": [
+        "Bäckerei",
+        "Bäcker",
+        "Konditorei",
+        "Café",
+        "Kaffeehaus",
+        "Backstube",
+        "bakery",
+        "cafe",
+        "pastry"
+      ],
       "source": "lovable",
-      "note": "words first with a rotated badge over the picture, price cards with dotted leaders, story band with quote and three numerals, three numbered steps, inset dark slab"
+      "note": "words first with a rotated badge over the picture, price cards with dotted leaders, story band with quote and three numerals, three numbered steps, inset dark slab",
+      "keeps": {
+        "sections": 5,
+        "devices": [
+          "rotated-badge",
+          "dotted-leader",
+          "quote",
+          "numbered-list"
+        ]
+      }
     },
     {
       "slug": "physio-calm",
       "kind": "site",
-      "industries": ["Physiotherapie", "Physio", "Therapie", "Praxis", "Ordination", "Massage", "Osteopathie", "Ergotherapie", "physiotherapy", "therapy", "clinic"],
+      "industries": [
+        "Physiotherapie",
+        "Physio",
+        "Therapie",
+        "Praxis",
+        "Ordination",
+        "Massage",
+        "Osteopathie",
+        "Ergotherapie",
+        "physiotherapy",
+        "therapy",
+        "clinic"
+      ],
       "source": "lovable",
-      "note": "promise beside a working booking form, ruled row of three facts, heading and intro on one baseline, hairline-ruled service grid, ruled numbered first-visit list, full-width closing band"
+      "note": "promise beside a working booking form, ruled row of three facts, heading and intro on one baseline, hairline-ruled service grid, ruled numbered first-visit list, full-width closing band",
+      "keeps": {
+        "sections": 6,
+        "devices": [
+          "form-first",
+          "numbered-list"
+        ]
+      }
     }
   ]
 }
