@@ -73,7 +73,81 @@ class ContentClaims
                 'elements' => array_values(array_slice(array_unique($claims), 0, 6))];
         }
 
+        if (($reworded = self::reworded($text, $prompt)) !== []) {
+            $out[] = ['severity' => 'blocking', 'check' => 'number-reworded', 'viewports' => [],
+                'detail' => 'a number from the customer\'s own words or website is printed with a different meaning; keep the noun it has there (downloads stay downloads)',
+                'elements' => array_slice($reworded, 0, 4)];
+        }
+
+        if ($kind === 'ads' && ($mixed = self::labelLanguage($html, $text)) !== null) {
+            $out[] = ['severity' => 'blocking', 'check' => 'label-language', 'viewports' => [],
+                'detail' => 'the platform labels are in a different language from the page; write "sponsored" and "learn more" in the language of the ads and of <html lang>',
+                'elements' => [$mixed]];
+        }
+
         return $out;
+    }
+
+    /** Numbers of three digits or more with the words that follow them. The ad sizes are not claims. */
+    private const COUNT = '/(?<![\p{N}.,])(\d{1,3}(?:[.,\x{00A0}\x{202F} ]\d{3})+|\d{3,})\+?\s+(\p{L}[\p{L}-]*)(?:\s+(\p{L}[\p{L}-]*))?(?:\s+(\p{L}[\p{L}-]*))?/u';
+
+    private const SIZES = ['1080', '1920', '1200', '628'];
+
+    /**
+     * A number the source gives, printed with another noun. The site said "20,000 Downloads" and
+     * the ad said "20,000 stores already sell gift cards with it": the number was real, the claim
+     * was not. A number the source never gives is not judged here.
+     *
+     * @return list<string> the page's phrase and what the source says, for the repair
+     */
+    private static function reworded(string $text, string $source): array
+    {
+        $stems = fn (array $words) => array_values(array_filter(array_map(
+            fn ($w) => mb_strlen((string) $w) >= 3 ? mb_substr(mb_strtolower((string) $w), 0, 5) : null, $words)));
+        $said = [];
+        if (preg_match_all(self::COUNT, $source, $m, PREG_SET_ORDER) > 0) {
+            foreach ($m as $hit) {
+                $said[preg_replace('/\D/', '', $hit[1])][] = $hit;
+            }
+        }
+
+        $out = [];
+        preg_match_all(self::COUNT, $text, $m, PREG_SET_ORDER);
+        foreach ($m as $hit) {
+            $n = preg_replace('/\D/', '', $hit[1]);
+            if (in_array($n, self::SIZES, true) || ! isset($said[$n])) {
+                continue;
+            }
+            $page = $stems(array_slice($hit, 2));
+            $matches = false;
+            foreach ($said[$n] as $there) {
+                if (array_intersect($page, $stems(array_slice($there, 2))) !== []) {
+                    $matches = true;
+                    break;
+                }
+            }
+            if (! $matches) {
+                $out[] = trim($hit[0]).' (the source says: '.trim($said[$n][0][0]).')';
+            }
+        }
+
+        return array_values(array_unique($out));
+    }
+
+    /** "Gesponsert" on an English page or "Sponsored" on a German one. */
+    private static function labelLanguage(string $html, string $text): ?string
+    {
+        $lang = preg_match('/<html[^>]*\blang=["\']?([a-z]{2})/i', $html, $m) === 1 ? strtolower($m[1]) : null;
+        $german = preg_match('/\b(Gesponsert|Mehr dazu)\b/u', $text, $g) === 1;
+        $english = preg_match('/\b(Sponsored|Learn more)\b/u', $text, $e) === 1;
+        if ($german && ($lang === 'en' || $english)) {
+            return "\"{$g[1]}\" on a page in ".($lang ?? 'English');
+        }
+        if ($english && $lang === 'de') {
+            return "\"{$e[1]}\" on a page in de";
+        }
+
+        return null;
     }
 
     private static function text(string $html): string

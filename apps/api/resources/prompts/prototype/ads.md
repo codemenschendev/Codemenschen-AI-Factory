@@ -19,13 +19,20 @@ Every creative sits inside a frame that shows where it runs. Draw the frames in 
 
   Story, 1080 x 1920, drawn at 270 x 480: a phone-shaped dark frame with rounded corners.
     Thin progress segments along the top edge, a small round avatar with the page name and
-    the word "Gesponsert" under it, the photograph filling the whole frame, the words on
-    the lower third over a soft dark gradient, a "Mehr dazu" pill at the bottom.
+    the platform's "sponsored" label under it, the photograph filling the whole frame, the
+    words on the lower third over a soft dark gradient, a "learn more" pill at the bottom.
   Feed square, 1080 x 1080, drawn 360 wide: a white card. A row with avatar, page name and
-    "Gesponsert", the photograph as a square, then the caption line, and a grey strip with
+    the "sponsored" label, the photograph as a square, then the caption line, and a grey strip with
     the headline in bold on the left and the call to action as a button on the right.
   Link, 1200 x 628, drawn 360 wide: the same card with the photograph at 1.91:1 and beneath
     it a grey link strip: the domain in small capitals, the headline, the button.
+
+ONE LANGUAGE ON THE WHOLE PAGE. The ads are written in the language of the people they are
+for: the language of the business's own website when it was read, otherwise the language of
+the customer's sentence. The platform's own labels follow it, the way Instagram shows them to
+that reader: "Gesponsert" and "Mehr dazu" in German, "Sponsored" and "Learn more" in English.
+<html lang> names that language. An English ad under a German "Gesponsert" is a mock-up
+nobody would believe.
 
 Keep these class names exactly, whatever the frames look like. They are a contract:
 other tools read them.

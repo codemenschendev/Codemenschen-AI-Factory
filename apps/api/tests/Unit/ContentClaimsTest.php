@@ -59,4 +59,35 @@ class ContentClaimsTest extends TestCase
 
         $this->assertSame(['price-unmarked', 'claim-invented'], array_column(PageAudit::repairable($report), 'check'));
     }
+
+    public function test_a_number_from_the_site_printed_with_another_noun_is_caught(): void
+    {
+        $source = "make the banner for wp-giftcard.com\nText: Buy now 20,000 Downloads 0 client satisfied";
+        $page = '<html lang="en"><body><p>20,000 stores already sell gift cards with it.</p><p>Join 20.000 downloads</p></body></html>';
+
+        $found = collect(ContentClaims::findings($page, $source, 'ads'))->firstWhere('check', 'number-reworded');
+
+        $this->assertNotNull($found);
+        $this->assertSame(['20,000 stores already sell (the source says: 20,000 Downloads)'], $found['elements']);
+    }
+
+    public function test_a_number_kept_with_its_noun_or_absent_from_the_source_is_left_alone(): void
+    {
+        $source = 'Text: 20,000 Downloads and 1080 happy users';
+        $page = '<html lang="en"><body><p>Over 20,000 WordPress downloads</p><span class="ad-size">1080 × 1920</span><p>500 templates</p></body></html>';
+
+        $this->assertNull(collect(ContentClaims::findings($page, $source, 'ads'))->firstWhere('check', 'number-reworded'));
+    }
+
+    public function test_ad_labels_must_speak_the_language_of_the_page(): void
+    {
+        $en = '<html lang="en"><body><span>Gesponsert</span><h2>Sell it yourself</h2><a>Learn more</a></body></html>';
+        $de = '<html lang="de"><body><span>Sponsored</span><h2>Selbst verkaufen</h2></body></html>';
+        $ok = '<html lang="de"><body><span>Gesponsert</span><a>Mehr dazu</a></body></html>';
+
+        $this->assertSame(['"Gesponsert" on a page in en'], collect(ContentClaims::findings($en, 'x', 'ads'))->firstWhere('check', 'label-language')['elements']);
+        $this->assertNotNull(collect(ContentClaims::findings($de, 'x', 'ads'))->firstWhere('check', 'label-language'));
+        $this->assertNull(collect(ContentClaims::findings($ok, 'x', 'ads'))->firstWhere('check', 'label-language'));
+        $this->assertNull(collect(ContentClaims::findings($en, 'x', 'site'))->firstWhere('check', 'label-language'), 'a site has no platform labels');
+    }
 }
