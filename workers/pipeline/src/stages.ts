@@ -81,8 +81,11 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const user = `${isCode ? `Repository directory on this machine: ${hostDir}\n\n` : ""}Project context:\n${JSON.stringify(job.context, null, 2)}${spec ? `\n\nSPEC.md:\n${spec}` : ""}${isCode ? lastReport : ""}${job.stage === "revise" ? changeRequest + shotLines : ""}`;
   // Code stages go through the host relay (full agent with shell/file tools);
   // text stages through the completions endpoint (faster, no tools needed).
+  // One session per run: the key used to be the project alone, so coding, every fix and every
+  // revise round of an app piled into one transcript, and a revise round re-read all of it
+  // (6.4M tokens on 2026-09-15). The repository, SPEC.md and the test report carry the state.
   const res = isCode
-    ? await relayAgent(`${system}\n\n${user}`, `factory:${job.project_id}`, 1200)
+    ? await relayAgent(`${system}\n\n${user}`, `factory:${job.project_id}:${job.stage}:${job.run_id}:${job.attempt}`, 1200)
     : await gatewayComplete(system, user);
   const section = (text: string, a: string, b?: string): string => {
     const i = text.indexOf(a);
