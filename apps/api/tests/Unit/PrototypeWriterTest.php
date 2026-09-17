@@ -39,7 +39,7 @@ class PrototypeWriterTest extends TestCase
     {
         // Handing the look back to the model loses what the stylesheet guaranteed by construction,
         // so the guarantees are stated instead. Losing either of these silently is the failure.
-        foreach (['app', 'site', 'ads'] as $kind) {
+        foreach (['app', 'site', 'ads', 'email'] as $kind) {
             $sent = $this->systemPrompt($kind);
             $this->assertStringContainsString('NEVER emoji', $sent, $kind);
             $this->assertStringContainsString('Nothing may scroll sideways', $sent, $kind);
@@ -78,6 +78,29 @@ class PrototypeWriterTest extends TestCase
         // What the labelled ad library counted travels with it.
         $this->assertStringContainsString('hook sits at the TOP', $sent);
         $this->assertStringNotContainsString('house.css', $sent);
+    }
+
+    public function test_the_email_prototype_is_the_four_emails_of_one_flow(): void
+    {
+        // Patrick's reference was a skincare brand's welcome, reminder, order and win-back
+        // e-mails in one look. The page is those e-mails, not a page about e-mail marketing.
+        $sent = $this->systemPrompt('email');
+
+        $this->assertStringContainsString('NOT A PAGE ABOUT THEM', $sent);
+        foreach (['email-welcome', 'email-reminder', 'email-thanks', 'email-comeback'] as $class) {
+            $this->assertStringContainsString($class, $sent);
+        }
+        $this->assertStringContainsString('max-width of 600px', $sent);
+        $this->assertStringContainsString('not an invented voucher', $sent);
+    }
+
+    public function test_an_email_build_skips_the_trade_study(): void
+    {
+        $this->fakeAnswer();
+        app(PrototypeWriter::class)->build('E-Mails für einen Salon in Wien', 'email', null, null, app(\App\Domain\Design\DesignLibrary::class));
+
+        // One call: the page. No plan, no study.
+        Http::assertSentCount(1);
     }
 
     public function test_the_app_prompt_builds_the_app_not_a_page_about_it(): void

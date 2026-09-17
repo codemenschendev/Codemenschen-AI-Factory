@@ -40,7 +40,7 @@ class PrototypeWriter
     ) {}
 
     /** The three things a visitor can ask for. `site` is the default and the original behaviour. */
-    public const KINDS = ['site', 'app', 'ads'];
+    public const KINDS = ['site', 'app', 'ads', 'email'];
 
     /** Repair rounds at most. The second runs only if the first reduced the faults. */
     /**
@@ -132,7 +132,9 @@ class PrototypeWriter
         $brief = null;
         $studied = [];
         $meta = [];
-        if ($library !== null) {
+        // No study for e-mails: the library holds apps, websites and ads, and an e-mail drawn
+        // from a website's hero is a website in a narrow column. The product brief is what counts.
+        if ($library !== null && $kind !== 'email') {
             $stage('studying');
             $plan = $this->study->plan($product === null ? $prompt
                 : $prompt."\n\nWhat the business sells, read from its own website:\n".$product, $kind);
@@ -198,6 +200,7 @@ class PrototypeWriter
         $system = match ($kind) {
             'app' => Prompts::get('prototype/app').$laws.$this->conventions('app-conventions.md'),
             'ads' => Prompts::get('prototype/ads').$laws.$this->conventions('ad-conventions.md'),
+            'email' => Prompts::get('prototype/email').$laws,
             default => Prompts::get('prototype/site').$laws.$this->conventions('web-conventions.md'),
         };
 

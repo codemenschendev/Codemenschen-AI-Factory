@@ -24,7 +24,7 @@ const LIVE_DAYS = 7;
 
 export interface Remembered {
   id: string;
-  kind: "site" | "app" | "ads";
+  kind: "site" | "app" | "ads" | "email";
   /** What the visitor typed. It is the only label there is until the build names itself. */
   prompt: string;
   /** The title the generator gave it, once the build is done. */
