@@ -176,7 +176,11 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   if (meta.status === "failed") {
     return (
       <div>
-        <p className="est-empty">{p.failed}</p>
+        <p className="est-empty">
+          {meta.error?.startsWith("site-unreadable: ")
+            ? p.siteUnreadable.replace("{domain}", meta.error.slice("site-unreadable: ".length))
+            : p.failed}
+        </p>
         <Link href={`/${locale}/prototype`}>{p.another}</Link>
       </div>
     );

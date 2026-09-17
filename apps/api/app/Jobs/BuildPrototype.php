@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Domain\Ai\PrototypePhoto;
 use App\Domain\Ai\PrototypeWriter;
+use App\Domain\Ai\SiteUnreadable;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Design\Layouts;
@@ -57,6 +58,10 @@ class BuildPrototype implements ShouldQueue
                     'faults' => array_column(PageAudit::blocking($out['qa']), 'check'),
                 ]);
             }
+        } catch (SiteUnreadable $e) {
+            // The visitor's to answer, not an incident: the page asks them what is sold.
+            Log::info('prototype: site unreadable, asking the visitor', ['id' => $proto->id, 'domain' => $e->domain]);
+            $proto->update(['status' => 'failed', 'stage' => null, 'error' => $e->getMessage()]);
         } catch (Throwable $e) {
             Log::error('build prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);
             $proto->update(['status' => 'failed', 'stage' => null, 'error' => mb_substr($e->getMessage(), 0, 400)]);
