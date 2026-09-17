@@ -172,7 +172,7 @@ class PrototypePhoto
             $logoPlaced = true;
         }
         if ($logoPlaced) {
-            $css = '.site-logo>img{display:block;height:100%;max-height:44px;width:auto;max-width:100%}';
+            $css = '.site-logo{display:inline-flex;align-items:center}.site-logo>img{display:block;height:32px;width:auto;max-width:200px}';
             $html = preg_replace('~</style>~i', $css.'</style>', $html, 1, $count) ?? $html;
             if ($count === 0) {
                 $html = preg_replace('~</head>~i', '<style>'.$css.'</style></head>', $html, 1) ?? $html;

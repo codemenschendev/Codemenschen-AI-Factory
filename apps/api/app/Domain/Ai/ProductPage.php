@@ -25,7 +25,10 @@ class ProductPage
     private const MAX_BYTES = 2_000_000;
 
     /** Pictures offered to the builder. More is a list the model skims, and each is a download. */
-    private const MAX_IMAGES = 14;
+    private const MAX_IMAGES = 20;
+
+    /** Of those, how many big enough ones the builder is shown. */
+    private const OFFERED = 12;
 
     /** A picture bigger than this is a video poster or an unoptimised original, not worth the wait. */
     private const MAX_IMAGE_BYTES = 6_000_000;
@@ -73,7 +76,7 @@ class ProductPage
      */
     public function read(string $domain): ?array
     {
-        $key = 'product-page:v2:'.sha1($domain);
+        $key = 'product-page:v3:'.sha1($domain);
         $cached = Cache::get($key);
         if ($cached !== null) {
             return $cached ?: null;
@@ -113,7 +116,7 @@ class ProductPage
                 }
                 [$images, $logo] = self::images($html, $url, $domain);
 
-                return ['url' => $url, 'text' => $text, 'images' => $images, 'logo' => $logo];
+                return ['url' => $url, 'text' => $text, 'images' => $this->bigEnough($images, $domain), 'logo' => $logo];
             }
         } catch (\Throwable $e) {
             Log::info('product page: not read', ['domain' => $domain, 'error' => mb_substr($e->getMessage(), 0, 160)]);
@@ -156,6 +159,33 @@ class ProductPage
         }
 
         return null;
+    }
+
+    /**
+     * Only pictures big enough to fill a slot, with their size for the builder to choose by.
+     *
+     * A name says nothing about size: wp-giftcard.com's "gift-card 4.png" is a 679-byte icon, the
+     * builder picked it for the welcome e-mail and the slot fell back to a stock photograph. The
+     * read is cached for a day, so this is paid once per site.
+     *
+     * @param  list<array{url:string,alt:string}>  $images
+     * @return list<array{url:string,alt:string,size:string}>
+     */
+    private function bigEnough(array $images, string $domain): array
+    {
+        $kept = [];
+        foreach ($images as $img) {
+            if (count($kept) >= self::OFFERED) {
+                break;
+            }
+            $bytes = $this->download($img['url'], $domain);
+            $size = $bytes === null ? false : @getimagesizefromstring($bytes);
+            if ($size !== false && $size[0] >= 300 && $size[1] >= 160) {
+                $kept[] = $img + ['size' => $size[0].'x'.$size[1]];
+            }
+        }
+
+        return $kept;
     }
 
     /**

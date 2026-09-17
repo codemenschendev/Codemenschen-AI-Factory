@@ -253,7 +253,7 @@ class PrototypeWriter
         if (($site['images'] ?? []) !== []) {
             $lines = [];
             foreach ($site['images'] as $n => $img) {
-                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).($img['alt'] !== '' ? ': '.$img['alt'] : '');
+                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).(isset($img['size']) ? ' ('.$img['size'].')' : '').($img['alt'] !== '' ? ': '.$img['alt'] : '');
             }
             $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-images', ['url' => $site['url'], 'images' => implode("\n", $lines)])];
         }
