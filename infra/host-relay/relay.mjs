@@ -12,7 +12,7 @@ const PORT = Number(process.env.PORT ?? 8310);
 const BIND = process.env.BIND ?? "127.0.0.1";
 const TOKEN = process.env.RELAY_TOKEN ?? "";
 const OPENCLAW_BIN = process.env.OPENCLAW_BIN ?? "openclaw";
-const AGENT = process.env.OPENCLAW_AGENT ?? "main";
+const AGENT = process.env.OPENCLAW_AGENT ?? "appwerk-code";
 
 const runAgent = (message, sessionKey, timeoutS) =>
   new Promise((resolve, reject) => {
