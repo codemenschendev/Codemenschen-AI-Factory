@@ -656,6 +656,7 @@ export const en = {
     go: "Build prototype",
     building: "Building, one moment…",
     failed: "That did not work. Try again.",
+    siteUnreadable: "We could not open {domain} and would rather not guess what it sells. Describe it in one sentence and who it is for, and we will build it.",
     expired: "This prototype has expired.",
     shareTitle: "Your prototype",
     shareHint: "This preview is live for a few days. Share the link, or let us turn it into a real app.",

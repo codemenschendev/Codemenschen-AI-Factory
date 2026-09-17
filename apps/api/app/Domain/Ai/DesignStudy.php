@@ -133,6 +133,28 @@ class DesignStudy
         return $text === null ? null : trim($text);
     }
 
+    /**
+     * What the business sells, read from its own website, before the trade is named.
+     *
+     * The plan used to name the trade from the customer's sentence alone, so a domain was all it
+     * had to go on and the competitors it picked were the competitors of whatever the name
+     * suggested. This brief goes in front of the plan and in front of the builder.
+     *
+     * @param  array{url:string,text:string}  $page
+     */
+    public function product(string $prompt, array $page): ?string
+    {
+        $text = Prompts::get('study/product', [
+            'prompt' => $prompt,
+            'url' => $page['url'],
+            'page' => $page['text'],
+            'rules' => 'Plain sentences, no dash as a sentence break, no bullet symbols.',
+        ]);
+        $reply = $this->ask([['role' => 'user', 'content' => $text]], 700, 90);
+
+        return $reply === null ? null : trim($reply);
+    }
+
     /** @param  list<string>  $screens */
     private function list(array $screens): string
     {

@@ -658,6 +658,7 @@ export const de = {
     go: "Prototyp bauen",
     building: "Wird gebaut, einen Moment…",
     failed: "Das hat nicht geklappt. Versuch es nochmal.",
+    siteUnreadable: "Wir konnten {domain} nicht öffnen und wollen nicht raten, was dort verkauft wird. Beschreib es in einem Satz und für wen, dann bauen wir es.",
     expired: "Dieser Prototyp ist abgelaufen.",
     shareTitle: "Dein Prototyp",
     shareHint: "Diese Vorschau ist ein paar Tage gültig. Teile den Link oder lass uns daraus eine echte App bauen.",

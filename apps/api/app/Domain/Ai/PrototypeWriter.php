@@ -36,6 +36,7 @@ class PrototypeWriter
         private readonly DesignStudy $study,
         private readonly AppStoreShots $store,
         private readonly WebShots $web,
+        private readonly ProductPage $pages,
     ) {}
 
     /** The three things a visitor can ask for. `site` is the default and the original behaviour. */
@@ -108,6 +109,24 @@ class PrototypeWriter
         };
         $stage = fn (string $s) => $progress?->__invoke($s);
 
+        // The business's own website, when the sentence names it. Read before the trade is named,
+        // because the trade, the competitors and every ad follow from what is sold, and the name
+        // alone said "cash for gift cards" about a WordPress voucher plugin.
+        [$site, $product] = [null, null];
+        if (($domain = ProductPage::domainIn($prompt)) !== null) {
+            $stage('studying');
+            $site = $this->pages->read($domain);
+            if ($site !== null) {
+                $product = $this->study->product($prompt, $site);
+            }
+            $lap('read');
+            if ($site === null && ProductPage::sentenceIsThin($prompt, $domain)) {
+                throw new SiteUnreadable($domain);
+            }
+        }
+        // What the page may state as fact: the customer's sentence and their own website.
+        $facts = $site === null ? $prompt : $prompt."\n".$site['text'];
+
         // The look at the trade's best apps, before anything is drawn. Only with a library to
         // draw from: the tests build without one and expect the writer to go straight to work.
         $brief = null;
@@ -115,7 +134,12 @@ class PrototypeWriter
         $meta = [];
         if ($library !== null) {
             $stage('studying');
-            $plan = $this->study->plan($prompt, $kind);
+            $plan = $this->study->plan($product === null ? $prompt
+                : $prompt."\n\nWhat the business sells, read from its own website:\n".$product, $kind);
+            if ($plan !== null && $site !== null) {
+                // The customer's own domain is not its competitor.
+                $plan['sites'] = array_values(array_filter($plan['sites'], fn ($s) => ! str_contains(strtolower($s), $domain)));
+            }
             if ($plan !== null) {
                 // The study is of the trade, so it is kept per trade: same kind, industry,
                 // country and screens means the same competitors, the same pictures and the
@@ -214,6 +238,15 @@ class PrototypeWriter
         // bakery build in Salzburg wrote baeckerei-steiner-salzburg.html to it, twice, and
         // answered "Done." Nothing on that disk ever reaches the visitor.
         $user = [['type' => 'text', 'text' => "Build a prototype for:\n\n{$prompt}\n\nReply with the HTML file only: the complete file, from <!doctype html> to </html>, as the TEXT of your reply. Do not use any tool, do not write a file to disk, do not describe what you did. The reply itself is the deliverable."]];
+        if ($site !== null) {
+            // What is sold, from the business's own site. Without it the model sells what the
+            // name suggests; with it, the brief and the page text are the only source of facts.
+            $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/product', [
+                'url' => $site['url'],
+                'brief' => $product ?? '(no brief could be written; read the website text below yourself)',
+                'page' => mb_substr($site['text'], 0, 2500),
+            ])];
+        }
         if ($brief !== null) {
             // The study's brief is the requirement, and the screens it was written from travel
             // along so the builder sees what "like the leading apps" looks like.
@@ -327,7 +360,7 @@ class PrototypeWriter
         }
         // Prices and credentials the customer never gave. The prompt forbids them and the model
         // printed them anyway, so they are checked here and repaired like any other fault.
-        if (($claims = ContentClaims::findings($page, $prompt, $kind)) !== []) {
+        if (($claims = ContentClaims::findings($page, $facts, $kind)) !== []) {
             array_push($qa['findings'], ...$claims);
             $qa['ok'] = false;
         }
@@ -366,7 +399,7 @@ class PrototypeWriter
                     'detail' => 'the page still names competitors the study looked at; remove every mention', 'elements' => $named];
                 $after['ok'] = false;
             }
-            if (($claims = ContentClaims::findings($fixed, $prompt, $kind)) !== []) {
+            if (($claims = ContentClaims::findings($fixed, $facts, $kind)) !== []) {
                 array_push($after['findings'], ...$claims);
                 $after['ok'] = false;
             }
@@ -428,6 +461,11 @@ class PrototypeWriter
         $qa['layout'] = $layout === null ? null : ['slug' => $layout['slug'], 'source' => $layout['source']];
         if ($meta !== []) {
             $qa['study'] = $meta;
+        }
+        // What the build understood the business to sell, so a wrong ad can be traced to a wrong
+        // reading rather than argued about.
+        if ($domain !== null) {
+            $qa['product'] = ['domain' => $domain, 'url' => $site['url'] ?? null, 'read' => $site !== null, 'brief' => $product];
         }
         if ($first !== []) {
             $qa['first_faults'] = $first;
