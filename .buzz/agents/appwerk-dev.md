@@ -32,18 +32,6 @@ Building in DEV:
 - Builds use the working tree of your clone, so what you see on DEV is the dev branch plus anything not committed yet.
 - After a pull that changed composer.lock, package-lock.json or added a migration, run `appwerk-sandbox-setup` first. If the DEV site shows an error after a change, read the log (apps/api/storage/logs) and fix it; that is what DEV is for.
 
-Ad review before Patrick sees an ad set (two reviewers: "Appwerk Ad Critic" looks at the pictures, "Appwerk Codex" reads the copy):
-- Use it when someone asks for ads or ad prototypes in more than one format, or asks for a reviewed ad. A single quick test build does not need it.
-- Build what was asked in DEV (for example image, web and video from one brief, same message and call to action). Then post one message in the main channel:
-  "@Appwerk Ad Critic @Appwerk Codex review round 1" followed by the brief in two lines, one DEV link per format, and the exact copy (headline, body, call to action, in the ad's language). Send it with both mentions set explicitly, otherwise they do not wake up: `buzz messages send --channel 59ceced3-ec08-429d-a282-d9589ac277d1 --content - --mention cab11603ad54055e94bdc57732a680d8c59549608829bdaaf297e8d8b0873e57 --mention da16a35c9b46ec3262eb5fa2a3a63375c4c3ec01f2d88bec29566ed623b19ee6`.
-- Both answer with a verdict line that mentions you: "CRITIC round N: PASS or REVISE" and "COPY round N: PASS or REVISE". Each answer wakes you separately. When you wake up for a review, read the channel (`BUZZ_RELAY_URL=https://buzz.codemenschen.at buzz messages get --channel 59ceced3-ec08-429d-a282-d9589ac277d1 --limit 20`). If the other reviewer's verdict for the same round is not there yet, end your turn without posting anything.
-- Both PASS: post the result for Patrick (see below).
-- Any REVISE in round 1: fix only what they listed, rebuild only the formats that need it (a text-only fix may not need a new render), then ask for "review round 2" the same way with the new links. Say in one line what you changed.
-- After round 2 you never ask for another review, whatever the verdicts are.
-- Result for Patrick, without mentioning a reviewer: the DEV links per format, the final scores, what the reviewers flagged and what you changed, and anything still open from round 2. End with "Patrick, which one should I take further?"
-- Never mention a reviewer except in a "review round 1" or "review round 2" request. Never reply to a review to thank or agree. This keeps the three agents from pinging each other in a loop.
-- Every render counts against the daily build limit. A full set with one revision round is about 4 to 5 builds. If the limit would be reached, say so before you start and ask which formats matter most.
-
 Hard rules:
 - Never delete branches or rewrite history that already reached GitHub. You have no GitHub credential and must not look for one or ask for one. Do not try to reach GitHub's API or push by any other way.
 - You cannot deploy and must not try. Deploys happen only when a human writes `!deploy appwerk` in the channel.

@@ -5,13 +5,10 @@ Instructions for the agent in the Buzz channel #appwerk-agents (buzz.codemensche
 | File | Agent | Model |
 |---|---|---|
 | appwerk-dev.md | Appwerk AI | Claude Opus |
-| appwerk-codex.md | Appwerk Codex | OpenAI Codex (subscription), reviews code and ad copy |
-| appwerk-critic.md | Appwerk Ad Critic | Claude Sonnet, reviews the pictures of ads (image, video, web) |
+| appwerk-codex.md | Appwerk Codex | OpenAI Codex (subscription), review only |
 
 Appwerk AI covers product, marketing and development. Appwerk Codex gives a
-second opinion: it reads the dev branch read-only and reviews code and ad copy.
-Appwerk Ad Critic looks at the ads Appwerk AI builds in DEV and scores them before
-Patrick sees them. An ad set gets at most two review rounds, then Patrick decides.
+second opinion: it reads the dev branch read-only and reviews, nothing else.
 Appwerk AI works on DEV
 (https://appwerk-dev.codemenschen.at, its own sandbox on the server) and never
 touches production. It has no GitHub credential: it commits on `dev`, and the bot
