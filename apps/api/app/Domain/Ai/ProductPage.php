@@ -24,6 +24,15 @@ class ProductPage
 
     private const MAX_BYTES = 2_000_000;
 
+    /** Pictures offered to the builder. More is a list the model skims, and each is a download. */
+    private const MAX_IMAGES = 14;
+
+    /** A picture bigger than this is a video poster or an unoptimised original, not worth the wait. */
+    private const MAX_IMAGE_BYTES = 6_000_000;
+
+    /** File names that are page furniture, not pictures of what is sold. */
+    private const NOT_PICTURES = '~(icon|favicon|sprite|arrow|chevron|avatar|badge|flag|star|rating|payment|paypal|visa|mastercard|stripe|spinner|loader|placeholder|blank|pixel|emoji|social|facebook|instagram|twitter|linkedin|youtube|whatsapp|check|close|menu|search|cart|bg-pattern)~i';
+
     /** @param  ?\Closure(string):list<string>  $resolve  host to IPs; tests pass their own */
     public function __construct(private ?\Closure $resolve = null) {}
 
@@ -58,10 +67,13 @@ class ProductPage
         return count($words) <= 8;
     }
 
-    /** @return array{url:string,text:string}|null the page as text, or null when it cannot be read */
+    /**
+     * @return array{url:string,text:string,images:list<array{url:string,alt:string}>,logo:?string}|null
+     *                                                                                                   the page as text with its own pictures, or null when it cannot be read
+     */
     public function read(string $domain): ?array
     {
-        $key = 'product-page:'.sha1($domain);
+        $key = 'product-page:v2:'.sha1($domain);
         $cached = Cache::get($key);
         if ($cached !== null) {
             return $cached ?: null;
@@ -94,15 +106,152 @@ class ProductPage
                 if (! $res->successful() || ! str_contains(strtolower($res->header('Content-Type')), 'html')) {
                     return false;
                 }
-                $text = self::text(substr($res->body(), 0, self::MAX_BYTES));
+                $html = substr($res->body(), 0, self::MAX_BYTES);
+                $text = self::text($html);
+                if (mb_strlen($text) < 80) {
+                    return false;
+                }
+                [$images, $logo] = self::images($html, $url, $domain);
 
-                return mb_strlen($text) < 80 ? false : ['url' => $url, 'text' => $text];
+                return ['url' => $url, 'text' => $text, 'images' => $images, 'logo' => $logo];
             }
         } catch (\Throwable $e) {
             Log::info('product page: not read', ['domain' => $domain, 'error' => mb_substr($e->getMessage(), 0, 160)]);
         }
 
         return false;
+    }
+
+    /**
+     * One of the business's own pictures, as bytes, or null.
+     *
+     * Only from the domain the customer named or its subdomains, only a public host, redirects
+     * checked hop by hop like the page itself, only an image, and capped.
+     */
+    public function download(string $url, string $domain): ?string
+    {
+        try {
+            for ($hop = 0; $hop < 3; $hop++) {
+                $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+                if (! self::onDomain($host, $domain) || ! $this->isPublic($host)) {
+                    return null;
+                }
+                $res = Http::withOptions(['allow_redirects' => false])
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; AppwerkBot/1.0; +https://appwerk.codemenschen.at)'])
+                    ->timeout(15)->connectTimeout(8)->get($url);
+                if ($res->redirect() && ($to = $res->header('Location')) !== '') {
+                    $url = self::absolute($to, $url) ?? '';
+
+                    continue;
+                }
+                $type = strtolower($res->header('Content-Type'));
+                if (! $res->successful() || ! str_starts_with($type, 'image/') || strlen($res->body()) > self::MAX_IMAGE_BYTES) {
+                    return null;
+                }
+
+                return $res->body();
+            }
+        } catch (\Throwable $e) {
+            Log::info('product page: picture not read', ['url' => mb_substr($url, 0, 160), 'error' => mb_substr($e->getMessage(), 0, 160)]);
+        }
+
+        return null;
+    }
+
+    /**
+     * The page's own pictures and its logo, in page order.
+     *
+     * @return array{0:list<array{url:string,alt:string}>,1:?string}
+     */
+    public static function images(string $html, string $pageUrl, string $domain): array
+    {
+        $doc = new \DOMDocument;
+        $previous = libxml_use_internal_errors(true);
+        $doc->loadHTML('<?xml encoding="utf-8"?>'.$html, LIBXML_NOERROR | LIBXML_NOWARNING);
+        libxml_clear_errors();
+        libxml_use_internal_errors($previous);
+        $xp = new \DOMXPath($doc);
+
+        $fold = fn (string $s) => mb_substr(trim(preg_replace('/\s+/u', ' ', $s) ?? $s), 0, 120);
+        $images = [];
+        $logo = null;
+        $seen = [];
+        $add = function (string $src, string $alt, string $hint) use (&$images, &$logo, &$seen, $pageUrl, $domain, $fold): void {
+            $url = self::absolute($src, $pageUrl);
+            if ($url === null || isset($seen[$url]) || ! self::onDomain(strtolower((string) parse_url($url, PHP_URL_HOST)), $domain)) {
+                return;
+            }
+            $seen[$url] = true;
+            $file = rawurldecode(basename((string) parse_url($url, PHP_URL_PATH)));
+            $ext = strtolower(pathinfo($file, PATHINFO_EXTENSION));
+            if ($logo === null && preg_match('~logo~i', $file.' '.$hint) === 1 && in_array($ext, ['svg', 'png', 'webp', 'jpg', 'jpeg'], true)) {
+                $logo = $url;
+
+                return;
+            }
+            if (! in_array($ext, ['jpg', 'jpeg', 'png', 'webp'], true) || preg_match(self::NOT_PICTURES, $file) === 1
+                || preg_match('~logo~i', $file) === 1 || count($images) >= self::MAX_IMAGES) {
+                return;
+            }
+            $images[] = ['url' => $url, 'alt' => $fold($alt !== '' ? $alt : pathinfo($file, PATHINFO_FILENAME))];
+        };
+
+        $og = $xp->query("//meta[@property='og:image' or @name='og:image']/@content")->item(0)?->nodeValue;
+        if ($og) {
+            $add($og, (string) $xp->query("//meta[@property='og:title']/@content")->item(0)?->nodeValue, 'og');
+        }
+        foreach ($xp->query('//img') as $img) {
+            /** @var \DOMElement $img */
+            $w = (int) $img->getAttribute('width');
+            $h = (int) $img->getAttribute('height');
+            $hint = $img->getAttribute('class').' '.$img->getAttribute('alt').' '.$img->getAttribute('id');
+            $src = $img->getAttribute('src');
+            // Lazy loaders keep the real picture in data-src and a grey pixel in src.
+            foreach (['data-src', 'data-lazy-src', 'data-original'] as $lazy) {
+                if ($img->getAttribute($lazy) !== '') {
+                    $src = $img->getAttribute($lazy);
+                }
+            }
+            if ($src === '' || str_starts_with($src, 'data:')) {
+                continue;
+            }
+            // Declared small is a thumbnail or an icon; the logo is small and still wanted.
+            if (($w > 0 && $w < 200 || $h > 0 && $h < 120) && preg_match('~logo~i', $src.' '.$hint) !== 1) {
+                continue;
+            }
+            $add($src, $img->getAttribute('alt'), $hint);
+        }
+
+        return [$images, $logo];
+    }
+
+    private static function absolute(string $src, string $base): ?string
+    {
+        $src = trim(html_entity_decode($src, ENT_QUOTES | ENT_HTML5));
+        if ($src === '') {
+            return null;
+        }
+        if (str_starts_with($src, '//')) {
+            $src = 'https:'.$src;
+        }
+        if (! preg_match('~^https?://~i', $src)) {
+            $root = preg_replace('~^(https?://[^/]+).*$~i', '$1', $base) ?? $base;
+            $src = str_starts_with($src, '/') ? $root.$src
+                : preg_replace('~/[^/]*$~', '/', $base).$src;
+        }
+        $parts = parse_url($src);
+        if (! isset($parts['host']) || ! in_array(strtolower($parts['scheme'] ?? ''), ['http', 'https'], true)) {
+            return null;
+        }
+        // A space in a file name ("gift-card 4.png") is legal on the page and not in a request.
+        return str_replace(' ', '%20', $src);
+    }
+
+    private static function onDomain(string $host, string $domain): bool
+    {
+        $host = preg_replace('/^www\./', '', $host) ?? $host;
+
+        return $host === $domain || str_ends_with($host, '.'.$domain);
     }
 
     private function isPublic(string $host): bool

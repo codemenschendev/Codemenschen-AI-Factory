@@ -107,6 +107,44 @@ class PrototypePhotoTest extends TestCase
         return new PrototypePhoto(new ImageLibrary($this->dir), $stock ?? $this->noStock());
     }
 
+    public function test_the_business_s_own_picture_comes_first_and_stays_out_of_the_library(): void
+    {
+        $png = $this->png();
+        $fetched = [];
+        $page = '<!doctype html><html><head><style>.x{}</style></head><body>'
+            .'<span class="site-logo">WP Gift Card</span>'
+            .'<div class="photo-wide" data-site="2" data-q="gift voucher">Der echte Weihnachtsgutschein</div>'
+            .'<div class="photo-card" data-q="laptop desk">Laptop am Schreibtisch</div></body></html>';
+        $site = [
+            'images' => [['url' => 'https://wp-giftcard.com/a.png', 'alt' => 'a'], ['url' => 'https://wp-giftcard.com/voucher.png', 'alt' => 'voucher']],
+            'logo' => 'https://wp-giftcard.com/logo.svg',
+            'fetch' => function (string $url) use (&$fetched, $png): ?string {
+                $fetched[] = $url;
+
+                return str_ends_with($url, '.svg') ? '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>' : $png;
+            },
+        ];
+
+        $out = $this->photo($this->stock($png))->apply($page, $site);
+
+        $this->assertSame(['site', 'stock'], $out['sources']);
+        $this->assertContains('https://wp-giftcard.com/voucher.png', $fetched);
+        $this->assertStringContainsString('<span class="site-logo"><img src="data:image/svg+xml;base64,', $out['html']);
+        $this->assertStringContainsString('alt="WP Gift Card"', $out['html']);
+        // Only the stock photograph is filed for other prototypes; the business's own is not.
+        $this->assertCount(1, glob($this->dir.'/img/*') ?: []);
+    }
+
+    public function test_a_picture_the_site_cannot_give_falls_back_to_stock(): void
+    {
+        $page = '<!doctype html><html><body><div class="photo-wide" data-site="1" data-q="bakery">Brot im Korb</div></body></html>';
+        $site = ['images' => [['url' => 'https://b.at/1.jpg', 'alt' => '']], 'fetch' => fn () => null];
+
+        $out = $this->photo($this->stock($this->png()))->apply($page, $site);
+
+        $this->assertSame(['stock'], $out['sources']);
+    }
+
     public function test_the_band_becomes_the_photograph(): void
     {
         $out = $this->photo($this->stock($this->png()))->apply($this->page());

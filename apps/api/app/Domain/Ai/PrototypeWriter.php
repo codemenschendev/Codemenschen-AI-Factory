@@ -250,6 +250,16 @@ class PrototypeWriter
                 'page' => mb_substr($site['text'], 0, 2500),
             ])];
         }
+        if (($site['images'] ?? []) !== []) {
+            $lines = [];
+            foreach ($site['images'] as $n => $img) {
+                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).($img['alt'] !== '' ? ': '.$img['alt'] : '');
+            }
+            $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-images', ['url' => $site['url'], 'images' => implode("\n", $lines)])];
+        }
+        if (($site['logo'] ?? null) !== null) {
+            $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-logo')];
+        }
         if ($brief !== null) {
             // The study's brief is the requirement, and the screens it was written from travel
             // along so the builder sees what "like the leading apps" looks like.
@@ -430,7 +440,11 @@ class PrototypeWriter
         // repair then throws away.
         if ($photo !== null) {
             $stage('photos');
-            $shot = $photo->apply($page);
+            $shot = $photo->apply($page, $site === null ? [] : [
+                'images' => $site['images'] ?? [],
+                'logo' => $site['logo'] ?? null,
+                'fetch' => fn (string $url) => $this->pages->download($url, $domain),
+            ]);
             $page = $shot['html'];
             $lap('photos');
 

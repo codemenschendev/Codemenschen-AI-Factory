@@ -36,6 +36,38 @@ class ProductPageTest extends TestCase
         $this->assertNull(ProductPage::domainIn('Ein Salon in Wien'));
     }
 
+    public function test_the_page_s_own_pictures_are_listed_and_furniture_left_out(): void
+    {
+        $html = '<html><head><meta property="og:image" content="https://wp-giftcard.com/share.jpg"></head><body>'
+            .'<img src="/wp-content/themes/gift-voucher/images/logo.svg" alt="WP Gift Card">'
+            .'<img src="images/gift-card 4.png" alt="Christmas voucher">'
+            .'<img data-src="https://cdn.wp-giftcard.com/editor.png" src="data:image/gif;base64,R0lG">'
+            .'<img src="https://wp-giftcard.com/icons/paypal.png" alt="">'
+            .'<img src="https://other.com/stock.jpg" alt="elsewhere">'
+            .'<img src="https://wp-giftcard.com/tiny.png" width="32" height="32">'
+            .'<img src="/images/gift-card 4.png"></body></html>';
+
+        [$images, $logo] = ProductPage::images($html, 'https://wp-giftcard.com/', 'wp-giftcard.com');
+
+        $this->assertSame('https://wp-giftcard.com/wp-content/themes/gift-voucher/images/logo.svg', $logo);
+        $this->assertSame([
+            'https://wp-giftcard.com/share.jpg',
+            'https://wp-giftcard.com/images/gift-card%204.png',
+            'https://cdn.wp-giftcard.com/editor.png',
+        ], array_column($images, 'url'));
+        $this->assertSame('Christmas voucher', $images[1]['alt']);
+    }
+
+    public function test_a_picture_is_only_downloaded_from_the_named_domain_on_a_public_host(): void
+    {
+        Http::fake(['*' => Http::response('PNGBYTES', 200, ['Content-Type' => 'image/png'])]);
+        $pages = app(ProductPage::class);
+
+        $this->assertSame('PNGBYTES', $pages->download('https://wp-giftcard.com/a.png', 'wp-giftcard.com'));
+        $this->assertNull($pages->download('https://other.com/a.png', 'wp-giftcard.com'));
+        $this->assertNull($pages->download('https://internal.test/a.png', 'internal.test'));
+    }
+
     public function test_a_sentence_is_thin_when_it_is_little_more_than_the_domain(): void
     {
         $this->assertTrue(ProductPage::sentenceIsThin('make the banner for wp-giftcard.com', 'wp-giftcard.com'));

@@ -56,10 +56,12 @@ class PrototypePhoto
     ) {}
 
     /**
+     * @param  array{images?:list<array{url:string,alt:string}>,logo?:?string,fetch?:\Closure(string):?string}  $site
+     *                                                                                                                  the business's own pictures from its website, and how to fetch one
      * @return array{html:string,photo:?string,photos:list<string>,source:?string,
      *               sources:list<string>,credit:?string,credit_url:?string,credits:list<string>}
      */
-    public function apply(string $html): array
+    public function apply(string $html, array $site = []): array
     {
         // First every slot worth filling, then every photograph at once, then the page. Reading
         // the slots and fetching for each in turn made six photographs cost six times the wait.
@@ -110,12 +112,15 @@ class PrototypePhoto
                     ? trim(html_entity_decode($q[1], ENT_QUOTES | ENT_HTML5, 'UTF-8'))
                     : null;
 
-                $slots[] = ['m' => $m, 'width' => $width, 'brief' => $brief, 'search' => $search];
+                // The business's own picture the model chose for this slot, by its number in the list.
+                $own = preg_match('~\sdata-site="(\d+)"~i', $m[2], $n) === 1 ? ($site['images'][(int) $n[1] - 1]['url'] ?? null) : null;
+
+                $slots[] = ['m' => $m, 'width' => $width, 'brief' => $brief, 'search' => $search, 'own' => $own];
             }
         }
 
         $photos = $sources = $credits = $urls = [];
-        foreach ($this->resolve($slots) as $i => $found) {
+        foreach ($this->resolve($slots, $site['fetch'] ?? null) as $i => $found) {
             if ($found === null) {
                 continue;   // this slot keeps its gradient
             }
@@ -151,6 +156,27 @@ class PrototypePhoto
             $html = preg_replace_callback($pattern, fn (array $m) => self::isBrief($m[3]) && trim(strip_tags($m[3])) !== ''
                 ? '<'.$m[1].$m[2].'></'.$m[1].'>'
                 : $m[0], $html);
+        }
+
+        // The business's own logo where the model marked the wordmark. The name inside stays as
+        // the alt text, and a logo that cannot be fetched leaves the name in type, as it was.
+        $logoPlaced = false;
+        if (($site['logo'] ?? null) !== null && isset($site['fetch'])
+            && preg_match('~<(\w+)([^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*)>(.*?)</\1>~is', $html) === 1
+            && ($logo = $this->logo($site['logo'], $site['fetch'])) !== null) {
+            $html = preg_replace_callback('~<(\w+)([^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*)>(.*?)</\1>~is', function (array $m) use ($logo): string {
+                $alt = htmlspecialchars(trim(html_entity_decode(strip_tags($m[3]), ENT_QUOTES | ENT_HTML5, 'UTF-8')), ENT_QUOTES, 'UTF-8');
+
+                return '<'.$m[1].$m[2].'><img src="'.$logo.'" alt="'.$alt.'"></'.$m[1].'>';
+            }, $html) ?? $html;
+            $logoPlaced = true;
+        }
+        if ($logoPlaced) {
+            $css = '.site-logo>img{display:block;height:100%;max-height:44px;width:auto;max-width:100%}';
+            $html = preg_replace('~</style>~i', $css.'</style>', $html, 1, $count) ?? $html;
+            if ($count === 0) {
+                $html = preg_replace('~</head>~i', '<style>'.$css.'</style></head>', $html, 1) ?? $html;
+            }
         }
 
         if ($photos === []) {
@@ -216,12 +242,31 @@ class PrototypePhoto
      * @param  list<array{m:array,width:int,brief:string,search:?string}>  $slots
      * @return array<int,array{data:string,source:string,credit:?string,url:?string}|null>
      */
-    private function resolve(array $slots): array
+    private function resolve(array $slots, ?\Closure $fetch = null): array
     {
         $out = array_fill(0, count($slots), null);
         $wanted = [];
 
         foreach ($slots as $i => $slot) {
+            // The business's own picture first: what the customer will recognise. Never filed in
+            // the shared library, because it belongs to that business and to no other prototype.
+            if ($slot['own'] !== null && $fetch !== null) {
+                try {
+                    $bytes = $fetch($slot['own']);
+                    $size = $bytes === null ? false : @getimagesizefromstring($bytes);
+                    // A picture smaller than a card would be blown up into mush.
+                    if ($size !== false && $size[0] >= 300 && $size[1] >= 160) {
+                        $uri = $this->encodeBytes($bytes, $slot['width']);
+                        if ($uri !== null) {
+                            $out[$i] = ['data' => $uri, 'source' => 'site', 'credit' => null, 'url' => null];
+
+                            continue;
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    Log::info('prototype photo: own picture skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
+                }
+            }
             try {
                 $hit = $this->library->find($slot['brief'], self::PROJECT);
                 $path = $hit === null ? null : $this->library->path($hit['id']);
@@ -280,6 +325,38 @@ class PrototypePhoto
             return $uri;
         } finally {
             @unlink($tmp);
+        }
+    }
+
+    private function encodeBytes(string $bytes, int $width): ?string
+    {
+        $tmp = tempnam(sys_get_temp_dir(), 'proto-own-');
+        file_put_contents($tmp, $bytes);
+
+        try {
+            return $this->encode($tmp, $width);
+        } finally {
+            @unlink($tmp);
+        }
+    }
+
+    /** The logo as a data URI: SVG as it is (an <img> runs no script), anything else re-encoded. */
+    private function logo(string $url, \Closure $fetch): ?string
+    {
+        try {
+            $bytes = $fetch($url);
+            if ($bytes === null || strlen($bytes) > 300_000) {
+                return null;
+            }
+            if (preg_match('~<svg[\s>]~i', substr($bytes, 0, 2000)) === 1) {
+                return 'data:image/svg+xml;base64,'.base64_encode($bytes);
+            }
+
+            return @getimagesizefromstring($bytes) === false ? null : $this->encodeBytes($bytes, 320);
+        } catch (\Throwable $e) {
+            Log::info('prototype photo: logo skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
+
+            return null;
         }
     }
 
