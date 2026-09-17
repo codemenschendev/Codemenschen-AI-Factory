@@ -113,4 +113,18 @@ class ContentClaimsTest extends TestCase
         $this->assertNotNull(collect(ContentClaims::findings($page, 'Website für einen Friseur in Graz', 'site'))
             ->firstWhere('check', 'personal-data'), 'a private mail address the customer never gave is someone real');
     }
+
+    public function test_scarcity_the_business_never_announced_is_an_invented_claim(): void
+    {
+        $page = '<html lang="de"><body><h2>Kapazität für neue Projekte</h2><p>Nur eine begrenzte Zahl an WordPress-Projekten gleichzeitig, jetzt Platz sichern.</p>'
+            .'<p>Wenige Projektplätze in Graz frei</p></body></html>';
+
+        $found = collect(ContentClaims::findings($page, 'Werbung für codemenschen.at', 'ads'))->firstWhere('check', 'claim-invented');
+
+        $this->assertSame(['begrenzte Zahl', 'Wenige Projektplätze'], $found['elements']);
+        $this->assertNull(collect(ContentClaims::findings('<p>Jetzt Platz sichern</p>', 'Yogakurs in Linz', 'ads'))->firstWhere('check', 'claim-invented'),
+            'a plain call to book a place is not scarcity');
+        $this->assertNull(collect(ContentClaims::findings('<p>Nur noch 3 Plätze frei</p>', 'Yogakurs, nur noch 3 Plätze frei', 'ads'))->firstWhere('check', 'claim-invented'),
+            'scarcity the customer states is theirs to print');
+    }
 }

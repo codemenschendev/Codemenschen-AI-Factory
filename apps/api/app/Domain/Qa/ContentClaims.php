@@ -32,6 +32,9 @@ class ContentClaims
         'ausgezeichnet mit', 'Award', 'Meisterbetrieb', 'Innungsmitglied',
     ];
 
+    /** Urgency a visitor is pushed by: limited places, last chances, closing dates. */
+    private const SCARCITY = '/\b(?:begrenzte?n?\s+(?:Zahl|Anzahl|Plätze|Kapazität)|nur\s+noch\s+\w+|wenige\s+(?:freie\s+)?(?:Plätze|Termine|Projektplätze)|\w*plätze\s+(?:in\s+\w+\s+)?frei|solange\s+(?:der\s+)?Vorrat|nur\s+(?:diese|heute|bis)\b\s*\w*|limited\s+(?:spots|places|time|availability)|only\s+\d+\s+(?:left|spots)|last\s+chance|letzte\s+Chance)/iu';
+
     /** @return list<array{severity:string,check:string,viewports:list<string>,detail:string,elements:list<string>}> */
     public static function findings(string $html, string $prompt, string $kind): array
     {
@@ -64,12 +67,22 @@ class ContentClaims
                 }
             }
         }
+        // Scarcity and deadlines the business never announced. Forbidden in the ads prompt, and a
+        // codemenschen.at ad closed on "Nur eine begrenzte Zahl an WordPress-Projekten
+        // gleichzeitig, jetzt Platz sichern" two builds running anyway.
+        if (preg_match_all(self::SCARCITY, $text, $rush) > 0) {
+            foreach ($rush[0] as $phrase) {
+                if (mb_stripos($asked, mb_strtolower(trim($phrase))) === false) {
+                    $claims[] = trim($phrase);
+                }
+            }
+        }
         if (preg_match_all('/(?:über\s+)?\d+\s+Jahren?\s+(?:Erfahrung|Backstube|Tradition|im Team|am Markt)/iu', $text, $exp) > 0) {
             $claims = array_merge($claims, $exp[0]);
         }
         if ($claims !== []) {
             $out[] = ['severity' => 'blocking', 'check' => 'claim-invented', 'viewports' => [],
-                'detail' => 'the page states facts the customer never gave: insurers, certificates, awards or years in business; take these lines out or say the same thing without the claim',
+                'detail' => 'the page states facts the customer never gave: insurers, certificates, awards, years in business, or scarcity and deadlines; take these lines out or say the same thing without the claim',
                 'elements' => array_values(array_slice(array_unique($claims), 0, 6))];
         }
 
