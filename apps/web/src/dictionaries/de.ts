@@ -648,7 +648,7 @@ export const de = {
     kindHints: {
       site: "Eine klickbare Startseite mit allem, was ein Kunde vor dem Anruf wissen will.",
       app: "Vier Bildschirme deiner App auf dem Handy, so wie sie sich bedienen würde.",
-      ads: "Fünf fertige Anzeigen in den Größen, die Meta und Google tatsächlich ausspielen.",
+      ads: "Zwei fertige Anzeigen, Story und Feed, mit einem Bild für dein Produkt. Weitere Formate gibt es im Projekt.",
       email: "Vier E-Mails in deinem Design: Willkommen, Erinnerung, Bestätigung und Comeback.",
     },
     hints: {

@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Domain\Ai\PrototypePhoto;
+use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Ai\StockPhotos;
 use App\Domain\Library\ImageLibrary;
 use Illuminate\Support\Facades\File;
@@ -217,6 +218,47 @@ class PrototypePhotoTest extends TestCase
         // Rendered, not framed: the rendered picture is a photograph and fills the story.
         $this->assertStringContainsString('class="has-photo photo-wide"', $out['html']);
         $this->assertSame(['codex', 'stock'], $out['sources']);
+    }
+
+    public function test_the_opening_picture_is_briefed_from_the_website_before_the_page_exists(): void
+    {
+        $fetched = [];
+        $job = PrototypePhoto::openingJob('Christmas campaign ads for wp-giftcard.com',
+            'A WordPress plugin that sells printable gift vouchers from the shop owner\'s own site.',
+            [['url' => 'https://g.com/home.png', 'kind' => 'screen'], ['url' => 'https://g.com/voucher.png', 'kind' => 'graphic']],
+            function (string $url) use (&$fetched) {
+                $fetched[] = $url;
+
+                return 'bytes';
+            });
+
+        // The product, not the screenshot of the homepage.
+        $this->assertSame(['https://g.com/voucher.png'], $fetched);
+        $this->assertSame(['bytes'], $job['refs']);
+        $this->assertSame('1080x1920', $job['size']);
+        $this->assertStringContainsString('printable gift vouchers', $job['prompt']);
+        $this->assertStringContainsString('Christmas campaign ads', $job['prompt']);
+        $this->assertStringContainsString('show THAT product', $job['prompt']);
+    }
+
+    public function test_the_ad_page_and_its_opening_picture_are_made_at_the_same_time(): void
+    {
+        $png = $this->png();
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't',
+            'services.ai_image.backend' => 'codex', 'services.ai_image.prototype_renders' => 1,
+            'services.ai_image.codex_url' => 'http://imagegen.test', 'services.ai_image.codex_token' => 'c']);
+        Http::fake([
+            '*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => '<!doctype html><html lang="de"><head><title>Anzeigen</title><style>.x{}</style></head><body><main class="ads">'
+                .'<article class="ad ad-story"><div class="photo-wide" data-q="bread oven">Brot im Ofen</div></article>'
+                .'</main></body></html>']]]]),
+            'imagegen.test/v1/images' => Http::response(['base64' => base64_encode($png), 'mime' => 'image/png']),
+        ]);
+
+        $out = app(PrototypeWriter::class)->build('Weihnachtsanzeigen für eine Bäckerei in Graz', 'ads', photo: $this->photo());
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && str_contains($r['prompt'], 'Bäckerei in Graz'));
+        $this->assertStringContainsString('data:image/', $out['html']);
+        $this->assertStringNotContainsString('Brot im Ofen</div>', $out['html']);
     }
 
     public function test_a_render_that_fails_leaves_the_slot_to_the_site(): void

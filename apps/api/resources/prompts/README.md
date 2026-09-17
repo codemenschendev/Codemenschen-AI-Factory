@@ -7,7 +7,7 @@ which file is used when.
 |---|---|
 | `prototype/site.md` | Free prototype: landing page |
 | `prototype/app.md` | Free prototype: app screens |
-| `prototype/ads.md` | Free prototype: five ad creatives |
+| `prototype/ads.md` | Free prototype: a story and a feed square |
 | `prototype/photo-slots.md` | Added to every prototype: how photos are placed |
 | `prototype/laws.md` | Added to every prototype: rules the page check enforces |
 | `prototype/reference.md` | Sent with a reference screenshot |

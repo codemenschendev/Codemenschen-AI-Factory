@@ -59,37 +59,44 @@ class ImageService
         if ($jobs === [] || (string) config('services.ai_image.codex_token') === '') {
             return array_fill(0, count($jobs), null);
         }
-        $base = rtrim((string) config('services.ai_image.codex_url'), '/');
-        $token = (string) config('services.ai_image.codex_token');
-        $timeout = (int) config('services.ai_image.codex_timeout', 420);
 
         try {
-            $responses = Http::pool(fn ($pool) => array_map(
-                fn (array $job) => $pool->baseUrl($base)->withToken($token)->acceptJson()
-                    ->timeout($timeout)->connectTimeout(10)
-                    ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs'])),
-                $jobs,
-            ));
+            $responses = Http::pool(fn ($pool) => array_map(fn (array $job, int $k) => $this->codexOn($pool, $job, 'codex'.$k), $jobs, array_keys($jobs)));
         } catch (\Throwable $e) {
             Log::warning('image: codex pool failed', ['error' => mb_substr($e->getMessage(), 0, 300)]);
 
             return array_fill(0, count($jobs), null);
         }
 
-        $out = [];
-        foreach (array_values($responses) as $res) {
-            if (! $res instanceof \Illuminate\Http\Client\Response || ! $res->successful()) {
-                Log::info('image: codex could not render a prototype picture', ['status' => $res instanceof \Illuminate\Http\Client\Response ? $res->status() : null,
-                    'error' => $res instanceof \Illuminate\Http\Client\Response ? mb_substr((string) $res->body(), 0, 200) : mb_substr((string) $res, 0, 200)]);
-                $out[] = null;
+        return array_map(fn (int $k) => $this->codexBytes($responses['codex'.$k] ?? null), array_keys($jobs));
+    }
 
-                continue;
-            }
-            $bytes = base64_decode((string) $res->json('base64'), true);
-            $out[] = $bytes === false || $bytes === '' ? null : $bytes;
+    /**
+     * One render request on a pool, so it runs beside another request: the ad prototype's
+     * opening picture is rendered while Claude writes the page.
+     *
+     * @param  array{prompt:string,size:string,refs:list<string>}  $job
+     */
+    public function codexOn(\Illuminate\Http\Client\Pool $pool, array $job, string $key = 'codex'): mixed
+    {
+        return $pool->as($key)->baseUrl(rtrim((string) config('services.ai_image.codex_url'), '/'))
+            ->withToken((string) config('services.ai_image.codex_token'))->acceptJson()
+            ->timeout((int) config('services.ai_image.codex_timeout', 420))->connectTimeout(10)
+            ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs']));
+    }
+
+    /** The picture in a pooled answer, or null for anything that is not one. */
+    public function codexBytes(mixed $res): ?string
+    {
+        if (! $res instanceof \Illuminate\Http\Client\Response || ! $res->successful()) {
+            Log::info('image: codex could not render a prototype picture', ['status' => $res instanceof \Illuminate\Http\Client\Response ? $res->status() : null,
+                'error' => $res instanceof \Illuminate\Http\Client\Response ? mb_substr((string) $res->body(), 0, 200) : mb_substr($res instanceof \Throwable ? $res->getMessage() : (string) $res, 0, 200)]);
+
+            return null;
         }
+        $bytes = base64_decode((string) $res->json('base64'), true);
 
-        return $out;
+        return $bytes === false || $bytes === '' ? null : $bytes;
     }
 
     /** @param  list<string>  $refs */

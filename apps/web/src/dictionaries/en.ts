@@ -646,7 +646,7 @@ export const en = {
     kindHints: {
       site: "A clickable home page with everything a customer wants before they call.",
       app: "Four screens of your app on a phone, the way it would actually be used.",
-      ads: "Five finished ads in the sizes Meta and Google really run.",
+      ads: "Two finished ads, story and feed, with a picture made for your product. More formats come with the project.",
       email: "Four e-mails in your design: welcome, reminder, confirmation and comeback.",
     },
     hints: {

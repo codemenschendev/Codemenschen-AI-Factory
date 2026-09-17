@@ -58,15 +58,18 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringContainsString('Proof comes before explanation', $sent);
     }
 
-    public function test_the_ad_prototype_is_the_ads_in_their_frames(): void
+    public function test_the_ad_prototype_is_two_creatives_in_their_frames(): void
     {
         // The house version put a landing page hero above five text boxes, and a customer who
-        // had picked "Werbung" asked where the ads were. Now the page IS the five creatives, each
-        // in the frame of the platform it runs on, each on a photograph, and it writes its own CSS.
+        // had picked "Werbung" asked where the ads were. Now the page IS the creative, in the
+        // frame of the platform it runs on, and it writes its own CSS. A story and a square, not
+        // five (owner's decision 2026-09-17): more formats come with the project.
         $sent = $this->systemPrompt('ads');
 
         $this->assertStringContainsString('YOU WRITE THE CSS', $sent);
         $this->assertStringContainsString('NOT A PAGE ABOUT THE ADS', $sent);
+        $this->assertStringContainsString('TWO creatives, a story and a feed square', $sent);
+        $this->assertStringNotContainsString('ad-link', $sent);
         $this->assertStringContainsString('Gesponsert', $sent);
         $this->assertStringContainsString('ad-story', $sent);
         $this->assertStringContainsString('photo-wide', $sent);

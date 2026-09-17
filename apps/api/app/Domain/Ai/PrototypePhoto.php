@@ -414,15 +414,62 @@ class PrototypePhoto
      *
      * @return array<int,array{data:string,source:string,credit:null,url:null,fit:string}>
      */
+    /**
+     * The opening story picture of an ad prototype, briefed before the page is written so it can
+     * render while Claude writes: the business as its own website describes it, the customer's
+     * sentence, and the business's own product picture to put in the scene.
+     *
+     * @param  list<array{url:string,kind?:string}>  $images  the site's pictures, best first
+     * @return array{prompt:string,size:string,refs:list<string>}
+     */
+    public static function openingJob(string $sentence, ?string $product, array $images, ?\Closure $fetch): array
+    {
+        // A product picture, not a screenshot of the site, when there is one.
+        usort($images, fn ($a, $b) => (($a['kind'] ?? '') === 'screen') <=> (($b['kind'] ?? '') === 'screen'));
+        $refs = [];
+        foreach (array_slice($images, 0, 3) as $img) {
+            if ($fetch !== null && ($bytes = $fetch($img['url'])) !== null) {
+                $refs[] = $bytes;
+                break;
+            }
+        }
+
+        return [
+            'prompt' => trim("A premium photographic picture for the opening story ad of this business's campaign, portrait 9:16.\n\n"
+                ."The campaign, in the customer's words: ".mb_substr(trim($sentence), 0, 400)."\n\n"
+                .($product !== null && trim($product) !== '' ? "What the business sells, read from its own website:\n".mb_substr(trim($product), 0, 1800)."\n\n" : '')
+                .($refs !== []
+                    ? "The attached picture is the business's own product. It is the hero: show THAT product, recognisable, large and sharp, in the world of the people who buy it and in the season of the campaign. Do not invent a different product.\n\n"
+                    : "Show what the business sells, in the world of the people who buy it and in the season of the campaign.\n\n")
+                .'Keep the top eighth calm for the page name, and the lower third calm and dark: the headline and button are set there. No words, letters, prices or logos in the picture.'),
+            'size' => '1080x1920',
+            'refs' => $refs,
+        ];
+    }
+
     private function rendered(string $html, array $slots, array $site): array
     {
+        // Page order: the slots were collected class by class.
+        $order = array_keys($slots);
+        usort($order, fn ($a, $b) => (int) strpos($html, $slots[$a]['m'][0]) <=> (int) strpos($html, $slots[$b]['m'][0]));
+
+        // Rendered ahead, beside the page: they go to the first slots in page order.
+        if (isset($site['pictures'])) {
+            $out = [];
+            foreach (array_values($site['pictures']) as $k => $bytes) {
+                $i = $order[$k] ?? null;
+                if ($i !== null && $bytes !== null && ($uri = $this->encodeBytes($bytes, $slots[$i]['width'] >= 720 ? 900 : 720)) !== null) {
+                    $out[$i] = ['data' => $uri, 'source' => 'codex', 'credit' => null, 'url' => null, 'fit' => 'photo'];
+                }
+            }
+
+            return $out;
+        }
+
         $count = (int) ($site['renders'] ?? 0);
         if ($count <= 0 || ! isset($site['render']) || $slots === []) {
             return [];
         }
-        // Page order: the slots were collected class by class.
-        $order = array_keys($slots);
-        usort($order, fn ($a, $b) => (int) strpos($html, $slots[$a]['m'][0]) <=> (int) strpos($html, $slots[$b]['m'][0]));
         $jobs = $index = [];
         foreach (array_slice($order, 0, $count) as $i) {
             $at = (int) strpos($html, $slots[$i]['m'][0]);
