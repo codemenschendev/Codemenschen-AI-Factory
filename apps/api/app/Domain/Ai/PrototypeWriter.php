@@ -453,6 +453,7 @@ class PrototypeWriter
                 // business's own pictures before a stock photograph: a chain-link fence from Pexels
                 // in a Christmas ad for a WordPress plugin was the alternative.
                 'fill' => in_array($kind, ['ads', 'email'], true),
+                'avatar' => $kind === 'ads',
             ]);
             $page = $shot['html'];
             $lap('photos');

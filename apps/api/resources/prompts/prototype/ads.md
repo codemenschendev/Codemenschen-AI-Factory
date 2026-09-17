@@ -40,6 +40,10 @@ that reader: "Gesponsert" and "Mehr dazu" in German, "Sponsored" and "Learn more
 <html lang> names that language. An English ad under a German "Gesponsert" is a mock-up
 nobody would believe.
 
+The avatar is <span class="avatar">GC</span>: a circle with the business's initials in it,
+and the page name beside it is the business's name as plain text. When the business has a
+logo, the logo replaces the initials in every avatar.
+
 Keep these class names exactly, whatever the frames look like. They are a contract:
 other tools read them.
 
