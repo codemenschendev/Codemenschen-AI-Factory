@@ -141,6 +141,28 @@ class DesignStudyTest extends TestCase
         Http::assertSentCount(2);
     }
 
+    public function test_the_site_s_pictures_are_seen_once_and_another_brand_s_are_dropped(): void
+    {
+        if (! is_executable('/usr/bin/montage') && ! is_executable('/opt/homebrew/bin/montage') || ! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('no montage or gd');
+        }
+        ob_start();
+        imagepng(imagecreatetruecolor(400, 300));
+        $png = (string) ob_get_clean();
+        $this->answer("```json\n[{\"n\":1,\"shows\":\"Mother's Day voucher, pastel, 400 dollars\",\"other_brand\":false},{\"n\":2,\"shows\":\"Amazon and iTunes cards\",\"other_brand\":true}]\n```");
+        $images = [['url' => 'https://g.com/modern-7.png', 'alt' => 'Giftcard modern 7'], ['url' => 'https://g.com/Rectangle-18.png', 'alt' => '']];
+
+        $first = app(DesignStudy::class)->pictures('https://g.com/', $images, fn () => $png);
+        $second = app(DesignStudy::class)->pictures('https://g.com/', $images, fn () => $png);
+
+        $this->assertCount(1, $first);
+        $this->assertSame("Mother's Day voucher, pastel, 400 dollars", $first[0]['shows']);
+        $this->assertSame($first, $second);
+        // One call with one picture: the contact sheet.
+        Http::assertSentCount(1);
+        Http::assertSent(fn ($r) => count(array_filter($r['messages'][0]['content'], fn ($c) => $c['type'] === 'image_url')) === 1);
+    }
+
     public function test_a_plan_that_was_not_json_is_asked_again(): void
     {
         $this->answer('I cannot help with that.');

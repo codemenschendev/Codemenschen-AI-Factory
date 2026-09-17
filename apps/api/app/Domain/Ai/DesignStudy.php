@@ -175,6 +175,116 @@ class DesignStudy
         return trim($reply);
     }
 
+    /**
+     * What each of the business's own pictures shows, seen once on a numbered contact sheet.
+     *
+     * The builder only had file names and alt texts, and on wp-giftcard.com those said nothing:
+     * "Rectangle-18.png" was a stack of Amazon and iTunes cards and went into an ad as the
+     * customer's product, "Giftcard modern 7" was a Mother's Day voucher under a Christmas
+     * headline. One sheet is one picture for the model (the gateway takes eight at most), and the
+     * answer is kept a day per set of pictures. A picture of another company's products is
+     * dropped; when the model cannot be asked, the list goes on as it was.
+     *
+     * @param  list<array{url:string,alt:string,size?:string,kind?:string}>  $images
+     * @param  \Closure(string):?string  $fetch
+     * @return list<array{url:string,alt:string,size?:string,kind?:string,shows?:string}>
+     */
+    public function pictures(string $url, array $images, \Closure $fetch): array
+    {
+        if ($images === []) {
+            return $images;
+        }
+        $key = 'site-pictures:'.sha1(implode("\n", array_column($images, 'url')));
+        $seen = Cache::get($key);
+        if (! is_array($seen)) {
+            $seen = $this->look($url, $images, $fetch);
+            if ($seen === null) {
+                return $images;
+            }
+            Cache::put($key, $seen, now()->addDay());
+        }
+
+        $out = [];
+        foreach ($images as $i => $img) {
+            $about = $seen[$i + 1] ?? null;
+            if (($about['other_brand'] ?? false) === true) {
+                continue;
+            }
+            if (is_string($about['shows'] ?? null) && $about['shows'] !== '') {
+                $img['shows'] = mb_substr($about['shows'], 0, 120);
+            }
+            $out[] = $img;
+        }
+
+        return $out;
+    }
+
+    /** @return array<int,array{shows:string,other_brand:bool}>|null */
+    private function look(string $url, array $images, \Closure $fetch): ?array
+    {
+        $bin = collect(['/usr/bin/montage', '/opt/homebrew/bin/montage'])->first(fn (string $p) => is_executable($p));
+        if ($bin === null) {
+            return null;
+        }
+        $dir = sys_get_temp_dir().'/site-sheet-'.bin2hex(random_bytes(4));
+        @mkdir($dir);
+        try {
+            $files = [];
+            foreach ($images as $i => $img) {
+                $bytes = $fetch($img['url']);
+                if ($bytes === null) {
+                    continue;
+                }
+                // The number is the file name, and montage prints the name under each tile.
+                $file = $dir.'/'.($i + 1);
+                file_put_contents($file, $bytes);
+                $files[] = $file;
+            }
+            if ($files === []) {
+                return null;
+            }
+            $sheet = $dir.'/sheet.jpg';
+            $proc = new \Symfony\Component\Process\Process(array_merge([$bin, '-label', '%f'], $files,
+                ['-tile', '4x', '-geometry', '300x225>+10+10', '-pointsize', '26', '-background', 'white', '-quality', '80', $sheet]), null, null, null, 90);
+            $proc->run();
+            // Without a font montage still draws the sheet and only the labels are missing; the
+            // order, four to a row, says the numbers as well.
+            if (! is_file($sheet) || filesize($sheet) < 1000) {
+                Log::info('design study: contact sheet failed', ['error' => mb_substr($proc->getErrorOutput(), 0, 200)]);
+
+                return null;
+            }
+
+            $text = $this->ask([['role' => 'user', 'content' => [
+                ['type' => 'text', 'text' => Prompts::get('study/pictures', ['url' => $url])],
+                ['type' => 'image_url', 'image_url' => ['url' => 'data:image/jpeg;base64,'.base64_encode((string) file_get_contents($sheet))]],
+            ]]], 1500, 120);
+            $rows = null;
+            if ($text !== null) {
+                $body = preg_match('/```(?:json)?\s*(.*?)```/is', $text, $m) === 1 ? $m[1] : $text;
+                $start = strpos($body, '[');
+                $end = strrpos($body, ']');
+                $rows = $start === false || $end === false ? null : json_decode(substr($body, $start, $end - $start + 1), true);
+            }
+            if (! is_array($rows)) {
+                return null;
+            }
+            $seen = [];
+            foreach ($rows as $row) {
+                if (is_array($row) && isset($row['n'])) {
+                    $seen[(int) $row['n']] = ['shows' => trim((string) ($row['shows'] ?? '')), 'other_brand' => ($row['other_brand'] ?? false) === true];
+                }
+            }
+
+            return $seen === [] ? null : $seen;
+        } finally {
+            foreach (glob($dir.'/*') ?: [] as $f) {
+                @unlink($f);
+            }
+            @rmdir($dir);
+        }
+    }
+
     /** @param  list<string>  $screens */
     private function list(array $screens): string
     {

@@ -118,6 +118,8 @@ class PrototypeWriter
             $site = $this->pages->read($domain);
             if ($site !== null) {
                 $product = $this->study->product($prompt, $site);
+                $site['images'] = $this->study->pictures($site['url'], $site['images'] ?? [],
+                    fn (string $url) => $this->pages->download($url, $domain));
             }
             $lap('read');
             if ($site === null && ProductPage::sentenceIsThin($prompt, $domain)) {
@@ -256,7 +258,7 @@ class PrototypeWriter
         if (($site['images'] ?? []) !== []) {
             $lines = [];
             foreach ($site['images'] as $n => $img) {
-                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).(isset($img['size']) ? ' ('.$img['size'].(isset($img['kind']) ? ', '.$img['kind'] : '').')' : '').($img['alt'] !== '' ? ': '.$img['alt'] : '');
+                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).(isset($img['size']) ? ' ('.$img['size'].(isset($img['kind']) ? ', '.$img['kind'] : '').')' : '').(($img['shows'] ?? '') !== '' ? ': '.$img['shows'] : ($img['alt'] !== '' ? ': '.$img['alt'] : ''));
             }
             $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-images', ['url' => $site['url'], 'images' => implode("\n", $lines)])];
         }
