@@ -175,6 +175,19 @@ class PrototypePhotoTest extends TestCase
         $this->assertStringContainsString('.avatar.has-logo{background:#fff', $out['html']);
     }
 
+    public function test_a_wide_wordmark_leaves_the_initials_in_the_avatar(): void
+    {
+        $page = '<!doctype html><html><head><style>.x{}</style></head><body>'
+            .'<div class="head"><span class="avatar">GC</span><div class="who">Gift Cards Pro</div></div></body></html>';
+        $site = ['logo' => 'https://g.com/logo.svg', 'avatar' => true,
+            'fetch' => fn () => '<svg width="166" height="51" viewBox="0 0 166 51" xmlns="http://www.w3.org/2000/svg"></svg>'];
+
+        $out = $this->photo()->apply($page, $site);
+
+        $this->assertStringContainsString('<span class="avatar">GC</span>', $out['html']);
+        $this->assertStringNotContainsString('has-logo', $out['html']);
+    }
+
     public function test_a_picture_the_site_cannot_give_falls_back_to_stock(): void
     {
         $page = '<!doctype html><html><body><div class="photo-wide" data-site="1" data-q="bakery">Brot im Korb</div></body></html>';
