@@ -239,13 +239,18 @@ class ChangeChat
 
     /**
      * Spaced dashes as sentence breaks read like a machine wrote them, and customer copy must not
-     * have them. Hyphens inside words stay.
+     * have them. Hyphens inside words stay, and so do unspaced en dashes in ranges ("9–17 Uhr").
+     * A dash that follows punctuation ("fertig. — Danach") keeps the punctuation instead of
+     * adding a comma, and a dash at the start or end of the text is dropped.
      */
     public static function undash(string $text): string
     {
-        $text = preg_replace('/\s+[—–]\s+/u', ', ', $text);
+        $text = preg_replace('/^\s*[—–]\s*|\s*[—–]\s*$/u', '', $text);
+        $text = preg_replace('/\s*—\s*|\s+–\s+/u', ', ', $text);
+        // ". , " or ", , " left behind: keep the first mark.
+        $text = preg_replace('/([.,;:!?])\s*,\s+/u', '$1 ', $text);
 
-        return str_replace('—', ', ', $text);
+        return trim($text);
     }
 
     /** @return array{reply:string, questions:list<array{q:string,options:list<string>}>, items:list<array{text:string}>, scope:string, reason:string}|null */
