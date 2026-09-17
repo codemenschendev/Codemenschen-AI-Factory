@@ -2,8 +2,9 @@
 
 ## Models: who does what
 
-- **Text, code, prototypes, ad copy: Claude only**, through OpenClaw. `openclaw/main` is Sonnet 5
-  on claude-cli. `AI_CHAT_BACKEND_MODEL` stays empty in production; only the owner changes it.
+- **Text, code, prototypes, ad copy: Claude only**, through OpenClaw. `openclaw/appwerk` is Sonnet 5
+  on the tool-less `claude-cli-chat` backend (5k tokens of context per call; `openclaw/main`, the full agent
+  runtime, was 50k and wandered into tool calls). Never point generation back at `openclaw/main`. `AI_CHAT_BACKEND_MODEL` stays empty in production; only the owner changes it.
 - **Haiku 4.5 is the chat agents' model** in the OpenClaw config (Teams and the other chat
   agents). It is not a faster prototype writer: measured 2026-09-05, Sonnet 5 and Haiku 4.5 both
   write a prototype at ~30 tokens/s through claude-cli. Do not point generation at it.

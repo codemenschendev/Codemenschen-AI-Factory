@@ -277,7 +277,7 @@ class PrototypeWriter
         }
 
         $body = [
-            'model' => config('services.ai_image.chat_model', 'openclaw/main'),
+            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
             'messages' => [
                 ['role' => 'system', 'content' => $system],
                 ['role' => 'user', 'content' => $user],
@@ -495,7 +495,7 @@ class PrototypeWriter
         $brief = PageAudit::brief($blocking);
 
         $res = $request->post('/v1/chat/completions', [
-            'model' => config('services.ai_image.chat_model', 'openclaw/main'),
+            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
             'messages' => [
                 ['role' => 'system', 'content' => $system],
                 ['role' => 'user', 'content' => $user],

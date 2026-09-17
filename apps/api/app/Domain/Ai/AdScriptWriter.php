@@ -208,7 +208,7 @@ class AdScriptWriter
         }
 
         $res = $request->post('/v1/chat/completions', [
-            'model' => config('services.ai_image.chat_model', 'openclaw/main'),
+            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
             'messages' => [
                 ['role' => 'system', 'content' => $system],
                 // A plain string when there is no picture: the sidecar has answered that shape

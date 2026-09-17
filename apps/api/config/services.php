@@ -66,7 +66,11 @@ return [
         'model' => env('AI_IMAGE_MODEL'),
         // `chat_model` is the agent target; `chat_backend_model` pins the LLM behind it via the
         // x-openclaw-model header. Leave the second empty to use whatever the agent is set to.
-        'chat_model' => env('AI_CHAT_TARGET', 'openclaw/main'),
+        // `openclaw/appwerk` runs claude-cli-chat: no tools, its own system prompt, a near-empty
+        // workspace. `openclaw/main` is the full agent runtime, and a one-word answer through it
+        // cost 50k tokens of context against 5k here (measured 2026-09-17); it also wandered off
+        // into tool calls, 1.8M tokens for one repair round.
+        'chat_model' => env('AI_CHAT_TARGET', 'openclaw/appwerk'),
         'chat_backend_model' => env('AI_CHAT_BACKEND_MODEL', ''),
         // Names and addresses the model can see behind the gateway (claude-cli injects the signed-in
         // account's e-mail) and must never print. Comma-separated; checked on every prototype.

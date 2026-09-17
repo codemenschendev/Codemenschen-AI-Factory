@@ -3,6 +3,7 @@
 namespace App\Domain\Ai;
 
 use App\Domain\Design\DesignLibrary;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -46,9 +47,18 @@ class DesignStudy
             'brief' => $brief, 'industries' => $industries, 'types' => $types,
         ]);
 
-        $text = $this->ask([['role' => 'user', 'content' => $ask]], 400, 60);
-        if ($text === null) {
-            return null;
+        // The same sentence planned twice names the same trade: a retry, a second format or a
+        // lab run reuses the answer for a day instead of asking again.
+        $key = 'design-plan:'.sha1($kind."\n".$brief);
+        $text = Cache::get($key);
+        if (! is_string($text)) {
+            $text = $this->ask([['role' => 'user', 'content' => $ask]], 400, 60);
+            if ($text === null) {
+                return null;
+            }
+            if (is_array(json_decode($this->extractJson($text), true))) {
+                Cache::put($key, $text, now()->addDay());
+            }
         }
         $json = json_decode($this->extractJson($text), true);
         if (! is_array($json)) {
@@ -150,9 +160,19 @@ class DesignStudy
             'page' => $page['text'],
             'rules' => 'Plain sentences, no dash as a sentence break, no bullet symbols.',
         ]);
+        // Kept for a day per sentence and page: a campaign renders several ads from the same
+        // sentence within minutes, and each asked for this brief again.
+        $key = 'product-brief:'.sha1($prompt."\n".$page['url']."\n".$page['text']);
+        if (is_string($cached = Cache::get($key))) {
+            return $cached;
+        }
         $reply = $this->ask([['role' => 'user', 'content' => $text]], 700, 90);
+        if ($reply === null || trim($reply) === '') {
+            return null;
+        }
+        Cache::put($key, trim($reply), now()->addDay());
 
-        return $reply === null ? null : trim($reply);
+        return trim($reply);
     }
 
     /** @param  list<string>  $screens */
@@ -177,7 +197,7 @@ class DesignStudy
                 $request = $request->withHeaders(['x-openclaw-model' => $backend]);
             }
             $res = $request->post('/v1/chat/completions', [
-                'model' => config('services.ai_image.chat_model', 'openclaw/main'),
+                'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
                 'messages' => $messages,
                 'max_completion_tokens' => $maxTokens,
             ]);
