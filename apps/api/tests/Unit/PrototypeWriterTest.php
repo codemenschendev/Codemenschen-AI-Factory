@@ -94,6 +94,19 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringContainsString('not an invented voucher', $sent);
     }
 
+    public function test_an_invented_sender_address_is_removed_and_a_given_one_kept(): void
+    {
+        $html = '<div class="inbox-sender">Gift Cards Pro &lt;hello@wp-giftcard.com&gt;</div>'
+            .'<div class="inbox-sender">Salon Anna &lt;office@salon-anna.at&gt;</div><p>anna@example.com</p>';
+
+        $out = PrototypeWriter::withoutSenderAddress($html, 'E-Mails für den Salon Anna, office@salon-anna.at');
+
+        $this->assertStringContainsString('>Gift Cards Pro</div>', $out);
+        $this->assertStringNotContainsString('hello@wp-giftcard.com', $out);
+        $this->assertStringContainsString('&lt;office@salon-anna.at&gt;', $out);
+        $this->assertStringContainsString('anna@example.com', $out);
+    }
+
     public function test_an_email_build_skips_the_trade_study(): void
     {
         $this->fakeAnswer();
