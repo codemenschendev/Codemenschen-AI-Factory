@@ -19,9 +19,13 @@
 
 - Server checkout `/var/www/ai-factory` on `manager` (ssh port 7172), stack `infra/docker-compose.prod.yml`,
   code baked into the images. Deploy: `git pull --ff-only origin main`, then in `infra/`
-  `docker compose -f docker-compose.prod.yml build --pull api horizon [web]` and
+  `docker compose -f docker-compose.prod.yml build --pull api horizon scheduler [web]` and
   `up -d --remove-orphans api horizon scheduler [web]`, then `exec -T api php artisan migrate --force`
   when a migration was added. Verify by grepping the new code inside the container, not by uptime.
+- `scheduler` builds its own image from the same Dockerfile. Leave it out of `build` and `up` keeps
+  the old image running with old code: a new `Schedule::` entry never fires (found 2026-09-17).
+  Check it with `exec -T scheduler php artisan schedule:list`. `infra/deploy-server.sh` with no
+  service names rebuilds every service, scheduler included.
 - After every commit and push/deploy, post it to Teams with `~/.openclaw/workspace/ops/teams-commit.sh`.
 - Mail goes out through the company's world4you SMTP (`smtp.world4you.com:587`, STARTTLS) as
   `developerweb@codemenschen.at`, DKIM-signed for codemenschen.at. Not Resend (its Tokyo IPs
