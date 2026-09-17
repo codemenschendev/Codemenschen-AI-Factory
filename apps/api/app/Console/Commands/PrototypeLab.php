@@ -120,7 +120,7 @@ class PrototypeLab extends Command
             ->withHeaders(array_filter(['x-openclaw-model' => ChatBackend::pin()]))
             ->acceptJson()->timeout(240)->connectTimeout(10)
             ->post('/v1/chat/completions', [
-                'model' => config('services.ai_image.chat_model', 'openclaw/main'),
+                'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
                 'messages' => [
                     ['role' => 'system', 'content' => self::FREE],
                     ['role' => 'user', 'content' => "Build a prototype for:\n\n{$brief}\n\nReply with the HTML file only."],

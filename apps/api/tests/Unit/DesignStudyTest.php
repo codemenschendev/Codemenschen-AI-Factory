@@ -127,4 +127,27 @@ class DesignStudyTest extends TestCase
         $this->assertNull(app(DesignStudy::class)->plan('x'));
         $this->assertNull(app(DesignStudy::class)->study($plan, [['id' => 'a', 'note' => '', 'data' => 'd', 'screen_type' => 'map']], ''));
     }
+
+    public function test_the_same_sentence_is_planned_and_briefed_once(): void
+    {
+        $this->answer('{"industry":"food_restaurant","screens":["menu"],"sites":["a.at"],"country":"at"}');
+        $page = ['url' => 'https://example.com', 'text' => 'We sell bread.'];
+
+        foreach ([1, 2, 3] as $_) {
+            app(DesignStudy::class)->plan('Bakery in Graz', 'site');
+            app(DesignStudy::class)->product('Ad for example.com', $page);
+        }
+
+        Http::assertSentCount(2);
+    }
+
+    public function test_a_plan_that_was_not_json_is_asked_again(): void
+    {
+        $this->answer('I cannot help with that.');
+
+        app(DesignStudy::class)->plan('x');
+        app(DesignStudy::class)->plan('x');
+
+        Http::assertSentCount(2);
+    }
 }
