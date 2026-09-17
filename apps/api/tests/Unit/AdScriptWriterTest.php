@@ -112,4 +112,40 @@ class AdScriptWriterTest extends TestCase
                 && str_contains($system, 'direct response copywriter');
         });
     }
+
+    public function test_a_script_that_breaks_a_rule_is_written_again_with_the_rule_named(): void
+    {
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't',
+            'services.ai_image.private_identities' => ['Fuchsbauer']]);
+        $answer = fn (array $scenes) => ['choices' => [['message' => ['content' => json_encode(['scenes' => $scenes])]]]];
+        Http::fake(['*/v1/chat/completions' => Http::sequence()
+            ->push($answer([['title' => '20,000 stores sell with it', 'text' => 'Ask Fuchsbauer — today.', 'picture' => 'a shop']]))
+            ->push($answer([['title' => '20,000 downloads', 'text' => 'Sell your own vouchers today.', 'picture' => 'a shop']])),
+        ]);
+
+        $writer = app(AdScriptWriter::class);
+        $scenes = $writer->write('Ad for wp-giftcard.com', 'en', 'image', ['subject_website_text' => 'Buy now 20,000 Downloads']);
+
+        $this->assertSame('20,000 downloads', $scenes[0]['title']);
+        $this->assertSame([], $writer->faults);
+        Http::assertSent(fn ($r) => str_contains((string) json_encode($r['messages'][1]['content']), 'A first draft broke these rules')
+            && str_contains((string) json_encode($r['messages'][1]['content']), 'number-reworded'));
+    }
+
+    public function test_when_both_drafts_break_a_rule_the_cleaner_one_is_kept_and_its_faults_reported(): void
+    {
+        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
+        $answer = fn (array $scenes) => ['choices' => [['message' => ['content' => json_encode(['scenes' => $scenes])]]]];
+        Http::fake(['*/v1/chat/completions' => Http::sequence()
+            ->push($answer([['title' => 'Seit 1998 zertifiziert', 'text' => 'Buchen — jetzt.', 'picture' => 'x']]))
+            ->push($answer([['title' => 'Jetzt buchen', 'text' => 'Termin in Wien — heute.', 'picture' => 'x']])),
+        ]);
+
+        $writer = app(AdScriptWriter::class);
+        $scenes = $writer->write('Friseur in Wien', 'de', 'image');
+
+        $this->assertSame('Jetzt buchen', $scenes[0]['title']);
+        $this->assertCount(1, $writer->faults);
+        $this->assertStringStartsWith('dash:', $writer->faults[0]);
+    }
 }

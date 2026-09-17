@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ai;
 
+use App\Domain\Qa\ContentClaims;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
@@ -46,6 +47,14 @@ class AdScriptWriter
      * No goal is a valid choice: then the copy closes on whatever action the subject itself
      * obviously offers.
      */
+    /**
+     * What the checks found in the copy that was returned, empty when it was clean. The render
+     * keeps it on the ad so the operator sees a flaw the second attempt could not remove.
+     *
+     * @var list<string>
+     */
+    public array $faults = [];
+
     public const GOALS = [
         'booking' => 'book an appointment, a table or a slot',
         'call' => 'call or write to the business today',
@@ -77,6 +86,10 @@ class AdScriptWriter
                 .'. Write the whole ad towards that one action, and say it plainly at the end.';
         }
 
+        // What the copy may state as fact: the customer's sentence and everything the context
+        // carries (the project's own description, the business's website).
+        $facts = $prompt."\n".implode("\n", $context);
+
         if ($context !== []) {
             $lines = [];
             foreach ($context as $k => $v) {
@@ -91,16 +104,60 @@ class AdScriptWriter
                 .' that customer getting what they came for.';
         }
 
-        // Two attempts: the agent occasionally answers conversationally on the first go, and a
-        // blunter reminder is cheaper than failing the whole render.
-        foreach ([$prompt, $prompt."\n\nReturn the JSON object only. Do not do anything else."] as $attempt) {
-            $scenes = $this->parseScenes($this->ask($system, $language, $attempt, $reference));
-            if ($scenes !== []) {
-                return $kind === 'image' ? $scenes : $this->closeOnCta($scenes);
+        // Two attempts. The agent occasionally answers conversationally on the first go, and a
+        // blunter reminder is cheaper than failing the whole render. A script that came back with
+        // a fault the checks can see (a number given a new noun, a real person's name, an invented
+        // credential, a dash) gets the second attempt with the faults named, and the cleaner of
+        // the two is kept: a customer pays for this ad and it gets published.
+        $best = null;
+        $bestFaults = [];
+        $next = $prompt;
+        foreach ([1, 2] as $round) {
+            $scenes = $this->parseScenes($this->ask($system, $language, $next, $reference));
+            if ($scenes === []) {
+                $next = $prompt."\n\nReturn the JSON object only. Do not do anything else.";
+
+                continue;
             }
+            $faults = self::faults($scenes, $facts);
+            if ($best === null || count($faults) < count($bestFaults)) {
+                [$best, $bestFaults] = [$scenes, $faults];
+            }
+            if ($faults === []) {
+                break;
+            }
+            $next = $prompt."\n\nA first draft broke these rules. Write the ad again without them:\n- "
+                .implode("\n- ", $faults)."\n\nReturn the JSON object only.";
         }
 
-        throw new RuntimeException('The agent answered without a usable script.');
+        if ($best === null) {
+            throw new RuntimeException('The agent answered without a usable script.');
+        }
+        $this->faults = $bestFaults;
+
+        return $kind === 'image' ? $best : $this->closeOnCta($best);
+    }
+
+    /**
+     * The checks the prototype pages get, run on the words of the script.
+     *
+     * @param  array<int,array<string,mixed>>  $scenes
+     * @return list<string>
+     */
+    public static function faults(array $scenes, string $facts): array
+    {
+        $words = implode("\n", array_map(fn (array $s) => $s['title'].'. '.$s['text'], $scenes));
+        $html = '<html><body><p>'.htmlspecialchars($words).'</p></body></html>';
+
+        $out = [];
+        foreach (ContentClaims::findings($html, $facts, 'ads') as $f) {
+            $out[] = $f['check'].': '.implode(', ', $f['elements']).' ('.$f['detail'].')';
+        }
+        if (preg_match('/—|\s–\s/u', $words) === 1) {
+            $out[] = 'dash: a dash is used as a sentence break; use a full stop or a comma';
+        }
+
+        return $out;
     }
 
     /**
