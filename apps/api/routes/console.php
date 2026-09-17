@@ -27,3 +27,6 @@ Schedule::command('factory:vision-check')->dailyAt('07:10');
 Schedule::call(function () {
     Prototype::where('expires_at', '<', now())->whereNull('project_id')->delete();
 })->dailyAt('03:30');
+
+// Ad platforms: read-only credential check, so the admin tile shows what the platform last said.
+Schedule::command('factory:ads-check')->dailyAt('07:20');

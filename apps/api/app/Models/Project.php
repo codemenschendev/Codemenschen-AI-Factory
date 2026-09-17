@@ -20,7 +20,7 @@ class Project extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean'];
+    protected $casts = ['archived_at' => 'datetime', 'build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean'];
 
     public function customer(): BelongsTo
     {

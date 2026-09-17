@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ads;
 
+use App\Models\Setting;
 use RuntimeException;
 
 /** Picks the publisher for a campaign's platform. */
@@ -17,7 +18,7 @@ class PublisherRegistry
         return match ($platform) {
             'meta' => $this->meta,
             'google' => $this->google,
-            default => throw new RuntimeException("Nền tảng không hỗ trợ: {$platform}"),
+            default => throw new RuntimeException("Unsupported platform: {$platform}"),
         };
     }
 
@@ -27,6 +28,12 @@ class PublisherRegistry
         return ['meta' => $this->meta->isConfigured(), 'google' => $this->google->isConfigured()];
     }
 
+    /** Where factory:ads-check leaves its last answer for a platform. */
+    public static function verifiedKey(string $platform): string
+    {
+        return "ads.verified.{$platform}";
+    }
+
     /** @return list<Publisher> */
     public function all(): array
     {
@@ -34,16 +41,22 @@ class PublisherRegistry
     }
 
     /**
-     * What the operator sees: configured or not, and which env names are still empty. No values,
-     * no API calls; this runs on every admin overview and must stay free.
+     * What the operator sees: configured or not, which env names are still empty, and what the last
+     * real credential check (factory:ads-check) found. No values and no API calls here; this runs
+     * on every admin overview and must stay free. "Configured" alone is not "connected": a token
+     * the account never accepted is configured.
      *
-     * @return array<string,array{configured:bool,missing:list<string>}>
+     * @return array<string,array{configured:bool,missing:list<string>,verified:?array{ok:bool,at:string,account:?string,detail:?string}}>
      */
     public function status(): array
     {
         $out = [];
         foreach ($this->all() as $p) {
-            $out[$p->key()] = ['configured' => $p->isConfigured(), 'missing' => $p->missing()];
+            $out[$p->key()] = [
+                'configured' => $p->isConfigured(),
+                'missing' => $p->missing(),
+                'verified' => Setting::read(self::verifiedKey($p->key())),
+            ];
         }
 
         return $out;

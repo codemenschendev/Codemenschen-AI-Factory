@@ -52,7 +52,7 @@ class MetaAdsPublisher implements Publisher
     public function verify(): array
     {
         if (! $this->isConfigured()) {
-            return ['ok' => false, 'account' => null, 'detail' => 'thiếu '.implode(', ', $this->missing())];
+            return ['ok' => false, 'account' => null, 'detail' => 'missing '.implode(', ', $this->missing())];
         }
 
         try {

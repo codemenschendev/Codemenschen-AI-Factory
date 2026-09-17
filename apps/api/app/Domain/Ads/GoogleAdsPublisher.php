@@ -69,7 +69,7 @@ class GoogleAdsPublisher implements Publisher
     public function verify(): array
     {
         if (! $this->isConfigured()) {
-            return ['ok' => false, 'account' => null, 'detail' => 'thiếu '.implode(', ', $this->missing())];
+            return ['ok' => false, 'account' => null, 'detail' => 'missing '.implode(', ', $this->missing())];
         }
 
         try {
@@ -82,7 +82,7 @@ class GoogleAdsPublisher implements Publisher
                 ]);
 
             if (! $res->successful()) {
-                return ['ok' => false, 'account' => null, 'detail' => mb_substr((string) $res->body(), 0, 300)];
+                return ['ok' => false, 'account' => null, 'detail' => self::errorDetail($res->status(), (string) $res->body())];
             }
 
             $c = $res->json('results.0.customer') ?? [];
@@ -212,10 +212,40 @@ class GoogleAdsPublisher implements Publisher
         ]);
         $token = (string) $res->json('access_token');
         if ($token === '') {
-            throw new RuntimeException('Google OAuth: không lấy được access token.');
+            throw new RuntimeException('Google OAuth: no access token ('.($res->json('error') ?: 'HTTP '.$res->status()).')');
         }
 
         return $token;
+    }
+
+    /**
+     * Google's own words for a refused call, short enough for a table cell: the error code first
+     * (USER_PERMISSION_DENIED, DEVELOPER_TOKEN_NOT_APPROVED, CUSTOMER_NOT_FOUND ...), because that
+     * is what says who has to fix it, then the message. The raw body is 2 KB of nesting.
+     */
+    public static function errorDetail(int $http, string $body): string
+    {
+        $json = json_decode($body, true);
+        if (! is_array($json)) {
+            return "HTTP {$http}: ".mb_substr(trim($body), 0, 200);
+        }
+
+        $codes = [];
+        $message = null;
+        foreach ((array) ($json['error']['details'] ?? []) as $detail) {
+            foreach ((array) ($detail['errors'] ?? []) as $err) {
+                foreach ((array) ($err['errorCode'] ?? []) as $group => $code) {
+                    $codes[] = "{$group}.{$code}";
+                }
+                $message ??= $err['message'] ?? null;
+            }
+        }
+        $message ??= $json['error']['message'] ?? null;
+        $status = $json['error']['status'] ?? null;
+
+        $head = $codes !== [] ? implode(', ', array_unique($codes)) : ($status ?: "HTTP {$http}");
+
+        return mb_substr($head.($message ? ": {$message}" : ''), 0, 300);
     }
 
     /** @return array{client_email:string, private_key:string, token_uri:string}|null */
