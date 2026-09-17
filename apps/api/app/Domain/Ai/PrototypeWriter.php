@@ -132,9 +132,12 @@ class PrototypeWriter
         $brief = null;
         $studied = [];
         $meta = [];
-        // No study for e-mails: the library holds apps, websites and ads, and an e-mail drawn
-        // from a website's hero is a website in a narrow column. The product brief is what counts.
-        if ($library !== null && $kind !== 'email') {
+        // The trade study is for apps only (owner's decision, 2026-09-17). An app is compared with
+        // the apps a user already has on the phone; a website, an ad or an e-mail is about THIS
+        // business, and studying its competitors printed their names as references and cost a
+        // minute and two model calls. The product brief from the business's own site stays for
+        // every kind.
+        if ($library !== null && $kind === 'app') {
             $stage('studying');
             $plan = $this->study->plan($product === null ? $prompt
                 : $prompt."\n\nWhat the business sells, read from its own website:\n".$product, $kind);
@@ -253,7 +256,7 @@ class PrototypeWriter
         if (($site['images'] ?? []) !== []) {
             $lines = [];
             foreach ($site['images'] as $n => $img) {
-                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).(isset($img['size']) ? ' ('.$img['size'].')' : '').($img['alt'] !== '' ? ': '.$img['alt'] : '');
+                $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).(isset($img['size']) ? ' ('.$img['size'].(isset($img['kind']) ? ', '.$img['kind'] : '').')' : '').($img['alt'] !== '' ? ': '.$img['alt'] : '');
             }
             $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-images', ['url' => $site['url'], 'images' => implode("\n", $lines)])];
         }
@@ -444,6 +447,10 @@ class PrototypeWriter
                 'images' => $site['images'] ?? [],
                 'logo' => $site['logo'] ?? null,
                 'fetch' => fn (string $url) => $this->pages->download($url, $domain),
+                // An ad or an e-mail fills a slot the builder left unmarked with another of the
+                // business's own pictures before a stock photograph: a chain-link fence from Pexels
+                // in a Christmas ad for a WordPress plugin was the alternative.
+                'fill' => in_array($kind, ['ads', 'email'], true),
             ]);
             $page = $shot['html'];
             $lap('photos');

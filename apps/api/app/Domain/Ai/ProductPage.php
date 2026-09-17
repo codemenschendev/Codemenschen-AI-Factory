@@ -76,7 +76,7 @@ class ProductPage
      */
     public function read(string $domain): ?array
     {
-        $key = 'product-page:v3:'.sha1($domain);
+        $key = 'product-page:v4:'.sha1($domain);
         $cached = Cache::get($key);
         if ($cached !== null) {
             return $cached ?: null;
@@ -181,11 +181,53 @@ class ProductPage
             $bytes = $this->download($img['url'], $domain);
             $size = $bytes === null ? false : @getimagesizefromstring($bytes);
             if ($size !== false && $size[0] >= 300 && $size[1] >= 160) {
-                $kept[] = $img + ['size' => $size[0].'x'.$size[1]];
+                $kept[] = $img + ['size' => $size[0].'x'.$size[1], 'kind' => self::pictureKind($img['url'], $img['alt'], (string) $bytes)];
             }
         }
 
         return $kept;
+    }
+
+    /**
+     * What a picture is, because each is shown differently.
+     *
+     * A "photo" can be cropped to fill a frame. A "screen" (a screenshot of the product) and a
+     * "graphic" (a voucher template, an illustration) cannot: cropped to a square, wp-giftcard.com's
+     * AI panel lost both edges and every line of its text. Names and descriptions say it most
+     * often; otherwise a screenshot is mostly white, flat background.
+     */
+    public static function pictureKind(string $url, string $alt, string $bytes): string
+    {
+        $words = strtolower(rawurldecode(basename((string) parse_url($url, PHP_URL_PATH))).' '.$alt);
+        if (preg_match('~screen|panel|editor|dashboard|admin|backend|interface|\bui\b|settings|builder|checkout|preview~', $words) === 1) {
+            return 'screen';
+        }
+        // A background is made to be filled edge to edge, whatever else its description says.
+        if (preg_match('~background|backdrop|hintergrund|\bbg\b|-bg-|_bg_~', $words) === 1) {
+            return 'photo';
+        }
+        if (preg_match('~template|voucher|gutschein|coupon|card|mockup|banner|illustration|graphic|vector|flyer|poster~', $words) === 1) {
+            return 'graphic';
+        }
+        if (function_exists('imagecreatefromstring') && ($im = @imagecreatefromstring($bytes)) !== false) {
+            $small = imagescale($im, 24, 24);
+            $white = 0;
+            if ($small !== false) {
+                for ($x = 0; $x < 24; $x++) {
+                    for ($y = 0; $y < 24; $y++) {
+                        $c = imagecolorat($small, $x, $y);
+                        if ((($c >> 16) & 255) > 235 && (($c >> 8) & 255) > 235 && ($c & 255) > 235) {
+                            $white++;
+                        }
+                    }
+                }
+            }
+            if ($white / 576 > 0.4) {
+                return 'screen';
+            }
+        }
+
+        return str_ends_with(strtolower((string) parse_url($url, PHP_URL_PATH)), '.png') ? 'graphic' : 'photo';
     }
 
     /**

@@ -19,6 +19,9 @@ Rules that are not style choices:
     "Item 1", no lorem ipsum, no placeholder rectangles.
   - Plain sentences. Never a dash as a sentence break: no em dash, no spaced en dash.
   - Invent no prices, percentages, ratings or guarantees as facts about the business.
+  - No sweeping claims about the reader or the market ("every shop owner loses Christmas
+    sales", "most customers expect…") unless the brief or the website says so. Say what the
+    business offers, not what everyone else is doing wrong.
   - No real person's name or e-mail address from your context, your memory or the account
     you run under. A signed-in user, a greeting, a sender or a sample customer is an invented
     person with an invented address on example.com, for example "Anna" and anna@example.com,

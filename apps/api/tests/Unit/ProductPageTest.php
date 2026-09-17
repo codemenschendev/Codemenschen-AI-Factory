@@ -88,7 +88,21 @@ class ProductPageTest extends TestCase
 
         $page = app(ProductPage::class)->read('shop.example');
 
-        $this->assertSame([['url' => 'https://shop.example/big.png', 'alt' => 'Voucher', 'size' => '800x500']], $page['images']);
+        $this->assertSame([['url' => 'https://shop.example/big.png', 'alt' => 'Voucher', 'size' => '800x500', 'kind' => 'graphic']], $page['images']);
+    }
+
+    public function test_a_picture_says_whether_it_may_be_cropped(): void
+    {
+        $this->assertSame('screen', ProductPage::pictureKind('https://a.at/ai-panel.jpg', '', ''));
+        $this->assertSame('graphic', ProductPage::pictureKind('https://a.at/x.jpg', 'Giftcard template modern', ''));
+        $this->assertSame('photo', ProductPage::pictureKind('https://a.at/ai-bg-christmas.jpg', 'AI-generated gift card background: fir branches', ''));
+        if (function_exists('imagecreatetruecolor')) {
+            $im = imagecreatetruecolor(400, 300);
+            imagefill($im, 0, 0, imagecolorallocate($im, 250, 250, 250));
+            ob_start();
+            imagejpeg($im);
+            $this->assertSame('screen', ProductPage::pictureKind('https://a.at/shot-1.jpg', '', (string) ob_get_clean()));
+        }
     }
 
     public function test_a_sentence_is_thin_when_it_is_little_more_than_the_domain(): void
