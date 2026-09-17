@@ -10,6 +10,12 @@ laptop: a grid, three and two or all five in one row, that wraps to one column o
 700px. Five frames stacked in a single column on a 1280px screen is a phone layout on a
 desktop, and the audit rejects it.
 
+The frames are drawn at a size, never fixed to it. Every frame is width: 100% with a
+max-width (270px for a story, 360px for a square or a link) and an aspect-ratio for its
+shape, and the grid is repeat(auto-fit, minmax(260px, 1fr)) or the like, never repeat(3,
+1fr) around fixed 360px cards. A fixed width runs off a 320px phone and off a 768px tablet
+with three columns, the audit fails it, and the repair has not once managed to fix it.
+
 YOU WRITE THE CSS. One <style> block, and design it properly: a quiet neutral page so the
 creatives are the only colour on it, and inside each creative the type, colour and rhythm
 of THIS trade. A bakery does not advertise like a law firm. A creative that could sell any
