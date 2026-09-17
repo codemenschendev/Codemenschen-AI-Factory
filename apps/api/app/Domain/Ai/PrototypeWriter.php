@@ -477,6 +477,13 @@ class PrototypeWriter
         // minutes are spent on.
         $qa['bytes'] = strlen($markup);
 
+        // The sender line of an e-mail mock-up. The prompt forbids a made-up sender address and
+        // the wp-giftcard.com build printed "Gift Cards Pro <hello@wp-giftcard.com>" anyway, four
+        // times. The name stays; an address nobody gave is removed here, after the last repair.
+        if ($kind === 'email') {
+            $page = self::withoutSenderAddress($page, $facts);
+        }
+
         return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];
     }
 
@@ -661,6 +668,14 @@ class PrototypeWriter
         }
 
         return array_values(array_unique($found));
+    }
+
+    /** "Name <someone@domain>" becomes "Name", unless the customer's sentence or website gave that address. */
+    public static function withoutSenderAddress(string $html, string $facts): string
+    {
+        return preg_replace_callback('~\s*(?:&lt;|<)\s*([^\s<>&;"\']+@[^\s<>&;"\']+\.[a-z]{2,})\s*(?:&gt;|>)~iu',
+            fn (array $m): string => stripos($facts, $m[1]) !== false ? $m[0] : '',
+            $html) ?? $html;
     }
 
     /** " – " and " — " in the <title> become ": ", which is how every other line here breaks. */
