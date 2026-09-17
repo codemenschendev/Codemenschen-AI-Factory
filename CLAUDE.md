@@ -32,7 +32,7 @@
 
 ## Prototypes
 
-- All three kinds (site, app, ads) write their own CSS; `house.css` only feeds `packages/design-system`.
+- All four kinds (site, app, ads, email) write their own CSS; `house.css` only feeds `packages/design-system`.
 - Photographs come from the shared library, then Pexels, never generated. Each slot carries
   `data-q` (2 to 4 English nouns) for the search.
 - The QA gate is `apps/api/tools/qa-page.cjs`; `PageAudit::repairable()` decides what earns a repair.

@@ -25,7 +25,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
-  const [kind, setKind] = useState<"site" | "app" | "ads">("site");
+  const [kind, setKind] = useState<"site" | "app" | "ads" | "email">("site");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -61,7 +61,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 8 }}>
         <legend style={{ padding: 0, marginBottom: 4 }}>{p.kindLabel}</legend>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {(["site", "app", "ads"] as const).map((k) => (
+          {(["site", "app", "ads", "email"] as const).map((k) => (
             <button
               key={k}
               type="button"
