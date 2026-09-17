@@ -203,7 +203,7 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
         </p>
         <div style={{ display: "flex", gap: 12 }}>
           <Link className="lang-toggle" href={`/${locale}/create?from=${id}`} onClick={() => trackOnce(`make-real-${id}`, "cta_click", { cta: "prototype_make_real", kind: meta.kind ?? null })}>
-            {p.makeReal}
+            {p.makeReal[(meta.kind ?? "site") as keyof typeof p.makeReal] ?? p.makeReal.site}
           </Link>
           <Link className="lang-toggle" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${id}`, "cta_click", { cta: "prototype_another" })}>
             {p.another}
