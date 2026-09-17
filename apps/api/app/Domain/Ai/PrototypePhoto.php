@@ -179,6 +179,7 @@ class PrototypePhoto
         // The business's own logo where the model marked the wordmark. The name inside stays as
         // the alt text, and a logo that cannot be fetched leaves the name in type, as it was.
         $logoPlaced = false;
+        $logo = null;
         if (($site['logo'] ?? null) !== null && isset($site['fetch'])
             && preg_match('~<(\w+)([^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*)>(.*?)</\1>~is', $html) === 1
             && ($logo = $this->logo($site['logo'], $site['fetch'])) !== null) {
@@ -195,6 +196,26 @@ class PrototypePhoto
                 return '<'.$m[1][0].$m[2][0].'><img src="'.$logo.'" alt="'.htmlspecialchars($name, ENT_QUOTES, 'UTF-8').'"></'.$m[1][0].'>';
             }, $html, -1, $count, PREG_OFFSET_CAPTURE) ?? $html;
             $logoPlaced = true;
+        }
+        // An ad's avatar is the business's logo, the way the platforms show a page, and the page
+        // name beside it is text. The wp-giftcard.com ads drew the avatar as an empty gradient
+        // circle next to the logo, which read as a crop of a photograph.
+        if (($site['avatar'] ?? false) && ($site['logo'] ?? null) !== null && isset($site['fetch'])
+            && preg_match('~\sclass="[^"]*\bavatar\b~i', $html) === 1
+            && ($logo ??= $this->logo($site['logo'], $site['fetch'])) !== null) {
+            $html = preg_replace_callback('~<(\w+)([^>]*\sclass="[^"]*\bavatar\b[^"]*"[^>]*)>(.*?)</\1>~is',
+                fn (array $m) => str_contains(strtolower($m[3]), '<img') ? $m[0]
+                    : '<'.$m[1].(preg_replace('~(\sclass=")~', '$1has-logo ', $m[2], 1) ?? $m[2]).'><img src="'.$logo.'" alt=""></'.$m[1].'>',
+                $html) ?? $html;
+            // The name next to it is text again: the same logo twice in one row is a sticker.
+            $html = preg_replace_callback('~<(\w+)[^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*><img[^>]*\balt="([^"]*)"[^>]*></\1>~is',
+                fn (array $m) => '<'.$m[1].' class="page-name">'.$m[2].'</'.$m[1].'>', $html) ?? $html;
+            $css = '.avatar.has-logo{background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:2px;color:transparent}'
+                .'.avatar.has-logo>img{display:block;width:100%;height:100%;object-fit:contain}';
+            $html = preg_replace('~</style>~i', $css.'</style>', $html, 1, $count) ?? $html;
+            if ($count === 0) {
+                $html = preg_replace('~</head>~i', '<style>'.$css.'</style></head>', $html, 1) ?? $html;
+            }
         }
         if ($logoPlaced) {
             $css = '.site-logo{display:inline-flex;align-items:center}.site-logo>img{display:block;height:32px;width:auto;max-width:200px;background:#fff;border-radius:6px;padding:2px 6px}';

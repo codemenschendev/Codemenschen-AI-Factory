@@ -160,6 +160,21 @@ class PrototypePhotoTest extends TestCase
         $this->assertSame(1, substr_count($out['html'], 'data:image/svg+xml'));
     }
 
+    public function test_an_ad_avatar_is_the_logo_and_the_page_name_is_text(): void
+    {
+        $page = '<!doctype html><html><head><style>.avatar{background:red}</style></head><body>'
+            .'<div class="head"><span class="avatar">GC</span><div class="who"><span class="site-logo">Gift Cards Pro</span><small>Sponsored</small></div></div>'
+            .'<div class="head"><span class="avatar">GC</span><div class="who">Gift Cards Pro<small>Sponsored</small></div></div></body></html>';
+        $site = ['logo' => 'https://g.com/logo.svg', 'avatar' => true,
+            'fetch' => fn () => '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"></svg>'];
+
+        $out = $this->photo()->apply($page, $site);
+
+        $this->assertSame(2, substr_count($out['html'], '<span class="has-logo avatar"><img src="data:image/svg+xml;base64,'));
+        $this->assertStringContainsString('<span class="page-name">Gift Cards Pro</span><small>Sponsored</small>', $out['html']);
+        $this->assertStringContainsString('.avatar.has-logo{background:#fff', $out['html']);
+    }
+
     public function test_a_picture_the_site_cannot_give_falls_back_to_stock(): void
     {
         $page = '<!doctype html><html><body><div class="photo-wide" data-site="1" data-q="bakery">Brot im Korb</div></body></html>';
