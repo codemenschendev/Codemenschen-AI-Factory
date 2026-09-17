@@ -4,13 +4,16 @@ namespace App\Jobs;
 
 use App\Domain\Ads\AdFormats;
 use App\Domain\Ai\AdScriptWriter;
+use App\Domain\Ai\DesignStudy;
 use App\Domain\Ai\ImageService;
+use App\Domain\Ai\ProductPage;
 use App\Domain\Ai\ScreenshotService;
 use App\Domain\Ai\SiteBrief;
 use App\Domain\Ai\StockPhotos;
 use App\Domain\Design\DesignLibrary;
 use App\Domain\Library\ImageLibrary;
 use App\Models\ProjectAd;
+use App\Models\StoreAsset;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
@@ -35,7 +38,8 @@ class RenderProjectAd implements ShouldQueue
     public function __construct(public int $adId) {}
 
     public function handle(AdScriptWriter $writer, ImageService $images, SiteBrief $sites,
-        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs, StockPhotos $stock): void
+        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs, StockPhotos $stock,
+        ProductPage $pages, DesignStudy $study): void
     {
         $ad = ProjectAd::find($this->adId);
         if (! $ad || $ad->status === 'ready') {
@@ -45,7 +49,7 @@ class RenderProjectAd implements ShouldQueue
         $ad->update(['status' => 'rendering', 'error' => null]);
 
         try {
-            $this->render($ad, $writer, $images, $sites, $shots, $library, $refs, $stock);
+            $this->render($ad, $writer, $images, $sites, $shots, $library, $refs, $stock, $pages, $study);
         } catch (Throwable $e) {
             Log::error('render video failed', ['ad' => $ad->id, 'error' => $e->getMessage()]);
             $ad->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 500)]);
@@ -53,7 +57,8 @@ class RenderProjectAd implements ShouldQueue
     }
 
     private function render(ProjectAd $ad, AdScriptWriter $writer, ImageService $images, SiteBrief $sites,
-        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs, StockPhotos $stock): void
+        ScreenshotService $shots, ImageLibrary $library, DesignLibrary $refs, StockPhotos $stock,
+        ProductPage $pages, DesignStudy $study): void
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
@@ -77,7 +82,7 @@ class RenderProjectAd implements ShouldQueue
                 (string) $ad->prompt,
                 (string) ($spec['language'] ?? 'de'),
                 $ad->kind,
-                $this->context($ad, $forCopy),
+                $this->context($ad, $forCopy, $pages, $study),
                 isset($spec['goal']) ? (string) $spec['goal'] : null,
                 isset($spec['angle']) ? (string) $spec['angle'] : null,
                 // A real ad of the same angle, if the library has one. The angle is the request:
@@ -89,6 +94,8 @@ class RenderProjectAd implements ShouldQueue
                     AdFormats::shape(isset($spec['format']) ? (string) $spec['format'] : null),
                 ),
             );
+            // Kept on the ad: a flaw the second attempt could not remove is the operator's to see.
+            $spec['copy_faults'] = $writer->faults;
         }
 
         // An image ad is one picture. Anything the model sent beyond the first scene would be
@@ -193,9 +200,17 @@ class RenderProjectAd implements ShouldQueue
      * @return array<string,string>
      */
     /** @param  array<string,string>|null  $site */
-    private function context(ProjectAd $ad, ?array $site): array
+    private function context(ProjectAd $ad, ?array $site, ?ProductPage $pages = null, ?DesignStudy $study = null): array
     {
         $project = $ad->project;
+
+        // The whole homepage and a product brief written from it. Title, description and two
+        // headings were what the copywriter had before, and for wp-giftcard.com the same thin
+        // reading produced ads for cashing in gift cards. The brief says what is sold, to whom,
+        // why, and what the site itself proves.
+        $domain = $pages !== null ? ProductPage::domainIn((string) $ad->prompt) : null;
+        $page = $domain !== null ? $pages->read($domain) : null;
+        $product = $page !== null ? $study?->product((string) $ad->prompt, $page) : null;
 
         // When the brief names a page, THAT is what the ad is for. The project is only where the
         // ad is filed: asking for an ad for codemenschen.at while sitting in a hair salon project
@@ -207,14 +222,38 @@ class RenderProjectAd implements ShouldQueue
                     $context['subject_'.$k] = $site[$k];
                 }
             }
+            if ($product !== null) {
+                $context['subject_product_brief'] = $product;
+            }
+            if ($page !== null) {
+                $context['subject_website_text'] = mb_substr($page['text'], 0, 2500);
+            }
             $context['filed_under_project'] = mb_substr((string) $project->name, 0, 120);
 
             return $context;
         }
+        if ($page !== null) {
+            // The page answered here but not to SiteBrief (a second redirect, a slow host): still
+            // the subject, still better than the project name.
+            return array_filter([
+                'subject' => $page['url'],
+                'subject_product_brief' => (string) $product,
+                'subject_website_text' => mb_substr($page['text'], 0, 2500),
+                'filed_under_project' => mb_substr((string) $project->name, 0, 120),
+            ]);
+        }
+
+        // No page: the ad is for the app this project builds. The project name is the first sixty
+        // characters of the idea, and "expo" told the copywriter nothing, so the whole idea and
+        // the store description (once the assets stage has written one) go instead.
+        $store = StoreAsset::where('project_id', $project->id)->where('kind', 'description')
+            ->orderByRaw('locale = ? desc', [(string) (($ad->spec ?? [])['language'] ?? 'de')])->latest('version')->value('content');
 
         return array_filter([
             'subject' => (string) $project->name,
-            'subject_platform' => (string) $project->stack,
+            'subject_description' => mb_substr((string) $project->order?->quote?->idea, 0, 1500),
+            'subject_store_description' => mb_substr((string) $store, 0, 1500),
+            'subject_platform' => $project->stack === 'nextjs' ? 'web app' : 'mobile app',
         ]);
     }
 
