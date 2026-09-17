@@ -346,7 +346,7 @@ class PrototypeRepairTest extends TestCase
         {
             public function __construct() {}
 
-            public function apply(string $html): array
+            public function apply(string $html, array $site = []): array
             {
                 return ['html' => $html.'<!--photo-->', 'photo' => 'Lena am Waschbecken',
                     'photos' => ['Lena am Waschbecken'], 'source' => 'stock', 'sources' => ['stock'],

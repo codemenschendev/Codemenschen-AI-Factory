@@ -33,7 +33,7 @@ domain, "wp-giftcard.com". Never a brand name you made up, never a sender e-mail
 
 Every e-mail sits in a light inbox frame: a small header strip with the sender name, the
 subject line in bold and the preheader in grey. Below it the message: the business's
-wordmark in type (no logo image), ONE photograph, a headline, two or three short
+wordmark in type (or the site-logo span, when a logo is offered), ONE photograph, a headline, two or three short
 sentences, one button, a content block that belongs to that e-mail (the benefits, the item
 left behind, the order summary, what is new), and a small grey footer with the business
 name, its place if the brief gives one, and "Abmelden" or "Unsubscribe".
