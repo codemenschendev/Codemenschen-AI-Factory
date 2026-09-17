@@ -4,7 +4,7 @@ namespace Tests\Unit;
 
 use App\Domain\Qa\ContentClaims;
 use App\Domain\Qa\PageAudit;
-use PHPUnit\Framework\TestCase;
+use Tests\TestCase;
 
 /**
  * The two faults the first pack builds shipped: bread prices nobody marked as examples, and a
@@ -89,5 +89,28 @@ class ContentClaimsTest extends TestCase
         $this->assertNotNull(collect(ContentClaims::findings($de, 'x', 'ads'))->firstWhere('check', 'label-language'));
         $this->assertNull(collect(ContentClaims::findings($ok, 'x', 'ads'))->firstWhere('check', 'label-language'));
         $this->assertNull(collect(ContentClaims::findings($en, 'x', 'site'))->firstWhere('check', 'label-language'), 'a site has no platform labels');
+    }
+
+    public function test_the_gateway_accounts_identity_is_never_printed(): void
+    {
+        config(['services.ai_image.private_identities' => ['owner.name@gmail.com', 'Fuchsbauer', 'Patrick']]);
+        $page = '<html><body><p>Servus, Patrick</p><p>Owner Fuchsbauer</p><small>owner.name@gmail.com</small>'
+            .'<p>Anna, anna@example.com, info@baeckerei-huber.at</p><p>Patricks Bäckerei</p></body></html>';
+
+        $found = collect(ContentClaims::findings($page, 'Eine App für Taxifahrten in Wien', 'app'))->firstWhere('check', 'personal-data');
+
+        $this->assertNotNull($found);
+        $this->assertEqualsCanonicalizing(['owner.name@gmail.com', 'Fuchsbauer', 'Patrick'], $found['elements']);
+    }
+
+    public function test_a_name_or_address_the_customer_gave_is_theirs_to_print(): void
+    {
+        config(['services.ai_image.private_identities' => ['Patrick']]);
+        $page = '<html><body><p>Friseur Patrick in Graz</p><p>termine.graz@gmail.com</p></body></html>';
+
+        $this->assertNull(collect(ContentClaims::findings($page, 'Website für Friseur Patrick in Graz, Mail termine.graz@gmail.com', 'site'))
+            ->firstWhere('check', 'personal-data'));
+        $this->assertNotNull(collect(ContentClaims::findings($page, 'Website für einen Friseur in Graz', 'site'))
+            ->firstWhere('check', 'personal-data'), 'a private mail address the customer never gave is someone real');
     }
 }
