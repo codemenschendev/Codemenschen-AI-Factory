@@ -62,7 +62,7 @@ class RenderProjectAd implements ShouldQueue
     {
         $work = rtrim((string) config('services.media.uploads_path'), '/').'/jobs/'.$ad->id;
         if (! is_dir($work) && ! mkdir($work, 0775, true) && ! is_dir($work)) {
-            throw new \RuntimeException('Không tạo được thư mục làm việc: '.$work);
+            throw new \RuntimeException('Could not create work directory: '.$work);
         }
 
         $spec = (array) ($ad->spec ?? []);
@@ -182,7 +182,7 @@ class RenderProjectAd implements ShouldQueue
         $name = 'p'.$ad->project_id.'-'.$ad->id.'.'.$ext;
         $dest = rtrim((string) config('services.media.videos_path'), '/').'/'.$name;
         if (! rename($out, $dest) && ! copy($out, $dest)) {
-            throw new \RuntimeException('Không chuyển được file vào thư mục media.');
+            throw new \RuntimeException('Could not move file into the media directory.');
         }
 
         $ad->update([

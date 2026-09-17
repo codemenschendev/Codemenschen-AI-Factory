@@ -25,7 +25,7 @@ class ImageService
         $token = (string) config('services.ai_image.token');
 
         if ($baseUrl === '' || $token === '') {
-            throw new RuntimeException('Chưa cấu hình dịch vụ sinh ảnh (AI_IMAGE_SERVICE_TOKEN).');
+            throw new RuntimeException('Image service is not configured (AI_IMAGE_SERVICE_TOKEN).');
         }
 
         $payload = array_filter([
@@ -44,14 +44,14 @@ class ImageService
             ->post('/v1/images/generate', $payload);
 
         if (! $res->successful()) {
-            throw new RuntimeException('Sinh ảnh thất bại ('.$res->status().'): '.mb_substr((string) $res->body(), 0, 300));
+            throw new RuntimeException('Image generation failed ('.$res->status().'): '.mb_substr((string) $res->body(), 0, 300));
         }
 
         $b64 = (string) $res->json('base64');
         $bytes = $b64 === '' ? false : base64_decode($b64, true);
 
         if ($bytes === false || $bytes === '') {
-            throw new RuntimeException('Dịch vụ sinh ảnh trả về dữ liệu rỗng.');
+            throw new RuntimeException('Image service returned empty data.');
         }
 
         return $bytes;

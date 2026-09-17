@@ -180,7 +180,7 @@ class GoogleAdsPublisher implements Publisher
         $this->assertConfigured();
         $resource = $campaign->platform_ref['campaign_id'] ?? null;
         if (! $resource) {
-            throw new RuntimeException('Google: campaign chưa được đăng.');
+            throw new RuntimeException('Google: campaign has not been published.');
         }
         $cid = $this->cfg('customer_id');
 
@@ -304,7 +304,7 @@ class GoogleAdsPublisher implements Publisher
             ->map(fn ($c) => trim((string) $c))->filter()->take($maxCount)->values();
 
         if ($texts->count() < $min) {
-            throw new RuntimeException("Google: cần ít nhất {$min} {$kind}.");
+            throw new RuntimeException("Google: at least {$min} {$kind} required.");
         }
 
         return $texts->map(fn ($t) => ['text' => $t])->all();
@@ -336,7 +336,7 @@ class GoogleAdsPublisher implements Publisher
     private function assertConfigured(): void
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Google Ads chưa cấu hình (GOOGLE_ADS_CUSTOMER_ID / CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN).');
+            throw new RuntimeException('Google Ads is not configured (GOOGLE_ADS_CUSTOMER_ID / CLIENT_ID / CLIENT_SECRET / REFRESH_TOKEN).');
         }
     }
 }

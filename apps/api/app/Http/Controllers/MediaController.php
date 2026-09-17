@@ -98,7 +98,7 @@ class MediaController extends Controller
         // One render at a time per project: pictures are paid for per scene, and a customer
         // hammering the button would otherwise queue a bill.
         $busy = $project->ads()->whereIn('status', ['queued', 'rendering'])->exists();
-        abort_if($busy, 409, 'Đang dựng một quảng cáo cho project này, đợi xong đã.');
+        abort_if($busy, 409, 'An ad is already rendering for this project. Wait until it is done.');
 
         $kind = $data['kind'] ?? 'video';
         $format = $data['format'] ?? AdFormats::DEFAULT;
@@ -106,9 +106,9 @@ class MediaController extends Controller
         // A film has nowhere to run on a 320x50 banner, and the display units still lay their text
         // out for a large canvas. Say which it is rather than rendering something unusable.
         abort_unless($spec && in_array($kind, $spec['kinds'], true), 422,
-            'Khổ này không dùng được cho loại quảng cáo đã chọn.');
+            'This format does not work for the selected ad type.');
         abort_unless($spec['ready'], 422,
-            'Khổ này đã có kích thước đúng nhưng phần chữ chưa dựng cho canvas nhỏ.');
+            'This format has the right size, but its text layout is not built for small canvases yet.');
         $size = AdFormats::size($format);
 
         $ad = $project->ads()->create([

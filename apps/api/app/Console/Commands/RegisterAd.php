@@ -37,7 +37,7 @@ class RegisterAd extends Command
         $realBase = realpath($base);
 
         if (! $real || ! $realBase || ! str_starts_with($real, $realBase.'/') || ! is_file($real)) {
-            $this->error('Không thấy file trong thư mục media: '.$base.'/'.$rel);
+            $this->error('File not found in the media directory: '.$base.'/'.$rel);
 
             return self::FAILURE;
         }

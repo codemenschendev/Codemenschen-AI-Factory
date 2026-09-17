@@ -79,7 +79,7 @@ class MetaAdsPublisher implements Publisher
         $ad = $campaign->projectAd;
 
         if (! $ad || ! is_file($ad->absolutePath())) {
-            throw new RuntimeException('Meta: không có file creative để đăng.');
+            throw new RuntimeException('Meta: no creative file to publish.');
         }
 
         $ref = [];
@@ -113,7 +113,7 @@ class MetaAdsPublisher implements Publisher
         // 3. the ad set: the customer's monthly budget, as a daily cap in minor units (cents).
         $daily = max(100, (int) round($campaign->ad_budget_monthly_eur * 100 / 30));
         $adset = $this->post("{$act}/adsets", [
-            'name' => $this->name($campaign).' – set',
+            'name' => $this->name($campaign).': set',
             'campaign_id' => $ref['campaign_id'],
             'daily_budget' => $daily,
             'billing_event' => 'IMPRESSIONS',
@@ -140,7 +140,7 @@ class MetaAdsPublisher implements Publisher
             $linkData['video_id'] = $ref['video_id'];
         }
         $creative = $this->post("{$act}/adcreatives", [
-            'name' => $this->name($campaign).' – creative',
+            'name' => $this->name($campaign).': creative',
             'object_story_spec' => json_encode([
                 'page_id' => $this->cfg('page_id'),
                 'link_data' => $linkData,
@@ -150,7 +150,7 @@ class MetaAdsPublisher implements Publisher
 
         // 5. the ad, paused.
         $adObj = $this->post("{$act}/ads", [
-            'name' => $this->name($campaign).' – ad',
+            'name' => $this->name($campaign).': ad',
             'adset_id' => $ref['adset_id'],
             'creative' => json_encode(['creative_id' => $ref['creative_id']]),
             'status' => 'PAUSED',
@@ -164,7 +164,7 @@ class MetaAdsPublisher implements Publisher
     {
         $id = $campaign->platform_ref['campaign_id'] ?? null;
         if (! $id) {
-            throw new RuntimeException('Meta: campaign chưa được đăng.');
+            throw new RuntimeException('Meta: campaign has not been published.');
         }
         $this->post($id, ['status' => 'ACTIVE']);
     }
@@ -197,7 +197,7 @@ class MetaAdsPublisher implements Publisher
     private function assertConfigured(): void
     {
         if (! $this->isConfigured()) {
-            throw new RuntimeException('Meta Ads chưa cấu hình (META_ADS_TOKEN / ACCOUNT_ID / PAGE_ID).');
+            throw new RuntimeException('Meta Ads is not configured (META_ADS_TOKEN / ACCOUNT_ID / PAGE_ID).');
         }
     }
 

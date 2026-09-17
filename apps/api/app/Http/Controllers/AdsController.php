@@ -54,8 +54,8 @@ class AdsController extends Controller
         if (! empty($data['project_ad_id'])) {
             $ad = ProjectAd::find($data['project_ad_id']);
             // The creative must belong to the same project, and be finished rendering.
-            abort_unless($ad && $ad->project_id === $campaign->project_id, 422, 'Creative không thuộc project này.');
-            abort_unless($ad->status === 'ready', 422, 'Creative chưa render xong.');
+            abort_unless($ad && $ad->project_id === $campaign->project_id, 422, 'Creative does not belong to this project.');
+            abort_unless($ad->status === 'ready', 422, 'Creative has not finished rendering.');
             $campaign->update(['project_ad_id' => $ad->id]);
             $campaign->load('projectAd');
         }
@@ -65,7 +65,7 @@ class AdsController extends Controller
             return response()->json(['problems' => $problems], 422);
         }
 
-        abort_if(in_array($campaign->platform_status, ['publishing', 'active'], true), 409, 'Campaign đang xử lý hoặc đã chạy.');
+        abort_if(in_array($campaign->platform_status, ['publishing', 'active'], true), 409, 'Campaign is being processed or already running.');
 
         $campaign->update(['platform_status' => 'publishing', 'publish_error' => null]);
         PublishCampaign::dispatch($campaign->id);
@@ -78,8 +78,8 @@ class AdsController extends Controller
     {
         $this->authorize($request, $campaign);
 
-        abort_unless($campaign->platform_status === 'paused', 409, 'Chỉ bật được campaign đã đăng và đang tạm dừng.');
-        abort_unless((int) $campaign->ad_budget_monthly_eur > 0, 422, 'Ngân sách bằng 0, khách chưa thanh toán.');
+        abort_unless($campaign->platform_status === 'paused', 409, 'Only a published, paused campaign can be activated.');
+        abort_unless((int) $campaign->ad_budget_monthly_eur > 0, 422, 'Budget is 0. The customer has not paid yet.');
 
         $registry->for($campaign->platform)->activate($campaign);
         $campaign->update(['platform_status' => 'active', 'activated_at' => now()]);
@@ -94,7 +94,7 @@ class AdsController extends Controller
     {
         $this->authorize($request, $campaign);
 
-        abort_unless($campaign->platform_status === 'active', 409, 'Campaign không đang chạy.');
+        abort_unless($campaign->platform_status === 'active', 409, 'Campaign is not running.');
         $registry->for($campaign->platform)->pause($campaign);
         $campaign->update(['platform_status' => 'paused']);
 

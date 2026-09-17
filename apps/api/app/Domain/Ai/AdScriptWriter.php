@@ -185,7 +185,7 @@ class AdScriptWriter
         $token = (string) config('services.ai_image.token');
 
         if ($baseUrl === '' || $token === '') {
-            throw new RuntimeException('Chưa cấu hình dịch vụ AI (AI_IMAGE_SERVICE_TOKEN).');
+            throw new RuntimeException('AI service is not configured (AI_IMAGE_SERVICE_TOKEN).');
         }
 
         $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(180)->connectTimeout(10);
@@ -218,7 +218,7 @@ class AdScriptWriter
         ]);
 
         if (! $res->successful()) {
-            throw new RuntimeException('Viết nội dung quảng cáo thất bại ('.$res->status().').');
+            throw new RuntimeException('Writing the ad copy failed ('.$res->status().').');
         }
 
         return (string) $res->json('choices.0.message.content');
