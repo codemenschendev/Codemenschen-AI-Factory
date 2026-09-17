@@ -67,3 +67,6 @@ Words:
   - The business is where the brief says it is. If the brief names no town, name none:
     "bei dir vor Ort", never a town you picked. The same for prices, dates and discounts:
     only what the brief says, and the offer angle sells a reason, not an invented number.
+  - No invented scarcity or deadline: "nur noch wenige Plätze", "nur diese Woche", "only 3
+    left" appear only when the brief or the business's website says so. The reminder angle
+    reminds of the benefit, it does not threaten with a closing door.

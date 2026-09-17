@@ -120,6 +120,21 @@ class PrototypePhotoTest extends TestCase
         $this->assertSame('Anna Fotografin', $out['credit']);
     }
 
+    public function test_the_photograph_is_made_to_fill_the_shape_the_model_drew(): void
+    {
+        $withStyle = '<!doctype html><html><head><style>.photo-card{aspect-ratio:1200/628}</style></head><body>'
+            .'<div class="photo-card" data-q="laptop code">Laptop mit Code</div></body></html>';
+
+        $out = $this->photo($this->stock($this->png()))->apply($withStyle);
+
+        // Last in the stylesheet, so it beats the model's own rule; without it a 4:3 photo turned
+        // a 1.91:1 link ad into a 358x318 box.
+        $this->assertMatchesRegularExpression('~\.has-photo>img\{display:block;width:100%;height:100%;object-fit:cover\}</style>~', $out['html']);
+
+        $noStyle = $this->photo($this->stock($this->png()))->apply(str_replace('<style>.photo-card{aspect-ratio:1200/628}</style>', '', $withStyle));
+        $this->assertStringContainsString('object-fit:cover}</style></head>', $noStyle['html']);
+    }
+
     public function test_a_slot_the_model_named_itself_is_still_a_slot(): void
     {
         // The Linz bakery's hero: class="photo-hero", a search phrase, a brief, and no picture,

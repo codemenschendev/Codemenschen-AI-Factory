@@ -157,6 +157,18 @@ class PrototypePhoto
             return $this->nothing($html);
         }
 
+        // The photograph fills the shape the model drew, whatever the model wrote for <img>. The
+        // prompt asks for width, height and object-fit and a page often forgets: a codemenschen.at
+        // ad built its link creative at 1.91:1, then a 4:3 stock photo pushed it to 358x318 and
+        // the audit failed a page that had been clean one step earlier. Last in the stylesheet so
+        // it wins over the model's own rule of the same weight; padding is dropped because it framed the brief text, not the picture; min-height 0 keeps a box sized by
+        // aspect-ratio from growing to the picture.
+        $fit = '.has-photo{overflow:hidden;min-height:0;padding:0}.has-photo>img{display:block;width:100%;height:100%;object-fit:cover}';
+        $html = preg_replace('~</style>~i', $fit.'</style>', $html, 1, $count) ?? $html;
+        if ($count === 0) {
+            $html = preg_replace('~</head>~i', '<style>'.$fit.'</style></head>', $html, 1) ?? $html;
+        }
+
         return [
             'html' => $html,
             'photo' => $photos[0],
