@@ -221,7 +221,11 @@ class PrototypePhoto
                 .'.has-photo.is-screen>img{width:100%;height:auto;max-height:100%;object-fit:contain;background:#fff;'
                 .'border:5px solid #0e1015;border-top-width:12px;border-radius:9px;box-shadow:0 16px 36px rgba(0,0,0,.4)}'
                 .'.has-photo.is-graphic>img{width:auto;height:auto;max-width:86%;max-height:86%;object-fit:contain;'
-                .'transform:rotate(-3deg);border-radius:8px;box-shadow:0 16px 36px rgba(0,0,0,.4)}';
+                .'transform:rotate(-3deg);border-radius:8px;box-shadow:0 16px 36px rgba(0,0,0,.4)}'
+                // A story writes its words over the lower third. A voucher shown whole there sat
+                // under the headline, so in a story it keeps to the top half.
+                .'.ad-story .has-photo.is-screen,.ad-story .has-photo.is-graphic{align-items:flex-start;padding-top:22%}'
+                .'.ad-story .has-photo.is-screen>img,.ad-story .has-photo.is-graphic>img{max-height:46%}';
         }
         $html = preg_replace('~</style>~i', $fit.'</style>', $html, 1, $count) ?? $html;
         if ($count === 0) {
