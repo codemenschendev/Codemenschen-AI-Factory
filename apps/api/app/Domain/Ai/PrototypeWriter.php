@@ -391,6 +391,9 @@ class PrototypeWriter
         // audit still catches a dash in the page; the title is the one place a machine fixes it
         // better than a model.
         $markup = $this->titleWithoutDash($markup);
+        if ($kind === 'ads') {
+            $markup = self::adFrameWidths($markup);
+        }
         $stage('auditing');
 
         // The page is whole as it comes back: the model wrote the stylesheet, so there is nothing
@@ -737,6 +740,22 @@ class PrototypeWriter
     }
 
     /** " – " and " — " in the <title> become ": ", which is how every other line here breaks. */
+    /**
+     * Each creative claims its width in the row. The first two-creative build put the story in a
+     * wrapping flex row with no basis: the article shrank to its content, the frame's width: 100%
+     * followed it, and a 1080 x 1920 story came out 70px wide beside a full-size square. Written
+     * after the page's own stylesheet, so it wins, and it holds in a grid as well.
+     */
+    public static function adFrameWidths(string $html): string
+    {
+        $css = '<style>.ads>.ad-story{flex:0 1 300px;width:100%;max-width:300px;min-width:0}'
+            .'.ads>.ad-square{flex:0 1 400px;width:100%;max-width:400px;min-width:0}</style>';
+
+        return stripos($html, '</head>') !== false
+            ? (string) preg_replace('~</head>~i', $css.'</head>', $html, 1)
+            : $css.$html;
+    }
+
     private function titleWithoutDash(string $html): string
     {
         return preg_replace_callback('~(<title[^>]*>)(.*?)(</title>)~is', function (array $m): string {

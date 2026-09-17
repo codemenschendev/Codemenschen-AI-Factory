@@ -83,6 +83,15 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringNotContainsString('house.css', $sent);
     }
 
+    public function test_every_ad_frame_claims_its_width_in_the_row(): void
+    {
+        $page = PrototypeWriter::adFrameWidths('<!doctype html><html><head><style>.ads{display:flex}</style></head><body></body></html>');
+
+        $this->assertStringContainsString('.ads>.ad-story{flex:0 1 300px', $page);
+        $this->assertLessThan(strpos($page, '</head>'), strpos($page, '.ad-square{flex:0 1 400px'));
+        $this->assertGreaterThan(strpos($page, '.ads{display:flex}'), strpos($page, '.ads>.ad-story'));
+    }
+
     public function test_the_email_prototype_is_the_four_emails_of_one_flow(): void
     {
         // Patrick's reference was a skincare brand's welcome, reminder, order and win-back

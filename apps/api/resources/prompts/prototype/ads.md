@@ -11,8 +11,9 @@ the two side by side on a laptop, centred, wrapping to one column only below 700
 
 The frames are drawn at a size, never fixed to it. Every frame is width: 100% with a
 max-width (300px for the story, 400px for the square) and an aspect-ratio for its shape,
-in a flex row that wraps or a grid of repeat(auto-fit, minmax(260px, max-content)). A fixed
-width runs off a 320px phone and the audit fails it.
+in a centred flex row that wraps, where the story is flex: 0 1 300px and the square
+flex: 0 1 400px. Without a flex-basis a frame shrinks to its content and a story comes out
+70px wide. A fixed width runs off a 320px phone and the audit fails it.
 
 YOU WRITE THE CSS. One <style> block, and design it properly: a quiet neutral page so the
 creatives are the only colour on it, and inside them the type, colour and rhythm of THIS trade.
