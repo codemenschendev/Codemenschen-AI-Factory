@@ -27,6 +27,10 @@ a real flow does: the same wordmark, palette, type and button in all four, desig
 THIS trade. A skincare brand is calm and airy, a bakery warm, a software plugin clean and
 precise. An e-mail that could come from any company sells nothing.
 
+The business keeps its own name. The wordmark and the sender are the name the website or
+the brief uses, spelled the same way; when only a domain is known, the sender is that
+domain, "wp-giftcard.com". Never a brand name you made up, never a sender e-mail address.
+
 Every e-mail sits in a light inbox frame: a small header strip with the sender name, the
 subject line in bold and the preheader in grey. Below it the message: the business's
 wordmark in type (no logo image), ONE photograph, a headline, two or three short
