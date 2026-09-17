@@ -68,6 +68,9 @@ return [
         // x-openclaw-model header. Leave the second empty to use whatever the agent is set to.
         'chat_model' => env('AI_CHAT_TARGET', 'openclaw/main'),
         'chat_backend_model' => env('AI_CHAT_BACKEND_MODEL', ''),
+        // Names and addresses the model can see behind the gateway (claude-cli injects the signed-in
+        // account's e-mail) and must never print. Comma-separated; checked on every prototype.
+        'private_identities' => array_values(array_filter(array_map('trim', explode(',', (string) env('PROTOTYPE_PRIVATE_IDENTITIES', ''))))),
     ],
 
     // Ad platforms. Campaigns run on Codemenschen's OWN ad accounts (one token set, no per-client

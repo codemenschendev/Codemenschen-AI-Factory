@@ -79,6 +79,12 @@ class ContentClaims
                 'elements' => array_slice($reworded, 0, 4)];
         }
 
+        if (($personal = self::personal($text, $prompt)) !== []) {
+            $out[] = ['severity' => 'blocking', 'check' => 'personal-data', 'viewports' => [],
+                'detail' => 'the page prints a real person\'s name or e-mail address that the customer never gave; replace it with an invented person on example.com, for example "Anna" and anna@example.com',
+                'elements' => $personal];
+        }
+
         if ($kind === 'ads' && ($mixed = self::labelLanguage($html, $text)) !== null) {
             $out[] = ['severity' => 'blocking', 'check' => 'label-language', 'viewports' => [],
                 'detail' => 'the platform labels are in a different language from the page; write "sponsored" and "learn more" in the language of the ads and of <html lang>',
@@ -132,6 +138,41 @@ class ContentClaims
         }
 
         return array_values(array_unique($out));
+    }
+
+    /** Mail providers people use privately. An invented info@ address of the business is not a person. */
+    private const PRIVATE_MAIL = ['gmail.com', 'googlemail.com', 'gmx.at', 'gmx.net', 'gmx.de', 'outlook.com', 'hotmail.com', 'live.com', 'yahoo.com', 'icloud.com', 'me.com', 'aon.at', 'web.de', 'proton.me', 'protonmail.com'];
+
+    /**
+     * A real person on the page. The gateway runs claude-cli signed in as the owner, and Claude
+     * Code puts that account's e-mail in the model's context: a prototype's account screen came
+     * back as the owner's full name and address, and an app greeted its user "Servus, Patrick".
+     * Checked against the configured identities, and any private-mail address the customer did
+     * not give.
+     *
+     * @return list<string>
+     */
+    private static function personal(string $text, string $source): array
+    {
+        $found = [];
+        foreach ((array) config('services.ai_image.private_identities', []) as $who) {
+            $who = trim((string) $who);
+            if (mb_strlen($who) < 3 || mb_stripos($source, $who) !== false) {
+                continue;
+            }
+            if (preg_match('/(?<![\p{L}\p{N}@.])'.preg_quote($who, '/').'(?![\p{L}\p{N}])/iu', $text) === 1) {
+                $found[] = $who;
+            }
+        }
+        if (preg_match_all('/[\p{L}\p{N}._%+-]+@([\p{L}\p{N}-]+(?:\.[\p{L}\p{N}-]+)+)/u', $text, $m, PREG_SET_ORDER) > 0) {
+            foreach ($m as $mail) {
+                if (in_array(mb_strtolower($mail[1]), self::PRIVATE_MAIL, true) && mb_stripos($source, $mail[0]) === false) {
+                    $found[] = $mail[0];
+                }
+            }
+        }
+
+        return array_values(array_unique($found));
     }
 
     /** "Gesponsert" on an English page or "Sponsored" on a German one. */
