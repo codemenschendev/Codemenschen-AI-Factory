@@ -202,7 +202,10 @@ class PrototypePhoto
         // circle next to the logo, which read as a crop of a photograph.
         if (($site['avatar'] ?? false) && ($site['logo'] ?? null) !== null && isset($site['fetch'])
             && preg_match('~\sclass="[^"]*\bavatar\b~i', $html) === 1
-            && ($logo ??= $this->logo($site['logo'], $site['fetch'])) !== null) {
+            && ($logo ??= $this->logo($site['logo'], $site['fetch'])) !== null
+            // A wide wordmark shrinks to a dot in a circle: wp-giftcard.com's is 166 by 51. Then
+            // the initials the builder wrote stay, which is what a page without a square mark shows.
+            && self::aspect($logo) <= 1.5) {
             $html = preg_replace_callback('~<(\w+)([^>]*\sclass="[^"]*\bavatar\b[^"]*"[^>]*)>(.*?)</\1>~is',
                 fn (array $m) => str_contains(strtolower($m[3]), '<img') ? $m[0]
                     : '<'.$m[1].(preg_replace('~(\sclass=")~', '$1has-logo ', $m[2], 1) ?? $m[2]).'><img src="'.$logo.'" alt=""></'.$m[1].'>',
@@ -396,6 +399,25 @@ class PrototypePhoto
         } finally {
             @unlink($tmp);
         }
+    }
+
+    /** Width over height of an inlined picture, 1.0 when it cannot be told. */
+    private static function aspect(string $dataUri): float
+    {
+        $bytes = base64_decode((string) substr($dataUri, (int) strpos($dataUri, ',') + 1), true) ?: '';
+        if (str_starts_with($dataUri, 'data:image/svg')) {
+            if (preg_match('~viewBox="\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)~i', $bytes, $m) === 1 && (float) $m[2] > 0) {
+                return (float) $m[1] / (float) $m[2];
+            }
+            if (preg_match('~<svg[^>]*\swidth="([\d.]+)[^"]*"[^>]*\sheight="([\d.]+)~i', $bytes, $m) === 1 && (float) $m[2] > 0) {
+                return (float) $m[1] / (float) $m[2];
+            }
+
+            return 1.0;
+        }
+        $size = @getimagesizefromstring($bytes);
+
+        return $size === false || $size[1] === 0 ? 1.0 : $size[0] / $size[1];
     }
 
     /** The logo as a data URI: SVG as it is (an <img> runs no script), anything else re-encoded. */
