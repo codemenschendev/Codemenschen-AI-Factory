@@ -372,6 +372,10 @@ function audit([placeholderSource, minTarget]) {
     const kind = Object.keys(SHAPES).find((k) => ad.classList.contains(k));
     if (!kind) continue;
     const want = SHAPES[kind];
+    // A frame squeezed to a thumbnail: a story drawn 70px wide beside a full-size square.
+    if (window.innerWidth >= 700 && ad.getBoundingClientRect().width < 200) {
+      wrong.push(`${sel(ad)}: drawn ${Math.round(ad.getBoundingClientRect().width)}px wide, give it a flex-basis or a grid column`);
+    }
     const pic = ad.querySelector('.photo-wide, .photo-card, .has-photo, img');
     if (pic && visible(pic)) {
       const r = pic.getBoundingClientRect();
