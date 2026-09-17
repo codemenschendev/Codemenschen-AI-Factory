@@ -5,7 +5,9 @@ for the reasons named here. If the name of the business suggests something else,
 wrong and this is right. Build the angles on the three written below where they fit.
 
 Facts you may state: what this brief and the website text say, nothing more. A number, a
-customer, a rating or a price that is not written here is not printed.
+customer, a rating or a price that is not written here is not printed. A number keeps the
+noun it has on the site: "20,000 downloads" is never "20,000 stores" or "20,000 customers",
+and "5 stars" on one review is never "rated 5 stars by everyone".
 
 {brief}
 

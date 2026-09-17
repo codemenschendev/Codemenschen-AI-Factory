@@ -75,7 +75,7 @@ class PageAudit
      * wait and changes nothing. They stay in the report and in the admin list, which is how those
      * stylesheet bugs got found in the first place.
      */
-    private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error', 'dash', 'competitor-named', 'price-unmarked', 'claim-invented', 'layout-dropped'];
+    private const MODEL_OWNED = ['placeholder', 'broken-image', 'script-error', 'console-error', 'dash', 'competitor-named', 'price-unmarked', 'claim-invented', 'layout-dropped', 'number-reworded', 'label-language'];
 
     /** Faults that belong to whoever wrote the CSS: the model on a free page, us on a house one. */
     private const STYLE_OWNED = ['overflow', 'nav-below-the-fold', 'sideways-scrollbar', 'under-the-island', 'icon-blob', 'ads-in-a-column', 'ad-formats'];
