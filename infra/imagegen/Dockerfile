@@ -6,7 +6,11 @@ FROM node:22-slim
 
 ARG CODEX_VERSION=0.154.0
 
-RUN npm install -g "@openai/codex@${CODEX_VERSION}" && npm cache clean --force \
+# node:22-slim ships no CA bundle. Node carries its own, Codex (Rust) reads the system one and
+# fails every request to auth.openai.com without it.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates \
+    && rm -rf /var/lib/apt/lists/* \
+    && npm install -g "@openai/codex@${CODEX_VERSION}" && npm cache clean --force \
     && mkdir -p /codex-home /app && chown node:node /codex-home /app
 
 COPY --chown=node:node server.mjs config.toml /app/
