@@ -311,6 +311,16 @@ class PrototypeWriter
         // restarted while this page was being written, and it is back five seconds later. A study
         // and minutes of a visitor's wait are worth one more roll before the build is called
         // failed. Not on 502: that is the sidecar's own timeout, and doubling it helps nobody.
+        // The opening picture of an ad page renders on the Codex image agent WHILE the page is
+        // written: in series it added a minute to a four-minute build. It is briefed from the
+        // website's product brief and the business's own picture, not from the page.
+        $opening = $kind === 'ads' && $photo !== null && config('services.ai_image.backend') === 'codex'
+            && (int) config('services.ai_image.prototype_renders', 0) > 0 && (string) config('services.ai_image.codex_token') !== ''
+            ? PrototypePhoto::openingJob($prompt, $product, $site['images'] ?? [],
+                $site === null ? null : fn (string $url) => $this->pages->download($url, $domain))
+            : null;
+        $pictures = null;
+
         $markup = '';
         $lastReply = '';
         foreach ([1, 2] as $attempt) {
@@ -323,7 +333,28 @@ class PrototypeWriter
                     ['role' => 'user', 'content' => 'Your reply held no HTML. Whatever you wrote to disk is not delivered; only the text of your reply is. Reply now with the complete HTML file, from <!doctype html> to </html>, and nothing else.'],
                 ];
             }
-            $res = $request->post('/v1/chat/completions', $body);
+            if ($opening !== null && $pictures === null) {
+                $images = app(ImageService::class);
+                $both = Http::pool(function ($pool) use ($baseUrl, $token, $backend, $body, $images, $opening) {
+                    $chat = $pool->as('chat')->baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(630)->connectTimeout(10);
+                    if ($backend !== null) {
+                        $chat = $chat->withHeaders(['x-openclaw-model' => $backend]);
+                    }
+
+                    return [$chat->post('/v1/chat/completions', $body), $images->codexOn($pool, $opening)];
+                });
+                $pictures = [$images->codexBytes($both['codex'] ?? null)];
+                $lap('generate+render');
+                $res = $both['chat'] ?? null;
+                if ($res instanceof \Throwable) {
+                    throw $res;
+                }
+                if (! $res instanceof \Illuminate\Http\Client\Response) {
+                    throw new RuntimeException('The gateway gave no answer.');
+                }
+            } else {
+                $res = $request->post('/v1/chat/completions', $body);
+            }
 
             if (! $res->successful()) {
                 if ($res->status() !== 502 && $attempt === 1) {
@@ -445,13 +476,9 @@ class PrototypeWriter
         // repair then throws away.
         if ($photo !== null) {
             $stage('photos');
-            // The opening picture of an ad page is rendered by the Codex image agent, with or
-            // without a website to take the product from.
-            $render = [
-                'renders' => $kind === 'ads' && config('services.ai_image.backend') === 'codex'
-                    ? (int) config('services.ai_image.prototype_renders', 0) : 0,
-                'render' => fn (array $jobs) => app(ImageService::class)->codexMany($jobs),
-            ];
+            // The opening picture of an ad page, rendered beside the page above. A render that
+            // failed leaves the slot to the site's own pictures and the library.
+            $render = $pictures === null ? [] : ['pictures' => $pictures];
             $shot = $photo->apply($page, $site === null ? $render : $render + [
                 'images' => $site['images'] ?? [],
                 'logo' => $site['logo'] ?? null,
