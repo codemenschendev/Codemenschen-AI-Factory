@@ -151,12 +151,11 @@ class PrototypeStudyTest extends TestCase
         // The link ad of one build printed the three agencies the study had looked at as if
         // they were the customer's references. The builder is told, and the page is checked.
         $this->sidecar(
-            '{"industry":"agency","sites":["wixx.at","webdorf.at"],"country":"at"}',
-            'Brief: cream and green.',
-            '<!doctype html><html><head><title>Agentur</title></head><body><p>Gebaut wie wixx.at und webdorf.at.</p></body></html>',
-            '<!doctype html><html><head><title>Agentur</title></head><body><p>Gebaut von uns.</p></body></html>',
+            '{"industry":"transport_mobility","screens":["map","list_feed","form_input","success_confirmation"],"apps":["Taxi 31300","Uber"],"country":"at"}',
+            'Brief: map first.',
+            '<!doctype html><html><head><title>Taxi</title></head><body class="app-page"><p>Wie Taxi 31300, nur besser.</p></body></html>',
+            '<!doctype html><html><head><title>Taxi</title></head><body class="app-page"><p>Dein Taxi in Wien.</p></body></html>',
         );
-        Http::fake(['sidecar.test/v1/pages/check' => Http::response(['results' => []])]);
         $audit = new class('/dev/null', null) extends PageAudit
         {
             public function run(string $html): array
@@ -165,29 +164,27 @@ class PrototypeStudyTest extends TestCase
             }
         };
 
-        $out = app(PrototypeWriter::class)->build('Eine Website für eine Webagentur in Linz', 'site', null, $audit, new DesignLibrary($this->dir));
+        $out = app(PrototypeWriter::class)->build('Eine Taxi-App für Wien', 'app', null, $audit, app(DesignLibrary::class));
 
-        $this->assertStringNotContainsString('wixx.at', $out['html']);
-        $this->assertSame(['competitor-named: wixx.at'], $out['qa']['first_faults']);
+        $this->assertStringNotContainsString('31300', $out['html']);
+        $this->assertSame(['competitor-named: Taxi 31300'], $out['qa']['first_faults']);
         $this->assertTrue($out['qa']['repaired']);
         Http::assertSent(fn ($r) => is_array($r['messages'][1]['content'] ?? null)
             && str_contains(json_encode($r['messages'][1]['content']), 'COMPETITORS the designer looked at'));
-        Http::assertSent(fn ($r) => count($r['messages'] ?? []) === 4 && str_contains((string) $r['messages'][3]['content'], 'competitor-named'));
     }
 
-    public function test_a_site_whose_study_finds_no_pictures_still_builds_the_old_way(): void
+    public function test_only_an_app_studies_the_trade(): void
     {
-        // Shadowing the DesignRefs parameter with the library's references crashed exactly here:
-        // no pictures, no brief, and the fallback called pick() on an array.
-        File::put($this->dir.'/catalog.json', json_encode(['images' => []]));
-        $this->sidecar(
-            '{"industry":"agency","sites":[],"country":"at"}',
-            '<!doctype html><html><head><title>Agentur</title></head><body><p>Ohne Studie.</p></body></html>',
-        );
+        // Owner's decision, 2026-09-17: a website, an ad or an e-mail is about this business,
+        // not its competitors. One call, the page; no plan, no study.
+        $page = '<!doctype html><html><head><title>Agentur</title></head><body><p>Ohne Studie.</p></body></html>';
+        $this->sidecar($page, $page, $page);
+        foreach (['site', 'ads', 'email'] as $n => $kind) {
+            $out = app(PrototypeWriter::class)->build('Eine Webagentur in Linz', $kind, null, null, app(DesignLibrary::class));
 
-        $out = app(PrototypeWriter::class)->build('Eine Website für eine Webagentur', 'site', null, null, new DesignLibrary($this->dir));
-
-        $this->assertStringContainsString('Ohne Studie', $out['html']);
-        $this->assertNull($out['qa']['study']['brief'] ?? null);
+            Http::assertSentCount($n + 1);
+            $this->assertArrayNotHasKey('study', $out['qa'], $kind);
+            $this->assertStringContainsString('Ohne Studie', $out['html']);
+        }
     }
 }

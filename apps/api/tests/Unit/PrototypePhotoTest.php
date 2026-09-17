@@ -116,7 +116,7 @@ class PrototypePhotoTest extends TestCase
             .'<div class="photo-wide" data-site="2" data-q="gift voucher">Der echte Weihnachtsgutschein</div>'
             .'<div class="photo-card" data-q="laptop desk">Laptop am Schreibtisch</div></body></html>';
         $site = [
-            'images' => [['url' => 'https://wp-giftcard.com/a.png', 'alt' => 'a'], ['url' => 'https://wp-giftcard.com/voucher.png', 'alt' => 'voucher']],
+            'images' => [['url' => 'https://wp-giftcard.com/a.png', 'alt' => 'a', 'kind' => 'photo'], ['url' => 'https://wp-giftcard.com/voucher.png', 'alt' => 'voucher', 'kind' => 'photo']],
             'logo' => 'https://wp-giftcard.com/logo.svg',
             'fetch' => function (string $url) use (&$fetched, $png): ?string {
                 $fetched[] = $url;
@@ -135,10 +135,35 @@ class PrototypePhotoTest extends TestCase
         $this->assertCount(1, glob($this->dir.'/img/*') ?: []);
     }
 
+    public function test_a_screenshot_is_framed_whole_and_a_logo_in_a_sentence_stays_text(): void
+    {
+        $png = $this->png();
+        $page = '<!doctype html><html><head><style>.x{}</style></head><body>'
+            .'<p>Ads for <span class="site-logo">Gift Card</span> (wp-giftcard.com)</p>'
+            .'<div class="head"><span class="site-logo">Gift Card</span><small>Sponsored</small></div>'
+            .'<div class="photo-card" data-site="1" data-q="plugin panel">Das AI-Panel</div>'
+            .'<div class="photo-wide" data-q="fence">Zaun</div></body></html>';
+        $site = [
+            'images' => [['url' => 'https://g.com/ai-panel.jpg', 'alt' => '', 'kind' => 'screen'], ['url' => 'https://g.com/xmas.jpg', 'alt' => '', 'kind' => 'photo']],
+            'logo' => 'https://g.com/logo.svg',
+            'fill' => true,
+            'fetch' => fn (string $url) => str_ends_with($url, '.svg') ? '<svg xmlns="http://www.w3.org/2000/svg"></svg>' : $png,
+        ];
+
+        $out = $this->photo($this->stock($png))->apply($page, $site);
+
+        $this->assertStringContainsString('class="has-photo is-screen photo-card"', $out['html']);
+        $this->assertStringContainsString('.has-photo.is-screen>img{', $out['html']);
+        // The unmarked slot took the spare Christmas photograph, not a stock fence.
+        $this->assertSame(['site', 'site'], $out['sources']);
+        $this->assertStringContainsString('<p>Ads for Gift Card (wp-giftcard.com)</p>', $out['html']);
+        $this->assertSame(1, substr_count($out['html'], 'data:image/svg+xml'));
+    }
+
     public function test_a_picture_the_site_cannot_give_falls_back_to_stock(): void
     {
         $page = '<!doctype html><html><body><div class="photo-wide" data-site="1" data-q="bakery">Brot im Korb</div></body></html>';
-        $site = ['images' => [['url' => 'https://b.at/1.jpg', 'alt' => '']], 'fetch' => fn () => null];
+        $site = ['images' => [['url' => 'https://b.at/1.jpg', 'alt' => '', 'kind' => 'photo']], 'fetch' => fn () => null];
 
         $out = $this->photo($this->stock($this->png()))->apply($page, $site);
 

@@ -113,13 +113,28 @@ class PrototypePhoto
                     : null;
 
                 // The business's own picture the model chose for this slot, by its number in the list.
-                $own = preg_match('~\sdata-site="(\d+)"~i', $m[2], $n) === 1 ? ($site['images'][(int) $n[1] - 1]['url'] ?? null) : null;
+                $own = preg_match('~\sdata-site="(\d+)"~i', $m[2], $n) === 1 ? ($site['images'][(int) $n[1] - 1] ?? null) : null;
 
                 $slots[] = ['m' => $m, 'width' => $width, 'brief' => $brief, 'search' => $search, 'own' => $own];
             }
         }
 
+        // A slot the builder left unmarked takes one of the business's own pictures nobody used
+        // yet, photographs first, before a stock search is tried.
+        if (($site['fill'] ?? false) && ($site['images'] ?? []) !== []) {
+            $used = array_column(array_filter(array_column($slots, 'own')), 'url');
+            $spare = array_values(array_filter($site['images'], fn ($img) => ! in_array($img['url'], $used, true)));
+            usort($spare, fn ($a, $b) => (['photo' => 0, 'graphic' => 1, 'screen' => 2][$a['kind'] ?? 'photo'] ?? 3)
+                <=> (['photo' => 0, 'graphic' => 1, 'screen' => 2][$b['kind'] ?? 'photo'] ?? 3));
+            foreach ($slots as $i => $slot) {
+                if ($slot['own'] === null && $spare !== []) {
+                    $slots[$i]['own'] = array_shift($spare);
+                }
+            }
+        }
+
         $photos = $sources = $credits = $urls = [];
+        $framed = false;
         foreach ($this->resolve($slots, $site['fetch'] ?? null) as $i => $found) {
             if ($found === null) {
                 continue;   // this slot keeps its gradient
@@ -129,7 +144,10 @@ class PrototypePhoto
             // The model's own attributes are kept, so a slot it styled keeps its styling and
             // only gains the marker class and the picture.
             $alt = htmlspecialchars($slots[$i]['brief'], ENT_QUOTES, 'UTF-8');
-            $open = preg_replace('~(\sclass=")~', '$1has-photo ', $m[2], 1);
+            // A screenshot or a graphic is shown whole in a frame; only a photograph is cropped.
+            $fit = in_array($found['fit'] ?? null, ['screen', 'graphic'], true) ? ' is-'.$found['fit'] : '';
+            $framed = $framed || $fit !== '';
+            $open = preg_replace('~(\sclass=")~', '$1has-photo'.$fit.' ', $m[2], 1);
             $html = str_replace($m[0],
                 '<'.$m[1].$open.'><img src="'.$found['data'].'" alt="'.$alt.'"></'.$m[1].'>',
                 $html);
@@ -164,15 +182,22 @@ class PrototypePhoto
         if (($site['logo'] ?? null) !== null && isset($site['fetch'])
             && preg_match('~<(\w+)([^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*)>(.*?)</\1>~is', $html) === 1
             && ($logo = $this->logo($site['logo'], $site['fetch'])) !== null) {
-            $html = preg_replace_callback('~<(\w+)([^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*)>(.*?)</\1>~is', function (array $m) use ($logo): string {
-                $alt = htmlspecialchars(trim(html_entity_decode(strip_tags($m[3]), ENT_QUOTES | ENT_HTML5, 'UTF-8')), ENT_QUOTES, 'UTF-8');
+            // Only where the name stands on its own. Inside a sentence, "ads for [logo] (wp-giftcard.com)",
+            // or next to more words, "[logo] Plugin", a logo reads as a sticker: the name stays text.
+            $html = preg_replace_callback('~<(\w+)([^>]*\sclass="[^"]*\bsite-logo\b[^"]*"[^>]*)>(.*?)</\1>~is', function (array $m) use ($logo, $html): string {
+                $name = trim(html_entity_decode(strip_tags($m[3][0]), ENT_QUOTES | ENT_HTML5, 'UTF-8'));
+                $before = rtrim(substr($html, 0, $m[0][1]));
+                $after = ltrim(substr($html, $m[0][1] + strlen($m[0][0])));
+                if (($before !== '' && ! str_ends_with($before, '>')) || ($after !== '' && ! str_starts_with($after, '<'))) {
+                    return htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+                }
 
-                return '<'.$m[1].$m[2].'><img src="'.$logo.'" alt="'.$alt.'"></'.$m[1].'>';
-            }, $html) ?? $html;
+                return '<'.$m[1][0].$m[2][0].'><img src="'.$logo.'" alt="'.htmlspecialchars($name, ENT_QUOTES, 'UTF-8').'"></'.$m[1][0].'>';
+            }, $html, -1, $count, PREG_OFFSET_CAPTURE) ?? $html;
             $logoPlaced = true;
         }
         if ($logoPlaced) {
-            $css = '.site-logo{display:inline-flex;align-items:center}.site-logo>img{display:block;height:32px;width:auto;max-width:200px}';
+            $css = '.site-logo{display:inline-flex;align-items:center}.site-logo>img{display:block;height:32px;width:auto;max-width:200px;background:#fff;border-radius:6px;padding:2px 6px}';
             $html = preg_replace('~</style>~i', $css.'</style>', $html, 1, $count) ?? $html;
             if ($count === 0) {
                 $html = preg_replace('~</head>~i', '<style>'.$css.'</style></head>', $html, 1) ?? $html;
@@ -190,6 +215,14 @@ class PrototypePhoto
         // it wins over the model's own rule of the same weight; padding is dropped because it framed the brief text, not the picture; min-height 0 keeps a box sized by
         // aspect-ratio from growing to the picture.
         $fit = '.has-photo{overflow:hidden;min-height:0;padding:0}.has-photo>img{display:block;width:100%;height:100%;object-fit:cover}';
+        if ($framed) {
+            $fit .= '.has-photo.is-screen,.has-photo.is-graphic{display:flex;align-items:center;justify-content:center;padding:7%;'
+                .'background:radial-gradient(120% 90% at 30% 15%,#3d4454 0%,#171a21 72%)}'
+                .'.has-photo.is-screen>img{width:100%;height:auto;max-height:100%;object-fit:contain;background:#fff;'
+                .'border:5px solid #0e1015;border-top-width:12px;border-radius:9px;box-shadow:0 16px 36px rgba(0,0,0,.4)}'
+                .'.has-photo.is-graphic>img{width:auto;height:auto;max-width:86%;max-height:86%;object-fit:contain;'
+                .'transform:rotate(-3deg);border-radius:8px;box-shadow:0 16px 36px rgba(0,0,0,.4)}';
+        }
         $html = preg_replace('~</style>~i', $fit.'</style>', $html, 1, $count) ?? $html;
         if ($count === 0) {
             $html = preg_replace('~</head>~i', '<style>'.$fit.'</style></head>', $html, 1) ?? $html;
@@ -252,13 +285,13 @@ class PrototypePhoto
             // the shared library, because it belongs to that business and to no other prototype.
             if ($slot['own'] !== null && $fetch !== null) {
                 try {
-                    $bytes = $fetch($slot['own']);
+                    $bytes = $fetch($slot['own']['url']);
                     $size = $bytes === null ? false : @getimagesizefromstring($bytes);
                     // A picture smaller than a card would be blown up into mush.
                     if ($size !== false && $size[0] >= 300 && $size[1] >= 160) {
                         $uri = $this->encodeBytes($bytes, $slot['width']);
                         if ($uri !== null) {
-                            $out[$i] = ['data' => $uri, 'source' => 'site', 'credit' => null, 'url' => null];
+                            $out[$i] = ['data' => $uri, 'source' => 'site', 'credit' => null, 'url' => null, 'fit' => $slot['own']['kind'] ?? 'photo'];
 
                             continue;
                         }
