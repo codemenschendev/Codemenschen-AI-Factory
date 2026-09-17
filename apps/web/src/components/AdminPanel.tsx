@@ -15,7 +15,14 @@ interface Overview {
   ads: Record<string, number>;
   campaigns: Record<string, number>;
   /** Names of empty env keys only, never values: the tile says what is missing, not what is set. */
-  connections: Record<string, { configured: boolean; missing: string[] }>;
+  connections: Record<
+    string,
+    {
+      configured: boolean;
+      missing: string[];
+      verified?: { ok: boolean; at: string; account: string | null; detail: string | null } | null;
+    }
+  >;
   customers: number;
   /** Stripe sandbox or live, switched here; live_missing names empty .env keys, never values. */
   payments: { mode: "sandbox" | "live"; sandbox_configured: boolean; live_missing: string[] };
@@ -383,7 +390,19 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 {Object.entries(overview.connections ?? {}).map(([platform, c]) => (
                   <div key={platform}>
                     <strong>{platform === "meta" ? "Meta (Facebook, Instagram)" : "Google Ads"}</strong>:{" "}
-                    {c.configured ? a.connected : a.notConnected}
+                    {!c.configured
+                      ? a.notConnected
+                      : !c.verified
+                        ? a.connectionUnchecked
+                        : c.verified.ok
+                          ? a.connected
+                          : a.connectionFailed}
+                    {c.configured && c.verified && (
+                      <div className="muted" style={{ fontSize: 12 }}>
+                        {a.connectionCheckedAt} {dt(c.verified.at, locale)}
+                        {c.verified.ok ? (c.verified.account ? `: ${c.verified.account}` : "") : `: ${c.verified.detail ?? ""}`}
+                      </div>
+                    )}
                     {c.missing.length > 0 && (
                       <div className="muted" style={{ fontSize: 12 }}>
                         {a.missing}: {c.missing.join(", ")}

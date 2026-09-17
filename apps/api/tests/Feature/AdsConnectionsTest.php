@@ -257,4 +257,43 @@ class AdsConnectionsTest extends TestCase
 
         $this->assertSame(['GOOGLE_ADS_SERVICE_ACCOUNT_JSON'], app(GoogleAdsPublisher::class)->missing());
     }
+
+    public function test_a_refused_google_call_is_reported_by_its_error_code(): void
+    {
+        $this->google();
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*' => Http::response(['error' => [
+                'code' => 403, 'message' => 'The caller does not have permission', 'status' => 'PERMISSION_DENIED',
+                'details' => [['@type' => 'type.googleapis.com/google.ads.googleads.v25.errors.GoogleAdsFailure',
+                    'errors' => [['errorCode' => ['authorizationError' => 'USER_PERMISSION_DENIED'],
+                        'message' => "User doesn't have permission to access customer."]]]],
+            ]], 403),
+        ]);
+
+        $v = app(GoogleAdsPublisher::class)->verify();
+
+        $this->assertFalse($v['ok']);
+        $this->assertSame("authorizationError.USER_PERMISSION_DENIED: User doesn't have permission to access customer.", $v['detail']);
+        $this->assertSame('HTTP 502: bad gateway', GoogleAdsPublisher::errorDetail(502, 'bad gateway'));
+    }
+
+    public function test_the_overview_says_connected_only_after_the_platform_accepted_the_credentials(): void
+    {
+        $this->google();
+        $this->meta(['page_id' => '']);
+        $this->assertNull(app(PublisherRegistry::class)->status()['google']['verified'], 'configured is not yet connected');
+
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*' => Http::response(['error' => ['code' => 401, 'status' => 'UNAUTHENTICATED', 'message' => 'no']], 401),
+        ]);
+        $this->artisan('factory:ads-check')->assertFailed();
+
+        $status = app(PublisherRegistry::class)->status();
+        $this->assertTrue($status['google']['configured']);
+        $this->assertFalse($status['google']['verified']['ok']);
+        $this->assertSame('UNAUTHENTICATED: no', $status['google']['verified']['detail']);
+        $this->assertNull($status['meta']['verified']);
+    }
 }

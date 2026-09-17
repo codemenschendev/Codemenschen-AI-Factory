@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Domain\Ads\PublisherRegistry;
+use App\Models\Setting;
 use Illuminate\Console\Command;
 
 /**
@@ -10,6 +11,8 @@ use Illuminate\Console\Command;
  *
  * Reads only. It exchanges the refresh token, opens the ad account, and reports what it found.
  * Nothing is created and nothing spends. Safe to run any time, including from the boss's chair.
+ *
+ * The answer is also kept, so the admin tile says "connected" only after the platform said so.
  */
 class AdsCheck extends Command
 {
@@ -25,6 +28,7 @@ class AdsCheck extends Command
         foreach ($registry->all() as $p) {
             $missing = $p->missing();
             if ($missing !== []) {
+                Setting::write(PublisherRegistry::verifiedKey($p->key()), null, 'factory:ads-check');
                 $rows[] = [$p->key(), 'not configured', '', 'missing: '.implode(', ', $missing)];
                 $allOk = false;
 
@@ -36,6 +40,12 @@ class AdsCheck extends Command
                 continue;
             }
             $v = $p->verify();
+            Setting::write(PublisherRegistry::verifiedKey($p->key()), [
+                'ok' => (bool) $v['ok'],
+                'at' => now()->toIso8601String(),
+                'account' => $v['account'] ?: null,
+                'detail' => $v['detail'] ?: null,
+            ], 'factory:ads-check');
             $rows[] = [$p->key(), $v['ok'] ? 'OK' : 'FAILED', (string) $v['account'], (string) $v['detail']];
             $allOk = $allOk && $v['ok'];
         }

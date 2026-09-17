@@ -100,6 +100,36 @@ class AdminTest extends TestCase
         $this->assertSame('coding', $items->first()['stage']);
     }
 
+    public function test_an_archived_project_leaves_the_lists_but_stays_reachable(): void
+    {
+        $this->project->update(['status' => 'FAILED']);
+        PipelineRun::create([
+            'project_id' => $this->project->id, 'stage' => 'coding', 'attempt' => 3,
+            'status' => 'failed', 'error' => 'boom', 'finished_at' => now(), 'callback_token' => 'x',
+        ]);
+
+        $this->artisan('factory:archive', ['ids' => [$this->project->id]])->assertSuccessful();
+
+        $res = $this->getJson('/api/admin/overview', $this->asAdmin())->assertOk();
+        $this->assertSame(0, $res->json('projects.total'));
+        $this->assertSame([], $res->json('attention'));
+        $this->getJson('/api/admin/projects', $this->asAdmin())->assertJsonCount(0, 'projects');
+        $this->getJson('/api/admin/projects?archived=1', $this->asAdmin())->assertJsonCount(1, 'projects');
+        $this->getJson("/api/admin/projects/{$this->project->id}", $this->asAdmin())->assertOk();
+
+        $this->artisan('factory:archive', ['ids' => [$this->project->id], '--undo' => true])->assertSuccessful();
+        $this->assertSame(1, $this->getJson('/api/admin/overview', $this->asAdmin())->json('projects.total'));
+    }
+
+    public function test_a_project_paid_with_real_money_is_not_archived(): void
+    {
+        $this->project->order->update(['livemode' => true]);
+
+        $this->artisan('factory:archive', ['ids' => [$this->project->id]])->assertFailed();
+
+        $this->assertNull($this->project->fresh()->archived_at);
+    }
+
     public function test_projects_can_be_searched_by_customer_address(): void
     {
         $this->getJson('/api/admin/projects?q=kunde@example.com', $this->asAdmin())

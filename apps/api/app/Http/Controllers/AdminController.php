@@ -44,7 +44,7 @@ class AdminController extends Controller
     /** The dashboard: counts to see the shape of the day, and a list of what is actually broken. */
     public function overview(): JsonResponse
     {
-        $byStatus = Project::query()->selectRaw('status, count(*) as n')->groupBy('status')
+        $byStatus = Project::query()->whereNull('archived_at')->selectRaw('status, count(*) as n')->groupBy('status')
             ->pluck('n', 'status');
 
         return response()->json([
@@ -90,7 +90,7 @@ class AdminController extends Controller
     {
         $items = [];
 
-        foreach (Project::where('status', 'FAILED')->with('customer:id,email')->latest('updated_at')->limit(20)->get() as $p) {
+        foreach (Project::where('status', 'FAILED')->whereNull('archived_at')->with('customer:id,email')->latest('updated_at')->limit(20)->get() as $p) {
             $items[] = [
                 'kind' => 'project_failed', 'at' => $p->updated_at->toIso8601String(),
                 'project' => ['id' => $p->id, 'name' => $p->name, 'status' => $p->status],
@@ -100,8 +100,10 @@ class AdminController extends Controller
         }
 
         $runs = PipelineRun::with('project:id,name,status,customer_id', 'project.customer:id,email')
-            ->where(fn ($q) => $q->where('status', 'failed')->where('created_at', '>=', now()->subDays(3)))
-            ->orWhere(fn ($q) => $q->where('status', 'running')->where('heartbeat_at', '<', now()->subMinutes(self::STALE_MINUTES)))
+            ->where(fn ($w) => $w
+                ->where(fn ($q) => $q->where('status', 'failed')->where('created_at', '>=', now()->subDays(3)))
+                ->orWhere(fn ($q) => $q->where('status', 'running')->where('heartbeat_at', '<', now()->subMinutes(self::STALE_MINUTES))))
+            ->whereDoesntHave('project', fn ($q) => $q->whereNotNull('archived_at'))
             ->latest()->limit(30)->get();
 
         foreach ($runs as $r) {
@@ -115,7 +117,7 @@ class AdminController extends Controller
             ];
         }
 
-        foreach (ProjectAd::where('status', 'failed')->with('project:id,name,status,customer_id', 'project.customer:id,email')
+        foreach (ProjectAd::where('status', 'failed')->whereDoesntHave('project', fn ($q) => $q->whereNotNull('archived_at'))->with('project:id,name,status,customer_id', 'project.customer:id,email')
             ->latest()->limit(20)->get() as $a) {
             $items[] = [
                 'kind' => 'ad_failed', 'at' => $a->updated_at->toIso8601String(),
@@ -155,10 +157,13 @@ class AdminController extends Controller
         $data = $request->validate([
             'status' => 'nullable|in:'.implode(',', Project::STATUSES),
             'q' => 'nullable|string|max:120',
+            'archived' => 'nullable|boolean',
         ]);
 
         $projects = Project::query()
             ->with(['customer:id,email', 'order:id,status,total_one_time_eur'])
+            // Archived projects (factory:archive) are tests and leftovers; they show only when asked for.
+            ->when(empty($data['archived']), fn ($q) => $q->whereNull('archived_at'))
             ->when($data['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->when($data['q'] ?? null, fn ($q, $term) => $q->where(fn ($w) => $w
                 ->where('name', 'like', "%{$term}%")
