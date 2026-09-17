@@ -188,6 +188,49 @@ class PrototypePhotoTest extends TestCase
         $this->assertStringNotContainsString('has-logo', $out['html']);
     }
 
+    public function test_the_opening_ad_picture_is_rendered_with_the_business_s_own_product(): void
+    {
+        $png = $this->png();
+        $jobs = [];
+        $page = '<!doctype html><html><head><style>.x{}</style></head><body><main class="ads">'
+            .'<article class="ad ad-story"><div class="photo-wide" data-site="1" data-q="voucher pine">Der Gutschein auf Tannenzweigen</div></article>'
+            .'<article class="ad ad-square"><div class="photo-card" data-q="laptop desk">Laptop am Schreibtisch</div></article>'
+            .'</main></body></html>';
+        $site = [
+            'images' => [['url' => 'https://g.com/voucher.png', 'alt' => '', 'kind' => 'graphic']],
+            'fetch' => fn () => $png,
+            'renders' => 1,
+            'render' => function (array $j) use (&$jobs, $png): array {
+                $jobs = $j;
+
+                return array_fill(0, count($j), $png);
+            },
+        ];
+
+        $out = $this->photo($this->stock($png))->apply($page, $site);
+
+        $this->assertCount(1, $jobs);
+        $this->assertSame('1080x1920', $jobs[0]['size']);
+        $this->assertCount(1, $jobs[0]['refs']);
+        $this->assertStringContainsString('Der Gutschein auf Tannenzweigen', $jobs[0]['prompt']);
+        $this->assertStringContainsString('lower third calm and dark', $jobs[0]['prompt']);
+        // Rendered, not framed: the rendered picture is a photograph and fills the story.
+        $this->assertStringContainsString('class="has-photo photo-wide"', $out['html']);
+        $this->assertSame(['codex', 'stock'], $out['sources']);
+    }
+
+    public function test_a_render_that_fails_leaves_the_slot_to_the_site(): void
+    {
+        $png = $this->png();
+        $page = '<!doctype html><html><body><article class="ad ad-story"><div class="photo-wide" data-site="1" data-q="x">Gutschein</div></article></body></html>';
+        $site = ['images' => [['url' => 'https://g.com/v.jpg', 'alt' => '', 'kind' => 'photo']], 'fetch' => fn () => $png,
+            'renders' => 1, 'render' => fn (array $j) => array_fill(0, count($j), null)];
+
+        $out = $this->photo()->apply($page, $site);
+
+        $this->assertSame(['site'], $out['sources']);
+    }
+
     public function test_a_picture_the_site_cannot_give_falls_back_to_stock(): void
     {
         $page = '<!doctype html><html><body><div class="photo-wide" data-site="1" data-q="bakery">Brot im Korb</div></body></html>';

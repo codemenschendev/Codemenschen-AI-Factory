@@ -72,6 +72,17 @@ return [
         // into tool calls, 1.8M tokens for one repair round.
         'chat_model' => env('AI_CHAT_TARGET', 'openclaw/appwerk'),
         'chat_backend_model' => env('AI_CHAT_BACKEND_MODEL', ''),
+        // Who renders pictures. 'codex' is the image agent on the Codex (ChatGPT) subscription
+        // (infra/imagegen), 'openai' the metered API behind the sidecar. `backend` is for the ad
+        // prototypes, `paid_backend` for paid ads, which fall back to the API when Codex fails.
+        'backend' => env('AI_IMAGE_BACKEND', 'openai'),
+        'paid_backend' => env('AI_IMAGE_PAID_BACKEND', 'openai'),
+        'codex_url' => env('AI_IMAGE_CODEX_URL', 'http://imagegen:8400'),
+        'codex_token' => env('AI_IMAGE_CODEX_TOKEN'),
+        'codex_timeout' => (int) env('AI_IMAGE_CODEX_TIMEOUT', 420),
+        // How many pictures of an ad prototype the Codex image agent renders (owner's decision,
+        // 2026-09-17: one, the opening story). 0 switches it off; the rest come from the site and the library.
+        'prototype_renders' => (int) env('AI_IMAGE_PROTOTYPE_RENDERS', 0),
         // Names and addresses the model can see behind the gateway (claude-cli injects the signed-in
         // account's e-mail) and must never print. Comma-separated; checked on every prototype.
         'private_identities' => array_values(array_filter(array_map('trim', explode(',', (string) env('PROTOTYPE_PRIVATE_IDENTITIES', ''))))),

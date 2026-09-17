@@ -9,7 +9,11 @@
 - **Haiku 4.5 is the chat agents' model** in the OpenClaw config (Teams and the other chat
   agents). It is not a faster prototype writer: measured 2026-09-05, Sonnet 5 and Haiku 4.5 both
   write a prototype at ~30 tokens/s through claude-cli. Do not point generation at it.
-- **OpenAI is for image rendering only** (the gpt-image path in the ad pipeline). Never for text.
+- **OpenAI is for image rendering only**. Never for text. Two paths: the metered gpt-image API
+  (paid ads) and the image agent `infra/imagegen`, Codex CLI on the ChatGPT (Codex) subscription,
+  read-only, no shell (owner's decision 2026-09-17, a quality test before any paid use). It renders
+  the opening picture of an ad prototype (`AI_IMAGE_PROTOTYPE_RENDERS=1`) with the business's own
+  product as reference; Claude writes the scene and every word, the picture holds no text.
   `App\Domain\Ai\ChatBackend` refuses an OpenAI chat backend before a request is sent; keep every
   `x-openclaw-model` header going through it.
 - **No model experiment without asking.** A benchmark against another provider or model spends
@@ -33,7 +37,8 @@
 ## Prototypes
 
 - All four kinds (site, app, ads, email) write their own CSS; `house.css` only feeds `packages/design-system`.
-- Photographs come from the shared library, then Pexels, never generated. Each slot carries
+- Photographs come from the business's own website, then the shared library, then Pexels; only the
+  opening picture of an ad prototype is rendered (see Models). Each slot carries
   `data-q` (2 to 4 English nouns) for the search.
 - The QA gate is `apps/api/tools/qa-page.cjs`; `PageAudit::repairable()` decides what earns a repair.
 - Verify a pipeline change with one real build of the affected kind and look at it rendered
