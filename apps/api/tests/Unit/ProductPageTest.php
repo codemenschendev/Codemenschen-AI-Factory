@@ -68,6 +68,29 @@ class ProductPageTest extends TestCase
         $this->assertNull($pages->download('https://internal.test/a.png', 'internal.test'));
     }
 
+    public function test_only_pictures_big_enough_for_a_slot_are_offered_with_their_size(): void
+    {
+        if (! function_exists('imagecreatetruecolor')) {
+            $this->markTestSkipped('no gd');
+        }
+        $png = function (int $w, int $h): string {
+            ob_start();
+            imagepng(imagecreatetruecolor($w, $h));
+
+            return (string) ob_get_clean();
+        };
+        $site = str_replace('</body>', '<img src="/big.png" alt="Voucher"><img src="/icon-ish.png" alt="small"></body>', self::SITE);
+        Http::fake([
+            'https://shop.example/' => Http::response($site, 200, ['Content-Type' => 'text/html']),
+            'https://shop.example/big.png' => Http::response($png(800, 500), 200, ['Content-Type' => 'image/png']),
+            'https://shop.example/icon-ish.png' => Http::response($png(40, 40), 200, ['Content-Type' => 'image/png']),
+        ]);
+
+        $page = app(ProductPage::class)->read('shop.example');
+
+        $this->assertSame([['url' => 'https://shop.example/big.png', 'alt' => 'Voucher', 'size' => '800x500']], $page['images']);
+    }
+
     public function test_a_sentence_is_thin_when_it_is_little_more_than_the_domain(): void
     {
         $this->assertTrue(ProductPage::sentenceIsThin('make the banner for wp-giftcard.com', 'wp-giftcard.com'));
