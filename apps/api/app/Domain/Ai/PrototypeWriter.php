@@ -445,7 +445,14 @@ class PrototypeWriter
         // repair then throws away.
         if ($photo !== null) {
             $stage('photos');
-            $shot = $photo->apply($page, $site === null ? [] : [
+            // The opening picture of an ad page is rendered by the Codex image agent, with or
+            // without a website to take the product from.
+            $render = [
+                'renders' => $kind === 'ads' && config('services.ai_image.backend') === 'codex'
+                    ? (int) config('services.ai_image.prototype_renders', 0) : 0,
+                'render' => fn (array $jobs) => app(ImageService::class)->codexMany($jobs),
+            ];
+            $shot = $photo->apply($page, $site === null ? $render : $render + [
                 'images' => $site['images'] ?? [],
                 'logo' => $site['logo'] ?? null,
                 'fetch' => fn (string $url) => $this->pages->download($url, $domain),

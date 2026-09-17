@@ -1,0 +1,7 @@
+# Copied into CODEX_HOME on start when it has none. The image agent only renders: read-only, it
+# can write no file and change nothing, and it has nothing to ask approval for.
+sandbox_mode = "read-only"
+approval_policy = "never"
+
+[features]
+image_generation = true

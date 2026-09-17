@@ -36,6 +36,11 @@ services:
     environment:
       BUZZ_ALERT_DIR: /alerts
       GOOGLE_ADS_SERVICE_ACCOUNT_JSON: /secrets/google-ads-sa.json
+      AI_IMAGE_BACKEND: ${AI_IMAGE_BACKEND:-openai}
+      AI_IMAGE_CODEX_URL: http://imagegen:8400
+      AI_IMAGE_CODEX_TOKEN: ${IMAGEGEN_TOKEN:-}
+      AI_IMAGE_PROTOTYPE_RENDERS: ${AI_IMAGE_PROTOTYPE_RENDERS:-0}
+      AI_IMAGE_PAID_BACKEND: ${AI_IMAGE_PAID_BACKEND:-openai}
     volumes:
       # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
       - /var/lib/ai-factory/alerts:/alerts
@@ -67,6 +72,11 @@ services:
     environment:
       BUZZ_ALERT_DIR: /alerts
       GOOGLE_ADS_SERVICE_ACCOUNT_JSON: /secrets/google-ads-sa.json
+      AI_IMAGE_BACKEND: ${AI_IMAGE_BACKEND:-openai}
+      AI_IMAGE_CODEX_URL: http://imagegen:8400
+      AI_IMAGE_CODEX_TOKEN: ${IMAGEGEN_TOKEN:-}
+      AI_IMAGE_PROTOTYPE_RENDERS: ${AI_IMAGE_PROTOTYPE_RENDERS:-0}
+      AI_IMAGE_PAID_BACKEND: ${AI_IMAGE_PAID_BACKEND:-openai}
     volumes:
       # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
       - /var/lib/ai-factory/alerts:/alerts
@@ -147,6 +157,19 @@ services:
       # OpenClaw gateway). Mounted rw so the runtime can refresh the access
       # token with the long-lived refresh token; same uid as the host user.
       - /home/openclaw/.claude:/home/worker/.claude
+
+  # Image agent for paid ads: Codex CLI on the ChatGPT (Codex) subscription, read-only, no shell.
+  # Sign in once: docker compose -f docker-compose.prod.yml exec imagegen codex login --device-auth
+  imagegen:
+    build:
+      context: ./imagegen
+    restart: unless-stopped
+    environment:
+      IMAGEGEN_TOKEN: ${IMAGEGEN_TOKEN:-}
+    volumes:
+      # The subscription sign-in and Codex's own output. Its own directory: a sign-in shared with
+      # another Codex (Buzz's) breaks both, because every refresh replaces the token.
+      - /var/lib/ai-factory/codex-home:/codex-home
 
   web:
     build:

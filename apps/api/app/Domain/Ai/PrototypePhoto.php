@@ -135,7 +135,10 @@ class PrototypePhoto
 
         $photos = $sources = $credits = $urls = [];
         $framed = false;
-        foreach ($this->resolve($slots, $site['fetch'] ?? null) as $i => $found) {
+        $rendered = $this->rendered($html, $slots, $site);
+        foreach (array_replace($this->resolve(array_map(
+            fn ($slot, $i) => isset($rendered[$i]) ? ['own' => null] + $slot : $slot, $slots, array_keys($slots)),
+            $site['fetch'] ?? null), $rendered) as $i => $found) {
             if ($found === null) {
                 continue;   // this slot keeps its gradient
             }
@@ -399,6 +402,62 @@ class PrototypePhoto
         } finally {
             @unlink($tmp);
         }
+    }
+
+    /**
+     * The first slots of an ad page rendered by the image agent, with the business's own picture
+     * the builder chose for each as the product to show (owner's decision, 2026-09-17: the ads
+     * are built around a rendered picture, and only the opening one is rendered).
+     *
+     * The brief inside the slot is the scene, written by Claude; the words of the ad are never
+     * in the picture. A render that fails leaves the slot to the site, the library and stock.
+     *
+     * @return array<int,array{data:string,source:string,credit:null,url:null,fit:string}>
+     */
+    private function rendered(string $html, array $slots, array $site): array
+    {
+        $count = (int) ($site['renders'] ?? 0);
+        if ($count <= 0 || ! isset($site['render']) || $slots === []) {
+            return [];
+        }
+        // Page order: the slots were collected class by class.
+        $order = array_keys($slots);
+        usort($order, fn ($a, $b) => (int) strpos($html, $slots[$a]['m'][0]) <=> (int) strpos($html, $slots[$b]['m'][0]));
+        $jobs = $index = [];
+        foreach (array_slice($order, 0, $count) as $i) {
+            $at = (int) strpos($html, $slots[$i]['m'][0]);
+            $frame = preg_match_all('~class="ad (ad-story|ad-square|ad-link)\b~', substr($html, 0, $at), $f) > 0 ? end($f[1]) : 'ad-square';
+            [$size, $room] = match ($frame) {
+                'ad-story' => ['1080x1920', 'Keep the top eighth calm for the page name, and the lower third calm and dark: the headline and button are set there.'],
+                'ad-link' => ['1200x628', 'The product fills the middle of the frame.'],
+                default => ['1080x1080', 'The product is the hero, whole and sharp.'],
+            };
+            $refs = [];
+            if ($slots[$i]['own'] !== null && isset($site['fetch']) && ($bytes = ($site['fetch'])($slots[$i]['own']['url'])) !== null) {
+                $refs[] = $bytes;
+            }
+            $jobs[] = [
+                'prompt' => trim($slots[$i]['brief'].($slots[$i]['search'] ? "\nSubject: ".$slots[$i]['search'] : '')
+                    .($refs !== [] ? "\nShow the attached picture of the business's own product in this scene." : '')
+                    ."\nA premium photographic advertising picture. ".$room),
+                'size' => $size,
+                'refs' => $refs,
+            ];
+            $index[] = $i;
+        }
+
+        $out = [];
+        try {
+            foreach (($site['render'])($jobs) as $k => $bytes) {
+                if ($bytes !== null && ($uri = $this->encodeBytes($bytes, $slots[$index[$k]]['width'] >= 720 ? 900 : 720)) !== null) {
+                    $out[$index[$k]] = ['data' => $uri, 'source' => 'codex', 'credit' => null, 'url' => null, 'fit' => 'photo'];
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::info('prototype photo: render skipped', ['error' => mb_substr($e->getMessage(), 0, 200)]);
+        }
+
+        return $out;
     }
 
     /** Width over height of an inlined picture, 1.0 when it cannot be told. */
