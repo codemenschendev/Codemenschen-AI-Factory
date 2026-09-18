@@ -420,16 +420,19 @@ class PrototypePhoto
      * sentence, and the business's own product picture to put in the scene.
      *
      * @param  list<array{url:string,kind?:string}>  $images  the site's pictures, best first
-     * @return array{prompt:string,size:string,refs:list<string>}
+     * @return array{prompt:string,size:string,refs:list<string>,product:?string}
      */
     public static function openingJob(string $sentence, ?string $product, array $images, ?\Closure $fetch): array
     {
         // A product picture, not a screenshot of the site, when there is one.
         usort($images, fn ($a, $b) => (($a['kind'] ?? '') === 'screen') <=> (($b['kind'] ?? '') === 'screen'));
-        $refs = [];
+        // The product itself is never drawn by the image model: given the voucher as a
+        // reference, it painted champagne and a clock around nothing. It renders the scene with
+        // room in the middle and the real picture is laid into that room (withProduct).
+        $own = null;
         foreach (array_slice($images, 0, 3) as $img) {
             if ($fetch !== null && ($bytes = $fetch($img['url'])) !== null) {
-                $refs[] = $bytes;
+                $own = $bytes;
                 break;
             }
         }
@@ -438,13 +441,54 @@ class PrototypePhoto
             'prompt' => trim("A premium photographic picture for the opening story ad of this business's campaign, portrait 9:16.\n\n"
                 ."The campaign, in the customer's words: ".mb_substr(trim($sentence), 0, 400)."\n\n"
                 .($product !== null && trim($product) !== '' ? "What the business sells, read from its own website:\n".mb_substr(trim($product), 0, 1800)."\n\n" : '')
-                .($refs !== []
-                    ? "The attached picture is the business's own product. It is the hero: show THAT product, recognisable, large and sharp, in the world of the people who buy it and in the season of the campaign. Do not invent a different product.\n\n"
+                .($own !== null
+                    ? "Render ONLY the scene around the business's product, in the world of the people who buy it and in the season of the campaign. The product itself is laid in afterwards: keep the middle of the frame, from 25% to 62% of the height, an open, softly lit space in front of the scene, with nothing standing in it. Do not draw any card, voucher, box, screen or product.\n\n"
                     : "Show what the business sells, in the world of the people who buy it and in the season of the campaign.\n\n")
                 .'Keep the top eighth calm for the page name, and the lower third calm and dark: the headline and button are set there. No words, letters, prices or logos in the picture.'),
             'size' => '1080x1920',
-            'refs' => $refs,
+            'refs' => [],
+            'product' => $own,
         ];
+    }
+
+    /**
+     * The business's own product picture laid into the rendered scene: trimmed of its flat
+     * border, rounded, with a soft shadow, centred a little above the middle where the scene
+     * left room. The rendered scene alone when anything fails.
+     */
+    public static function withProduct(string $scene, ?string $product): string
+    {
+        $bin = collect(['/usr/bin/magick', '/opt/homebrew/bin/magick'])->first(fn (string $p) => is_executable($p));
+        if ($product === null || $bin === null) {
+            return $scene;
+        }
+        $dir = sys_get_temp_dir().'/proto-comp-'.bin2hex(random_bytes(4));
+        @mkdir($dir);
+        try {
+            file_put_contents("$dir/scene", $scene);
+            file_put_contents("$dir/product", $product);
+            $proc = new Process([$bin, "$dir/scene", '-resize', '1080x1920^', '-gravity', 'center', '-extent', '1080x1920',
+                '(', "$dir/product", '-fuzz', '8%', '-trim', '+repage', '-resize', '560x760>',
+                '(', '+clone', '-alpha', 'extract', '-draw', 'fill black polygon 0,0 0,24 24,0 fill white circle 24,24 24,0',
+                '(', '+clone', '-flip', ')', '-compose', 'Multiply', '-composite',
+                '(', '+clone', '-flop', ')', '-compose', 'Multiply', '-composite', ')',
+                '-alpha', 'off', '-compose', 'CopyOpacity', '-composite',
+                '(', '+clone', '-background', 'black', '-shadow', '70x28+0+22', ')', '+swap',
+                '-background', 'none', '-compose', 'over', '-layers', 'merge', '+repage', ')',
+                '-gravity', 'center', '-geometry', '+0-110', '-compose', 'over', '-composite', '-quality', '88', "$dir/out.jpg"],
+                null, null, null, 60);
+            $proc->run();
+            $out = @file_get_contents("$dir/out.jpg");
+
+            return $proc->isSuccessful() && is_string($out) && strlen($out) > 5000 ? $out : $scene;
+        } catch (\Throwable $e) {
+            Log::info('prototype photo: product not laid in', ['error' => mb_substr($e->getMessage(), 0, 200)]);
+
+            return $scene;
+        } finally {
+            array_map('unlink', glob("$dir/*") ?: []);
+            @rmdir($dir);
+        }
     }
 
     private function rendered(string $html, array $slots, array $site): array
