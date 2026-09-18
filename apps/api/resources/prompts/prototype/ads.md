@@ -52,10 +52,12 @@ other tools read them.
 In that order, each with its size printed small under the frame, outside it:
 <span class="ad-size">1080 × 1920</span> and <span class="ad-size">1080 × 1080</span>.
 Inside every creative ONE photograph: <div class="photo-wide"> in the story,
-<div class="photo-card"> in the square. The story's picture is rendered for this ad with the
-business's own product in it, so brief it as a scene: the product in the customer's world,
-not the product on white. Position the words over or under the picture; the slot holds the
-brief and nothing else.
+<div class="photo-card"> in the square. The story's picture is rendered for this ad: a scene
+in the customer's world, with the business's own product picture laid into its middle. So
+when the website's pictures are offered, the story slot's data-site names the picture that
+shows THE PRODUCT ITSELF (the voucher, the cake, the app screen), never a mood, a table or a
+decoration: the scene around it is drawn for you. Position the words over or under the
+picture; the slot holds the brief and nothing else.
 
 Two different angles, not two wordings of one idea: the story shows the result the reader
 gets, the square the proof, something the reader can check such as a finished example.
