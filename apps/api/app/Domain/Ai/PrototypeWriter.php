@@ -343,7 +343,8 @@ class PrototypeWriter
 
                     return [$chat->post('/v1/chat/completions', $body), $images->codexOn($pool, $opening)];
                 });
-                $pictures = [$images->codexBytes($both['codex'] ?? null)];
+                $scene = $images->codexBytes($both['codex'] ?? null);
+                $pictures = [$scene === null ? null : PrototypePhoto::withProduct($scene, $opening['product'])];
                 $lap('generate+render');
                 $res = $both['chat'] ?? null;
                 if ($res instanceof \Throwable) {

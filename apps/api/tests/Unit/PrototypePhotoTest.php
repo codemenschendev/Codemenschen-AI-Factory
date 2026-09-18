@@ -234,11 +234,26 @@ class PrototypePhotoTest extends TestCase
 
         // The product, not the screenshot of the homepage.
         $this->assertSame(['https://g.com/voucher.png'], $fetched);
-        $this->assertSame(['bytes'], $job['refs']);
+        // The model renders the scene only; the real product is laid in afterwards.
+        $this->assertSame([], $job['refs']);
+        $this->assertSame('bytes', $job['product']);
         $this->assertSame('1080x1920', $job['size']);
         $this->assertStringContainsString('printable gift vouchers', $job['prompt']);
         $this->assertStringContainsString('Christmas campaign ads', $job['prompt']);
-        $this->assertStringContainsString('show THAT product', $job['prompt']);
+        $this->assertStringContainsString('Do not draw any card, voucher', $job['prompt']);
+    }
+
+    public function test_the_real_product_is_laid_into_the_rendered_scene(): void
+    {
+        $png = $this->png();
+        $bin = $this->magick();
+        (new Process([$bin, '-size', '300x400', 'xc:white', $this->dir.'/card.png']))->run();
+
+        $out = PrototypePhoto::withProduct($png, (string) file_get_contents($this->dir.'/card.png'));
+
+        $this->assertNotSame($png, $out);
+        $this->assertSame([1080, 1920], array_slice(getimagesizefromstring($out) ?: [0, 0], 0, 2));
+        $this->assertSame($png, PrototypePhoto::withProduct($png, null));
     }
 
     public function test_the_ad_page_and_its_opening_picture_are_made_at_the_same_time(): void
