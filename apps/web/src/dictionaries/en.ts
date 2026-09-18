@@ -670,6 +670,13 @@ export const en = {
     },
     another: "Build another",
     limit: "Daily limit reached. Come back tomorrow or get in touch.",
+    signIn: {
+      ads: "For ads we need your e-mail. We send you a link, then you carry on right away.",
+      again: "Your first prototype was free without signing in. For more we need your e-mail. We send you a link.",
+      email: "Your e-mail",
+      send: "Send link",
+      sent: "The link is on its way. Open it on this device and your text will be back here.",
+    },
     tooLong: "That is more than {max} characters. Shorten it a little and try again.",
     mine: "Your prototypes",
     mineHint: "Kept on this device only. We store nothing for it and send nothing away.",

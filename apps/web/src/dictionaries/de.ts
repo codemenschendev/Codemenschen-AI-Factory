@@ -672,6 +672,13 @@ export const de = {
     },
     another: "Noch einen bauen",
     limit: "Tageslimit erreicht. Morgen wieder oder schreib uns.",
+    signIn: {
+      ads: "Für Anzeigen brauchen wir deine E-Mail. Wir schicken dir einen Link, danach geht es gleich weiter.",
+      again: "Dein erster Prototyp war kostenlos ohne Anmeldung. Für weitere brauchen wir deine E-Mail. Wir schicken dir einen Link.",
+      email: "Deine E-Mail",
+      send: "Link senden",
+      sent: "Link ist unterwegs. Öffne ihn auf diesem Gerät, dann ist dein Text wieder hier.",
+    },
     tooLong: "Das sind mehr als {max} Zeichen. Kürz es ein wenig und versuch es nochmal.",
     mine: "Deine Prototypen",
     mineHint: "Nur auf diesem Gerät gespeichert. Wir legen dazu nichts an und schicken nichts weg.",

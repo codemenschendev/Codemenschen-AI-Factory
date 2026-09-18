@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { remember } from "@/lib/history";
@@ -20,6 +20,7 @@ import type { Dict, Locale } from "@/lib/i18n";
  */
 /** Mirrors PrototypeController::MAX_PROMPT. The API is the one that refuses; this only warns first. */
 const MAX_PROMPT = 4000;
+const DRAFT = "aifactory-proto-draft";
 
 export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
@@ -28,6 +29,37 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const [kind, setKind] = useState<"site" | "app" | "ads" | "email">("site");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Ads, and any prototype after the first, ask for an e-mail. The text typed so far is kept
+  // in this browser and comes back when the sign-in link returns the visitor to the form.
+  const [signIn, setSignIn] = useState<"ads" | "again" | null>(null);
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+
+  useEffect(() => {
+    try {
+      const draft = JSON.parse(localStorage.getItem(DRAFT) ?? "null");
+      if (draft && typeof draft.prompt === "string") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage exists only in the browser, after hydration
+        setPrompt(draft.prompt);
+        if (["site", "app", "ads", "email"].includes(draft.kind)) setKind(draft.kind);
+        localStorage.removeItem(DRAFT);
+      }
+    } catch {}
+  }, []);
+
+  async function sendLink(e: React.SyntheticEvent) {
+    e.preventDefault();
+    try {
+      localStorage.setItem(DRAFT, JSON.stringify({ prompt, kind }));
+      localStorage.setItem("aifactory-next", `/${locale}/prototype`);
+    } catch {}
+    try {
+      await api("/auth/magic-link", { method: "POST", body: JSON.stringify({ email, locale, join: true }) });
+      setSent(true);
+    } catch {
+      setError(p.failed);
+    }
+  }
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -49,6 +81,12 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       // 429 is the per-IP cap, 422 is a brief the API would not take (too long, in practice).
       // Both used to fall through to "try again", which is the one thing that does not help.
       const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
+      const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string; reason?: string } | null }).body : null;
+      if (status === 401 && body?.code === "sign_in") {
+        setSignIn(body.reason === "ads" ? "ads" : "again");
+        setBusy(false);
+        return;
+      }
       setError(status === 429 ? p.limit : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
       setBusy(false);
     }
@@ -99,9 +137,31 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
         </p>
       )}
       {error && <p className="est-empty">{error}</p>}
-      <button type="submit" disabled={busy || prompt.trim().length < 12} style={{ justifySelf: "start" }}>
-        {busy ? p.building : p.go}
-      </button>
+      {signIn === null ? (
+        <button type="submit" disabled={busy || prompt.trim().length < 12} style={{ justifySelf: "start" }}>
+          {busy ? p.building : p.go}
+        </button>
+      ) : sent ? (
+        <p>{p.signIn.sent}</p>
+      ) : (
+        <div style={{ display: "grid", gap: 8 }}>
+          <p style={{ margin: 0 }}>{p.signIn[signIn]}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={p.signIn.email}
+              aria-label={p.signIn.email}
+              style={{ flex: "1 1 220px", padding: 10, fontSize: "1rem" }}
+            />
+            <button type="button" onClick={sendLink} disabled={!/.+@.+\..+/.test(email)}>
+              {p.signIn.send}
+            </button>
+          </div>
+        </div>
+      )}
     </form>
   );
 }
