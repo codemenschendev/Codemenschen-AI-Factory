@@ -2,6 +2,7 @@
 # Nightly backup of what Appwerk cannot regenerate:
 #   db-<stamp>.sql.gz        the Postgres database (customers, orders, projects, prototypes)
 #   artifacts-<stamp>.tar.gz the artifacts volume (source bundles, builds, previews)
+#   repos-<stamp>.tar.gz     the repos volume (each project's git working copy)
 #   media-<stamp>.tar.gz     customer uploads, the picture library, videos, design references
 #                            and the design library on /var/lib (2026-09-18: 185 MB in all)
 #   env-<stamp>.tar.gz.enc   the API and infra .env files plus /var/lib/ai-factory/secrets,
@@ -12,9 +13,12 @@
 # Keeps 14 nights locally and uploads every file to S3, because a backup on the same disk as
 # the database covers a mistaken delete and nothing else. The S3 key may only PutObject into its
 # prefix: it cannot list or delete, so a compromised server cannot destroy what is already up
-# there. Retention up there is the bucket's lifecycle rule (90 days on wp-sofa/), not this script.
+# there. Retention up there is the bucket's lifecycle rule (90 days on appwerk/), not this script.
 #
-# Restore: gunzip -c db-<stamp>.sql.gz | psql;  tar -xzf artifacts-… -C <volume mountpoint>;
+# Not backed up, on purpose: the Docker images (rebuilt from git by the deploy), the raw
+# pgdata volume (pg_dump is the consistent copy of it) and redis (queue and cache, transient).
+#
+# Restore: gunzip -c db-<stamp>.sql.gz | psql;  tar -xzf artifacts-|repos-… -C <volume mountpoint>;
 #          tar -xzf media-… -C /;  openssl enc -d -aes-256-cbc -pbkdf2 -pass file:$ENV_KEY
 #          -in env-<stamp>.tar.gz.enc | tar -xz -C /   (paths inside are absolute, minus the /)
 set -euo pipefail
@@ -24,13 +28,14 @@ DEST=/var/backups/ai-factory
 KEEP_DAYS=14
 STAMP=$(date +%Y%m%d-%H%M)
 
-# Off-site. Same bucket and key as the wp-sofa dump (/usr/local/bin/mongo-backup.sh); that key is
-# scoped to wp-sofa/*, hence the prefix. An own key `appwerk-backup` scoped to appwerk/* is the
-# cleaner setup: create it, then change PREFIX and PROFILE here.
+# Off-site. Same bucket as the wp-sofa dump (/usr/local/bin/mongo-backup.sh), own IAM user
+# `appwerk-backup` (created 2026-09-18) whose only right is PutObject on appwerk/*; its key is the
+# `appwerk-backup` profile in /root/.aws on the host. The bucket's lifecycle rule
+# `appwerk-nightly-backups` expires objects under appwerk/ after 90 days.
 AWS=/usr/local/bin/aws
 BUCKET=codemenschenbackup
-PREFIX=wp-sofa/appwerk
-PROFILE=wp-sofa-backup
+PREFIX=appwerk
+PROFILE=appwerk-backup
 
 # Passphrase for the env archive. Generated once on the host (openssl rand -base64 48), mode 600,
 # and kept OFF the server too (password manager): the S3 copy is useless without it.
@@ -64,6 +69,12 @@ mv "$DEST/db-$STAMP.sql.gz.part" "$DEST/db-$STAMP.sql.gz"
 ART=$(docker volume inspect infra_artifacts --format '{{.Mountpoint}}')
 tar -czf "$DEST/artifacts-$STAMP.tar.gz.part" -C "$ART" .
 mv "$DEST/artifacts-$STAMP.tar.gz.part" "$DEST/artifacts-$STAMP.tar.gz"
+
+# The repos volume: each project's git working copy, the one the revise stage edits. The source
+# bundle in artifacts is a snapshot of a release; this is the history and the current state.
+REPOS=$(docker volume inspect infra_repos --format '{{.Mountpoint}}')
+tar -czf "$DEST/repos-$STAMP.tar.gz.part" -C "$REPOS" .
+mv "$DEST/repos-$STAMP.tar.gz.part" "$DEST/repos-$STAMP.tar.gz"
 
 # Media: absolute paths, stored without the leading slash (tar's default), so a restore is
 # `tar -xzf … -C /`. A directory that does not exist yet is skipped, not fatal.
