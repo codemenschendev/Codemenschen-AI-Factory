@@ -70,6 +70,7 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringContainsString('NOT A PAGE ABOUT THE ADS', $sent);
         $this->assertStringContainsString('TWO creatives, a story and a feed square', $sent);
         $this->assertStringNotContainsString('ad-link', $sent);
+        $this->assertStringContainsString('shows THE PRODUCT ITSELF', $sent);
         $this->assertStringContainsString('Gesponsert', $sent);
         $this->assertStringContainsString('ad-story', $sent);
         $this->assertStringContainsString('photo-wide', $sent);
