@@ -497,12 +497,22 @@ class PrototypePhoto
         $order = array_keys($slots);
         usort($order, fn ($a, $b) => (int) strpos($html, $slots[$a]['m'][0]) <=> (int) strpos($html, $slots[$b]['m'][0]));
 
-        // Rendered ahead, beside the page: they go to the first slots in page order.
+        // Rendered ahead, beside the page: scenes for the first slots in page order. The product
+        // laid into each is the business's picture the builder picked for that slot, or for any
+        // slot of the page, because it saw the pictures described and the first one on the site
+        // was a Christmas table, not the voucher. The picture guessed before the page is the last resort.
         if (isset($site['pictures'])) {
             $out = [];
+            $picked = array_values(array_filter(array_map(fn ($i) => $slots[$i]['own'], $order)));
             foreach (array_values($site['pictures']) as $k => $bytes) {
                 $i = $order[$k] ?? null;
-                if ($i !== null && $bytes !== null && ($uri = $this->encodeBytes($bytes, $slots[$i]['width'] >= 720 ? 900 : 720)) !== null) {
+                if ($i === null || $bytes === null) {
+                    continue;
+                }
+                $own = $slots[$i]['own'] ?? $picked[0] ?? null;
+                $product = $own !== null && isset($site['fetch']) ? ($site['fetch'])($own['url']) : null;
+                $bytes = self::withProduct($bytes, $product ?? ($site['products'][$k] ?? null));
+                if (($uri = $this->encodeBytes($bytes, $slots[$i]['width'] >= 720 ? 900 : 720)) !== null) {
                     $out[$i] = ['data' => $uri, 'source' => 'codex', 'credit' => null, 'url' => null, 'fit' => 'photo'];
                 }
             }
