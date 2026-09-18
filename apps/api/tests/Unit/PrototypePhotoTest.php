@@ -256,6 +256,31 @@ class PrototypePhotoTest extends TestCase
         $this->assertSame($png, PrototypePhoto::withProduct($png, null));
     }
 
+    public function test_the_product_laid_in_is_the_one_the_builder_picked(): void
+    {
+        $png = $this->png();
+        $fetched = [];
+        $page = '<!doctype html><html><head><style>.x{}</style></head><body><main class="ads">'
+            .'<article class="ad ad-story"><div class="photo-wide" data-q="table">Festtafel</div></article>'
+            .'<article class="ad ad-square"><div class="photo-card" data-site="2" data-q="voucher">Der Gutschein</div></article>'
+            .'</main></body></html>';
+        $site = [
+            'images' => [['url' => 'https://g.com/table.jpg', 'alt' => '', 'kind' => 'photo'], ['url' => 'https://g.com/voucher.png', 'alt' => '', 'kind' => 'graphic']],
+            'fetch' => function (string $url) use (&$fetched, $png) {
+                $fetched[] = $url;
+
+                return $png;
+            },
+            'pictures' => [$png], 'products' => [null],
+        ];
+
+        $out = $this->photo()->apply($page, $site);
+
+        $this->assertContains('https://g.com/voucher.png', $fetched);
+        $this->assertNotContains('https://g.com/table.jpg', $fetched);
+        $this->assertSame(['codex', 'site'], $out['sources']);
+    }
+
     public function test_the_ad_page_and_its_opening_picture_are_made_at_the_same_time(): void
     {
         $png = $this->png();

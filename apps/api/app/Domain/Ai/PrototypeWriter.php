@@ -344,7 +344,7 @@ class PrototypeWriter
                     return [$chat->post('/v1/chat/completions', $body), $images->codexOn($pool, $opening)];
                 });
                 $scene = $images->codexBytes($both['codex'] ?? null);
-                $pictures = [$scene === null ? null : PrototypePhoto::withProduct($scene, $opening['product'])];
+                $pictures = [$scene];
                 $lap('generate+render');
                 $res = $both['chat'] ?? null;
                 if ($res instanceof \Throwable) {
@@ -482,7 +482,7 @@ class PrototypeWriter
             $stage('photos');
             // The opening picture of an ad page, rendered beside the page above. A render that
             // failed leaves the slot to the site's own pictures and the library.
-            $render = $pictures === null ? [] : ['pictures' => $pictures];
+            $render = $pictures === null ? [] : ['pictures' => $pictures, 'products' => [$opening['product'] ?? null]];
             $shot = $photo->apply($page, $site === null ? $render : $render + [
                 'images' => $site['images'] ?? [],
                 'logo' => $site['logo'] ?? null,
