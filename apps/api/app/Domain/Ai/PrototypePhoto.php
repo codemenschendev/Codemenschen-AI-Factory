@@ -422,7 +422,7 @@ class PrototypePhoto
      * @param  list<array{url:string,kind?:string}>  $images  the site's pictures, best first
      * @return array{prompt:string,size:string,refs:list<string>,product:?string}
      */
-    public static function openingJob(string $sentence, ?string $product, array $images, ?\Closure $fetch): array
+    public static function openingJob(string $sentence, ?string $product, array $images, ?\Closure $fetch, string $frame = 'ad-story'): array
     {
         // A product picture, not a screenshot of the site, when there is one.
         usort($images, fn ($a, $b) => (($a['kind'] ?? '') === 'screen') <=> (($b['kind'] ?? '') === 'screen'));
@@ -437,15 +437,20 @@ class PrototypePhoto
             }
         }
 
+        $story = $frame === 'ad-story';
+
         return [
-            'prompt' => trim("A premium photographic picture for the opening story ad of this business's campaign, portrait 9:16.\n\n"
+            'prompt' => trim(($story ? "A premium photographic picture for the opening story ad of this business's campaign, portrait 9:16.\n\n"
+                : "A premium photographic picture for a square feed ad of this business's campaign, 1:1. A different scene from the story ad: another place and moment of the same season.\n\n")
+                .""
                 ."The campaign, in the customer's words: ".mb_substr(trim($sentence), 0, 400)."\n\n"
                 .($product !== null && trim($product) !== '' ? "What the business sells, read from its own website:\n".mb_substr(trim($product), 0, 1800)."\n\n" : '')
                 .($own !== null
-                    ? "Render ONLY the scene around the business's product, in the world of the people who buy it and in the season of the campaign. The product itself is laid in afterwards: keep the middle of the frame, from 25% to 62% of the height, an open, softly lit space in front of the scene, with nothing standing in it. Do not draw any card, voucher, box, screen or product.\n\n"
+                    ? "Render ONLY the scene around the business's product, in the world of the people who buy it and in the season of the campaign. The product itself is laid in afterwards: keep the middle of the frame, ".($story ? 'from 25% to 62% of the height' : 'the central half')." an open, softly lit space in front of the scene, with nothing standing in it. Do not draw any card, voucher, box, screen or product.\n\n"
                     : "Show what the business sells, in the world of the people who buy it and in the season of the campaign.\n\n")
-                .'Keep the top eighth calm for the page name, and the lower third calm and dark: the headline and button are set there. No words, letters, prices or logos in the picture.'),
-            'size' => '1080x1920',
+                .($story ? 'Keep the top eighth calm for the page name, and the lower third calm and dark: the headline and button are set there. ' : '')
+                .'No words, letters, prices or logos in the picture.'),
+            'size' => $story ? '1080x1920' : '1080x1080',
             'refs' => [],
             'product' => $own,
         ];
@@ -462,20 +467,25 @@ class PrototypePhoto
         if ($product === null || $bin === null) {
             return $scene;
         }
+        // A story leaves its lower third to the words, so the product sits a little high; a
+        // square carries its words under the picture and the product sits in the middle.
+        $size = @getimagesizefromstring($scene);
+        $square = is_array($size) && $size[1] > 0 && $size[0] / $size[1] > 0.8;
+        [$canvas, $box, $shift] = $square ? ['1080x1080', '520x640>', '+0+0'] : ['1080x1920', '560x760>', '+0-110'];
         $dir = sys_get_temp_dir().'/proto-comp-'.bin2hex(random_bytes(4));
         @mkdir($dir);
         try {
             file_put_contents("$dir/scene", $scene);
             file_put_contents("$dir/product", $product);
-            $proc = new Process([$bin, "$dir/scene", '-resize', '1080x1920^', '-gravity', 'center', '-extent', '1080x1920',
-                '(', "$dir/product", '-fuzz', '8%', '-trim', '+repage', '-resize', '560x760>',
+            $proc = new Process([$bin, "$dir/scene", '-resize', $canvas.'^', '-gravity', 'center', '-extent', $canvas,
+                '(', "$dir/product", '-fuzz', '8%', '-trim', '+repage', '-resize', $box,
                 '(', '+clone', '-alpha', 'extract', '-draw', 'fill black polygon 0,0 0,24 24,0 fill white circle 24,24 24,0',
                 '(', '+clone', '-flip', ')', '-compose', 'Multiply', '-composite',
                 '(', '+clone', '-flop', ')', '-compose', 'Multiply', '-composite', ')',
                 '-alpha', 'off', '-compose', 'CopyOpacity', '-composite',
                 '(', '+clone', '-background', 'black', '-shadow', '70x28+0+22', ')', '+swap',
                 '-background', 'none', '-compose', 'over', '-layers', 'merge', '+repage', ')',
-                '-gravity', 'center', '-geometry', '+0-110', '-compose', 'over', '-composite', '-quality', '88', "$dir/out.jpg"],
+                '-gravity', 'center', '-geometry', $shift, '-compose', 'over', '-composite', '-quality', '88', "$dir/out.jpg"],
                 null, null, null, 60);
             $proc->run();
             $out = @file_get_contents("$dir/out.jpg");

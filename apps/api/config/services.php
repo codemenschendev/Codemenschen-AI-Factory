@@ -81,7 +81,7 @@ return [
         'codex_token' => env('AI_IMAGE_CODEX_TOKEN'),
         'codex_timeout' => (int) env('AI_IMAGE_CODEX_TIMEOUT', 420),
         // How many pictures of an ad prototype the Codex image agent renders (owner's decision,
-        // 2026-09-17: one, the opening story). 0 switches it off; the rest come from the site and the library.
+        // 2026-09-18: two, the story and the square; at most two). 0 switches it off.
         'prototype_renders' => (int) env('AI_IMAGE_PROTOTYPE_RENDERS', 0),
         // Names and addresses the model can see behind the gateway (claude-cli injects the signed-in
         // account's e-mail) and must never print. Comma-separated; checked on every prototype.
