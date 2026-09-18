@@ -44,11 +44,43 @@ class PrototypeCapTest extends TestCase
         }
     }
 
-    public function test_a_visitor_gets_five_a_day(): void
+    public function test_the_first_prototype_is_free_and_the_second_asks_for_an_e_mail(): void
+    {
+        $this->build(['X-Forwarded-For' => '203.0.113.7'])->assertStatus(202);
+
+        $this->build(['X-Forwarded-For' => '203.0.113.7'])->assertStatus(401)
+            ->assertJson(['code' => 'sign_in', 'reason' => 'again']);
+    }
+
+    public function test_ads_ask_for_an_e_mail_even_the_first_time(): void
+    {
+        $this->postJson('/api/prototypes', ['prompt' => 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'kind' => 'ads'])
+            ->assertStatus(401)->assertJson(['reason' => 'ads']);
+
+        $token = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de'])->createToken('portal')->plainTextToken;
+        $this->postJson('/api/prototypes', ['prompt' => 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'kind' => 'ads'],
+            ['Authorization' => 'Bearer '.$token])->assertStatus(202);
+    }
+
+    public function test_an_unknown_address_from_the_form_gets_a_link_that_creates_the_account(): void
+    {
+        $before = Customer::count();
+        $this->postJson('/api/auth/magic-link', ['email' => 'Neu@Example.com', 'locale' => 'de', 'join' => true])->assertOk();
+        $this->assertSame($before, Customer::count(), 'nothing is created before the link is clicked');
+
+        $url = \Illuminate\Support\Facades\URL::temporarySignedRoute('auth.join', now()->addMinutes(30), ['email' => 'neu@example.com', 'locale' => 'de']);
+        $this->get($url)->assertRedirect();
+        $this->assertSame($before + 1, Customer::count());
+        $this->assertTrue(Customer::where('email', 'neu@example.com')->exists());
+        $this->get('/api/auth/join?email=x@example.com&locale=de')->assertForbidden();
+    }
+
+    public function test_a_signed_in_visitor_gets_five_a_day(): void
     {
         $this->fill('203.0.113.7');
+        $token = Customer::create(['email' => 'a@example.com', 'locale' => 'de'])->createToken('portal')->plainTextToken;
 
-        $this->withServerVariables(['REMOTE_ADDR' => '203.0.113.7'])->build()->assertStatus(429);
+        $this->build(['X-Forwarded-For' => '203.0.113.7', 'Authorization' => 'Bearer '.$token])->assertStatus(429);
     }
 
     public function test_one_visitor_hitting_the_cap_does_not_block_another(): void
@@ -64,7 +96,7 @@ class PrototypeCapTest extends TestCase
     {
         $this->fill('198.51.100.4');
 
-        $this->build(['X-Forwarded-For' => '198.51.100.4'])->assertStatus(429);
+        $this->build(['X-Forwarded-For' => '198.51.100.4'])->assertStatus(401);
         $this->build(['X-Forwarded-For' => '198.51.100.9'])->assertStatus(202);
     }
 

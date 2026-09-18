@@ -45,14 +45,27 @@ class PrototypeController extends Controller
         // operator testing the funnel is not that, and must not eat the public allowance either,
         // so a signed-in admin passes straight through. The route stays open to everyone else:
         // a token is read if one is sent, never required.
-        if (! ($request->user('sanctum')?->isAdmin() ?? false)) {
+        $kind = $data['kind'] ?? 'site';
+        $user = $request->user('sanctum');
+
+        // The first prototype is free and needs nothing. Ads, which spend two renders on the
+        // image agent, and every prototype after the first from the same address, ask for an
+        // e-mail first (owner's decision 2026-09-18): changing IP no longer buys unlimited
+        // generations, and each build after the first comes with a way to reach the visitor.
+        if ($user === null) {
+            $before = Prototype::where('ip', $ip)->where('created_at', '>=', now()->subDays(self::LIVE_DAYS))->exists();
+            if ($kind === 'ads' || $before) {
+                return response()->json(['error' => 'Sign in with your e-mail to build this prototype.',
+                    'code' => 'sign_in', 'reason' => $kind === 'ads' ? 'ads' : 'again'], 401);
+            }
+        }
+
+        if (! ($user?->isAdmin() ?? false)) {
             $today = Prototype::where('ip', $ip)->where('created_at', '>=', now()->startOfDay())->count();
             if ($today >= self::PER_IP_PER_DAY) {
                 return response()->json(['error' => 'Daily limit of free prototypes reached for this address. Come back tomorrow or get in touch.'], 429);
             }
         }
-
-        $kind = $data['kind'] ?? 'site';
 
         $proto = Prototype::create([
             'status' => 'queued',

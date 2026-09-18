@@ -36,7 +36,8 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
     const stored = getToken();
     // A project page sent the visitor here to sign in: go back once a token exists.
     const next = localStorage.getItem("aifactory-next");
-    if (stored && next && next.startsWith(`/${locale}/account/`)) {
+    // The prototype form sent them, to build ads or a second prototype: back to the form.
+    if (stored && next && (next.startsWith(`/${locale}/account/`) || next === `/${locale}/prototype`)) {
       localStorage.removeItem("aifactory-next");
       window.location.replace(next);
     }

@@ -36,6 +36,8 @@ Route::post('/auth/magic-link', [AuthController::class, 'magicLink'])
     ->middleware('throttle:5,1');
 Route::get('/auth/verify/{customer}', [AuthController::class, 'verify'])
     ->name('auth.verify');
+Route::get('/auth/join', [AuthController::class, 'join'])
+    ->name('auth.join');
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/projects', [MeController::class, 'projects']);
