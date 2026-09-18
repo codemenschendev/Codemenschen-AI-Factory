@@ -248,11 +248,13 @@ class PrototypePhotoTest extends TestCase
         $png = $this->png();
         $bin = $this->magick();
         (new Process([$bin, '-size', '300x400', 'xc:white', $this->dir.'/card.png']))->run();
+        (new Process([$bin, '-size', '540x960', 'plasma:', $this->dir.'/story.png']))->run();
+        $card = (string) file_get_contents($this->dir.'/card.png');
 
-        $out = PrototypePhoto::withProduct($png, (string) file_get_contents($this->dir.'/card.png'));
-
-        $this->assertNotSame($png, $out);
+        $out = PrototypePhoto::withProduct((string) file_get_contents($this->dir.'/story.png'), $card);
         $this->assertSame([1080, 1920], array_slice(getimagesizefromstring($out) ?: [0, 0], 0, 2));
+        // A square scene stays square.
+        $this->assertSame([1080, 1080], array_slice(getimagesizefromstring(PrototypePhoto::withProduct($png, $card)) ?: [0, 0], 0, 2));
         $this->assertSame($png, PrototypePhoto::withProduct($png, null));
     }
 
@@ -285,18 +287,21 @@ class PrototypePhotoTest extends TestCase
     {
         $png = $this->png();
         config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't',
-            'services.ai_image.backend' => 'codex', 'services.ai_image.prototype_renders' => 1,
+            'services.ai_image.backend' => 'codex', 'services.ai_image.prototype_renders' => 2,
             'services.ai_image.codex_url' => 'http://imagegen.test', 'services.ai_image.codex_token' => 'c']);
         Http::fake([
             '*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => '<!doctype html><html lang="de"><head><title>Anzeigen</title><style>.x{}</style></head><body><main class="ads">'
                 .'<article class="ad ad-story"><div class="photo-wide" data-q="bread oven">Brot im Ofen</div></article>'
+                .'<article class="ad ad-square"><div class="photo-card" data-q="bread basket">Brotkorb</div></article>'
                 .'</main></body></html>']]]]),
             'imagegen.test/v1/images' => Http::response(['base64' => base64_encode($png), 'mime' => 'image/png']),
         ]);
 
         $out = app(PrototypeWriter::class)->build('Weihnachtsanzeigen für eine Bäckerei in Graz', 'ads', photo: $this->photo());
 
-        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && str_contains($r['prompt'], 'Bäckerei in Graz'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['size'] === '1080x1920' && str_contains($r['prompt'], 'Bäckerei in Graz'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['size'] === '1080x1080' && str_contains($r['prompt'], 'square feed ad'));
+        $this->assertStringNotContainsString('Brotkorb</div>', $out['html']);
         $this->assertStringContainsString('data:image/', $out['html']);
         $this->assertStringNotContainsString('Brot im Ofen</div>', $out['html']);
     }
