@@ -34,6 +34,9 @@ services:
     ports:
       - "127.0.0.1:8181:8000"
     environment:
+      # The file log lives inside the container and is gone after every rebuild; stderr
+      # keeps it in `docker compose logs`.
+      LOG_STACK: single,stderr
       BUZZ_ALERT_DIR: /alerts
       GOOGLE_ADS_SERVICE_ACCOUNT_JSON: /secrets/google-ads-sa.json
       AI_IMAGE_BACKEND: ${AI_IMAGE_BACKEND:-openai}
@@ -70,6 +73,7 @@ services:
     env_file: [../apps/api/.env]
     depends_on: [postgres, redis]
     environment:
+      LOG_STACK: single,stderr
       BUZZ_ALERT_DIR: /alerts
       GOOGLE_ADS_SERVICE_ACCOUNT_JSON: /secrets/google-ads-sa.json
       AI_IMAGE_BACKEND: ${AI_IMAGE_BACKEND:-openai}
@@ -104,6 +108,7 @@ services:
     env_file: [../apps/api/.env]
     depends_on: [postgres, redis]
     environment:
+      LOG_STACK: single,stderr
       BUZZ_ALERT_DIR: /alerts
     volumes:
       # Alerts for the Buzz channel #appwerk-alerts: Notify drops a file, the Buzz bot posts it.
