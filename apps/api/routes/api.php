@@ -18,22 +18,25 @@ use App\Http\Controllers\StripeWebhookController;
 use Illuminate\Support\Facades\Route;
 
 // First-party analytics beacon from the portal (App\Domain\Analytics\Analytics). No cookies.
-Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:120,1');
+Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:120,1,t');
 
 // Public prompt-to-prototype (lead magnet): no auth. Throttle on top of the per-IP daily cap.
-Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60');
+Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60,prototypes');
 Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
 Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);
 
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
-Route::post('/quotes/refine', QuoteRefineController::class)->middleware('throttle:5,1');
+Route::post('/quotes/refine', QuoteRefineController::class)->middleware('throttle:5,1,refine');
 Route::get('/quotes/{quote}', [QuoteController::class, 'show']);
 Route::post('/checkout', [CheckoutController::class, 'store']);
 Route::post('/webhooks/stripe', StripeWebhookController::class);
 
+// Every throttle names its own counter (the third argument). Without one, Laravel keys them all
+// by IP alone and they share one count: the page-view beacon on /t used up the sign-in's five,
+// and a visitor was locked out of signing in for the rest of the prototypes' hour.
 Route::post('/auth/magic-link', [AuthController::class, 'magicLink'])
-    ->middleware('throttle:5,1');
+    ->middleware('throttle:5,1,signin');
 Route::get('/auth/verify/{customer}', [AuthController::class, 'verify'])
     ->name('auth.verify');
 Route::get('/auth/join', [AuthController::class, 'join'])
@@ -44,13 +47,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/projects/{project}', [MeController::class, 'project']);
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
     Route::post('/me/projects/{project}/change-requests', [MeController::class, 'requestChanges']);
-    Route::post('/me/projects/{project}/change-requests/refine', [MeController::class, 'refineChangeRequest'])->middleware('throttle:5,1');
+    Route::post('/me/projects/{project}/change-requests/refine', [MeController::class, 'refineChangeRequest'])->middleware('throttle:5,1,cr-refine');
     // The change chat (docs/specs/change-chat.md). The assistant's own limits are in ChangeChat;
     // the throttle only stops a stuck client from hammering the endpoint.
     Route::get('/me/projects/{project}/messages', [MeController::class, 'changeMessages']);
-    Route::post('/me/projects/{project}/messages', [MeController::class, 'sendChangeMessage'])->middleware('throttle:20,1');
+    Route::post('/me/projects/{project}/messages', [MeController::class, 'sendChangeMessage'])->middleware('throttle:20,1,messages');
     Route::get('/me/projects/{project}/messages/{message}/images/{n}', [MeController::class, 'changeMessageImage'])->whereNumber('n');
-    Route::post('/me/projects/{project}/messages/confirm', [MeController::class, 'confirmChange'])->middleware('throttle:10,1');
+    Route::post('/me/projects/{project}/messages/confirm', [MeController::class, 'confirmChange'])->middleware('throttle:10,1,confirm');
     Route::post('/me/projects/{project}/care/checkout', [MeController::class, 'startCare']);
     Route::post('/me/projects/{project}/care/cancel', [MeController::class, 'cancelCare']);
     Route::post('/me/projects/{project}/publishing/start', [MeController::class, 'startPublishing']);
@@ -61,7 +64,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Ad creatives (video or image), scoped to the customer's own projects.
     Route::get('/me/ads', [MediaController::class, 'index']);
-    Route::post('/me/projects/{project}/ads', [MediaController::class, 'store'])->middleware('throttle:10,60');
+    Route::post('/me/projects/{project}/ads', [MediaController::class, 'store'])->middleware('throttle:10,60,media');
     Route::get('/me/ads/{ad}/download', [MediaController::class, 'download']);
 
     // Running campaigns on Codemenschen's ad accounts. publish creates them PAUSED; activate is
