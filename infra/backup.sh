@@ -12,7 +12,7 @@
 # Keeps 14 nights locally and uploads every file to S3, because a backup on the same disk as
 # the database covers a mistaken delete and nothing else. The S3 key may only PutObject into its
 # prefix: it cannot list or delete, so a compromised server cannot destroy what is already up
-# there. Retention up there is the bucket's lifecycle rule (90 days on wp-sofa/), not this script.
+# there. Retention up there is the bucket's lifecycle rule (90 days on appwerk/), not this script.
 #
 # Restore: gunzip -c db-<stamp>.sql.gz | psql;  tar -xzf artifacts-… -C <volume mountpoint>;
 #          tar -xzf media-… -C /;  openssl enc -d -aes-256-cbc -pbkdf2 -pass file:$ENV_KEY
@@ -24,13 +24,14 @@ DEST=/var/backups/ai-factory
 KEEP_DAYS=14
 STAMP=$(date +%Y%m%d-%H%M)
 
-# Off-site. Same bucket and key as the wp-sofa dump (/usr/local/bin/mongo-backup.sh); that key is
-# scoped to wp-sofa/*, hence the prefix. An own key `appwerk-backup` scoped to appwerk/* is the
-# cleaner setup: create it, then change PREFIX and PROFILE here.
+# Off-site. Same bucket as the wp-sofa dump (/usr/local/bin/mongo-backup.sh), own IAM user
+# `appwerk-backup` (created 2026-09-18) whose only right is PutObject on appwerk/*; its key is the
+# `appwerk-backup` profile in /root/.aws on the host. The bucket's lifecycle rule
+# `appwerk-nightly-backups` expires objects under appwerk/ after 90 days.
 AWS=/usr/local/bin/aws
 BUCKET=codemenschenbackup
-PREFIX=wp-sofa/appwerk
-PROFILE=wp-sofa-backup
+PREFIX=appwerk
+PROFILE=appwerk-backup
 
 # Passphrase for the env archive. Generated once on the host (openssl rand -base64 48), mode 600,
 # and kept OFF the server too (password manager): the S3 copy is useless without it.
