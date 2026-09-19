@@ -20,7 +20,7 @@ class Preflight
     {
         $problems = [];
 
-        if ((int) $campaign->ad_budget_monthly_eur <= 0) {
+        if ((int) $campaign->ad_budget_monthly_eur <= 0 && ! $campaign->spend_cap_eur) {
             $problems[] = 'Ad budget is 0. The customer must pay the budget before publishing.';
         }
 
@@ -40,7 +40,7 @@ class Preflight
                     $problems[] = 'Meta: headline is longer than 40 characters: "'.mb_substr($h, 0, 30).'…"';
                 }
             }
-            if (! $campaign->project_ad_id) {
+            if ($campaign->creativePath() === null) {
                 $problems[] = 'Meta: the ad needs a creative (image or video).';
             }
         }

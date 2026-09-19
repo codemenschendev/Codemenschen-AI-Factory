@@ -107,6 +107,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/payments/mode', [AdminController::class, 'paymentsMode']);
     Route::post('/layouts', [AdminController::class, 'layoutsSettings']);
     Route::post('/ads-mode', [AdminController::class, 'adsMode']);
+    // The validation test and the spend guard (ValidationController, SpendGuard).
+    Route::get('/prototypes/{prototype}/validation', [\App\Http\Controllers\ValidationController::class, 'show']);
+    Route::post('/prototypes/{prototype}/validation', [\App\Http\Controllers\ValidationController::class, 'store']);
+    Route::post('/marketing/{campaign}/activate', [\App\Http\Controllers\ValidationController::class, 'activate']);
+    Route::post('/marketing/{campaign}/pause', [\App\Http\Controllers\ValidationController::class, 'pause']);
+    Route::post('/ads/kill', [\App\Http\Controllers\ValidationController::class, 'kill']);
+    Route::post('/ads/limits', [\App\Http\Controllers\ValidationController::class, 'limits']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');

@@ -34,3 +34,6 @@ Schedule::call(function () {
 
 // Ad platforms: read-only credential check, so the admin tile shows what the platform last said.
 Schedule::command('factory:ads-check')->dailyAt('07:20');
+
+// The spend guard's watch (SpendGuard): every running ad, every 15 minutes.
+Schedule::command('factory:ads-guard')->everyFifteenMinutes()->withoutOverlapping();

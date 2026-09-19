@@ -104,7 +104,9 @@ class GoogleAdsPublisher implements Publisher
 
         $cid = $this->cfg('customer_id');
         $token = $this->accessToken();
-        $monthlyMicros = (int) round($campaign->ad_budget_monthly_eur * 1_000_000);
+        // A campaign budget on Google is per DAY. It used to be sent the monthly amount, which
+        // would have let a campaign spend thirty months' budget in a month.
+        $dailyMicros = (int) round($campaign->dailyEur() * 1_000_000);
 
         // Google Ads mutates are batched under googleAdsService:mutate. Each operation refers to
         // the previous one by a temporary negative resource id, so budget -> campaign -> ad group
@@ -113,7 +115,7 @@ class GoogleAdsPublisher implements Publisher
             ['campaignBudgetOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/campaignBudgets/-1",
                 'name' => 'Appwerk budget #'.$campaign->id.'-'.now()->timestamp,
-                'amountMicros' => (string) $monthlyMicros,
+                'amountMicros' => (string) $dailyMicros,
                 'deliveryMethod' => 'STANDARD',
                 'explicitlyShared' => false,
             ]]],
@@ -173,6 +175,27 @@ class GoogleAdsPublisher implements Publisher
     public function pause(MarketingCampaign $campaign): void
     {
         $this->setStatus($campaign, 'PAUSED');
+    }
+
+    public function spend(MarketingCampaign $campaign): array
+    {
+        $this->assertConfigured();
+        $resource = $campaign->platform_ref['campaign_id'] ?? null;
+        if (! $resource) {
+            throw new RuntimeException('Google: campaign has not been published.');
+        }
+        $cid = $this->cfg('customer_id');
+        $read = function (string $during) use ($cid, $resource): float {
+            $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid))->timeout(30)
+                ->post($this->endpoint("customers/{$cid}/googleAds:search"), ['query' => "SELECT metrics.cost_micros FROM campaign WHERE campaign.resource_name = '{$resource}'".$during]);
+            if (! $res->successful()) {
+                throw new RuntimeException('Google Ads API: '.mb_substr((string) $res->body(), 0, 300));
+            }
+
+            return collect($res->json('results') ?? [])->sum(fn ($r) => (int) ($r['metrics']['costMicros'] ?? 0)) / 1_000_000;
+        };
+
+        return ['total' => $read(''), 'today' => $read(' AND segments.date DURING TODAY')];
     }
 
     private function setStatus(MarketingCampaign $campaign, string $status): void
