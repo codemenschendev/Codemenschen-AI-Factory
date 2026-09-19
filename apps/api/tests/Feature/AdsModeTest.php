@@ -44,6 +44,7 @@ class AdsModeTest extends TestCase
             && $r['size'] === '1200x628' && str_starts_with($r['prompt'], 'Weihnachtsanzeigen für eine Bäckerei in Graz'));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['size'] === '1080x1080');
         $this->assertSame('codex', $out['qa']['mode']);
+        $this->assertArrayHasKey('render', $out['qa']['timing']);
         $this->assertSame(2, substr_count($out['html'], 'src="data:image/'));
     }
 
