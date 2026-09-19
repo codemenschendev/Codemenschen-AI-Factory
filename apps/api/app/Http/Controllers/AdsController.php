@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Ads\Preflight;
 use App\Domain\Ads\PublisherRegistry;
+use App\Domain\Ads\SpendGuard;
 use App\Jobs\PublishCampaign;
 use App\Models\MarketingCampaign;
 use App\Models\ProjectAd;
@@ -74,12 +75,15 @@ class AdsController extends Controller
     }
 
     /** The spend gate. A person calls this; nothing automatic does. */
-    public function activate(Request $request, MarketingCampaign $campaign, PublisherRegistry $registry): JsonResponse
+    public function activate(Request $request, MarketingCampaign $campaign, PublisherRegistry $registry, SpendGuard $guard): JsonResponse
     {
         $this->authorize($request, $campaign);
 
         abort_unless($campaign->platform_status === 'paused', 409, 'Only a published, paused campaign can be activated.');
         abort_unless((int) $campaign->ad_budget_monthly_eur > 0, 422, 'Budget is 0. The customer has not paid yet.');
+        if (($blockers = $guard->blockers($campaign)) !== []) {
+            return response()->json(['error' => $blockers[0], 'blockers' => $blockers], 422);
+        }
 
         $registry->for($campaign->platform)->activate($campaign);
         $campaign->update(['platform_status' => 'active', 'activated_at' => now()]);

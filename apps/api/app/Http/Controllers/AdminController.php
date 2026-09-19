@@ -70,6 +70,8 @@ class AdminController extends Controller
             'layouts' => app(Layouts::class)->status(),
             // Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone.
             'ads_mode' => PrototypeWriter::adsMode(),
+            // The spend guard: kill switch, limits, and what runs now.
+            'ads_guard' => app(\App\Domain\Ads\SpendGuard::class)->limits() + ['running' => \App\Models\MarketingCampaign::where('platform_status', 'active')->count()],
             'revenue' => [
                 // Real money only: sandbox orders (and those from before the switch, all test mode) stay out.
                 'paid_orders' => Order::where('status', 'paid')->where('livemode', true)->count(),

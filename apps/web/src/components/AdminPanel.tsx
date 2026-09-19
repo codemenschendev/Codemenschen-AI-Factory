@@ -28,6 +28,8 @@ interface Overview {
   payments: { mode: "sandbox" | "live"; sandbox_configured: boolean; live_missing: string[] };
   /** Who makes the ad prototype: Claude's page with Codex scenes, Claude alone, or Codex alone. */
   ads_mode: "hybrid" | "claude" | "codex";
+  /** The spend guard: the kill switch, its two limits, and what runs now. */
+  ads_guard: { killed: boolean; max_campaign_eur: number; max_daily_total_eur: number; running_daily_eur: number; running: number };
   /** Layout packs for the free prototypes: on or off, per kind, with a control group. */
   layouts: {
     enabled: boolean;
@@ -278,6 +280,21 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     if (r) setOverview((o) => (o ? { ...o, ads_mode: r.ads_mode } : o));
   }
 
+  async function setKill(on: boolean) {
+    if (on && !window.confirm(a.guardKillConfirm)) return;
+    setBusy(true);
+    const r = await call<{ limits: Omit<Overview["ads_guard"], "running"> }>("/admin/ads/kill", { method: "POST", body: JSON.stringify({ on }) });
+    if (r) setOverview((o) => (o ? { ...o, ads_guard: { ...o.ads_guard, ...r.limits, running: on ? 0 : o.ads_guard.running } } : o));
+    setBusy(false);
+  }
+
+  async function saveGuardLimits(max_campaign_eur: number, max_daily_total_eur: number) {
+    setBusy(true);
+    const r = await call<{ limits: Omit<Overview["ads_guard"], "running"> }>("/admin/ads/limits", { method: "POST", body: JSON.stringify({ max_campaign_eur, max_daily_total_eur }) });
+    if (r) setOverview((o) => (o ? { ...o, ads_guard: { ...o.ads_guard, ...r.limits } } : o));
+    setBusy(false);
+  }
+
   async function saveLayouts(patch: Partial<Pick<Overview["layouts"], "enabled" | "kinds" | "share" | "off">>) {
     setBusy(true);
     const r = await call<Overview["layouts"]>("/admin/layouts", { method: "POST", body: JSON.stringify(patch) });
@@ -479,6 +496,42 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 </button>
               )}
             </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26, borderColor: overview.ads_guard.killed ? "#c0392b" : undefined }}>
+            <span className="cat">{a.guardTile}</span>
+            <strong style={{ fontSize: 22 }}>
+              {overview.ads_guard.killed
+                ? a.guardKilled
+                : a.guardRunning.replace("{n}", String(overview.ads_guard.running)).replace("{eur}", overview.ads_guard.running_daily_eur.toFixed(2))}
+            </strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.guardHint}</p>
+            <form
+              style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 10 }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                const f = new FormData(e.currentTarget);
+                void saveGuardLimits(Number(f.get("c")), Number(f.get("d")));
+              }}
+            >
+              <label className="small">
+                {a.guardMaxCampaign}{" "}
+                <input name="c" type="number" min={20} max={10000} defaultValue={overview.ads_guard.max_campaign_eur} style={{ width: 90 }} /> €
+              </label>
+              <label className="small">
+                {a.guardMaxDaily}{" "}
+                <input name="d" type="number" min={5} max={5000} defaultValue={overview.ads_guard.max_daily_total_eur} style={{ width: 90 }} /> €
+              </label>
+              <button className="btn btn-ghost btn-sm" disabled={busy}>{a.guardSave}</button>
+            </form>
+            <button
+              className={overview.ads_guard.killed ? "btn btn-ghost btn-sm" : "btn btn-primary btn-sm"}
+              style={overview.ads_guard.killed ? undefined : { background: "#c0392b", borderColor: "#c0392b" }}
+              disabled={busy}
+              onClick={() => void setKill(!overview.ads_guard.killed)}
+            >
+              {overview.ads_guard.killed ? a.guardUnkill : a.guardKill}
+            </button>
           </div>
 
           <div className="card" style={{ marginBottom: 26 }}>

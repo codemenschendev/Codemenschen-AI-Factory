@@ -38,6 +38,14 @@
   landed the sign-in mail in spam, 2026-09-07) and not the host's sendmail (generic rDNS, no DKIM).
   The password is in the server `.env` only; a mail says "reply to this e-mail" and that mailbox is read.
 
+## Ad spend
+
+- Nothing spends without a person pressing start, and `SpendGuard` stands behind that (2026-09-19):
+  platform limits set at publish (Meta lifetime budget + end time, spend cap from 100 EUR), the guard's
+  checks before a start (kill switch, max per campaign, max per day for all running ads, settings
+  `ads.*` in the admin overview), and `factory:ads-guard` every 15 minutes, which pauses any campaign
+  over its total, far over its day, or past its end. A Google campaign budget is per DAY.
+
 ## Prototypes
 
 - A `campaign` (2026-09-19) is not a fifth writer: `Campaign` writes one message, then builds an ads,

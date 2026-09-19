@@ -84,6 +84,13 @@ class Notify
         $this->send(sprintf('Project %s (%s) %s', substr($project->id, 0, 8), $project->name, $line));
     }
 
+    /** Money: the spend guard stopped an ad, or could not look. Mail and chat, always. */
+    public function money(string $subject, string $line): void
+    {
+        $this->mailAdmin('[Appwerk ads] '.$subject, $line);
+        $this->send($line);
+    }
+
     /** One chat line about the factory itself, not about a project. */
     public function system(string $line): void
     {

@@ -430,6 +430,7 @@ function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: 
       {parts.some((x) => x.kind === "site" && x.status === "ready") && (
         <LandingPanel part={parts.find((x) => x.kind === "site")!} d={d} locale={locale} />
       )}
+      <ValidationPanel id={meta.id} d={d} />
     </div>
   );
 }
@@ -527,6 +528,152 @@ function LandingPanel({ part, d, locale }: { part: Part; d: Dict; locale: Locale
           )}
         </>
       )}
+    </div>
+  );
+}
+
+interface Validation {
+  ready: boolean;
+  landing_url: string | null;
+  defaults: { headline: string; text: string; budget_eur: number; days: number; countries: string[] };
+  meta: { configured: boolean };
+  limits: { killed: boolean; max_campaign_eur: number; max_daily_total_eur: number; running_daily_eur: number };
+  tests: {
+    id: number;
+    status: string;
+    budget_eur: number | null;
+    spent_eur: number;
+    spent_today_eur: number;
+    checked_at: string | null;
+    ends_at: string | null;
+    stopped_reason: string | null;
+    error: string | null;
+    countries: string[];
+  }[];
+}
+
+const COUNTRIES = ["AT", "DE", "CH"];
+
+/**
+ * The validation test, for operators: the campaign's ad on Meta for a few days with a fixed total,
+ * pointing at the live landing page. Prepared paused, started by a button, watched by the spend
+ * guard. The API answers 403 to anyone else, and then this shows nothing.
+ */
+function ValidationPanel({ id, d }: { id: string; d: Dict }) {
+  const v = d.proto.validation;
+  const token = useToken();
+  const [data, setData] = useState<Validation | null>(null);
+  const [form, setForm] = useState<Validation["defaults"] | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let stop = false;
+    // A visitor who is not an admin gets a 403 once, and the panel stops asking.
+    const load = () =>
+      !stop &&
+      api<Validation>(`/admin/prototypes/${id}/validation`, { token })
+        .then((r) => {
+          if (stop) return;
+          setData(r);
+          setForm((f) => f ?? r.defaults);
+        })
+        .catch(() => {
+          stop = true;
+        });
+    load();
+    const t = setInterval(load, 20000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [token, id]);
+
+  if (!token || !data || !form) return null;
+
+  async function run(path: string, body?: object, confirm?: string) {
+    if (confirm && !window.confirm(confirm)) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await api(path, { method: "POST", token: token ?? undefined, body: body ? JSON.stringify(body) : undefined });
+      setData(await api<Validation>(`/admin/prototypes/${id}/validation`, { token: token ?? undefined }));
+    } catch (err) {
+      const b = err && typeof err === "object" && "body" in err ? (err as { body: { error?: string; message?: string; problems?: string[] } | null }).body : null;
+      setError(b?.error ?? b?.problems?.join(" · ") ?? b?.message ?? d.proto.failed);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const open = data.tests.find((t) => ["publishing", "paused", "active"].includes(t.status));
+  const eur = (n: number | null) => (n === null ? "?" : `${n.toFixed(2)} €`);
+
+  return (
+    <div className="card" style={{ marginTop: 20, display: "grid", gap: 10, maxWidth: 640 }}>
+      <strong>{v.title}</strong>
+      <p className="small muted" style={{ margin: 0 }}>{v.hint}</p>
+      {!data.meta.configured && <p className="est-empty" style={{ margin: 0 }}>{v.noMeta}</p>}
+      {data.limits.killed && <p className="est-empty" style={{ margin: 0 }}>{v.killed}</p>}
+      {!data.ready && <p className="small" style={{ margin: 0 }}>{v.notReady}</p>}
+      {data.tests.map((t) => (
+        <div key={t.id} style={{ borderTop: "1px solid var(--border)", paddingTop: 8, display: "grid", gap: 6 }}>
+          <span>
+            <strong>#{t.id}</strong> · {v.status[t.status as keyof typeof v.status] ?? t.status} · {eur(t.spent_eur)} / {eur(t.budget_eur)}
+            {" · "}
+            {v.today} {eur(t.spent_today_eur)}
+            {t.ends_at && ` · ${v.until} ${new Date(t.ends_at).toLocaleDateString()}`}
+          </span>
+          {t.stopped_reason && <span className="small muted">{v.stopped} {t.stopped_reason}</span>}
+          {t.error && <span className="small" style={{ color: "#c0392b" }}>{t.error}</span>}
+          <div style={{ display: "flex", gap: 8 }}>
+            {t.status === "paused" && (
+              <button type="button" disabled={busy} onClick={() => run(`/admin/marketing/${t.id}/activate`, undefined,
+                v.startConfirm.replace("{eur}", String(t.budget_eur)).replace("{date}", t.ends_at ? new Date(t.ends_at).toLocaleDateString() : "?"))}>
+                {v.start}
+              </button>
+            )}
+            {t.status === "active" && (
+              <button type="button" disabled={busy} onClick={() => run(`/admin/marketing/${t.id}/pause`)}>{v.pause}</button>
+            )}
+          </div>
+        </div>
+      ))}
+      {data.ready && !open && data.meta.configured && (
+        <div style={{ display: "grid", gap: 8, borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+          <label className="small">
+            {v.headline}
+            <input value={form.headline} maxLength={40} onChange={(e) => setForm({ ...form, headline: e.target.value })} style={{ width: "100%", padding: 8 }} />
+          </label>
+          <label className="small">
+            {v.text}
+            <textarea value={form.text} maxLength={500} rows={3} onChange={(e) => setForm({ ...form, text: e.target.value })} style={{ width: "100%", padding: 8 }} />
+          </label>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12, alignItems: "center" }}>
+            <label className="small">
+              {v.budget}{" "}
+              <input type="number" min={20} max={data.limits.max_campaign_eur} value={form.budget_eur}
+                onChange={(e) => setForm({ ...form, budget_eur: Number(e.target.value) })} style={{ width: 80 }} /> €
+            </label>
+            <label className="small">
+              {v.days}{" "}
+              <input type="number" min={3} max={14} value={form.days} onChange={(e) => setForm({ ...form, days: Number(e.target.value) })} style={{ width: 60 }} />
+            </label>
+            {COUNTRIES.map((c) => (
+              <label key={c} className="small">
+                <input type="checkbox" checked={form.countries.includes(c)}
+                  onChange={(e) => setForm({ ...form, countries: e.target.checked ? [...form.countries, c] : form.countries.filter((x) => x !== c) })} /> {c}
+              </label>
+            ))}
+          </div>
+          <button type="button" disabled={busy || !form.headline || !form.text || form.countries.length === 0} style={{ justifySelf: "start" }}
+            onClick={() => run(`/admin/prototypes/${id}/validation`, form)}>
+            {v.prepare}
+          </button>
+        </div>
+      )}
+      {error && <p className="est-empty" style={{ margin: 0 }}>{error}</p>}
     </div>
   );
 }

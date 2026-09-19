@@ -76,50 +76,60 @@ class MetaAdsPublisher implements Publisher
     {
         $this->assertConfigured();
         $act = $this->cfg('ad_account_id');
-        $ad = $campaign->projectAd;
-
-        if (! $ad || ! is_file($ad->absolutePath())) {
+        $path = $campaign->creativePath();
+        if ($path === null) {
             throw new RuntimeException('Meta: no creative file to publish.');
         }
 
         $ref = [];
 
         // 1. the creative file. Image => image_hash, video => video_id.
-        if ($ad->kind === 'video') {
+        if ($campaign->creativeKind() === 'video') {
             $up = $this->post("{$act}/advideos", [
-                'source' => fopen($ad->absolutePath(), 'r'),
+                'source' => fopen($path, 'r'),
             ], multipart: true);
             $ref['video_id'] = $up['id'] ?? null;
         } else {
             $up = $this->post("{$act}/adimages", [
-                'bytes' => base64_encode((string) file_get_contents($ad->absolutePath())),
+                'bytes' => base64_encode((string) file_get_contents($path)),
             ]);
             // adimages answers {images:{<name>:{hash}}}
             $images = $up['images'] ?? [];
             $ref['image_hash'] = $images[array_key_first($images)]['hash'] ?? null;
         }
 
-        // 2. the campaign, paused.
-        $created = $this->post("{$act}/campaigns", [
+        // 2. the campaign, paused. With a total, Meta itself refuses to spend past it (the first
+        // wall of the spend guard). Meta takes no spend cap under 100 EUR; a smaller test is held
+        // by its lifetime budget below.
+        $params = [
             'name' => $this->name($campaign),
             'objective' => 'OUTCOME_TRAFFIC',
             'status' => 'PAUSED',
             'special_ad_categories' => json_encode([]),
             // No campaign budget: each ad set spends its own. The API wants that said out loud.
             'is_adset_budget_sharing_enabled' => 'false',
-        ]);
+        ];
+        if ($campaign->spend_cap_eur !== null && $campaign->spend_cap_eur >= 100) {
+            $params['spend_cap'] = $campaign->spend_cap_eur * 100;
+        }
+        $created = $this->post("{$act}/campaigns", $params);
         $ref['campaign_id'] = $created['id'] ?? null;
 
-        // 3. the ad set: the customer's monthly budget, as a daily cap in minor units (cents).
-        $daily = max(100, (int) round($campaign->ad_budget_monthly_eur * 100 / 30));
-        $adset = $this->post("{$act}/adsets", [
+        // 3. the ad set. A test with a total and an end runs on a lifetime budget with an end
+        // time, so Meta stops on its own when either is reached. Otherwise the customer's monthly
+        // budget, as a daily cap in minor units (cents).
+        $budget = $campaign->spend_cap_eur !== null && $campaign->ends_at !== null
+            ? ['lifetime_budget' => $campaign->spend_cap_eur * 100, 'start_time' => now()->toIso8601String(),
+                'end_time' => $campaign->ends_at->toIso8601String()]
+            : ['daily_budget' => max(100, (int) round($campaign->ad_budget_monthly_eur * 100 / 30))];
+        $countries = array_values(array_filter((array) ($campaign->strategy['countries'] ?? []))) ?: ['AT', 'DE'];
+        $adset = $this->post("{$act}/adsets", $budget + [
             'name' => $this->name($campaign).': set',
             'campaign_id' => $ref['campaign_id'],
-            'daily_budget' => $daily,
             'billing_event' => 'IMPRESSIONS',
             'optimization_goal' => 'LINK_CLICKS',
             'bid_strategy' => 'LOWEST_COST_WITHOUT_CAP',
-            'targeting' => json_encode(['geo_locations' => ['countries' => ['AT', 'DE']]]),
+            'targeting' => json_encode(['geo_locations' => ['countries' => $countries]]),
             'dsa_beneficiary' => $this->cfg('dsa_beneficiary'),
             'dsa_payor' => $this->cfg('dsa_payor'),
             'status' => 'PAUSED',
@@ -177,9 +187,32 @@ class MetaAdsPublisher implements Publisher
         }
     }
 
+    public function spend(MarketingCampaign $campaign): array
+    {
+        $this->assertConfigured();
+        $id = $campaign->platform_ref['campaign_id'] ?? null;
+        if (! $id) {
+            throw new RuntimeException('Meta: campaign has not been published.');
+        }
+        $read = fn (string $preset) => (float) ($this->insights($id, $preset)['data'][0]['spend'] ?? 0);
+
+        return ['total' => $read('maximum'), 'today' => $read('today')];
+    }
+
+    /** @return array<string,mixed> */
+    private function insights(string $id, string $preset): array
+    {
+        $res = $this->base()->get("{$id}/insights", ['fields' => 'spend', 'date_preset' => $preset, 'access_token' => $this->cfg('token')]);
+        if (! $res->successful()) {
+            throw new RuntimeException('Meta API: '.($res->json('error.message') ?? mb_substr((string) $res->body(), 0, 300)));
+        }
+
+        return $res->json() ?? [];
+    }
+
     private function name(MarketingCampaign $campaign): string
     {
-        return 'Appwerk #'.$campaign->id.' '.mb_substr((string) optional($campaign->project)->name, 0, 40);
+        return 'Appwerk #'.$campaign->id.' '.mb_substr((string) ($campaign->project?->name ?? $campaign->prototype?->title), 0, 40);
     }
 
     private function firstCreative(MarketingCampaign $campaign, string $kind): string
