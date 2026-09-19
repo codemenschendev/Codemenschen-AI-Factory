@@ -33,6 +33,7 @@ class PrototypeCapTest extends TestCase
         return $this->postJson('/api/prototypes', [
             'prompt' => 'Eine App für ein Friseurstudio in Wien mit Terminbuchung',
             'kind' => 'app',
+            'email' => 'besucher@example.com',
         ], $headers);
     }
 
@@ -44,22 +45,44 @@ class PrototypeCapTest extends TestCase
         }
     }
 
-    public function test_the_first_prototype_is_free_and_the_second_asks_for_an_e_mail(): void
+    public function test_a_visitor_who_is_not_signed_in_gives_an_e_mail_and_nothing_is_built_yet(): void
     {
-        $this->build(['X-Forwarded-For' => '203.0.113.7'])->assertStatus(202);
+        $before = Customer::count();
+        $this->postJson('/api/prototypes', ['prompt' => 'Eine App für ein Friseurstudio in Wien', 'kind' => 'app'])
+            ->assertStatus(422)->assertJson(['code' => 'email']);
 
-        $this->build(['X-Forwarded-For' => '203.0.113.7'])->assertStatus(401)
-            ->assertJson(['code' => 'sign_in', 'reason' => 'again']);
+        $this->build()->assertStatus(202)->assertJson(['status' => 'waiting']);
+        Queue::assertNothingPushed();
+        $this->assertSame($before, Customer::count(), 'nothing is created before the link is opened');
+        $this->assertSame('waiting', Prototype::sole()->status);
     }
 
-    public function test_ads_ask_for_an_e_mail_even_the_first_time(): void
+    public function test_the_link_in_the_e_mail_signs_in_and_starts_the_build_once(): void
     {
-        $this->postJson('/api/prototypes', ['prompt' => 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'kind' => 'ads'])
-            ->assertStatus(401)->assertJson(['reason' => 'ads']);
+        $this->build()->assertStatus(202);
+        $proto = Prototype::sole();
+        $url = \Illuminate\Support\Facades\URL::temporarySignedRoute('prototypes.confirm', now()->addDay(), ['prototype' => $proto->id, 'locale' => 'de']);
 
-        $token = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de'])->createToken('portal')->plainTextToken;
+        $res = $this->get($url)->assertRedirect();
+        $this->assertMatchesRegularExpression('~/de/p/'.$proto->id.'#token=\S+~', $res->headers->get('Location'));
+        $proto->refresh();
+        $this->assertSame('queued', $proto->status);
+        $this->assertSame(Customer::where('email', 'besucher@example.com')->value('id'), $proto->customer_id);
+        Queue::assertPushed(BuildPrototype::class, 1);
+
+        $this->get($url)->assertRedirect();
+        Queue::assertPushed(BuildPrototype::class, 1);
+        $this->get('/api/prototypes/'.$proto->id.'/confirm?locale=de')->assertForbidden();
+    }
+
+    public function test_a_signed_in_visitor_builds_at_once_even_ads(): void
+    {
+        $me = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+        $token = $me->createToken('portal')->plainTextToken;
         $this->postJson('/api/prototypes', ['prompt' => 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'kind' => 'ads'],
-            ['Authorization' => 'Bearer '.$token])->assertStatus(202);
+            ['Authorization' => 'Bearer '.$token])->assertStatus(202)->assertJson(['status' => 'queued']);
+        Queue::assertPushed(BuildPrototype::class);
+        $this->assertSame($me->id, Prototype::sole()->customer_id);
     }
 
     public function test_an_unknown_address_from_the_form_gets_a_link_that_creates_the_account(): void
@@ -96,7 +119,7 @@ class PrototypeCapTest extends TestCase
     {
         $this->fill('198.51.100.4');
 
-        $this->build(['X-Forwarded-For' => '198.51.100.4'])->assertStatus(401);
+        $this->build(['X-Forwarded-For' => '198.51.100.4'])->assertStatus(429);
         $this->build(['X-Forwarded-For' => '198.51.100.9'])->assertStatus(202);
     }
 
@@ -138,10 +161,9 @@ class PrototypeCapTest extends TestCase
         $sentence = 'Bäckerei in Salzburg mit drei Filialen, Brot, Gebäck und Vorbestellung im Onlineshop. ';
         $long = mb_substr(str_repeat($sentence, 60), 0, PrototypeController::MAX_PROMPT);
 
-        $this->postJson('/api/prototypes', ['prompt' => $long, 'kind' => 'site'])->assertStatus(202);
-        Queue::assertPushed(BuildPrototype::class, 1);
+        $this->postJson('/api/prototypes', ['prompt' => $long, 'kind' => 'site', 'email' => 'b@example.com'])->assertStatus(202);
 
-        $this->postJson('/api/prototypes', ['prompt' => $long.'x', 'kind' => 'site'])
+        $this->postJson('/api/prototypes', ['prompt' => $long.'x', 'kind' => 'site', 'email' => 'b@example.com'])
             ->assertStatus(422)
             ->assertJsonValidationErrors(['prompt']);
         $this->assertSame(1, Prototype::count());

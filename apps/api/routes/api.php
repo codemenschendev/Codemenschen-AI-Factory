@@ -22,6 +22,9 @@ Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:1
 
 // Public prompt-to-prototype (lead magnet): no auth. Throttle on top of the per-IP daily cap.
 Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60,prototypes');
+// The link in the e-mail a visitor gets when they build without being signed in: it signs them
+// in and starts the build (owner's decision 2026-09-19).
+Route::get('/prototypes/{prototype}/confirm', [PrototypeController::class, 'confirm'])->name('prototypes.confirm')->middleware('throttle:20,1,proto-confirm');
 Route::post('/prototypes/questions', [PrototypeController::class, 'questions'])->middleware('throttle:12,60,proto-questions');
 Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
 Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);

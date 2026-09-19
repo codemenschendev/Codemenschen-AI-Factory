@@ -717,6 +717,13 @@ export const de = {
       notYours: "Dieser Prototyp gehört zu einem anderen Konto.",
       failed: "Die letzte Änderung hat nicht geklappt. Deine kostenlose Änderung ist noch da, versuch es nochmal.",
     },
+    email: {
+      label: "Deine E-Mail",
+      hint: "Wir schicken dir einen Link. Öffne ihn und dein Prototyp startet sofort.",
+      needed: "Gib deine E-Mail an. Dein Prototyp startet, sobald du den Link öffnest, den wir dir schicken.",
+      waitingTitle: "Schau in dein Postfach",
+      waiting: "Wir haben dir einen Link geschickt. Öffne ihn und dein Prototyp startet sofort, diese Seite zeigt dann, wie er entsteht. Nichts angekommen? Schau im Spam-Ordner nach.",
+    },
     tooLong: "Das sind mehr als {max} Zeichen. Kürz es ein wenig und versuch es nochmal.",
     mine: "Deine Prototypen",
     mineHint: "Nur auf diesem Gerät gespeichert. Wir legen dazu nichts an und schicken nichts weg.",

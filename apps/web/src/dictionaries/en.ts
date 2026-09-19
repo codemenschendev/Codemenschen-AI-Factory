@@ -715,6 +715,13 @@ export const en = {
       notYours: "This prototype belongs to another account.",
       failed: "The last change did not work. Your free change is still there, try again.",
     },
+    email: {
+      label: "Your e-mail",
+      hint: "We send you a link. Open it and your prototype starts right away.",
+      needed: "Enter your e-mail. Your prototype starts when you open the link we send.",
+      waitingTitle: "Check your inbox",
+      waiting: "We sent you a link. Open it and your prototype starts at once, and this page shows it being built. Nothing in your inbox? Look in the spam folder.",
+    },
     tooLong: "That is more than {max} characters. Shorten it a little and try again.",
     mine: "Your prototypes",
     mineHint: "Kept on this device only. We store nothing for it and send nothing away.",
