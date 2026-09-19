@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
+import { getToken } from "@/lib/token";
 import { trackOnce } from "@/lib/analytics";
 import { forget, rename } from "@/lib/history";
 import type { Dict, Locale } from "@/lib/i18n";
@@ -20,6 +21,9 @@ interface Meta {
   created_at?: string;
   title: string | null;
   error: string | null;
+  /** The one free change: how many are left, and whether the last one failed (and was given back). */
+  revisions_left?: number;
+  revision_failed?: boolean;
 }
 
 /**
@@ -78,6 +82,8 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   // seen: the API says which step, the page remembers since when.
   const [now, setNow] = useState(() => Date.now());
   const [stageSince, setStageSince] = useState<{ stage: string | null; at: number } | null>(null);
+  // Bumped when a change is sent, so the polling starts again for the rebuild.
+  const [round, setRound] = useState(0);
 
   useEffect(() => {
     let stop = false;
@@ -101,7 +107,7 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
     return () => {
       stop = true;
     };
-  }, [id]);
+  }, [id, round]);
 
   const building = meta?.status === "queued" || meta?.status === "building";
   const readyKind = meta?.status === "ready" ? (meta.kind ?? "site") : null;
@@ -115,6 +121,17 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   }, [building]);
 
   if (!meta) return <p className="est-empty">{p.building}</p>;
+
+  if (building && meta.stage === "revising") {
+    const since = Math.max(0, Math.floor((now - (stageSince?.at ?? now)) / 1000));
+
+    return (
+      <div aria-live="polite" style={{ maxWidth: 560 }}>
+        <p className="est-empty" style={{ marginBottom: 6 }}>{p.revise.working}</p>
+        <p className="small muted" style={{ margin: 0 }}>{p.revise.elapsed.replace("{t}", clock(since))}</p>
+      </div>
+    );
+  }
 
   if (building) {
     // "One moment" for four minutes reads as broken, and one line of text for four minutes reads
@@ -276,6 +293,99 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
           )}
         </div>
       )}
+      <RevisePanel id={id} locale={locale} d={d} meta={meta} onSent={() => {
+        setMeta({ ...meta, status: "building", stage: "revising" });
+        setRound((r) => r + 1);
+      }} />
+    </div>
+  );
+}
+
+/**
+ * The one free change. A visitor who is not signed in is asked for an e-mail first and comes
+ * back to this page from the link; one who is signed in writes what should change.
+ */
+function RevisePanel({ id, locale, d, meta, onSent }: { id: string; locale: Locale; d: Dict; meta: Meta; onSent: () => void }) {
+  const r = d.proto.revise;
+  const [token, setTokenState] = useState<string | null>(null);
+  const [change, setChange] = useState("");
+  const [email, setEmail] = useState("");
+  const [sent, setSent] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- the token lives in localStorage, readable only after hydration
+  useEffect(() => setTokenState(getToken()), []);
+
+  if ((meta.revisions_left ?? 1) < 1) {
+    return <p className="small muted" style={{ marginTop: 16 }}>{r.used}</p>;
+  }
+
+  async function sendLink() {
+    try {
+      localStorage.setItem("aifactory-next", `/${locale}/p/${id}`);
+    } catch {}
+    try {
+      await api("/auth/magic-link", { method: "POST", body: JSON.stringify({ email, locale, join: true }) });
+      setSent(true);
+    } catch {
+      setError(d.proto.failed);
+    }
+  }
+
+  async function send() {
+    setBusy(true);
+    setError(null);
+    try {
+      await api(`/prototypes/${id}/revise`, { method: "POST", token: token ?? undefined, body: JSON.stringify({ change }) });
+      onSent();
+    } catch (err) {
+      const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
+      const code = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string } | null }).body?.code : undefined;
+      setError(code === "used" ? r.used : code === "not_yours" ? r.notYours : status === 401 ? r.signIn : d.proto.failed);
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="card" style={{ marginTop: 20, display: "grid", gap: 10, maxWidth: 640 }}>
+      <strong>{r.title}</strong>
+      <p className="small muted" style={{ margin: 0 }}>{r.hint}</p>
+      {meta.revision_failed && <p className="est-empty" style={{ margin: 0 }}>{r.failed}</p>}
+      {token ? (
+        <>
+          <textarea
+            value={change}
+            onChange={(e) => setChange(e.target.value.slice(0, 1000))}
+            rows={3}
+            placeholder={r.placeholder}
+            aria-label={r.title}
+            style={{ width: "100%", fontSize: "1rem", padding: 10 }}
+          />
+          <button type="button" onClick={send} disabled={busy || change.trim().length < 5} style={{ justifySelf: "start" }}>
+            {r.send}
+          </button>
+        </>
+      ) : sent ? (
+        <p style={{ margin: 0 }}>{r.linkSent}</p>
+      ) : (
+        <>
+          <p style={{ margin: 0 }}>{r.signIn}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={d.proto.signIn.email}
+              aria-label={d.proto.signIn.email}
+              style={{ flex: "1 1 220px", padding: 10, fontSize: "1rem" }}
+            />
+            <button type="button" onClick={sendLink} disabled={!/.+@.+\..+/.test(email)}>
+              {d.proto.signIn.send}
+            </button>
+          </div>
+        </>
+      )}
+      {error && <p className="est-empty" style={{ margin: 0 }}>{error}</p>}
     </div>
   );
 }

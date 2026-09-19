@@ -6,6 +6,7 @@ use App\Domain\Ai\PrototypeQuestions;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Analytics\Analytics;
 use App\Jobs\BuildPrototype;
+use App\Jobs\RevisePrototype;
 use App\Models\Prototype;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -149,6 +150,37 @@ class PrototypeController extends Controller
             'code' => 'sign_in', 'reason' => $kind === 'ads' ? 'ads' : 'again'], 401);
     }
 
+    /** How many changes a signed-in visitor may ask for on one free prototype. */
+    public const REVISIONS = 1;
+
+    /**
+     * The one change (owner's decision 2026-09-19). Signed in only: the change is how the free
+     * prototype turns into a conversation with somebody we can reach. The first change claims
+     * the prototype for that customer; an admin is not counted.
+     */
+    public function revise(Request $request, Prototype $prototype): JsonResponse
+    {
+        $data = $request->validate(['change' => 'required|string|min:5|max:1000']);
+        $user = $request->user();
+        abort_unless($prototype->isLive(), 410, 'This prototype has expired or is not ready yet.');
+        $admin = $user->isAdmin();
+        if (! $admin && $prototype->customer_id !== null && $prototype->customer_id !== $user->id) {
+            return response()->json(['error' => 'This prototype belongs to another account.', 'code' => 'not_yours'], 403);
+        }
+        if (! $admin && $prototype->revisions >= self::REVISIONS) {
+            return response()->json(['error' => 'The free change for this prototype is used.', 'code' => 'used'], 403);
+        }
+
+        $qa = $prototype->qa ?? [];
+        unset($qa['revision_failed']);
+        $prototype->update(['status' => 'building', 'stage' => 'revising', 'revisions' => $prototype->revisions + 1,
+            'customer_id' => $prototype->customer_id ?? $user->id, 'qa' => $qa]);
+        RevisePrototype::dispatch($prototype->id, $data['change']);
+        app(Analytics::class)->record('prototype_revised', $request, [], ['kind' => $prototype->kind, 'prototype' => $prototype->id]);
+
+        return response()->json(['id' => $prototype->id, 'status' => 'building'], 202);
+    }
+
     /** Status the share page polls while building, plus what it needs to render once ready. */
     public function show(Prototype $prototype): JsonResponse
     {
@@ -173,6 +205,9 @@ class PrototypeController extends Controller
             // wizard instead of asking them to type the same thing twice.
             'prompt' => $prototype->prompt,
             'error' => $prototype->error,
+            // The one change: how many are left, and why the last one did not happen.
+            'revisions_left' => max(0, self::REVISIONS - (int) $prototype->revisions),
+            'revision_failed' => isset($prototype->qa['revision_failed']),
             // Only what the share page has to print: the photographer and where the photo is from.
             'photo_credit' => $prototype->qa['photo_credit'] ?? null,
             'photo_credit_url' => $prototype->qa['photo_credit_url'] ?? null,
