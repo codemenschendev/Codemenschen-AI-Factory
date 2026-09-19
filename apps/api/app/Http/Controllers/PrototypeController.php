@@ -261,7 +261,8 @@ class PrototypeController extends Controller
             'parts' => $prototype->kind === 'campaign' ? Prototype::where('parent_id', $prototype->id)->get()
                 ->sortBy(fn (Prototype $p) => array_search($p->kind, Campaign::PARTS, true))->values()
                 ->map(fn (Prototype $p) => ['id' => $p->id, 'kind' => $p->kind, 'status' => $expired ? 'expired' : $p->status,
-                    'stage' => $p->stage, 'title' => $p->title, 'mode' => $p->kind === 'ads' ? ($p->qa['mode'] ?? null) : null])
+                    'stage' => $p->stage, 'title' => $p->title, 'mode' => $p->kind === 'ads' ? ($p->qa['mode'] ?? null) : null,
+                    'live_url' => $p->published_at !== null ? LandingController::url($p) : null])
                 : null,
         ]);
     }

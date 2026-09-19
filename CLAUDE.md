@@ -43,6 +43,9 @@
 - A `campaign` (2026-09-19) is not a fifth writer: `Campaign` writes one message, then builds an ads,
   a site (the landing page with a sign-up form) and an email prototype as its parts, side by side;
   it is ready when the last part is. The parts share the one free change.
+- The campaign's landing page goes live at `api.appwerk…/l/{id}` when its owner switches it on
+  (`LandingController`, 30 days). The sign-up form is taken over by a script added when the page is served;
+  the waitlist is double opt-in (`landing_signups` is the consent record) and every mail has a one-click delete.
 - All four kinds (site, app, ads, email) write their own CSS; `house.css` only feeds `packages/design-system`.
 - Photographs come from the business's own website, then the shared library, then Pexels; the
   opening picture of an ad prototype is rendered (see Models). Each slot carries
