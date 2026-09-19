@@ -723,6 +723,12 @@ export const en = {
       photos: "Add photos",
     },
     elapsed: "{t} elapsed, usually 4 to 6 minutes in total.",
+    codexStages: {
+      studying: "Reading your website and your pictures.",
+      rendering: "Codex is designing the banner and the feed ad. This takes about a minute.",
+    },
+    codexSteps: { studying: "Read the website", rendering: "Design the ads" },
+    codexElapsed: "{t} elapsed, usually 1 to 2 minutes in total.",
   },
   legal: {
     draft: "Draft. This is the plain-language version, written by us and not yet cleared by counsel. We publish it anyway, because the contract and the marketing must never tell two different stories.",

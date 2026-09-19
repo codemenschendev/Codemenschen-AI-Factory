@@ -725,6 +725,12 @@ export const de = {
       photos: "Fotos einsetzen",
     },
     elapsed: "{t} vergangen, insgesamt meist 4 bis 6 Minuten.",
+    codexStages: {
+      studying: "Wir lesen deine Website und deine Bilder.",
+      rendering: "Codex gestaltet das Banner und die Feed-Anzeige. Das dauert etwa eine Minute.",
+    },
+    codexSteps: { studying: "Website lesen", rendering: "Anzeigen gestalten" },
+    codexElapsed: "{t} vergangen, meist 1 bis 2 Minuten insgesamt.",
   },
   legal: {
     draft: "Entwurf. Das ist die Klartext-Fassung, geschrieben von uns und noch nicht anwaltlich freigegeben. Wir stellen sie trotzdem online, weil Vertrag und Werbung nie zwei verschiedene Geschichten erzählen dürfen.",
