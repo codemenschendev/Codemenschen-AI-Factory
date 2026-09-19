@@ -44,7 +44,7 @@ class BuildPrototype implements ShouldQueue
 
         try {
             $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit, $library, $photo,
-                fn (string $stage) => $proto->update(['stage' => $stage]), $layouts);
+                fn (string $stage) => $proto->update(['stage' => $stage]), $layouts, $proto->uploads ?? []);
             $proto->update([
                 'status' => 'ready', 'stage' => null, 'title' => $out['title'], 'html' => $out['html'],
                 'qa' => $out['qa'] ?? null,

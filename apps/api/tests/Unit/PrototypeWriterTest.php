@@ -84,6 +84,31 @@ class PrototypeWriterTest extends TestCase
         $this->assertStringNotContainsString('house.css', $sent);
     }
 
+    public function test_uploaded_pictures_are_offered_to_the_builder_first(): void
+    {
+        // A visitor with no website, or one whose website shows the product badly, uploads the
+        // pictures instead. They are listed like the site's own, numbered, before anything else.
+        $file = sys_get_temp_dir().'/upload-'.bin2hex(random_bytes(4)).'.png';
+        $im = imagecreatetruecolor(400, 300);
+        imagefilledrectangle($im, 0, 0, 399, 299, imagecolorallocate($im, 180, 120, 60));
+        imagepng($im, $file);
+        $this->fakeAnswer();
+
+        app(PrototypeWriter::class)->build('Eine Website für eine Bäckerei in Graz', 'site', uploads: [['path' => $file, 'name' => 'Unser Sauerteigbrot']]);
+        @unlink($file);
+
+        $user = '';
+        Http::assertSent(function ($request) use (&$user) {
+            if (is_array($request['messages'][1]['content'] ?? null)) {
+                $user = json_encode($request['messages'][1]['content'], JSON_UNESCAPED_UNICODE);
+            }
+
+            return true;
+        });
+        $this->assertStringContainsString('uploaded by the customer for this build', $user);
+        $this->assertStringContainsString('1. 1 Unser Sauerteigbrot (400x300', $user);
+    }
+
     public function test_every_ad_frame_claims_its_width_in_the_row(): void
     {
         $page = PrototypeWriter::adFrameWidths('<!doctype html><html><head><style>.ads{display:flex}</style></head><body></body></html>');

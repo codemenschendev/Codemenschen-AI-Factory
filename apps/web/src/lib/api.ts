@@ -18,7 +18,8 @@ export async function api<T>(
   const res = await fetch(`${API_BASE}/api${path}`, {
     ...init,
     headers: {
-      "content-type": "application/json",
+      // A FormData body sets its own multipart boundary; a JSON content type would break it.
+      ...(init?.body instanceof FormData ? {} : { "content-type": "application/json" }),
       accept: "application/json",
       ...(init?.token ? { authorization: `Bearer ${init.token}` } : {}),
       ...init?.headers,

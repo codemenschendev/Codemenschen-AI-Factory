@@ -1,4 +1,4 @@
-The business's own pictures, from its website at {url}. A customer recognises these at once,
+The business's own pictures, {from}. A customer recognises these at once,
 and a stock photograph next to their own product looks like somebody else's business. Use
 them FIRST, wherever one fits a photo slot: add data-site="N" (the number below) to the slot,
 and still write the brief sentence and data-q inside it, as for any slot. Each number at most
