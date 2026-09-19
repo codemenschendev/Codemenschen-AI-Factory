@@ -40,6 +40,9 @@
 
 ## Prototypes
 
+- A `campaign` (2026-09-19) is not a fifth writer: `Campaign` writes one message, then builds an ads,
+  a site (the landing page with a sign-up form) and an email prototype as its parts, side by side;
+  it is ready when the last part is. The parts share the one free change.
 - All four kinds (site, app, ads, email) write their own CSS; `house.css` only feeds `packages/design-system`.
 - Photographs come from the business's own website, then the shared library, then Pexels; the
   opening picture of an ad prototype is rendered (see Models). Each slot carries

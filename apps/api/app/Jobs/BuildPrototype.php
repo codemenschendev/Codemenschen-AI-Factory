@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Domain\Ai\Campaign;
 use App\Domain\Ai\PrototypePhoto;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Ai\SiteUnreadable;
@@ -42,6 +43,19 @@ class BuildPrototype implements ShouldQueue
 
         $proto->update(['status' => 'building', 'error' => null]);
 
+        // A campaign writes its message and hands the three parts to their own builds; it is
+        // settled when the last part finishes.
+        if ($this->kind === 'campaign') {
+            try {
+                app(Campaign::class)->start($proto, fn (string $stage) => $proto->update(['stage' => $stage]));
+            } catch (Throwable $e) {
+                Log::error('campaign prototype failed', ['id' => $proto->id, 'error' => $e->getMessage()]);
+                $proto->update(['status' => 'failed', 'stage' => null, 'error' => mb_substr($e->getMessage(), 0, 400)]);
+            }
+
+            return;
+        }
+
         try {
             $out = $writer->build((string) $proto->prompt, $this->kind, $refs, $audit, $library, $photo,
                 fn (string $stage) => $proto->update(['stage' => $stage]), $layouts, $proto->uploads ?? []);
@@ -67,6 +81,7 @@ class BuildPrototype implements ShouldQueue
             $proto->update(['status' => 'failed', 'stage' => null, 'error' => mb_substr($e->getMessage(), 0, 400)]);
             app(Notify::class)->prototypeFailed($proto->fresh());
         }
+        Campaign::settle($proto->parent_id);
     }
 
     /** A worker timeout throws MaxAttemptsExceeded OUTSIDE handle(), so record it here or the row
@@ -75,5 +90,6 @@ class BuildPrototype implements ShouldQueue
     {
         Prototype::whereKey($this->prototypeId)->where('status', '!=', 'ready')
             ->update(['status' => 'failed', 'error' => mb_substr($e->getMessage(), 0, 400)]);
+        Campaign::settle(Prototype::whereKey($this->prototypeId)->value('parent_id'));
     }
 }

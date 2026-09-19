@@ -55,7 +55,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const p = d.proto;
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
-  const [kind, setKind] = useState<"site" | "app" | "ads" | "email">("site");
+  const [kind, setKind] = useState<"site" | "app" | "ads" | "email" | "campaign">("site");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Every build needs an e-mail (owner's decision 2026-09-19). A visitor who is not signed in
@@ -81,7 +81,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       if (draft && typeof draft.prompt === "string") {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage exists only in the browser, after hydration
         setPrompt(draft.prompt);
-        if (["site", "app", "ads", "email"].includes(draft.kind)) setKind(draft.kind);
+        if (["site", "app", "ads", "email", "campaign"].includes(draft.kind)) setKind(draft.kind);
         localStorage.removeItem(DRAFT);
       }
     } catch {}
@@ -220,7 +220,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 8 }}>
         <legend style={{ padding: 0, marginBottom: 4 }}>{p.kindLabel}</legend>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {(["site", "app", "ads", "email"] as const).map((k) => (
+          {(["site", "app", "ads", "email", "campaign"] as const).map((k) => (
             <button
               key={k}
               type="button"
