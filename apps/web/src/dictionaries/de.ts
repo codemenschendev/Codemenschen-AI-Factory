@@ -740,9 +740,9 @@ export const de = {
     elapsed: "{t} vergangen, insgesamt meist 4 bis 6 Minuten.",
     codexStages: {
       studying: "Wir lesen deine Website und deine Bilder.",
-      rendering: "Appwerk AI gestaltet das Banner und die Feed-Anzeige. Das dauert etwa eine Minute.",
+      rendering: "Appwerk AI gestaltet deine Anzeige. Das dauert etwa eine Minute.",
     },
-    codexSteps: { studying: "Website lesen", rendering: "Anzeigen gestalten" },
+    codexSteps: { studying: "Website lesen", rendering: "Anzeige gestalten" },
     codexElapsed: "{t} vergangen, meist 1 bis 2 Minuten insgesamt.",
   },
   legal: {

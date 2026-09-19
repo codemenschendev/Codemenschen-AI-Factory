@@ -913,6 +913,25 @@ class PrototypeWriter
             .($sample !== '' ? "\nA sample of the website's own text: \"{$sample}\"" : '');
     }
 
+    /**
+     * The one free ad's format, from the words of the request: a story when it says story or
+     * reel, a 1.91:1 link banner when it says banner, Google or website, the feed square otherwise.
+     *
+     * @return array<string,string> name => size
+     */
+    public static function adFormat(string $prompt): array
+    {
+        $p = mb_strtolower($prompt);
+        if (preg_match('~\b(story|stories|reels?|tiktok|shorts|9:16|hochformat)\b~u', $p) === 1) {
+            return ['story' => '1080x1920'];
+        }
+        if (preg_match('~\b(banner|google|display|link ad|website ad|landscape|querformat|1200x628)\b|ngang~u', $p) === 1) {
+            return ['banner' => '1200x628'];
+        }
+
+        return ['square' => '1080x1080'];
+    }
+
     public const ADS_MODES = ['hybrid', 'claude', 'codex'];
 
     public static function adsMode(): string
@@ -955,10 +974,11 @@ class PrototypeWriter
         $refs = array_values(array_filter(array_map(fn (string $b) => self::asPng($b), $refs)));
         $brief = trim($prompt)
             .($product !== null && trim($product) !== '' ? "\n\nWhat the business sells, read from its own website".(isset($site['url']) ? " {$site['url']}" : '').":\n".mb_substr(trim($product), 0, 1800) : '');
-        // The platforms' own sizes: a link or display banner at 1.91:1 and a feed square. Codex
-        // draws 3:2 or 1:1 and is told the exact size; the picture is cropped to it here.
         $brief .= "\n\n".self::languageRule($site);
-        $formats = ['banner' => '1200x628', 'square' => '1080x1080'];
+        // One picture on the free prototype (owner's decision 2026-09-19), in the platform size the
+        // request asks for; the paid project renders the other formats. Codex draws 3:2, 1:1 or
+        // 2:3 and is told the exact size; the picture is cropped to it here.
+        $formats = self::adFormat($prompt);
         $jobs = [];
         foreach ($formats as $name => $size) {
             $jobs[$name] = ['prompt' => $brief, 'size' => $size, 'refs' => $refs, 'creative' => true];
@@ -989,7 +1009,7 @@ class PrototypeWriter
             .'body{margin:0;background:#f3f1ec;font-family:system-ui,sans-serif;color:#555}'
             .'.ads{display:flex;flex-wrap:wrap;gap:32px;justify-content:center;align-items:flex-start;padding:32px 16px}'
             .'.ad{margin:0;text-align:center}.ad img{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.18)}'
-            .'.ad-banner{flex:1 1 620px;max-width:1200px}.ad-square{flex:0 1 420px}'
+            .'.ad-banner{flex:1 1 620px;max-width:1200px}.ad-square{flex:0 1 560px}.ad-story{flex:0 1 380px}'
             .'figcaption{font-size:12px;margin-top:10px}</style></head><body><main class="ads">'.$cards.'</main></body></html>';
 
         $timing['total'] = round(array_sum($timing), 1);
