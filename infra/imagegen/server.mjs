@@ -41,6 +41,23 @@ const shape = (size) => {
     return w > h ? 'landscape (wide, about 3:2)' : 'portrait (tall, about 2:3)';
 };
 
+// A finished creative, text and all: the owner's test of Codex as the whole ad designer
+// (2026-09-19). The words come from the request, spelled exactly; facts not given are not added.
+const creative = (prompt, size, refCount) => [
+    'Generate exactly ONE image with your image generation tool, then reply "done".',
+    'Do not run commands and do not write files: the image tool output is all that is needed.',
+    '',
+    `Format: ${shape(size)}.`,
+    'Design a finished, premium advertising creative, ready to publish: headline, short supporting line, a few benefit points where they fit, and a call-to-action button, laid out by a senior art director. Spell every word correctly, in the language of the request.',
+    refCount > 0
+        ? `The ${refCount} attached picture(s) are the business's own real logo, product and screenshots. Use them faithfully: same logo, same design, same printed text. Show the real product, never an invented one.`
+        : '',
+    'Use only facts from the request and the business description below. No invented prices, awards, ratings, customer numbers or partner logos.',
+    '',
+    'The request:',
+    prompt,
+].filter((l) => l !== '').join('\n');
+
 const instruction = (prompt, size, refCount) => [
     'Generate exactly ONE image with your image generation tool, then reply "done".',
     'Do not run commands and do not write files: the image tool output is all that is needed.',
@@ -105,7 +122,7 @@ const render = async (body) => {
         const args = ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', '-C', dir];
         if (refs.length) args.push('-i', refs.join(','));
         args.push('-');
-        const res = await run(args, instruction(String(body.prompt ?? ''), body.size, refs.length), TIMEOUT_MS, dir);
+        const res = await run(args, (body.creative === true ? creative : instruction)(String(body.prompt ?? ''), body.size, refs.length), TIMEOUT_MS, dir);
         // Two renders can finish while both run; each takes a picture no other job has claimed.
         // Codex files a run's pictures under generated_images/<session id>/, and prints that id.
         const session = /session id:\s*([0-9a-f-]{36})/i.exec(res.out + res.err)?.[1];

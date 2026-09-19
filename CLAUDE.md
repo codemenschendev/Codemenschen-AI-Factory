@@ -14,6 +14,10 @@
   read-only, no shell (owner's decision 2026-09-17, a quality test before any paid use). It renders
   the scenes of an ad prototype's story and square (`AI_IMAGE_PROTOTYPE_RENDERS=2`) while Claude
   writes the page, and the business's own product picture is laid into each; the picture holds no text.
+  The ad prototype has three modes, switched by the owner in the admin panel (setting `ads.mode`,
+  2026-09-19): `hybrid` (default, the above), `claude` (no render) and `codex`, where Codex gets the
+  customer's words and designs the whole creative, text included. `codex` is the one place OpenAI
+  sets words, and only because the owner chose to test it; it never writes text for Claude's pages.
   `App\Domain\Ai\ChatBackend` refuses an OpenAI chat backend before a request is sent; keep every
   `x-openclaw-model` header going through it.
 - **No model experiment without asking.** A benchmark against another provider or model spends

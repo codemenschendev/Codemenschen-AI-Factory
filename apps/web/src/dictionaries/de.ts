@@ -494,6 +494,13 @@ export const de = {
     paymentsGoLive: "Auf Live schalten",
     paymentsBackToSandbox: "Zurück auf Sandbox",
     paymentsConfirm: "Ab jetzt werden echte Karten belastet. Zum Bestätigen LIVE eintippen.",
+    adsModeTile: "Werbe-Prototypen",
+    adsModes: { hybrid: "Hybrid: Claude + Codex", claude: "Nur Claude", codex: "Nur Codex" },
+    adsModeHints: {
+      hybrid: "Claude schreibt die Anzeigen und ihren Text, Codex rendert gleichzeitig die Bilder, das Produktfoto wird eingesetzt.",
+      claude: "Claude schreibt die Anzeigen. Bilder kommen von der Website, aus Uploads, der Bibliothek und Pexels. Kein Rendering.",
+      codex: "Codex bekommt den Text des Kunden, die Zusammenfassung der Website und die hochgeladenen Bilder und gestaltet das ganze Banner samt Text.",
+    },
     layoutsTile: "Layout-Vorlagen",
     layoutsOn: "An",
     layoutsOff: "Aus",

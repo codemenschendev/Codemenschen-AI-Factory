@@ -82,7 +82,7 @@ class ImageService
         return $pool->as($key)->baseUrl(rtrim((string) config('services.ai_image.codex_url'), '/'))
             ->withToken((string) config('services.ai_image.codex_token'))->acceptJson()
             ->timeout((int) config('services.ai_image.codex_timeout', 420))->connectTimeout(10)
-            ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs']));
+            ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs']) + (($job['creative'] ?? false) ? ['creative' => true] : []));
     }
 
     /** The picture in a pooled answer, or null for anything that is not one. */
