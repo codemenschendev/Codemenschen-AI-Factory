@@ -814,7 +814,7 @@ class PrototypeWriter
      * @return array{title:string,html:string,qa:array<string,mixed>}
      */
     private function direct(string $prompt, ?string $product, array $images, \Closure $fetch, ?array $site,
-        array $timing, \Closure $lap): array
+        array &$timing, \Closure $lap): array
     {
         $refs = [];
         if (($site['logo'] ?? null) !== null && ($logo = $fetch($site['logo'])) !== null) {
