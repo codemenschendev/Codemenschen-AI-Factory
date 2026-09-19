@@ -36,6 +36,15 @@ interface Part {
   stage?: string | null;
   title: string | null;
   mode?: string | null;
+  /** The landing page's public address, once its owner switched it on. */
+  live_url?: string | null;
+}
+
+interface Waitlist {
+  url: string | null;
+  confirmed: number;
+  pending: number;
+  signups: { email: string; status: string; source: string | null; created_at: string; confirmed_at: string | null }[];
 }
 
 /**
@@ -418,6 +427,106 @@ function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: 
       {active && (active.status === "failed"
         ? <p className="est-empty">{c.partFailed}</p>
         : <PrototypeView key={active.id} id={active.id} locale={locale} d={d} embedded />)}
+      {parts.some((x) => x.kind === "site" && x.status === "ready") && (
+        <LandingPanel part={parts.find((x) => x.kind === "site")!} d={d} locale={locale} />
+      )}
+    </div>
+  );
+}
+
+/**
+ * The landing page, live: the owner switches it on, gets the address to put in the ad, and sees
+ * who signed up. Only the owner (or an admin) gets past the API; anyone else sees nothing here.
+ */
+function LandingPanel({ part, d, locale }: { part: Part; d: Dict; locale: Locale }) {
+  const w = d.proto.waitlist;
+  const token = useToken();
+  const [list, setList] = useState<Waitlist | null>(null);
+  const [denied, setDenied] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  useEffect(() => {
+    if (!token) return;
+    let stop = false;
+    const load = () =>
+      api<Waitlist>(`/prototypes/${part.id}/signups`, { token })
+        .then((l) => !stop && setList(l))
+        .catch(() => !stop && setDenied(true));
+    load();
+    const t = setInterval(load, 30000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [token, part.id]);
+
+  if (!token || denied || !list) return null;
+
+  async function publish() {
+    setBusy(true);
+    try {
+      const r = await api<{ url: string }>(`/prototypes/${part.id}/publish`, { method: "POST", token: token ?? undefined });
+      setList((l) => (l ? { ...l, url: r.url } : l));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function csv() {
+    const rows = [["email", "status", "source", "signed_up", "confirmed"], ...list!.signups.map((s) => [s.email, s.status, s.source ?? "", s.created_at, s.confirmed_at ?? ""])];
+    const blob = new Blob([rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "waitlist.csv";
+    a.click();
+    URL.revokeObjectURL(a.href);
+  }
+
+  const date = (iso: string) => new Date(iso).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB");
+
+  return (
+    <div className="card" style={{ marginTop: 20, display: "grid", gap: 10, maxWidth: 640 }}>
+      <strong>{w.title}</strong>
+      {!list.url ? (
+        <>
+          <p className="small muted" style={{ margin: 0 }}>{w.hint}</p>
+          <button type="button" onClick={publish} disabled={busy} style={{ justifySelf: "start" }}>{w.publish}</button>
+        </>
+      ) : (
+        <>
+          <p className="small muted" style={{ margin: 0 }}>{w.live}</p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+            <a href={list.url} target="_blank" rel="noopener" style={{ wordBreak: "break-all" }}>{list.url}</a>
+            <button
+              type="button"
+              className="tab"
+              onClick={() => {
+                navigator.clipboard?.writeText(list.url!);
+                setCopied(true);
+              }}
+            >
+              {copied ? w.copied : w.copy}
+            </button>
+          </div>
+          <p style={{ margin: 0 }}>
+            <strong>{list.confirmed}</strong> {w.confirmed} · {list.pending} {w.pending}
+          </p>
+          {list.signups.length > 0 && (
+            <>
+              <ul className="small" style={{ margin: 0, paddingLeft: 18, maxHeight: 220, overflow: "auto" }}>
+                {list.signups.map((s) => (
+                  <li key={s.email}>
+                    {s.email} · {s.status === "confirmed" ? w.confirmedOne : w.pendingOne} · {date(s.created_at)}
+                    {s.source ? ` · ${s.source}` : ""}
+                  </li>
+                ))}
+              </ul>
+              <button type="button" className="tab" onClick={csv} style={{ justifySelf: "start" }}>{w.csv}</button>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

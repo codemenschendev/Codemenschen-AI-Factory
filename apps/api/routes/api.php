@@ -28,6 +28,10 @@ Route::get('/prototypes/{prototype}/confirm', [PrototypeController::class, 'conf
 Route::post('/prototypes/questions', [PrototypeController::class, 'questions'])->middleware('throttle:12,60,proto-questions');
 Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
 Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);
+// A campaign's live landing page: the sign-up and the two links in its mails.
+Route::post('/landing/{prototype}/signup', [\App\Http\Controllers\LandingController::class, 'signup'])->middleware('throttle:6,10,landing-signup');
+Route::get('/landing/signups/{signup}/confirm', [\App\Http\Controllers\LandingController::class, 'confirm'])->name('landing.confirm')->middleware('throttle:30,1,landing-link');
+Route::get('/landing/signups/{signup}/remove', [\App\Http\Controllers\LandingController::class, 'remove'])->name('landing.remove')->middleware('throttle:30,1,landing-link');
 
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
@@ -49,6 +53,8 @@ Route::get('/auth/join', [AuthController::class, 'join'])
 Route::middleware('auth:sanctum')->group(function () {
     // The one free change to a prototype, for a visitor who signed in.
     Route::post('/prototypes/{prototype}/revise', [PrototypeController::class, 'revise'])->middleware('throttle:6,60,revise');
+    Route::post('/prototypes/{prototype}/publish', [\App\Http\Controllers\LandingController::class, 'publish']);
+    Route::get('/prototypes/{prototype}/signups', [\App\Http\Controllers\LandingController::class, 'signups']);
     Route::get('/me/projects', [MeController::class, 'projects']);
     Route::get('/me/projects/{project}', [MeController::class, 'project']);
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
