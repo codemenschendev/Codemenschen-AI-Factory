@@ -49,6 +49,9 @@ class AdsModeTest extends TestCase
 
     public function test_a_render_is_cropped_to_the_platforms_exact_size(): void
     {
+        if (! collect(['/usr/bin/magick', '/opt/homebrew/bin/magick'])->contains(fn (string $p) => is_executable($p))) {
+            $this->markTestSkipped('no imagemagick on this machine');
+        }
         $im = imagecreatetruecolor(1536, 1024);
         ob_start();
         imagepng($im);
