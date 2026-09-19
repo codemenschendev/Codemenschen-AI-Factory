@@ -53,7 +53,12 @@ const fitNote = (size) => {
         : want > drawn
             ? ` The picture is then cropped to exactly this ratio: about ${Math.round((1 - drawn / want) * 50)}% is cut from the top and from the bottom, so keep every word, the logo and the button inside the middle band.`
             : ` The picture is then cropped to exactly this ratio: about ${Math.round((1 - want / drawn) * 50)}% is cut from the left and from the right, so keep every word, the logo and the button inside the middle column.`;
-    return `Final ad size: ${w}x${h} px (ratio ${want.toFixed(2)}:1).${cut}`;
+    // Said twice on purpose: the agent rewrites the request into its own prompt for the image
+    // tool and dropped the crop note, and a banner lost the top of its logo to the crop.
+    return `Final ad size: ${w}x${h} px (ratio ${want.toFixed(2)}:1).${cut}`
+        + (cut ? ` When you call the image tool, copy this rule into its prompt word for word: "${want > drawn
+            ? `Leave the top ${Math.round((1 - drawn / want) * 50) + 4}% and the bottom ${Math.round((1 - drawn / want) * 50) + 4}% of the image as plain background with no text, no logo and no button.`
+            : `Leave the left ${Math.round((1 - want / drawn) * 50) + 4}% and the right ${Math.round((1 - want / drawn) * 50) + 4}% of the image as plain background with no text, no logo and no button.`}"` : '');
 };
 
 // A finished creative, text and all: the owner's test of Codex as the whole ad designer
