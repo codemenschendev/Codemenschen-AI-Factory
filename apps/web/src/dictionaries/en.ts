@@ -725,7 +725,7 @@ export const en = {
     elapsed: "{t} elapsed, usually 4 to 6 minutes in total.",
     codexStages: {
       studying: "Reading your website and your pictures.",
-      rendering: "Codex is designing the banner and the feed ad. This takes about a minute.",
+      rendering: "Appwerk AI is designing the banner and the feed ad. This takes about a minute.",
     },
     codexSteps: { studying: "Read the website", rendering: "Design the ads" },
     codexElapsed: "{t} elapsed, usually 1 to 2 minutes in total.",
