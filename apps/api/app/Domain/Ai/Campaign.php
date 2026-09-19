@@ -85,9 +85,10 @@ class Campaign
 
                 return;
             }
+            // The page's own title, in the campaign's language; the message's promise is English.
             $site = $ready->firstWhere('kind', 'site');
             $parent->update(['status' => 'ready', 'stage' => null,
-                'title' => $parent->title ?: ($site?->title ?? $ready->first()->title)]);
+                'title' => $site?->title ?: ($parent->title ?: $ready->first()->title)]);
         });
     }
 
@@ -104,11 +105,12 @@ class Campaign
         if ($baseUrl === '' || $token === '') {
             return [];
         }
-        $site = '';
+        [$site, $lang] = ['', ''];
         if (($domain = ProductPage::domainIn($sentence)) !== null && ($page = $this->pages->read($domain)) !== null) {
             $site = "\nTheir website, $domain, says:\n\"".mb_substr(trim((string) $page['text']), 0, 3000)."\"\n";
+            $lang = ($page['lang'] ?? '') !== '' ? ' (its page says lang="'.$page['lang'].'")' : '';
         }
-        $prompt = Prompts::get('prototype/campaign', ['sentence' => mb_substr(trim($sentence), 0, 3000), 'site' => $site]);
+        $prompt = Prompts::get('prototype/campaign', ['sentence' => mb_substr(trim($sentence), 0, 3000), 'site' => $site, 'lang' => $lang]);
 
         try {
             $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(90)->connectTimeout(10);
@@ -148,7 +150,7 @@ class Campaign
         }
         $line = fn ($v) => is_string($v) ? mb_substr(trim($v), 0, 200) : '';
         $out = [];
-        foreach (['audience', 'promise', 'action', 'offer', 'tone'] as $key) {
+        foreach (['audience', 'promise', 'action', 'offer', 'tone', 'language'] as $key) {
             if (($v = $line($data[$key] ?? null)) !== '') {
                 $out[$key] = $v;
             }
@@ -167,7 +169,12 @@ class Campaign
         if (! isset($message['promise'])) {
             return '';
         }
-        $lines = ['The campaign message. The ad, the landing page and the e-mails all say this, in the language of their own part:'];
+        // One language for the three parts. Left to themselves the page followed the sentence and
+        // the ad and the e-mails the website, and the first campaign spoke German and English.
+        $lang = $message['language'] ?? null;
+        $lines = [$lang !== null
+            ? "The campaign message. The ad, the landing page and the e-mails all say this. Every word the customer sees, in all three, is in $lang:"
+            : 'The campaign message. The ad, the landing page and the e-mails all say this:'];
         foreach (['audience' => 'Who it is for', 'promise' => 'The promise', 'action' => 'What people do', 'offer' => 'Why now', 'tone' => 'Tone'] as $key => $label) {
             if (isset($message[$key])) {
                 $lines[] = "$label: {$message[$key]}";
