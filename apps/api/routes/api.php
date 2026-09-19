@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/prototypes/{prototype}/revise', [PrototypeController::class, 'revise'])->middleware('throttle:6,60,revise');
     Route::post('/prototypes/{prototype}/publish', [\App\Http\Controllers\LandingController::class, 'publish']);
     Route::get('/prototypes/{prototype}/signups', [\App\Http\Controllers\LandingController::class, 'signups']);
+    Route::get('/prototypes/{prototype}/report', [\App\Http\Controllers\LandingController::class, 'report']);
     Route::get('/me/projects', [MeController::class, 'projects']);
     Route::get('/me/projects/{project}', [MeController::class, 'project']);
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);

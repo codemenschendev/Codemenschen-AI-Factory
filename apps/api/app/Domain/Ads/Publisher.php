@@ -43,9 +43,10 @@ interface Publisher
     public function pause(MarketingCampaign $campaign): void;
 
     /**
-     * What the campaign has spent, in EUR: in total and today. Read-only; the spend guard's watch.
+     * What the campaign has spent, in EUR: in total and today, and what it reached in total.
+     * Read-only; the spend guard's watch.
      *
-     * @return array{total:float,today:float}
+     * @return array{total:float,today:float,impressions?:int,clicks?:int}
      */
     public function spend(MarketingCampaign $campaign): array;
 }

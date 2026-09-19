@@ -430,6 +430,7 @@ function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: 
       {parts.some((x) => x.kind === "site" && x.status === "ready") && (
         <LandingPanel part={parts.find((x) => x.kind === "site")!} d={d} locale={locale} />
       )}
+      {parts.some((x) => x.kind === "site" && x.live_url) && <ReportPanel id={meta.id} d={d} locale={locale} />}
       <ValidationPanel id={meta.id} d={d} />
     </div>
   );
@@ -532,10 +533,111 @@ function LandingPanel({ part, d, locale }: { part: Part; d: Dict; locale: Locale
   );
 }
 
+interface Report {
+  from: string | null;
+  running: boolean;
+  verdict: "go" | "no_go" | "unclear" | "too_early";
+  goals: { rate: number; cpl: number };
+  funnel: {
+    impressions: number;
+    clicks: number;
+    ctr: number | null;
+    visitors: number;
+    visitors_from_ads: number;
+    signups: number;
+    confirmed: number;
+    rate: number | null;
+    rate_range: [number, number] | null;
+    spend_eur: number;
+    cost_per_signup_eur: number | null;
+  };
+  days: { date: string; visitors: number; signups: number; confirmed: number }[];
+}
+
+const VERDICT_COLOR = { go: "#1e8449", no_go: "#c0392b", unclear: "#b9770e", too_early: "#7f8c8d" } as const;
+
+/**
+ * The validation report for the campaign's owner: the funnel from the ad to the confirmed
+ * sign-up, a verdict against the goals set before the test, and the days one by one.
+ */
+function ReportPanel({ id, d, locale }: { id: string; d: Dict; locale: Locale }) {
+  const r = d.proto.report;
+  const token = useToken();
+  const [rep, setRep] = useState<Report | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+    let stop = false;
+    const load = () =>
+      !stop &&
+      api<Report>(`/prototypes/${id}/report`, { token })
+        .then((x) => !stop && setRep(x))
+        .catch(() => {
+          stop = true;
+        });
+    load();
+    const t = setInterval(load, 60000);
+    return () => {
+      stop = true;
+      clearInterval(t);
+    };
+  }, [token, id]);
+
+  if (!rep) return null;
+  const f = rep.funnel;
+  const nf = (n: number, digits = 0) => n.toLocaleString(locale === "de" ? "de-AT" : "en-GB", { minimumFractionDigits: digits, maximumFractionDigits: digits });
+  const pct = (v: number | null) => (v === null ? "-" : `${nf(v * 100, 1)} %`);
+  const eur = (v: number | null) => (v === null ? "-" : `${nf(v, 2)} €`);
+  const max = Math.max(1, ...rep.days.map((x) => x.visitors));
+  const tiles: [string, string, string?][] = [
+    ...(f.impressions > 0 ? ([[r.impressions, nf(f.impressions)], [r.clicks, nf(f.clicks), pct(f.ctr)]] as [string, string, string?][]) : []),
+    [r.visitors, nf(f.visitors), f.visitors_from_ads ? r.fromAds.replace("{n}", nf(f.visitors_from_ads)) : undefined],
+    [r.confirmed, nf(f.confirmed), r.of.replace("{n}", nf(f.signups))],
+    [r.rate, pct(f.rate), f.rate_range ? r.range.replace("{lo}", pct(f.rate_range[0])).replace("{hi}", pct(f.rate_range[1])) : undefined],
+    ...(f.spend_eur > 0 ? ([[r.spend, eur(f.spend_eur)], [r.cpl, eur(f.cost_per_signup_eur)]] as [string, string, string?][]) : []),
+  ];
+
+  return (
+    <div className="card" style={{ marginTop: 20, display: "grid", gap: 12, maxWidth: 760 }}>
+      <strong>{r.title}</strong>
+      <div style={{ borderLeft: `4px solid ${VERDICT_COLOR[rep.verdict]}`, paddingLeft: 12 }}>
+        <strong style={{ color: VERDICT_COLOR[rep.verdict] }}>{r.verdicts[rep.verdict]}</strong>
+        <p className="small muted" style={{ margin: "4px 0 0" }}>
+          {r.verdictHints[rep.verdict]} {r.goals.replace("{rate}", pct(rep.goals.rate)).replace("{cpl}", eur(rep.goals.cpl))}
+          {rep.running ? ` ${r.running}` : ""}
+        </p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
+        {tiles.map(([label, value, note]) => (
+          <div key={label} style={{ border: "1px solid var(--border)", borderRadius: 10, padding: 10 }}>
+            <span className="small muted">{label}</span>
+            <div style={{ fontSize: 22, fontWeight: 600 }}>{value}</div>
+            {note && <span className="small muted">{note}</span>}
+          </div>
+        ))}
+      </div>
+      {rep.days.length > 0 && (
+        <div style={{ display: "grid", gap: 4 }}>
+          <span className="small muted">{r.perDay}</span>
+          {rep.days.map((x) => (
+            <div key={x.date} className="small" style={{ display: "grid", gridTemplateColumns: "56px 1fr 90px", gap: 8, alignItems: "center" }}>
+              <span>{new Date(x.date).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB", { day: "2-digit", month: "2-digit" })}</span>
+              <span style={{ background: "var(--border)", borderRadius: 4, height: 10, overflow: "hidden" }}>
+                <span style={{ display: "block", height: "100%", width: `${(x.visitors / max) * 100}%`, background: "var(--accent, #2f4bd6)" }} />
+              </span>
+              <span>{r.dayLine.replace("{v}", String(x.visitors)).replace("{c}", String(x.confirmed))}</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 interface Validation {
   ready: boolean;
   landing_url: string | null;
-  defaults: { headline: string; text: string; budget_eur: number; days: number; countries: string[] };
+  defaults: { headline: string; text: string; budget_eur: number; days: number; countries: string[]; goal_rate: number; goal_cpl: number };
   meta: { configured: boolean };
   limits: { killed: boolean; max_campaign_eur: number; max_daily_total_eur: number; running_daily_eur: number };
   tests: {
@@ -659,6 +761,14 @@ function ValidationPanel({ id, d }: { id: string; d: Dict }) {
             <label className="small">
               {v.days}{" "}
               <input type="number" min={3} max={14} value={form.days} onChange={(e) => setForm({ ...form, days: Number(e.target.value) })} style={{ width: 60 }} />
+            </label>
+            <label className="small">
+              {v.goalRate}{" "}
+              <input type="number" min={1} max={80} value={form.goal_rate} onChange={(e) => setForm({ ...form, goal_rate: Number(e.target.value) })} style={{ width: 60 }} /> %
+            </label>
+            <label className="small">
+              {v.goalCpl}{" "}
+              <input type="number" min={0.5} max={500} step={0.5} value={form.goal_cpl} onChange={(e) => setForm({ ...form, goal_cpl: Number(e.target.value) })} style={{ width: 70 }} /> €
             </label>
             {COUNTRIES.map((c) => (
               <label key={c} className="small">

@@ -185,17 +185,23 @@ class GoogleAdsPublisher implements Publisher
             throw new RuntimeException('Google: campaign has not been published.');
         }
         $cid = $this->cfg('customer_id');
-        $read = function (string $during) use ($cid, $resource): float {
+        $read = function (string $during) use ($cid, $resource): array {
             $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid))->timeout(30)
-                ->post($this->endpoint("customers/{$cid}/googleAds:search"), ['query' => "SELECT metrics.cost_micros FROM campaign WHERE campaign.resource_name = '{$resource}'".$during]);
+                ->post($this->endpoint("customers/{$cid}/googleAds:search"), ['query' => "SELECT metrics.cost_micros, metrics.impressions, metrics.clicks FROM campaign WHERE campaign.resource_name = '{$resource}'".$during]);
             if (! $res->successful()) {
                 throw new RuntimeException('Google Ads API: '.mb_substr((string) $res->body(), 0, 300));
             }
 
-            return collect($res->json('results') ?? [])->sum(fn ($r) => (int) ($r['metrics']['costMicros'] ?? 0)) / 1_000_000;
-        };
+            $rows = collect($res->json('results') ?? []);
 
-        return ['total' => $read(''), 'today' => $read(' AND segments.date DURING TODAY')];
+            return ['cost' => $rows->sum(fn ($r) => (int) ($r['metrics']['costMicros'] ?? 0)) / 1_000_000,
+                'impressions' => (int) $rows->sum(fn ($r) => (int) ($r['metrics']['impressions'] ?? 0)),
+                'clicks' => (int) $rows->sum(fn ($r) => (int) ($r['metrics']['clicks'] ?? 0))];
+        };
+        $all = $read('');
+
+        return ['total' => $all['cost'], 'today' => $read(' AND segments.date DURING TODAY')['cost'],
+            'impressions' => $all['impressions'], 'clicks' => $all['clicks']];
     }
 
     private function setStatus(MarketingCampaign $campaign, string $status): void
