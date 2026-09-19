@@ -36,8 +36,9 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
     const stored = getToken();
     // A project page sent the visitor here to sign in: go back once a token exists.
     const next = localStorage.getItem("aifactory-next");
-    // The prototype form sent them, to build ads or a second prototype: back to the form.
-    if (stored && next && (next.startsWith(`/${locale}/account/`) || next === `/${locale}/prototype`)) {
+    // The prototype form sent them, to build ads or a second prototype: back to the form. A share
+    // page sent them, to make its one change: back to that prototype.
+    if (stored && next && (next.startsWith(`/${locale}/account/`) || next === `/${locale}/prototype` || /^\/(de|en)\/p\/[0-9a-f-]{36}$/.test(next))) {
       localStorage.removeItem("aifactory-next");
       window.location.replace(next);
     }

@@ -63,6 +63,17 @@ class AdsModeTest extends TestCase
         $this->assertSame([1200, 628], array_slice(getimagesizefromstring($out), 0, 2));
     }
 
+    public function test_a_change_to_a_codex_ad_renders_it_again_from_the_current_picture(): void
+    {
+        Setting::write('ads.mode', 'codex');
+        $out = app(PrototypeWriter::class)->build('Weihnachtsanzeigen für eine Bäckerei in Graz', 'ads');
+
+        app(PrototypeWriter::class)->revise($out['html'], 'ads', $out['qa'], 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'Den Button in Rot');
+
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && str_contains($r['prompt'], 'change only this, as the customer asked: Den Button in Rot')
+            && count($r['refs']) === 1 && $r['size'] === '1200x628');
+    }
+
     public function test_claude_alone_renders_nothing(): void
     {
         Setting::write('ads.mode', 'claude');

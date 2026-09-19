@@ -791,6 +791,107 @@ class PrototypeWriter
      * followed it, and a 1080 x 1920 story came out 70px wide beside a full-size square. Written
      * after the page's own stylesheet, so it wins, and it holds in a grid as well.
      */
+    /**
+     * The one change a signed-in visitor may ask for. An ad Codex designed is rendered again with
+     * the current picture as the reference and the change as the brief; a page Claude wrote gets
+     * patches, with its pictures swapped for short tokens so the model reads the page and not a
+     * megabyte of base64, and put back afterwards.
+     *
+     * @param  array<string,mixed>  $qa
+     * @return array{title:string,html:string,qa:array<string,mixed>}
+     */
+    public function revise(string $html, string $kind, array $qa, string $prompt, string $change, ?PrototypePhoto $photo = null): array
+    {
+        $t0 = microtime(true);
+        if (($qa['mode'] ?? null) === 'codex') {
+            $page = $this->reviseCodex($html, $qa, $prompt, $change);
+        } else {
+            $page = $this->reviseClaude($html, $kind, $change);
+            if ($photo !== null) {
+                // A slot the change added still holds its brief: it gets a picture like any other.
+                $page = $photo->apply($page, ['fill' => false])['html'];
+            }
+        }
+        $qa['revision'] = ['request' => mb_substr($change, 0, 1000), 'seconds' => round(microtime(true) - $t0, 1), 'at' => now()->toIso8601String()];
+
+        return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];
+    }
+
+    private function reviseClaude(string $html, string $kind, string $change): string
+    {
+        $pictures = [];
+        $lean = preg_replace_callback('~src="(data:[^"]+)"~', function (array $m) use (&$pictures): string {
+            $pictures[] = $m[1];
+
+            return 'src="img:'.count($pictures).'"';
+        }, $html);
+
+        $baseUrl = rtrim((string) config('services.ai_image.base_url'), '/');
+        $request = Http::baseUrl($baseUrl)->withToken((string) config('services.ai_image.token'))->acceptJson()->timeout(630)->connectTimeout(10);
+        if (($backend = ChatBackend::pin()) !== null) {
+            $request = $request->withHeaders(['x-openclaw-model' => $backend]);
+        }
+        $res = $request->post('/v1/chat/completions', [
+            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
+            'messages' => [
+                ['role' => 'system', 'content' => Prompts::get('prototype/laws')],
+                ['role' => 'user', 'content' => "This is the {$kind} prototype you wrote for a customer:"],
+                ['role' => 'assistant', 'content' => $lean],
+                ['role' => 'user', 'content' => Prompts::get('prototype/revise', ['request' => trim($change)])],
+            ],
+            'max_completion_tokens' => 6000,
+        ]);
+        if (! $res->successful()) {
+            throw new RuntimeException('The gateway answered '.$res->status().' to the change.');
+        }
+        $reply = (string) $res->json('choices.0.message.content');
+        [$patched, $applied] = self::patch($lean, $reply);
+        if ($applied === 0) {
+            $patched = $this->extractHtml($reply);
+            if ($patched === '') {
+                throw new RuntimeException('The change came back without a patch or a page.');
+            }
+        }
+        $patched = $this->titleWithoutDash($patched);
+
+        return preg_replace_callback('~src="img:(\d+)"~', fn (array $m) => 'src="'.($pictures[(int) $m[1] - 1] ?? '').'"', $patched);
+    }
+
+    private function reviseCodex(string $html, array $qa, string $prompt, string $change): string
+    {
+        preg_match_all('~<figure class="ad ad-(\w+)"><img src="data:[^;]+;base64,([^"]+)"~', $html, $found, PREG_SET_ORDER);
+        if ($found === []) {
+            throw new RuntimeException('The ad holds no picture to change.');
+        }
+        $sizes = ['banner' => '1200x628', 'square' => '1080x1080', 'story' => '1080x1920'];
+        $product = $qa['product']['brief'] ?? null;
+        $brief = trim($prompt)
+            .(is_string($product) && trim($product) !== '' ? "\n\nWhat the business sells, read from its own website:\n".mb_substr(trim($product), 0, 1800) : '')
+            ."\n\nTHE CHANGE: the attached picture is the current ad. Keep it as it is: the same layout, logo, product, colours and words, and change only this, as the customer asked: ".trim($change);
+        $jobs = [];
+        foreach ($found as [, $format, $b64]) {
+            $jobs[$format] = ['prompt' => $brief, 'size' => $sizes[$format] ?? '1080x1080',
+                'refs' => array_values(array_filter([self::asPng((string) base64_decode($b64))])), 'creative' => true];
+        }
+        $images = app(ImageService::class);
+        $res = Http::pool(fn ($pool) => array_map(fn ($f) => $images->codexOn($pool, $jobs[$f], $f), array_keys($jobs)));
+        $done = 0;
+        foreach (array_keys($jobs) as $format) {
+            if (($bytes = $images->codexBytes($res[$format] ?? null)) === null) {
+                continue;
+            }
+            $bytes = self::toSize($bytes, $jobs[$format]['size']);
+            $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/jpeg';
+            $html = preg_replace('~(<figure class="ad ad-'.$format.'"><img src=")[^"]+~', '${1}data:'.$mime.';base64,'.base64_encode($bytes), $html, 1);
+            $done++;
+        }
+        if ($done === 0) {
+            throw new RuntimeException('The image agent rendered no changed creative.');
+        }
+
+        return $html;
+    }
+
     public const ADS_MODES = ['hybrid', 'claude', 'codex'];
 
     public static function adsMode(): string

@@ -44,6 +44,8 @@ Route::get('/auth/join', [AuthController::class, 'join'])
     ->name('auth.join');
 
 Route::middleware('auth:sanctum')->group(function () {
+    // The one free change to a prototype, for a visitor who signed in.
+    Route::post('/prototypes/{prototype}/revise', [PrototypeController::class, 'revise'])->middleware('throttle:6,60,revise');
     Route::get('/me/projects', [MeController::class, 'projects']);
     Route::get('/me/projects/{project}', [MeController::class, 'project']);
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
