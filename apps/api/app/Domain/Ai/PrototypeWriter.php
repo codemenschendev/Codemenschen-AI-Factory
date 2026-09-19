@@ -12,6 +12,7 @@ use App\Domain\Qa\LayoutFit;
 use App\Domain\Qa\PageAudit;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
+use App\Models\Setting;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use RuntimeException;
@@ -148,6 +149,18 @@ class PrototypeWriter
             $uploaded = $this->study->pictures('uploaded by the customer', array_values($uploaded), $fetchOwn);
         }
         $ownImages = [...$uploaded, ...($site['images'] ?? [])];
+
+        // The owner's switch between the ad modes (admin panel, 2026-09-19): hybrid, Claude writes
+        // the page while Codex renders the scenes; claude, the page with the business's own and
+        // library pictures and no render; codex, Codex gets the customer's words and designs the
+        // whole creative, text included, the way it does when asked directly.
+        $adsMode = $kind === 'ads' ? self::adsMode() : null;
+        $codexReady = config('services.ai_image.backend') === 'codex' && (string) config('services.ai_image.codex_token') !== '';
+        if ($adsMode === 'codex' && $codexReady) {
+            $stage('writing');
+
+            return $this->direct($prompt, $product, $ownImages, $fetchOwn, $site, $timing, $lap);
+        }
 
         // What the page may state as fact: the customer's sentence and their own website.
         $facts = $site === null ? $prompt : $prompt."\n".$site['text'];
@@ -344,8 +357,7 @@ class PrototypeWriter
         // written: in series it added a minute to a four-minute build. It is briefed from the
         // website's product brief and the business's own picture, not from the page.
         // Two since 2026-09-18 (owner's decision): the story and the square, both on the agent at once.
-        $renders = $kind === 'ads' && $photo !== null && config('services.ai_image.backend') === 'codex'
-            && (string) config('services.ai_image.codex_token') !== ''
+        $renders = $adsMode === 'hybrid' && $photo !== null && $codexReady
             ? min(2, (int) config('services.ai_image.prototype_renders', 0)) : 0;
         $jobs = array_map(fn (string $frame) => PrototypePhoto::openingJob($prompt, $product, $ownImages,
             $ownImages === [] ? null : $fetchOwn, $frame),
@@ -779,6 +791,87 @@ class PrototypeWriter
      * followed it, and a 1080 x 1920 story came out 70px wide beside a full-size square. Written
      * after the page's own stylesheet, so it wins, and it holds in a grid as well.
      */
+    public const ADS_MODES = ['hybrid', 'claude', 'codex'];
+
+    public static function adsMode(): string
+    {
+        // A switch that cannot be read is the default, not a failed build.
+        try {
+            $mode = Setting::read('ads.mode', 'hybrid');
+        } catch (\Illuminate\Database\QueryException) {
+            return 'hybrid';
+        }
+
+        return in_array($mode, self::ADS_MODES, true) ? $mode : 'hybrid';
+    }
+
+    /**
+     * Codex as the whole ad designer: the customer's words as they wrote them, what the website
+     * says it sells, and the business's own pictures (uploads, logo, product) as references. A
+     * wide banner and a feed square render at once; the page only frames them.
+     *
+     * @param  list<array{url:string}>  $images
+     * @return array{title:string,html:string,qa:array<string,mixed>}
+     */
+    private function direct(string $prompt, ?string $product, array $images, \Closure $fetch, ?array $site,
+        array $timing, \Closure $lap): array
+    {
+        $refs = [];
+        if (($site['logo'] ?? null) !== null && ($logo = $fetch($site['logo'])) !== null) {
+            $refs[] = $logo;
+        }
+        foreach ($images as $img) {
+            if (count($refs) >= 4) {
+                break;
+            }
+            if (($bytes = $fetch($img['url'])) !== null) {
+                $refs[] = $bytes;
+            }
+        }
+        $brief = trim($prompt)
+            .($product !== null && trim($product) !== '' ? "\n\nWhat the business sells, read from its own website".(isset($site['url']) ? " {$site['url']}" : '').":\n".mb_substr(trim($product), 0, 1800) : '');
+        $formats = ['banner' => '1536x1024', 'square' => '1080x1080'];
+        $jobs = [];
+        foreach ($formats as $name => $size) {
+            $jobs[$name] = ['prompt' => $brief, 'size' => $size, 'refs' => $refs, 'creative' => true];
+        }
+
+        $images = app(ImageService::class);
+        $res = Http::pool(fn ($pool) => array_map(fn ($name) => $images->codexOn($pool, $jobs[$name], $name), array_keys($jobs)));
+        $lap('render');
+        $shown = [];
+        foreach (array_keys($formats) as $name) {
+            if (($bytes = $images->codexBytes($res[$name] ?? null)) !== null) {
+                $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
+                $shown[$name] = 'data:'.$mime.';base64,'.base64_encode($bytes);
+            }
+        }
+        if ($shown === []) {
+            throw new RuntimeException('The image agent rendered no creative.');
+        }
+
+        $name = htmlspecialchars(isset($site['url']) ? (string) parse_url($site['url'], PHP_URL_HOST) : 'Ads', ENT_QUOTES, 'UTF-8');
+        $cards = '';
+        foreach ($shown as $format => $src) {
+            $cards .= '<figure class="ad ad-'.$format.'"><img src="'.$src.'" alt=""><figcaption>'.$formats[$format].'</figcaption></figure>';
+        }
+        $html = '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            .'<title>'.$name.': Ads</title><style>'
+            .'body{margin:0;background:#f3f1ec;font-family:system-ui,sans-serif;color:#555}'
+            .'.ads{display:flex;flex-wrap:wrap;gap:32px;justify-content:center;align-items:flex-start;padding:32px 16px}'
+            .'.ad{margin:0;text-align:center}.ad img{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.18)}'
+            .'.ad-banner{flex:1 1 620px;max-width:900px}.ad-square{flex:0 1 420px}'
+            .'figcaption{font-size:12px;margin-top:10px}</style></head><body><main class="ads">'.$cards.'</main></body></html>';
+
+        $timing['total'] = round(array_sum($timing), 1);
+
+        return ['title' => html_entity_decode($name, ENT_QUOTES).': Ads', 'html' => $html, 'qa' => [
+            'ok' => null, 'findings' => [], 'mode' => 'codex', 'formats' => array_keys($shown),
+            'refs' => count($refs), 'timing' => $timing,
+            'product' => isset($site['url']) ? ['url' => $site['url'], 'brief' => $product] : null,
+        ]];
+    }
+
     public static function adFrameWidths(string $html): string
     {
         $css = '<style>.ads>.ad-story{flex:0 1 300px;width:100%;max-width:300px;min-width:0}'

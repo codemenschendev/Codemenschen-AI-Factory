@@ -16,6 +16,7 @@ use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Models\ProjectAd;
 use App\Models\Prototype;
+use App\Domain\Ai\PrototypeWriter;
 use App\Models\Setting;
 use App\Services\ChangeChat;
 use App\Services\ChangeShots;
@@ -67,6 +68,8 @@ class AdminController extends Controller
             'connections' => app(PublisherRegistry::class)->status(),
             'payments' => app(StripeKeys::class)->status(),
             'layouts' => app(Layouts::class)->status(),
+            // Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone.
+            'ads_mode' => PrototypeWriter::adsMode(),
             'revenue' => [
                 // Real money only: sandbox orders (and those from before the switch, all test mode) stay out.
                 'paid_orders' => Order::where('status', 'paid')->where('livemode', true)->count(),
@@ -253,6 +256,17 @@ class AdminController extends Controller
      * looking at what comes out, and turning them off again. A deploy in between would compare
      * two different weeks instead of two kinds of build.
      */
+    /** Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone. */
+    public function adsMode(Request $request, Notify $notify): JsonResponse
+    {
+        $mode = $request->validate(['mode' => 'required|in:'.implode(',', PrototypeWriter::ADS_MODES)])['mode'];
+        $by = (string) $request->user()->email;
+        Setting::write('ads.mode', $mode, $by);
+        $notify->system("prototype ads mode set to {$mode} by {$by}");
+
+        return response()->json(['ads_mode' => $mode]);
+    }
+
     public function layoutsSettings(Request $request, Layouts $layouts, Notify $notify): JsonResponse
     {
         $data = $request->validate([

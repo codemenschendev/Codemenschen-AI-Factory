@@ -494,6 +494,13 @@ export const en = {
     paymentsGoLive: "Switch to live",
     paymentsBackToSandbox: "Back to sandbox",
     paymentsConfirm: "From now on real cards are charged. Type LIVE to confirm.",
+    adsModeTile: "Ad prototypes",
+    adsModes: { hybrid: "Hybrid: Claude + Codex", claude: "Claude only", codex: "Codex only" },
+    adsModeHints: {
+      hybrid: "Claude writes the ads and their text, Codex renders the pictures at the same time, the product photo is laid in.",
+      claude: "Claude writes the ads. Pictures come from the business's website, uploads, the library and Pexels. No render.",
+      codex: "Codex gets the customer's words, the website summary and the uploaded pictures and designs the whole banner, text included.",
+    },
     layoutsTile: "Layout packs",
     layoutsOn: "On",
     layoutsOff: "Off",

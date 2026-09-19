@@ -26,6 +26,8 @@ interface Overview {
   customers: number;
   /** Stripe sandbox or live, switched here; live_missing names empty .env keys, never values. */
   payments: { mode: "sandbox" | "live"; sandbox_configured: boolean; live_missing: string[] };
+  /** Who makes the ad prototype: Claude's page with Codex scenes, Claude alone, or Codex alone. */
+  ads_mode: "hybrid" | "claude" | "codex";
   /** Layout packs for the free prototypes: on or off, per kind, with a control group. */
   layouts: {
     enabled: boolean;
@@ -271,6 +273,11 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
    * Every layout setting is saved here rather than deployed, because the question they answer is
    * whether the packs make the pages better, and that needs them turned on and off in one week.
    */
+  async function saveAdsMode(mode: Overview["ads_mode"]) {
+    const r = await call<{ ads_mode: Overview["ads_mode"] }>("/admin/ads-mode", { method: "POST", body: JSON.stringify({ mode }) });
+    if (r) setOverview((o) => (o ? { ...o, ads_mode: r.ads_mode } : o));
+  }
+
   async function saveLayouts(patch: Partial<Pick<Overview["layouts"], "enabled" | "kinds" | "share" | "off">>) {
     setBusy(true);
     const r = await call<Overview["layouts"]>("/admin/layouts", { method: "POST", body: JSON.stringify(patch) });
@@ -471,6 +478,24 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   {a.paymentsBackToSandbox}
                 </button>
               )}
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26 }}>
+            <span className="cat">{a.adsModeTile}</span>
+            <strong style={{ fontSize: 22 }}>{a.adsModes[overview.ads_mode]}</strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.adsModeHints[overview.ads_mode]}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {(["hybrid", "claude", "codex"] as const).map((m) => (
+                <button
+                  key={m}
+                  className={overview.ads_mode === m ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                  disabled={busy || overview.ads_mode === m}
+                  onClick={() => void saveAdsMode(m)}
+                >
+                  {a.adsModes[m]}
+                </button>
+              ))}
             </div>
           </div>
 
