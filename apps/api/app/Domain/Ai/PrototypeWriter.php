@@ -830,7 +830,9 @@ class PrototypeWriter
         }
         $brief = trim($prompt)
             .($product !== null && trim($product) !== '' ? "\n\nWhat the business sells, read from its own website".(isset($site['url']) ? " {$site['url']}" : '').":\n".mb_substr(trim($product), 0, 1800) : '');
-        $formats = ['banner' => '1536x1024', 'square' => '1080x1080'];
+        // The platforms' own sizes: a link or display banner at 1.91:1 and a feed square. Codex
+        // draws 3:2 or 1:1 and is told the exact size; the picture is cropped to it here.
+        $formats = ['banner' => '1200x628', 'square' => '1080x1080'];
         $jobs = [];
         foreach ($formats as $name => $size) {
             $jobs[$name] = ['prompt' => $brief, 'size' => $size, 'refs' => $refs, 'creative' => true];
@@ -842,6 +844,7 @@ class PrototypeWriter
         $shown = [];
         foreach (array_keys($formats) as $name) {
             if (($bytes = $images->codexBytes($res[$name] ?? null)) !== null) {
+                $bytes = self::toSize($bytes, $formats[$name]);
                 $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
                 $shown[$name] = 'data:'.$mime.';base64,'.base64_encode($bytes);
             }
@@ -860,7 +863,7 @@ class PrototypeWriter
             .'body{margin:0;background:#f3f1ec;font-family:system-ui,sans-serif;color:#555}'
             .'.ads{display:flex;flex-wrap:wrap;gap:32px;justify-content:center;align-items:flex-start;padding:32px 16px}'
             .'.ad{margin:0;text-align:center}.ad img{display:block;width:100%;height:auto;border-radius:14px;box-shadow:0 18px 40px rgba(0,0,0,.18)}'
-            .'.ad-banner{flex:1 1 620px;max-width:900px}.ad-square{flex:0 1 420px}'
+            .'.ad-banner{flex:1 1 620px;max-width:1200px}.ad-square{flex:0 1 420px}'
             .'figcaption{font-size:12px;margin-top:10px}</style></head><body><main class="ads">'.$cards.'</main></body></html>';
 
         $timing['total'] = round(array_sum($timing), 1);
@@ -870,6 +873,20 @@ class PrototypeWriter
             'refs' => count($refs), 'timing' => $timing,
             'product' => isset($site['url']) ? ['url' => $site['url'], 'brief' => $product] : null,
         ]];
+    }
+
+    /** The picture cropped from the centre and scaled to exactly $size; as it came when that fails. */
+    public static function toSize(string $bytes, string $size): string
+    {
+        $bin = collect(['/usr/bin/magick', '/opt/homebrew/bin/magick'])->first(fn (string $p) => is_executable($p));
+        if ($bin === null || preg_match('~^\d+x\d+$~', $size) !== 1) {
+            return $bytes;
+        }
+        $proc = new \Symfony\Component\Process\Process([$bin, '-', '-resize', $size.'^', '-gravity', 'center', '-extent', $size, '-quality', '90', 'jpg:-'], null, null, $bytes, 60);
+        $proc->run();
+        $out = $proc->getOutput();
+
+        return $proc->isSuccessful() && strlen($out) > 1000 ? $out : $bytes;
     }
 
     public static function adFrameWidths(string $html): string

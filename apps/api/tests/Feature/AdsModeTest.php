@@ -41,10 +41,25 @@ class AdsModeTest extends TestCase
 
         Http::assertNotSent(fn ($r) => str_contains($r->url(), 'chat/completions'));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['creative'] === true
-            && $r['size'] === '1536x1024' && str_starts_with($r['prompt'], 'Weihnachtsanzeigen für eine Bäckerei in Graz'));
+            && $r['size'] === '1200x628' && str_starts_with($r['prompt'], 'Weihnachtsanzeigen für eine Bäckerei in Graz'));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['size'] === '1080x1080');
         $this->assertSame('codex', $out['qa']['mode']);
-        $this->assertSame(2, substr_count($out['html'], 'src="data:image/png'));
+        $this->assertSame(2, substr_count($out['html'], 'src="data:image/'));
+    }
+
+    public function test_a_render_is_cropped_to_the_platforms_exact_size(): void
+    {
+        if (! collect(['/usr/bin/magick', '/opt/homebrew/bin/magick'])->contains(fn (string $p) => is_executable($p))) {
+            $this->markTestSkipped('no imagemagick on this machine');
+        }
+        $im = imagecreatetruecolor(1536, 1024);
+        ob_start();
+        imagepng($im);
+        $png = (string) ob_get_clean();
+
+        $out = PrototypeWriter::toSize($png, '1200x628');
+
+        $this->assertSame([1200, 628], array_slice(getimagesizefromstring($out), 0, 2));
     }
 
     public function test_claude_alone_renders_nothing(): void

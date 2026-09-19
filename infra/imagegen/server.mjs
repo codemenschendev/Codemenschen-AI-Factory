@@ -41,6 +41,21 @@ const shape = (size) => {
     return w > h ? 'landscape (wide, about 3:2)' : 'portrait (tall, about 2:3)';
 };
 
+// The image tool draws 1:1, 3:2 or 2:3 only. An ad has an exact size (1200x628, 1080x1920, ...),
+// so the picture is cropped to it afterwards, and the design has to keep its words clear of the
+// part that is cut.
+const fitNote = (size) => {
+    const [w, h] = String(size ?? '').split('x').map(Number);
+    if (!w || !h) return '';
+    const want = w / h;
+    const drawn = w === h ? 1 : w > h ? 1.5 : 2 / 3;
+    const cut = Math.abs(want - drawn) < 0.02 ? ''
+        : want > drawn
+            ? ` The picture is then cropped to exactly this ratio: about ${Math.round((1 - drawn / want) * 50)}% is cut from the top and from the bottom, so keep every word, the logo and the button inside the middle band.`
+            : ` The picture is then cropped to exactly this ratio: about ${Math.round((1 - want / drawn) * 50)}% is cut from the left and from the right, so keep every word, the logo and the button inside the middle column.`;
+    return `Final ad size: ${w}x${h} px (ratio ${want.toFixed(2)}:1).${cut}`;
+};
+
 // A finished creative, text and all: the owner's test of Codex as the whole ad designer
 // (2026-09-19). The words come from the request, spelled exactly; facts not given are not added.
 const creative = (prompt, size, refCount) => [
@@ -48,6 +63,7 @@ const creative = (prompt, size, refCount) => [
     'Do not run commands and do not write files: the image tool output is all that is needed.',
     '',
     `Format: ${shape(size)}.`,
+    fitNote(size),
     'Design a finished, premium advertising creative, ready to publish: headline, short supporting line, a few benefit points where they fit, and a call-to-action button, laid out by a senior art director. Spell every word correctly, in the language of the request.',
     refCount > 0
         ? `The ${refCount} attached picture(s) are the business's own real logo, product and screenshots. Use them faithfully: same logo, same design, same printed text. Show the real product, never an invented one.`
