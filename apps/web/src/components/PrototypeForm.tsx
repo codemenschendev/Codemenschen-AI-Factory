@@ -191,7 +191,7 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
                   type="button"
                   className="tab"
                   aria-pressed={picked[i] === o}
-                  onClick={() => setPicked({ ...picked, [i]: picked[i] === o ? "" : o })}
+                  onClick={() => setPicked((cur) => ({ ...cur, [i]: cur[i] === o ? "" : o }))}
                   style={{ borderColor: picked[i] === o ? "currentColor" : undefined, fontWeight: picked[i] === o ? 600 : undefined }}
                 >
                   {o}
@@ -201,7 +201,10 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
             <input
               type="text"
               value={own[i] ?? ""}
-              onChange={(e) => setOwn({ ...own, [i]: e.target.value.slice(0, 300) })}
+              onChange={(e) => {
+                const v = e.target.value.slice(0, 300);
+                setOwn((cur) => ({ ...cur, [i]: v }));
+              }}
               placeholder={q.own}
               aria-label={`${item.q} ${q.own}`}
               style={{ padding: 10, fontSize: "1rem" }}
