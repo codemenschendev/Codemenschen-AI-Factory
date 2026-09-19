@@ -9,6 +9,8 @@ import type { Dict, Locale } from "@/lib/i18n";
 
 interface Meta {
   kind?: string;
+  /** How an ad was made: hybrid, claude, or codex alone (two steps, a minute or two). */
+  mode?: string | null;
   photo_credit?: string | null;
   photo_credit_url?: string | null;
   id: string;
@@ -44,13 +46,20 @@ const STEPS = [
   { key: "photos", share: 0.03, seconds: 5 },
 ] as const;
 
-type StepKey = (typeof STEPS)[number]["key"];
+/** An ad by Codex alone: the website is read, then Codex renders both creatives at once (about 50 s). */
+const CODEX_STEPS = [
+  { key: "studying", share: 0.2, seconds: 25 },
+  { key: "rendering", share: 0.8, seconds: 60 },
+] as const;
+
+type StepKey = (typeof STEPS)[number]["key"] | (typeof CODEX_STEPS)[number]["key"];
+type Step = { key: StepKey; share: number; seconds: number };
 
 /** Percent done, from the step the build is on and how long it has been on it. */
-function progress(stage: StepKey | null, inStage: number): number {
+function progress(steps: readonly Step[], stage: StepKey | null, inStage: number): number {
   if (!stage) return 2;
   let done = 0;
-  for (const s of STEPS) {
+  for (const s of steps) {
     if (s.key === stage) {
       return Math.round((done + s.share * Math.min(0.92, inStage / s.seconds)) * 100);
     }
@@ -111,13 +120,17 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
     // "One moment" for four minutes reads as broken, and one line of text for four minutes reads
     // as stuck. The visitor is watching: they get the steps, the one it is on, a bar that moves
     // every second and a clock, so a long build looks like a long build and not like a dead page.
-    const key = meta.stage && meta.stage in p.stages ? (meta.stage as StepKey) : null;
-    const stage = key ? p.stages[key] : null;
+    const codex = meta.mode === "codex";
+    const steps: readonly Step[] = codex ? CODEX_STEPS : STEPS;
+    const labels = codex ? p.codexStages : p.stages;
+    const names = codex ? p.codexSteps : p.steps;
+    const key = meta.stage && meta.stage in labels ? (meta.stage as StepKey) : null;
+    const stage = key ? labels[key as keyof typeof labels] : null;
     const started = meta.created_at ? Date.parse(meta.created_at) : (stageSince?.at ?? now);
     const elapsed = Math.max(0, Math.floor((now - started) / 1000));
     const inStage = Math.max(0, (now - (stageSince?.at ?? now)) / 1000);
-    const pct = progress(key, inStage);
-    const at = key ? STEPS.findIndex((s) => s.key === key) : -1;
+    const pct = progress(steps, key, inStage);
+    const at = key ? steps.findIndex((s) => s.key === key) : -1;
 
     return (
       <div aria-live="polite" style={{ maxWidth: 560 }}>
@@ -139,10 +152,10 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
           />
         </div>
         <p className="small muted" style={{ margin: "6px 0 14px" }}>
-          {pct}% · {p.elapsed.replace("{t}", clock(elapsed))}
+          {pct}% · {(codex ? p.codexElapsed : p.elapsed).replace("{t}", clock(elapsed))}
         </p>
         <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
-          {STEPS.map((s, i) => {
+          {steps.map((s, i) => {
             const state = at < 0 ? "todo" : i < at ? "done" : i === at ? "now" : "todo";
 
             return (
@@ -160,7 +173,7 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
                   {state === "done" ? "✓" : state === "now" ? "●" : "○"}
                 </span>
                 <span>
-                  {p.steps[s.key]}
+                  {names[s.key as keyof typeof names]}
                   {state === "now" && stage && (
                     <span className="small muted" style={{ display: "block", fontWeight: 400 }}>{stage}</span>
                   )}

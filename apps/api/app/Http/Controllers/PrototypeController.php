@@ -163,6 +163,11 @@ class PrototypeController extends Controller
             'created_at' => $prototype->created_at->toIso8601String(),
             // The share page frames an app in a phone and a site in a window.
             'kind' => $prototype->kind,
+            // An ad built by Codex alone has two steps, not five, and takes a minute or two: the
+            // wait says so instead of promising four to six minutes of steps that never come.
+            'mode' => $prototype->kind === 'ads'
+                ? ($prototype->qa['mode'] ?? ($prototype->status === 'ready' ? 'hybrid' : PrototypeWriter::adsMode()))
+                : null,
             'title' => $prototype->title,
             // The visitor's own sentence, so "turn it into a real app" can carry it into the
             // wizard instead of asking them to type the same thing twice.

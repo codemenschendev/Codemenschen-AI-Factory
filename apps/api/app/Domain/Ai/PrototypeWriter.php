@@ -157,7 +157,7 @@ class PrototypeWriter
         $adsMode = $kind === 'ads' ? self::adsMode() : null;
         $codexReady = config('services.ai_image.backend') === 'codex' && (string) config('services.ai_image.codex_token') !== '';
         if ($adsMode === 'codex' && $codexReady) {
-            $stage('writing');
+            $stage('rendering');
 
             return $this->direct($prompt, $product, $ownImages, $fetchOwn, $site, $timing, $lap);
         }
