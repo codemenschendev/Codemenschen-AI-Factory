@@ -40,8 +40,11 @@ class PrototypeWriter
         private readonly ProductPage $pages,
     ) {}
 
-    /** The three things a visitor can ask for. `site` is the default and the original behaviour. */
-    public const KINDS = ['site', 'app', 'ads', 'email'];
+    /**
+     * What a visitor can ask for. `site` is the default and the original behaviour. `campaign` is
+     * not written here: it is the ad, the site and the e-mails built together (Campaign).
+     */
+    public const KINDS = ['site', 'app', 'ads', 'email', 'campaign'];
 
     /** Repair rounds at most. The second runs only if the first reduced the faults. */
     /**

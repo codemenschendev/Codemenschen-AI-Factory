@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ai\Campaign;
 use App\Domain\Ai\PrototypeQuestions;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Analytics\Analytics;
@@ -89,7 +90,8 @@ class PrototypeController extends Controller
         // so a signed-in admin passes straight through. The route stays open to everyone else:
         // a token is read if one is sent, never required.
         if (! ($request->user('sanctum')?->isAdmin() ?? false)) {
-            $today = Prototype::where('ip', $ip)->where('created_at', '>=', now()->startOfDay())->count();
+            // The parts of a campaign are not counted: the visitor asked for one thing.
+            $today = Prototype::where('ip', $ip)->whereNull('parent_id')->where('created_at', '>=', now()->startOfDay())->count();
             if ($today >= self::PER_IP_PER_DAY) {
                 return response()->json(['error' => 'Daily limit of free prototypes reached for this address. Come back tomorrow or get in touch.'], 429);
             }
@@ -203,11 +205,14 @@ class PrototypeController extends Controller
         $data = $request->validate(['change' => 'required|string|min:5|max:1000']);
         $user = $request->user();
         abort_unless($prototype->isLive(), 410, 'This prototype has expired or is not ready yet.');
+        // A campaign has no page of its own; a change is asked for on one of its parts.
+        abort_if($prototype->kind === 'campaign', 422, 'Change one part of the campaign.');
         $admin = $user->isAdmin();
         if (! $admin && $prototype->customer_id !== null && $prototype->customer_id !== $user->id) {
             return response()->json(['error' => 'This prototype belongs to another account.', 'code' => 'not_yours'], 403);
         }
-        if (! $admin && $prototype->revisions >= self::REVISIONS) {
+        // The parts of a campaign share one allowance: one change for the campaign, not three.
+        if (! $admin && Campaign::revisionsUsed($prototype) >= self::REVISIONS) {
             return response()->json(['error' => 'The free change for this prototype is used.', 'code' => 'used'], 403);
         }
 
@@ -246,12 +251,18 @@ class PrototypeController extends Controller
             'prompt' => $prototype->prompt,
             'error' => $prototype->error,
             // The one change: how many are left, and why the last one did not happen.
-            'revisions_left' => max(0, self::REVISIONS - (int) $prototype->revisions),
+            'revisions_left' => max(0, self::REVISIONS - Campaign::revisionsUsed($prototype)),
             'revision_failed' => isset($prototype->qa['revision_failed']),
             // Only what the share page has to print: the photographer and where the photo is from.
             'photo_credit' => $prototype->qa['photo_credit'] ?? null,
             'photo_credit_url' => $prototype->qa['photo_credit_url'] ?? null,
             'expires_at' => $prototype->expires_at->toIso8601String(),
+            // A campaign is shown as its parts: the ad, the landing page, the e-mails.
+            'parts' => $prototype->kind === 'campaign' ? Prototype::where('parent_id', $prototype->id)->get()
+                ->sortBy(fn (Prototype $p) => array_search($p->kind, Campaign::PARTS, true))->values()
+                ->map(fn (Prototype $p) => ['id' => $p->id, 'kind' => $p->kind, 'status' => $expired ? 'expired' : $p->status,
+                    'stage' => $p->stage, 'title' => $p->title, 'mode' => $p->kind === 'ads' ? ($p->qa['mode'] ?? null) : null])
+                : null,
         ]);
     }
 

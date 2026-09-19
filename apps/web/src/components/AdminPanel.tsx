@@ -119,7 +119,7 @@ interface ProjectDetail {
 
 interface PrototypeRow {
   id: string;
-  kind: "site" | "app" | "ads" | "email";
+  kind: "site" | "app" | "ads" | "email" | "campaign";
   status: string;
   stage: string | null;
   title: string | null;

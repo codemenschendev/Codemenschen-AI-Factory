@@ -18,6 +18,7 @@ class PrototypeQuestions
         'app' => 'who uses the app, the one task it must make easy, what users do today instead, the tone',
         'ads' => 'who the ads should reach, what the ad should get people to do, the offer or occasion (a season, a discount, a launch), the tone',
         'email' => 'who receives the e-mails, the moments they go out (welcome, order, reminder, comeback), the offer, the tone',
+        'campaign' => 'who the campaign should win, what people sign up for on the landing page (a waitlist, a free trial, a first appointment), the offer or reason to act now, the tone',
     ];
 
     /** @return list<array{q:string,options:list<string>}> empty when there is nothing worth asking or the call failed */
@@ -30,7 +31,8 @@ class PrototypeQuestions
         }
         $de = $locale === 'de';
         $prompt = Prompts::get('prototype/questions', [
-            'kind' => ['site' => 'website', 'app' => 'app', 'ads' => 'ads', 'email' => 'e-mail'][$kind] ?? 'website',
+            'kind' => ['site' => 'website', 'app' => 'app', 'ads' => 'ads', 'email' => 'e-mail',
+                'campaign' => 'campaign (an ad, its landing page and the e-mails after sign-up)'][$kind] ?? 'website',
             'sentence' => mb_substr(trim($sentence), 0, 2000),
             'topics' => self::TOPICS[$kind] ?? self::TOPICS['site'],
             'language' => $de ? 'German' : 'English',

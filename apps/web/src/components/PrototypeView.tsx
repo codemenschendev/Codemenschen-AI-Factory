@@ -25,6 +25,17 @@ interface Meta {
   /** The one free change: how many are left, and whether the last one failed (and was given back). */
   revisions_left?: number;
   revision_failed?: boolean;
+  /** A campaign is its parts: the ad, the landing page and the e-mails, each its own prototype. */
+  parts?: Part[] | null;
+}
+
+interface Part {
+  id: string;
+  kind: "ads" | "site" | "email";
+  status: Meta["status"];
+  stage?: string | null;
+  title: string | null;
+  mode?: string | null;
 }
 
 /**
@@ -76,7 +87,7 @@ function progress(steps: readonly Step[], stage: StepKey | null, inStage: number
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d: Dict }) {
+export function PrototypeView({ id, locale, d, embedded = false }: { id: string; locale: Locale; d: Dict; embedded?: boolean }) {
   const p = d.proto;
   const [meta, setMeta] = useState<Meta | null>(null);
   // A one-second clock while it builds. The stage's own start is noted when the stage is first
@@ -141,6 +152,10 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
         <p className="small muted" style={{ margin: 0 }}>{p.email.waiting}</p>
       </div>
     );
+  }
+
+  if (meta.kind === "campaign" && meta.status !== "expired" && meta.status !== "failed") {
+    return <CampaignView meta={meta} locale={locale} d={d} now={now} building={building} />;
   }
 
   if (building && meta.stage === "revising") {
@@ -239,7 +254,7 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
 
   return (
     <div>
-      <div
+      {!embedded && <div
         style={{
           display: "flex",
           gap: 12,
@@ -260,7 +275,7 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
             {p.another}
           </Link>
         </div>
-      </div>
+      </div>}
       {/* An app is shown in a phone and a website in a window. Squeezing a 1120px landing page
           into 390px would be as wrong as hanging one app screen across a desktop. */}
       {meta.kind === "app" ? (
@@ -318,6 +333,91 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
         setMeta({ ...meta, status: "building", stage: "revising" });
         setRound((r) => r + 1);
       }} />
+    </div>
+  );
+}
+
+/**
+ * A campaign: while it builds, the three parts and where each one is; once ready, one tab per
+ * part, each shown the way a prototype of its kind is shown, with the one change the parts share.
+ */
+function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: Locale; d: Dict; now: number; building: boolean }) {
+  const p = d.proto;
+  const c = p.campaign;
+  const parts = meta.parts ?? [];
+  const [tab, setTab] = useState<string | null>(null);
+
+  if (building) {
+    const started = meta.created_at ? Date.parse(meta.created_at) : now;
+    const elapsed = Math.max(0, Math.floor((now - started) / 1000));
+    const rows: { key: string; label: string; state: "done" | "now" | "todo" | "failed"; note?: string }[] = [
+      { key: "message", label: c.message, state: parts.length ? "done" : "now", note: parts.length ? undefined : c.messageNow },
+      ...(["ads", "site", "email"] as const).map((k) => {
+        const part = parts.find((x) => x.kind === k);
+        const state = !part || part.status === "queued" ? "todo" : part.status === "building" ? "now" : part.status === "ready" ? "done" : "failed";
+        const stages = part?.mode === "codex" ? p.codexStages : p.stages;
+        const note = state === "now" && part?.stage && part.stage in stages ? stages[part.stage as keyof typeof stages]
+          : state === "failed" ? c.failed : state === "todo" && part ? c.queued : undefined;
+
+        return { key: k, label: c.parts[k], state: state as "done" | "now" | "todo" | "failed", note };
+      }),
+    ];
+
+    return (
+      <div aria-live="polite" style={{ maxWidth: 560 }}>
+        <p className="est-empty" style={{ marginBottom: 6 }}>{c.building}</p>
+        <p className="small muted" style={{ margin: "0 0 14px" }}>{c.elapsed.replace("{t}", clock(elapsed))}</p>
+        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
+          {rows.map((r) => (
+            <li key={r.key} style={{ display: "flex", gap: 10, alignItems: "baseline", opacity: r.state === "todo" ? 0.45 : 1, fontWeight: r.state === "now" ? 600 : 400 }}>
+              <span style={{ width: 18, textAlign: "center" }} aria-hidden="true">
+                {r.state === "done" ? "✓" : r.state === "now" ? "●" : r.state === "failed" ? "✕" : "○"}
+              </span>
+              <span>
+                {r.label}
+                {r.note && <span className="small muted" style={{ display: "block", fontWeight: 400 }}>{r.note}</span>}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
+    );
+  }
+
+  const active = parts.find((x) => x.id === tab) ?? parts.find((x) => x.status === "ready") ?? parts[0];
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+        <p className="est-empty" style={{ margin: 0 }}>{c.hint}</p>
+        <div style={{ display: "flex", gap: 12 }}>
+          <Link className="lang-toggle" href={`/${locale}/create?from=${meta.id}`} onClick={() => trackOnce(`make-real-${meta.id}`, "cta_click", { cta: "prototype_make_real", kind: "campaign" })}>
+            {p.makeReal.campaign}
+          </Link>
+          <Link className="lang-toggle" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${meta.id}`, "cta_click", { cta: "prototype_another" })}>
+            {p.another}
+          </Link>
+        </div>
+      </div>
+      <div role="tablist" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+        {parts.map((x, i) => (
+          <button
+            key={x.id}
+            type="button"
+            role="tab"
+            className="tab"
+            aria-selected={active?.id === x.id}
+            onClick={() => setTab(x.id)}
+            style={{ borderColor: active?.id === x.id ? "currentColor" : undefined, fontWeight: active?.id === x.id ? 600 : undefined }}
+          >
+            {i + 1}. {c.parts[x.kind]}
+            {x.status === "failed" ? " ✕" : ""}
+          </button>
+        ))}
+      </div>
+      {active && (active.status === "failed"
+        ? <p className="est-empty">{c.partFailed}</p>
+        : <PrototypeView key={active.id} id={active.id} locale={locale} d={d} embedded />)}
     </div>
   );
 }
