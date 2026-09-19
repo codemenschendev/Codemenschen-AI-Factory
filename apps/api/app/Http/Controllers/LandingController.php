@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
+use App\Domain\Analytics\ValidationReport;
 use App\Models\LandingSignup;
 use App\Models\Prototype;
 use Illuminate\Http\JsonResponse;
@@ -60,6 +61,15 @@ class LandingController extends Controller
                 'source' => $s->source, 'created_at' => $s->created_at->toIso8601String(),
                 'confirmed_at' => $s->confirmed_at?->toIso8601String()])->values(),
         ]);
+    }
+
+    /** The validation report of a campaign, for its owner (or an admin). */
+    public function report(Request $request, Prototype $prototype, ValidationReport $report): JsonResponse
+    {
+        $this->authorizeOwner($request, $prototype);
+        abort_unless($prototype->kind === 'campaign', 422, 'Only a campaign has a report.');
+
+        return response()->json($report->build($prototype));
     }
 
     /** The public page. */

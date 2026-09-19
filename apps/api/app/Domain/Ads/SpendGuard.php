@@ -112,7 +112,8 @@ class SpendGuard
                 continue;
             }
             $out['checked']++;
-            $campaign->update(['spent_eur' => $spend['total'], 'spent_today_eur' => $spend['today'], 'spend_checked_at' => now()]);
+            $campaign->update(['spent_eur' => $spend['total'], 'spent_today_eur' => $spend['today'], 'spend_checked_at' => now(),
+                'impressions' => $spend['impressions'] ?? $campaign->impressions, 'link_clicks' => $spend['clicks'] ?? $campaign->link_clicks]);
 
             $reason = match (true) {
                 $campaign->spend_cap_eur !== null && $spend['total'] >= $campaign->spend_cap_eur => 'cap_reached',

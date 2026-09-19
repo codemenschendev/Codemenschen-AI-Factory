@@ -194,15 +194,16 @@ class MetaAdsPublisher implements Publisher
         if (! $id) {
             throw new RuntimeException('Meta: campaign has not been published.');
         }
-        $read = fn (string $preset) => (float) ($this->insights($id, $preset)['data'][0]['spend'] ?? 0);
+        $all = $this->insights($id, 'maximum')['data'][0] ?? [];
 
-        return ['total' => $read('maximum'), 'today' => $read('today')];
+        return ['total' => (float) ($all['spend'] ?? 0), 'today' => (float) ($this->insights($id, 'today')['data'][0]['spend'] ?? 0),
+            'impressions' => (int) ($all['impressions'] ?? 0), 'clicks' => (int) ($all['inline_link_clicks'] ?? 0)];
     }
 
     /** @return array<string,mixed> */
     private function insights(string $id, string $preset): array
     {
-        $res = $this->base()->get("{$id}/insights", ['fields' => 'spend', 'date_preset' => $preset, 'access_token' => $this->cfg('token')]);
+        $res = $this->base()->get("{$id}/insights", ['fields' => 'spend,impressions,inline_link_clicks', 'date_preset' => $preset, 'access_token' => $this->cfg('token')]);
         if (! $res->successful()) {
             throw new RuntimeException('Meta API: '.($res->json('error.message') ?? mb_substr((string) $res->body(), 0, 300)));
         }

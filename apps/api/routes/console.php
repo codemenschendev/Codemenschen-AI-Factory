@@ -37,3 +37,6 @@ Schedule::command('factory:ads-check')->dailyAt('07:20');
 
 // The spend guard's watch (SpendGuard): every running ad, every 15 minutes.
 Schedule::command('factory:ads-guard')->everyFifteenMinutes()->withoutOverlapping();
+
+// The validation report of a campaign, mailed once its test or first week is over.
+Schedule::command('factory:validation-reports')->dailyAt('08:30')->timezone('Europe/Vienna');

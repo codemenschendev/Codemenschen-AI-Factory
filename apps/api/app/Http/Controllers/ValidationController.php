@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Ads\Preflight;
 use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Ads\SpendGuard;
+use App\Domain\Analytics\ValidationReport;
 use App\Jobs\PublishCampaign;
 use App\Models\MarketingCampaign;
 use App\Models\Prototype;
@@ -34,6 +35,7 @@ class ValidationController extends Controller
                 'headline' => mb_substr($site ? LandingController::name($site) : (string) $prototype->title, 0, 40),
                 'text' => self::primaryText($site),
                 'budget_eur' => 150, 'days' => 7, 'countries' => ['AT', 'DE'],
+                'goal_rate' => ValidationReport::DEFAULT_RATE * 100, 'goal_cpl' => ValidationReport::DEFAULT_CPL,
             ],
             'meta' => ['configured' => $registry->for('meta')->isConfigured()],
             'limits' => $guard->limits(),
@@ -52,6 +54,9 @@ class ValidationController extends Controller
             'countries.*' => 'string|in:AT,DE,CH,IT,NL,BE,LU,FR,ES,GB,US',
             'headline' => 'required|string|max:40',
             'text' => 'required|string|max:500',
+            // The goals the verdict is measured against, set before the test and not after it.
+            'goal_rate' => 'nullable|numeric|min:1|max:80',
+            'goal_cpl' => 'nullable|numeric|min:0.5|max:500',
         ]);
         abort_unless($prototype->kind === 'campaign', 422, 'Only a campaign can be tested.');
         [$site, $ad] = $this->parts($prototype);
@@ -66,6 +71,7 @@ class ValidationController extends Controller
             'platform' => 'meta',
             'status' => 'approved',
             'strategy' => ['kind' => 'validation', 'countries' => array_values(array_unique($data['countries'])), 'days' => $data['days'],
+                'goals' => ['rate' => ($data['goal_rate'] ?? ValidationReport::DEFAULT_RATE * 100) / 100, 'cpl' => (float) ($data['goal_cpl'] ?? ValidationReport::DEFAULT_CPL)],
                 'landing_url' => LandingController::url($site).'?utm_source=meta&utm_medium=paid&utm_campaign=validation-'.substr($prototype->id, 0, 8)],
             'spend_cap_eur' => $data['budget_eur'],
             'ends_at' => now()->addDays($data['days']),
