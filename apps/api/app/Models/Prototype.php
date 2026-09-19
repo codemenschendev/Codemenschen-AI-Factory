@@ -11,7 +11,7 @@ class Prototype extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['expires_at' => 'datetime', 'qa' => 'array'];
+    protected $casts = ['expires_at' => 'datetime', 'qa' => 'array', 'uploads' => 'array'];
 
     /** The page went out with something a browser could see was wrong. Null means nobody looked. */
     public function qaFailed(): bool

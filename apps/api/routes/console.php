@@ -25,6 +25,10 @@ Schedule::command('factory:vision-check')->dailyAt('07:10');
 
 // Expired prototypes are throwaway; drop them and their generated HTML daily.
 Schedule::call(function () {
+    // The pictures a visitor uploaded go with the prototype; a query delete fires no model event.
+    Prototype::where('expires_at', '<', now())->whereNull('project_id')->pluck('id')->each(function (string $id) {
+        \Illuminate\Support\Facades\File::deleteDirectory(\App\Http\Controllers\PrototypeController::uploadDir($id));
+    });
     Prototype::where('expires_at', '<', now())->whereNull('project_id')->delete();
 })->dailyAt('03:30');
 

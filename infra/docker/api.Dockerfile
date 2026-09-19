@@ -12,6 +12,10 @@ RUN apk add --no-cache postgresql-dev icu-dev linux-headers \
       ffmpeg imagemagick python3 font-dejavu chromium nodejs npm \
   && docker-php-ext-install pdo_pgsql intl pcntl bcmath
 
+# PHP's own 2 MB upload ceiling turned away a phone photo, and the prototype form takes up to
+# four pictures of the business (PrototypeController::MAX_UPLOADS, 8 MB each).
+RUN printf 'upload_max_filesize=10M\npost_max_size=40M\nmax_file_uploads=8\n' > "$PHP_INI_DIR/conf.d/uploads.ini"
+
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 
 WORKDIR /app

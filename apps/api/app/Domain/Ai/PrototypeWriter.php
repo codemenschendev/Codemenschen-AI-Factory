@@ -92,11 +92,12 @@ class PrototypeWriter
     /**
      * @param  ?\Closure(string):void  $progress  told the stage as it changes: writing, auditing,
      *                                            repairing, photos
+     * @param  list<array{path:string,name:string}>  $uploads  the pictures the visitor uploaded
      * @return array{title:string,html:string,qa:array<string,mixed>}
      */
     public function build(string $prompt, string $kind = 'site', ?DesignRefs $refs = null,
         ?PageAudit $audit = null, ?DesignLibrary $library = null, ?PrototypePhoto $photo = null,
-        ?\Closure $progress = null, ?Layouts $layouts = null): array
+        ?\Closure $progress = null, ?Layouts $layouts = null, array $uploads = []): array
     {
         // Where the minutes go, by step, kept with the audit. Every argument about speed so far
         // was settled by a stopwatch held by hand; this is the stopwatch.
@@ -126,6 +127,28 @@ class PrototypeWriter
                 throw new SiteUnreadable($domain);
             }
         }
+        // The pictures the visitor uploaded are the business's own pictures too, and chosen for
+        // this build, so they come before anything read from the website.
+        $uploaded = [];
+        foreach ($uploads as $n => $up) {
+            if (is_file((string) ($up['path'] ?? '')) && ($size = @getimagesize($up['path'])) !== false) {
+                $url = 'upload:'.substr(sha1($up['path']), 0, 12).'/'.rawurlencode(($n + 1).' '.($up['name'] ?? 'picture'));
+                $uploaded[$url] = ['url' => $url, 'alt' => '', 'size' => $size[0].'x'.$size[1],
+                    'kind' => ProductPage::pictureKind($url, '', (string) file_get_contents($up['path'])), 'path' => $up['path']];
+            }
+        }
+        $fetchOwn = function (string $url) use ($uploaded, $domain): ?string {
+            if (isset($uploaded[$url])) {
+                return (string) file_get_contents($uploaded[$url]['path']);
+            }
+
+            return $domain === null ? null : $this->pages->download($url, $domain);
+        };
+        if ($uploaded !== []) {
+            $uploaded = $this->study->pictures('uploaded by the customer', array_values($uploaded), $fetchOwn);
+        }
+        $ownImages = [...$uploaded, ...($site['images'] ?? [])];
+
         // What the page may state as fact: the customer's sentence and their own website.
         $facts = $site === null ? $prompt : $prompt."\n".$site['text'];
 
@@ -255,12 +278,18 @@ class PrototypeWriter
                 'page' => mb_substr($site['text'], 0, 2500),
             ])];
         }
-        if (($site['images'] ?? []) !== []) {
+        if ($ownImages !== []) {
             $lines = [];
-            foreach ($site['images'] as $n => $img) {
+            foreach ($ownImages as $n => $img) {
                 $lines[] = ($n + 1).'. '.rawurldecode(basename((string) parse_url($img['url'], PHP_URL_PATH))).(isset($img['size']) ? ' ('.$img['size'].(isset($img['kind']) ? ', '.$img['kind'] : '').')' : '').(($img['shows'] ?? '') !== '' ? ': '.$img['shows'] : ($img['alt'] !== '' ? ': '.$img['alt'] : ''));
             }
-            $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-images', ['url' => $site['url'], 'images' => implode("\n", $lines)])];
+            $k = count($uploaded);
+            $from = match (true) {
+                $k > 0 && $site !== null => 'uploaded by the customer for this build (numbers 1 to '.$k.', use these before any other) and from its website at '.$site['url'],
+                $k > 0 => 'uploaded by the customer for this build',
+                default => 'from its website at '.$site['url'],
+            };
+            $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-images', ['from' => $from, 'images' => implode("\n", $lines)])];
         }
         if (($site['logo'] ?? null) !== null) {
             $user[] = ['type' => 'text', 'text' => Prompts::get('prototype/site-logo')];
@@ -318,8 +347,8 @@ class PrototypeWriter
         $renders = $kind === 'ads' && $photo !== null && config('services.ai_image.backend') === 'codex'
             && (string) config('services.ai_image.codex_token') !== ''
             ? min(2, (int) config('services.ai_image.prototype_renders', 0)) : 0;
-        $jobs = array_map(fn (string $frame) => PrototypePhoto::openingJob($prompt, $product, $site['images'] ?? [],
-            $site === null ? null : fn (string $url) => $this->pages->download($url, $domain), $frame),
+        $jobs = array_map(fn (string $frame) => PrototypePhoto::openingJob($prompt, $product, $ownImages,
+            $ownImages === [] ? null : $fetchOwn, $frame),
             array_slice(['ad-story', 'ad-square'], 0, $renders));
         $opening = $jobs === [] ? null : $jobs;
         $pictures = null;
@@ -486,10 +515,10 @@ class PrototypeWriter
             // The opening picture of an ad page, rendered beside the page above. A render that
             // failed leaves the slot to the site's own pictures and the library.
             $render = $pictures === null ? [] : ['pictures' => $pictures, 'products' => array_column($jobs, 'product')];
-            $shot = $photo->apply($page, $site === null ? $render : $render + [
-                'images' => $site['images'] ?? [],
+            $shot = $photo->apply($page, $site === null && $ownImages === [] ? $render : $render + [
+                'images' => $ownImages,
                 'logo' => $site['logo'] ?? null,
-                'fetch' => fn (string $url) => $this->pages->download($url, $domain),
+                'fetch' => $fetchOwn,
                 // An ad or an e-mail fills a slot the builder left unmarked with another of the
                 // business's own pictures before a stock photograph: a chain-link fence from Pexels
                 // in a Christmas ad for a WordPress plugin was the alternative.
