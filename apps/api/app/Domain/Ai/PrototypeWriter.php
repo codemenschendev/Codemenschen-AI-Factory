@@ -892,6 +892,27 @@ class PrototypeWriter
         return $html;
     }
 
+    /**
+     * Which language the words of a Codex ad are in. A visitor who writes in Vietnamese about
+     * wp-giftcard.com wants ads for its English-speaking buyers, and got Vietnamese ones: the
+     * website's language wins unless the request names a language itself.
+     */
+    public static function languageRule(?array $site): string
+    {
+        if ($site === null) {
+            return 'LANGUAGE: every word in the ad is in the language the request is written in, unless the request names another language.';
+        }
+        $names = ['de' => 'German', 'en' => 'English', 'fr' => 'French', 'it' => 'Italian', 'es' => 'Spanish', 'nl' => 'Dutch',
+            'pl' => 'Polish', 'cs' => 'Czech', 'hu' => 'Hungarian', 'vi' => 'Vietnamese', 'pt' => 'Portuguese', 'hr' => 'Croatian', 'sl' => 'Slovenian'];
+        $lang = $site['lang'] ?? null;
+        $which = $lang !== null ? ($names[$lang] ?? $lang).' (the language of the website)' : 'the language of the website';
+        $sample = mb_substr(trim(preg_replace('~\s+~', ' ', (string) ($site['text'] ?? ''))), 0, 300);
+
+        return "LANGUAGE: every word in the ad is in {$which}, because the ads speak to the business's own customers. "
+            .'Use another language only when the request explicitly asks for one (for example "in German" or "auf Deutsch"); the language the request itself is written in does not count.'
+            .($sample !== '' ? "\nA sample of the website's own text: \"{$sample}\"" : '');
+    }
+
     public const ADS_MODES = ['hybrid', 'claude', 'codex'];
 
     public static function adsMode(): string
@@ -936,6 +957,7 @@ class PrototypeWriter
             .($product !== null && trim($product) !== '' ? "\n\nWhat the business sells, read from its own website".(isset($site['url']) ? " {$site['url']}" : '').":\n".mb_substr(trim($product), 0, 1800) : '');
         // The platforms' own sizes: a link or display banner at 1.91:1 and a feed square. Codex
         // draws 3:2 or 1:1 and is told the exact size; the picture is cropped to it here.
+        $brief .= "\n\n".self::languageRule($site);
         $formats = ['banner' => '1200x628', 'square' => '1080x1080'];
         $jobs = [];
         foreach ($formats as $name => $size) {

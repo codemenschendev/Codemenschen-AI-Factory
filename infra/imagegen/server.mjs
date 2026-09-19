@@ -69,7 +69,7 @@ const creative = (prompt, size, refCount) => [
     '',
     `Format: ${shape(size)}.`,
     fitNote(size),
-    'Design a finished, premium advertising creative, ready to publish: headline, short supporting line, a few benefit points where they fit, and a call-to-action button, laid out by a senior art director. Spell every word correctly, in the language of the request.',
+    'Design a finished, premium advertising creative, ready to publish: headline, short supporting line, a few benefit points where they fit, and a call-to-action button, laid out by a senior art director. Spell every word correctly, in the language the LANGUAGE line of the request names.',
     refCount > 0
         ? `The ${refCount} attached picture(s) are the business's own real logo, product and screenshots. Use them faithfully: same logo, same design, same printed text. Show the real product, never an invented one.`
         : '',
