@@ -28,7 +28,7 @@ class CampaignPrototypeTest extends TestCase
         config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't']);
         Http::fake(['*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => '{"audience":"Families in Graz",'
             .'"promise":"Fresh bread at your door every morning","reasons":["Baked at night","Organic flour"],'
-            .'"action":"join the waitlist","offer":"","tone":"warm, local, honest"}']]]])]);
+            .'"action":"join the waitlist","offer":"","tone":"warm, local, honest","language":"German"}']]]])]);
         $proto = $this->campaign();
 
         (new BuildPrototype($proto->id, 'campaign'))->handle(...array_map('app', [\App\Domain\Ai\PrototypeWriter::class,
@@ -45,6 +45,7 @@ class CampaignPrototypeTest extends TestCase
             $this->assertStringStartsWith('Eine Bäckerei in Graz mit Brot-Abo', $part->prompt);
         }
         $this->assertStringContainsString('sign-up form', $parts->firstWhere('kind', 'site')->prompt);
+        $this->assertStringContainsString('in all three, is in German', $parts->firstWhere('kind', 'ads')->prompt);
         Queue::assertPushed(BuildPrototype::class, 3);
     }
 
