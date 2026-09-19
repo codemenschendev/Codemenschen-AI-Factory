@@ -828,6 +828,9 @@ class PrototypeWriter
                 $refs[] = $bytes;
             }
         }
+        // Codex reads JPEG, PNG and WebP; the logo of wp-giftcard.com is an SVG and arrived as
+        // "image content omitted", so the ad spelled the name in its own type. Everything goes as PNG.
+        $refs = array_values(array_filter(array_map(fn (string $b) => self::asPng($b), $refs)));
         $brief = trim($prompt)
             .($product !== null && trim($product) !== '' ? "\n\nWhat the business sells, read from its own website".(isset($site['url']) ? " {$site['url']}" : '').":\n".mb_substr(trim($product), 0, 1800) : '');
         // The platforms' own sizes: a link or display banner at 1.91:1 and a feed square. Codex
@@ -873,6 +876,20 @@ class PrototypeWriter
             'refs' => count($refs), 'timing' => $timing,
             'product' => isset($site['url']) ? ['url' => $site['url'], 'brief' => $product] : null,
         ]];
+    }
+
+    /** Any picture ImageMagick can read (SVG, ICO, AVIF, ...) as a PNG at most 1600px wide; null when it cannot. */
+    public static function asPng(string $bytes): ?string
+    {
+        $bin = collect(['/usr/bin/magick', '/opt/homebrew/bin/magick'])->first(fn (string $p) => is_executable($p));
+        if ($bin === null) {
+            return $bytes;
+        }
+        $proc = new \Symfony\Component\Process\Process([$bin, '-density', '300', '-background', 'none', '-', '-resize', '1600x1600>', 'png:-'], null, null, $bytes, 60);
+        $proc->run();
+        $out = $proc->getOutput();
+
+        return $proc->isSuccessful() && strlen($out) > 200 ? $out : null;
     }
 
     /** The picture cropped from the centre and scaled to exactly $size; as it came when that fails. */
