@@ -74,6 +74,16 @@ class AdsModeTest extends TestCase
             && count($r['refs']) === 1 && $r['size'] === '1200x628');
     }
 
+    public function test_the_ad_speaks_the_websites_language_unless_the_request_names_one(): void
+    {
+        $rule = PrototypeWriter::languageRule(['lang' => 'en', 'text' => 'Sell gift cards on your WordPress site']);
+        $this->assertStringContainsString('every word in the ad is in English (the language of the website)', $rule);
+        $this->assertStringContainsString('the language the request itself is written in does not count', $rule);
+        $this->assertStringContainsString('Sell gift cards on your WordPress site', $rule);
+
+        $this->assertStringContainsString('the language the request is written in', PrototypeWriter::languageRule(null));
+    }
+
     public function test_claude_alone_renders_nothing(): void
     {
         Setting::write('ads.mode', 'claude');

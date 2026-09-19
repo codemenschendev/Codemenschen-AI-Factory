@@ -89,7 +89,7 @@ class ProductPage
         return $page ?: null;
     }
 
-    /** @return array{url:string,text:string}|false false so a failed read is cached too, briefly enough */
+    /** @return array{url:string,text:string,lang?:?string}|false false so a failed read is cached too, briefly enough */
     private function fetch(string $domain): array|false
     {
         $url = "https://{$domain}/";
@@ -116,7 +116,10 @@ class ProductPage
                 }
                 [$images, $logo] = self::images($html, $url, $domain);
 
-                return ['url' => $url, 'text' => $text, 'images' => $this->bigEnough($images, $domain), 'logo' => $logo];
+                // The language the business speaks to its customers in, from <html lang>.
+                $lang = preg_match('~<html[^>]*\slang="([a-zA-Z]{2,3})~i', $html, $l) === 1 ? strtolower($l[1]) : null;
+
+                return ['url' => $url, 'text' => $text, 'images' => $this->bigEnough($images, $domain), 'logo' => $logo, 'lang' => $lang];
             }
         } catch (\Throwable $e) {
             Log::info('product page: not read', ['domain' => $domain, 'error' => mb_substr($e->getMessage(), 0, 160)]);
