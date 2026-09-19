@@ -41,11 +41,11 @@ class AdsModeTest extends TestCase
 
         Http::assertNotSent(fn ($r) => str_contains($r->url(), 'chat/completions'));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['creative'] === true
-            && $r['size'] === '1200x628' && str_starts_with($r['prompt'], 'Weihnachtsanzeigen für eine Bäckerei in Graz'));
-        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['size'] === '1080x1080');
+            && $r['size'] === '1080x1080' && str_starts_with($r['prompt'], 'Weihnachtsanzeigen für eine Bäckerei in Graz'));
+        Http::assertSentCount(1);
         $this->assertSame('codex', $out['qa']['mode']);
+        $this->assertSame(1, substr_count($out['html'], 'src="data:image/'));
         $this->assertArrayHasKey('render', $out['qa']['timing']);
-        $this->assertSame(2, substr_count($out['html'], 'src="data:image/'));
     }
 
     public function test_a_render_is_cropped_to_the_platforms_exact_size(): void
@@ -69,9 +69,12 @@ class AdsModeTest extends TestCase
         $out = app(PrototypeWriter::class)->build('Weihnachtsanzeigen für eine Bäckerei in Graz', 'ads');
 
         app(PrototypeWriter::class)->revise($out['html'], 'ads', $out['qa'], 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'Den Button in Rot');
+        $this->assertSame(['square' => '1080x1080'], PrototypeWriter::adFormat('Weihnachtsanzeigen für eine Bäckerei'));
+        $this->assertSame(['banner' => '1200x628'], PrototypeWriter::adFormat('wp-giftcard.com làm cho tôi 1 ảnh banner Ads'));
+        $this->assertSame(['story' => '1080x1920'], PrototypeWriter::adFormat('Instagram Story für ein Café'));
 
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && str_contains($r['prompt'], 'change only this, as the customer asked: Den Button in Rot')
-            && count($r['refs']) === 1 && $r['size'] === '1200x628');
+            && count($r['refs']) === 1 && $r['size'] === '1080x1080');
     }
 
     public function test_the_ad_speaks_the_websites_language_unless_the_request_names_one(): void
