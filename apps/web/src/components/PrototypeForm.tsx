@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { remember } from "@/lib/history";
-import { getToken } from "@/lib/token";
+import { getToken, useToken } from "@/lib/token";
 import type { Dict, Locale } from "@/lib/i18n";
 
 /**
@@ -58,11 +58,12 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
   const [kind, setKind] = useState<"site" | "app" | "ads" | "email">("site");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Ads, and any prototype after the first, ask for an e-mail. The text typed so far is kept
-  // in this browser and comes back when the sign-in link returns the visitor to the form.
-  const [signIn, setSignIn] = useState<"ads" | "again" | null>(null);
+  // Every build needs an e-mail (owner's decision 2026-09-19). A visitor who is not signed in
+  // types it here; the build starts when they open the link we send, which also signs them in.
+  const token = useToken();
   const [email, setEmail] = useState("");
-  const [sent, setSent] = useState(false);
+  const needsEmail = token === null;
+  const emailOk = !needsEmail || /.+@.+\..+/.test(email.trim());
   // Between the sentence and the build: a few questions the model thinks would change the
   // result most, each answered with a tap or in the visitor's own words, all of it optional.
   const [step, setStep] = useState<"write" | "asking" | "answer">("write");
@@ -86,20 +87,6 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
     } catch {}
   }, []);
 
-  async function sendLink(e: React.SyntheticEvent) {
-    e.preventDefault();
-    try {
-      localStorage.setItem(DRAFT, JSON.stringify({ prompt, kind }));
-      localStorage.setItem("aifactory-next", `/${locale}/prototype`);
-    } catch {}
-    try {
-      await api("/auth/magic-link", { method: "POST", body: JSON.stringify({ email, locale, join: true }) });
-      setSent(true);
-    } catch {
-      setError(p.failed);
-    }
-  }
-
   function addFiles(list: FileList | null) {
     if (!list) return;
     const ok = Array.from(list).filter((f) => ACCEPT.includes(f.type));
@@ -109,15 +96,12 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
     setFiles(all.slice(0, MAX_UPLOADS));
   }
 
-  /** 401 sign_in, 429 cap, 422 too long: each says something the visitor can act on. */
+  /** 429 cap, 422 no e-mail or too long: each says something the visitor can act on. */
   function failed(err: unknown) {
     const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
-    const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string; reason?: string } | null }).body : null;
-    if (status === 401 && body?.code === "sign_in") {
-      setSignIn(body.reason === "ads" ? "ads" : "again");
-    } else {
-      setError(status === 429 ? p.limit : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
-    }
+    const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string } | null }).body : null;
+    setError(status === 429 ? p.limit : body?.code === "email" ? p.email.needed
+      : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
     setStep("write");
     setBusy(false);
   }
@@ -161,8 +145,14 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
       body.append("prompt", prompt);
       body.append("kind", kind);
       if (details) body.append("details", details);
+      if (needsEmail) {
+        body.append("email", email.trim());
+        body.append("locale", locale);
+      }
       for (const f of await Promise.all(files.map(shrink))) body.append("images[]", f);
       // Read here, not in an effect: this only runs in the browser, on a click.
+      // Without a token the answer is "waiting": the share page says to open the e-mail and
+      // starts showing the build the moment the link is opened, on any device.
       const r = await api<{ id: string }>("/prototypes", { method: "POST", token: getToken() ?? undefined, body });
       // Written before the redirect, so a visitor who never comes back to this tab still finds
       // the prototype in the list next time. The title is filled in by the share page.
@@ -303,32 +293,24 @@ export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
           )}
         </div>
       </div>
-      {error && <p className="est-empty">{error}</p>}
-      {signIn === null ? (
-        <button type="submit" disabled={busy || step === "asking" || prompt.trim().length < 12} style={{ justifySelf: "start" }}>
-          {busy ? p.building : step === "asking" ? p.asking : p.next}
-        </button>
-      ) : sent ? (
-        <p>{p.signIn.sent}</p>
-      ) : (
-        <div style={{ display: "grid", gap: 8 }}>
-          <p style={{ margin: 0 }}>{p.signIn[signIn]}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={p.signIn.email}
-              aria-label={p.signIn.email}
-              style={{ flex: "1 1 220px", padding: 10, fontSize: "1rem" }}
-            />
-            <button type="button" onClick={sendLink} disabled={!/.+@.+\..+/.test(email)}>
-              {p.signIn.send}
-            </button>
-          </div>
-        </div>
+      {needsEmail && (
+        <label style={{ display: "grid", gap: 6 }}>
+          {p.email.label}
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={p.signIn.email}
+            autoComplete="email"
+            style={{ padding: 10, fontSize: "1rem", maxWidth: 360 }}
+          />
+          <span className="small muted">{p.email.hint}</span>
+        </label>
       )}
+      {error && <p className="est-empty">{error}</p>}
+      <button type="submit" disabled={busy || step === "asking" || prompt.trim().length < 12 || !emailOk} style={{ justifySelf: "start" }}>
+        {busy ? p.building : step === "asking" ? p.asking : p.next}
+      </button>
     </form>
   );
 }

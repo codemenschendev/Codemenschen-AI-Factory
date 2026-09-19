@@ -8,12 +8,18 @@ use App\Domain\Analytics\Analytics;
 use App\Jobs\BuildPrototype;
 use App\Jobs\RevisePrototype;
 use App\Models\Prototype;
+use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
 /**
- * Public, anonymous prompt-to-prototype. No sign-in: it is a lead magnet.
+ * Public prompt-to-prototype, the lead magnet. Every build needs an e-mail: a visitor who is not
+ * signed in gets a link that signs them in and starts the build (owner's decision 2026-09-19).
  *
  * Two things keep the free tier from being a bill. A per-IP daily cap on top of route throttling,
  * and a short life on every prototype. The generated HTML is untrusted, so raw() serves it with a
@@ -51,9 +57,6 @@ class PrototypeController extends Controller
             'locale' => 'nullable|in:de,en',
         ]);
         $kind = $data['kind'] ?? 'site';
-        if (($gate = $this->gate($request, $kind)) !== null) {
-            return $gate;
-        }
 
         return response()->json(['questions' => $questions->ask($data['prompt'], $kind, $data['locale'] ?? 'de')]);
     }
@@ -69,11 +72,16 @@ class PrototypeController extends Controller
             // The business's own pictures: product, shop, logo.
             'images' => 'nullable|array|max:'.self::MAX_UPLOADS,
             'images.*' => 'file|mimes:jpeg,png,webp|max:'.self::MAX_UPLOAD_KB,
+            // A visitor who is not signed in gives an e-mail; the build starts from the link.
+            'email' => 'nullable|email|max:190',
+            'locale' => 'nullable|in:de,en',
         ]);
         $ip = (string) $request->ip();
         $kind = $data['kind'] ?? 'site';
-        if (($gate = $this->gate($request, $kind)) !== null) {
-            return $gate;
+        $user = $request->user('sanctum');
+        if ($user === null && empty($data['email'])) {
+            return response()->json(['error' => 'Give your e-mail: the build starts when you open the link we send.',
+                'code' => 'email'], 422);
         }
 
         // The cap is there to stop an anonymous visitor spending our money on generations. An
@@ -94,11 +102,16 @@ class PrototypeController extends Controller
             $prompt .= "\n\n".trim($data['details']);
         }
 
+        // Every build needs an address now (owner's decision 2026-09-19). A signed-in visitor's
+        // starts at once; anybody else's waits for the link in the e-mail, which signs them in and
+        // starts it. Nothing is spent on an address that is never opened.
         $proto = Prototype::create([
-            'status' => 'queued',
+            'status' => $user === null ? 'waiting' : 'queued',
             'kind' => $kind,
             'prompt' => $prompt,
             'ip' => $ip,
+            'customer_id' => $user?->id,
+            'qa' => $user === null ? ['pending_email' => strtolower($data['email'])] : null,
             'expires_at' => now()->addDays(self::LIVE_DAYS),
         ]);
 
@@ -118,9 +131,14 @@ class PrototypeController extends Controller
             $proto->update(['uploads' => $uploads]);
         }
 
-        BuildPrototype::dispatch($proto->id, $kind);
         app(Analytics::class)->record('prototype_requested', $request, [], ['kind' => $kind, 'prototype' => $proto->id,
-            'uploads' => count($files), 'details' => trim($data['details'] ?? '') !== '']);
+            'uploads' => count($files), 'details' => trim($data['details'] ?? '') !== '', 'waiting' => $user === null]);
+        if ($user === null) {
+            self::sendBuildLink($proto, strtolower($data['email']), $data['locale'] ?? 'de');
+
+            return response()->json(['id' => $proto->id, 'status' => 'waiting'], 202);
+        }
+        BuildPrototype::dispatch($proto->id, $kind);
 
         return response()->json(['id' => $proto->id, 'status' => 'queued'], 202);
     }
@@ -130,24 +148,46 @@ class PrototypeController extends Controller
         return rtrim((string) config('services.media.uploads_path'), '/').'/prototypes/'.$id;
     }
 
-    /**
-     * The first prototype is free and needs nothing. Ads, which spend two renders on the image
-     * agent, and every prototype after the first from the same address, ask for an e-mail first
-     * (owner's decision 2026-09-18): changing IP no longer buys unlimited generations, and each
-     * build after the first comes with a way to reach the visitor.
-     */
-    private function gate(Request $request, string $kind): ?JsonResponse
+    /** The e-mail whose link signs the visitor in and starts the build. Valid for a day. */
+    private static function sendBuildLink(Prototype $proto, string $email, string $locale): void
     {
-        if ($request->user('sanctum') !== null) {
-            return null;
-        }
-        $before = Prototype::where('ip', (string) $request->ip())->where('created_at', '>=', now()->subDays(self::LIVE_DAYS))->exists();
-        if ($kind !== 'ads' && ! $before) {
-            return null;
-        }
+        $url = URL::temporarySignedRoute('prototypes.confirm', now()->addDay(), ['prototype' => $proto->id, 'locale' => $locale]);
+        if (config('mail.default') === 'log') {
+            Log::info('prototype.build_link', ['email' => $email, 'url' => $url]);
 
-        return response()->json(['error' => 'Sign in with your e-mail to build this prototype.',
-            'code' => 'sign_in', 'reason' => $kind === 'ads' ? 'ads' : 'again'], 401);
+            return;
+        }
+        Mail::raw($locale === 'de'
+            ? "Hallo,\n\nein Klick auf diesen Link bestätigt deine E-Mail und startet deinen Prototyp:\n\n$url\n\nDu landest direkt auf der Seite, auf der er entsteht. Der Link gilt 24 Stunden.\n\nWenn du nichts angefragt hast, ignoriere diese E-Mail.\n\nAppwerk"
+            : "Hello,\n\none click on this link confirms your e-mail and starts your prototype:\n\n$url\n\nYou land right on the page where it is built. The link is valid for 24 hours.\n\nIf you did not ask for this, ignore this e-mail.\n\nAppwerk",
+            fn ($m) => $m->to($email)->subject($locale === 'de' ? 'Starte deinen Appwerk Prototyp' : 'Start your Appwerk prototype'));
+    }
+
+    /**
+     * The link from that e-mail: the address is confirmed, the customer exists from now on and is
+     * signed in, and the build starts. Opened twice, it only signs in and shows the prototype.
+     */
+    public function confirm(Request $request, Prototype $prototype): RedirectResponse
+    {
+        abort_unless($request->hasValidSignature(), 403, 'Link expired or invalid');
+        $locale = in_array($request->query('locale'), ['de', 'en'], true) ? $request->query('locale') : 'de';
+        $email = $prototype->qa['pending_email'] ?? null;
+        $customer = $prototype->customer_id !== null ? Customer::find($prototype->customer_id)
+            : ($email !== null ? Customer::firstOrCreate(['email' => $email], ['locale' => $locale]) : null);
+        abort_if($customer === null, 410, 'This prototype can no longer be started.');
+
+        if ($prototype->status === 'waiting') {
+            $qa = $prototype->qa ?? [];
+            unset($qa['pending_email']);
+            $prototype->update(['status' => 'queued', 'customer_id' => $customer->id, 'qa' => $qa ?: null,
+                'expires_at' => now()->addDays(self::LIVE_DAYS)]);
+            BuildPrototype::dispatch($prototype->id, (string) $prototype->kind);
+            app(Analytics::class)->record('prototype_confirmed', $request, ['customer_id' => $customer->id], ['kind' => $prototype->kind, 'prototype' => $prototype->id]);
+        }
+        $token = $customer->createToken('portal', ['portal'])->plainTextToken;
+        $front = rtrim((string) config('services.frontend_url'), '/');
+
+        return redirect()->away("$front/$locale/p/{$prototype->id}#token=$token");
     }
 
     /** How many changes a signed-in visitor may ask for on one free prototype. */

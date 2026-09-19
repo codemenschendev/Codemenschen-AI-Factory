@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
-import { getToken } from "@/lib/token";
+import { setToken, useToken } from "@/lib/token";
 import { trackOnce } from "@/lib/analytics";
 import { forget, rename } from "@/lib/history";
 import type { Dict, Locale } from "@/lib/i18n";
@@ -15,7 +15,8 @@ interface Meta {
   photo_credit?: string | null;
   photo_credit_url?: string | null;
   id: string;
-  status: "queued" | "building" | "ready" | "failed" | "expired";
+  /** waiting: the visitor has not opened the e-mail link yet, and nothing is built until they do. */
+  status: "waiting" | "queued" | "building" | "ready" | "failed" | "expired";
   /** Which step a build is on: writing, auditing, repairing, photos. */
   stage?: string | null;
   created_at?: string;
@@ -85,6 +86,16 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   // Bumped when a change is sent, so the polling starts again for the rebuild.
   const [round, setRound] = useState(0);
 
+  // The link in the e-mail lands here with a token in the hash: the visitor is signed in from now
+  // on, and the hash comes off the address so the token is not shared with the link.
+  useEffect(() => {
+    const fromHash = new URLSearchParams(window.location.hash.slice(1)).get("token");
+    if (fromHash) {
+      setToken(fromHash);
+      history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
+
   useEffect(() => {
     let stop = false;
     const tick = async () => {
@@ -99,6 +110,7 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
         if (m.status === "ready") rename(id, m.title);
         if (m.status === "expired") forget(id);
         if (m.status === "queued" || m.status === "building") setTimeout(tick, 3000);
+        if (m.status === "waiting") setTimeout(tick, 5000);
       } catch {
         if (!stop) setMeta({ id, status: "failed", title: null, error: null });
       }
@@ -121,6 +133,15 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
   }, [building]);
 
   if (!meta) return <p className="est-empty">{p.building}</p>;
+
+  if (meta.status === "waiting") {
+    return (
+      <div aria-live="polite" style={{ maxWidth: 560 }}>
+        <p className="est-empty" style={{ marginBottom: 6 }}>{p.email.waitingTitle}</p>
+        <p className="small muted" style={{ margin: 0 }}>{p.email.waiting}</p>
+      </div>
+    );
+  }
 
   if (building && meta.stage === "revising") {
     const since = Math.max(0, Math.floor((now - (stageSince?.at ?? now)) / 1000));
@@ -307,14 +328,12 @@ export function PrototypeView({ id, locale, d }: { id: string; locale: Locale; d
  */
 function RevisePanel({ id, locale, d, meta, onSent }: { id: string; locale: Locale; d: Dict; meta: Meta; onSent: () => void }) {
   const r = d.proto.revise;
-  const [token, setTokenState] = useState<string | null>(null);
+  const token = useToken();
   const [change, setChange] = useState("");
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // eslint-disable-next-line react-hooks/set-state-in-effect -- the token lives in localStorage, readable only after hydration
-  useEffect(() => setTokenState(getToken()), []);
 
   if ((meta.revisions_left ?? 1) < 1) {
     return <p className="small muted" style={{ marginTop: 16 }}>{r.used}</p>;

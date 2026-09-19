@@ -56,18 +56,13 @@ class PrototypeQuestionsTest extends TestCase
         $this->assertSame([], PrototypeQuestions::parse('Sure, here are some questions.'));
     }
 
-    public function test_questions_are_behind_the_same_sign_in_as_the_build(): void
-    {
-        $this->postJson('/api/prototypes/questions', ['prompt' => 'Weihnachtsanzeigen für eine Bäckerei in Graz', 'kind' => 'ads'])
-            ->assertStatus(401)->assertJson(['code' => 'sign_in', 'reason' => 'ads']);
-    }
-
     public function test_answers_and_pictures_travel_with_the_prototype(): void
     {
         $this->post('/api/prototypes', [
             'prompt' => 'Eine Website für eine Bäckerei in Graz',
             'kind' => 'site',
             'details' => "Wen soll sie erreichen? Familien im Bezirk",
+            'email' => 'b@example.com',
             'images' => [UploadedFile::fake()->image('Unser Brot.jpg', 800, 600), UploadedFile::fake()->image('logo.png', 200, 200)],
         ], ['Accept' => 'application/json'])->assertStatus(202);
 
@@ -83,6 +78,7 @@ class PrototypeQuestionsTest extends TestCase
     {
         $this->post('/api/prototypes', [
             'prompt' => 'Eine Website für eine Bäckerei in Graz',
+            'email' => 'b@example.com',
             'images' => [UploadedFile::fake()->create('menu.pdf', 100, 'application/pdf')],
         ], ['Accept' => 'application/json'])->assertStatus(422);
         $this->assertSame(0, Prototype::count());
