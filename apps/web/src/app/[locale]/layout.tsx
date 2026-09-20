@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { LOCALES, getDict, isLocale, type Locale } from "@/lib/i18n";
 import { AccountLink } from "@/components/AccountLink";
 import { LangSwitch } from "@/components/LangSwitch";
+import { MobileNav } from "@/components/MobileNav";
 import { PageViews } from "@/components/PageViews";
 import "../globals.css";
 
@@ -26,6 +27,13 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const dict = getDict(locale as Locale);
+  // The same four links in the bar and, on a phone, behind the menu button.
+  const navLinks = [
+    { href: `/${locale}#how`, label: dict.nav.how },
+    { href: `/${locale}#apps`, label: dict.nav.ideas },
+    { href: `/${locale}/create`, label: dict.nav.create },
+    { href: `/${locale}/prototype`, label: dict.proto.navLink },
+  ];
 
   return (
     <html lang={locale}>
@@ -39,10 +47,9 @@ export default async function LocaleLayout({
               <span className="logo-by">{dict.nav.by}</span>
             </Link>
             <nav className="nav-links">
-              <Link href={`/${locale}#how`}>{dict.nav.how}</Link>
-              <Link href={`/${locale}#apps`}>{dict.nav.ideas}</Link>
-              <Link href={`/${locale}/create`}>{dict.nav.create}</Link>
-              <Link href={`/${locale}/prototype`}>{dict.proto.navLink}</Link>
+              {navLinks.map((l) => (
+                <Link key={l.href} href={l.href}>{l.label}</Link>
+              ))}
             </nav>
             <div className="nav-right">
               <AccountLink locale={locale as Locale} labels={{ account: dict.nav.account, login: dict.nav.login }} />
@@ -50,6 +57,7 @@ export default async function LocaleLayout({
               <Link className="btn btn-primary btn-sm nav-cta" href={`/${locale}#apps`}>
                 {dict.nav.cta}
               </Link>
+              <MobileNav links={navLinks} />
             </div>
           </div>
         </header>
