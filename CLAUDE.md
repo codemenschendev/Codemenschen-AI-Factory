@@ -38,6 +38,9 @@
   landed the sign-in mail in spam, 2026-09-07) and not the host's sendmail (generic rDNS, no DKIM).
   The password is in the server `.env` only; a mail says "reply to this e-mail" and that mailbox is read.
 
+- **Paid renders run at `AI_IMAGE_QUALITY=low`** in production (owner's decision 2026-09-21, to save
+  money). The config default stays `medium`; the server env is what decides.
+
 ## Ad spend
 
 - Nothing spends without a person pressing start, and `SpendGuard` stands behind that (2026-09-19):

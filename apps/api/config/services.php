@@ -57,7 +57,8 @@ return [
     // `openclaw` user on the host. The OpenClaw gateway has no images/generations endpoint, so
     // the sidecar wraps `openclaw infer image generate` as HTTP. Same service the giftcard and
     // CookCam stacks already use — Codemenschen pays OpenAI for the renders, so `quality` is a
-    // real cost lever: keep it at medium unless someone asks for better.
+    // real cost lever. Production runs at `low` to keep the bill down (owner's decision
+    // 2026-09-21); raise it per render only when somebody asks for better.
     'ai_image' => [
         'base_url' => env('AI_IMAGE_SERVICE_BASE_URL', 'http://172.17.0.1:18790'),
         'token' => env('AI_IMAGE_SERVICE_TOKEN'),
