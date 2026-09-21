@@ -28,6 +28,34 @@ class PublisherRegistry
         return ['meta' => $this->meta->isConfigured(), 'google' => $this->google->isConfigured()];
     }
 
+    /** Platforms the owner switched off: nothing publishes there and the daily check skips them. */
+    public const PAUSED = 'ads.paused';
+
+    /** @return list<string> */
+    public static function pausedPlatforms(): array
+    {
+        $v = Setting::read(self::PAUSED, []);
+
+        return is_array($v) ? array_values(array_filter($v, 'is_string')) : [];
+    }
+
+    public static function paused(string $platform): bool
+    {
+        return in_array($platform, self::pausedPlatforms(), true);
+    }
+
+    /** @return list<string> the platforms paused afterwards */
+    public static function setPaused(string $platform, bool $paused, ?string $by = null): array
+    {
+        $now = array_values(array_diff(self::pausedPlatforms(), [$platform]));
+        if ($paused) {
+            $now[] = $platform;
+        }
+        Setting::write(self::PAUSED, $now, $by);
+
+        return $now;
+    }
+
     /** Where factory:ads-check leaves its last answer for a platform. */
     public static function verifiedKey(string $platform): string
     {
@@ -53,6 +81,7 @@ class PublisherRegistry
         $out = [];
         foreach ($this->all() as $p) {
             $out[$p->key()] = [
+                'paused' => self::paused($p->key()),
                 'configured' => $p->isConfigured(),
                 'missing' => $p->missing(),
                 'verified' => Setting::read(self::verifiedKey($p->key())),
