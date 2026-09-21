@@ -160,6 +160,27 @@ class SpendGuardTest extends TestCase
             ->getJson("/api/admin/prototypes/{$campaign->id}/validation")->assertForbidden();
     }
 
+    public function test_a_paused_platform_is_not_checked_and_nothing_starts_on_it(): void
+    {
+        $admin = Customer::create(['email' => 'chef@example.com', 'locale' => 'de', 'is_admin' => true]);
+        $c = $this->running(['platform_status' => 'paused']);
+
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/ads/platform', ['platform' => 'meta', 'paused' => true])
+            ->assertOk()->assertJson(['paused' => ['meta']]);
+
+        $this->assertStringContainsString('switched off', app(\App\Domain\Ads\SpendGuard::class)->blockers($c)[0]);
+        $this->actingAs($admin, 'sanctum')->postJson("/api/admin/marketing/{$c->id}/activate")->assertStatus(422);
+        // Paused platforms are not verified and do not make the daily check red; google is
+        // unconfigured here, so the run still fails on google alone.
+        $this->artisan('factory:ads-check')->expectsOutputToContain('paused')->assertFailed();
+        \App\Domain\Ads\PublisherRegistry::setPaused('google', true);
+        $this->artisan('factory:ads-check')->assertSuccessful();
+
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/ads/platform', ['platform' => 'meta', 'paused' => false])
+            ->assertOk()->assertJson(['paused' => []]);
+        $this->assertSame([], app(\App\Domain\Ads\SpendGuard::class)->blockers($c));
+    }
+
     public function test_the_ad_picture_is_the_largest_image(): void
     {
         $small = base64_encode(str_repeat('s', 25000));

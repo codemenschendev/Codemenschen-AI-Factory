@@ -115,6 +115,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/marketing/{campaign}/pause', [\App\Http\Controllers\ValidationController::class, 'pause']);
     Route::post('/ads/kill', [\App\Http\Controllers\ValidationController::class, 'kill']);
     Route::post('/ads/limits', [\App\Http\Controllers\ValidationController::class, 'limits']);
+    Route::post('/ads/platform', [\App\Http\Controllers\ValidationController::class, 'platform']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');

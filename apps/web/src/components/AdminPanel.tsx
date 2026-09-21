@@ -18,6 +18,8 @@ interface Overview {
   connections: Record<
     string,
     {
+      /** Switched off by the owner: nothing publishes there and the daily check skips it. */
+      paused?: boolean;
       configured: boolean;
       missing: string[];
       verified?: { ok: boolean; at: string; account: string | null; detail: string | null } | null;
@@ -288,6 +290,17 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     setBusy(false);
   }
 
+  async function setPlatformPaused(platform: string, paused: boolean) {
+    setBusy(true);
+    const r = await call<{ paused: string[] }>("/admin/ads/platform", { method: "POST", body: JSON.stringify({ platform, paused }) });
+    if (r) {
+      setOverview((o) =>
+        o ? { ...o, connections: Object.fromEntries(Object.entries(o.connections).map(([k, c]) => [k, { ...c, paused: r.paused.includes(k) }])) } : o,
+      );
+    }
+    setBusy(false);
+  }
+
   async function saveGuardLimits(max_campaign_eur: number, max_daily_total_eur: number) {
     setBusy(true);
     const r = await call<{ limits: Omit<Overview["ads_guard"], "running"> }>("/admin/ads/limits", { method: "POST", body: JSON.stringify({ max_campaign_eur, max_daily_total_eur }) });
@@ -414,20 +427,30 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 {Object.entries(overview.connections ?? {}).map(([platform, c]) => (
                   <div key={platform}>
                     <strong>{platform === "meta" ? "Meta (Facebook, Instagram)" : "Google Ads"}</strong>:{" "}
-                    {!c.configured
+                    {c.paused
+                      ? a.platformPaused
+                      : !c.configured
                       ? a.notConnected
                       : !c.verified
                         ? a.connectionUnchecked
                         : c.verified.ok
                           ? a.connected
                           : a.connectionFailed}
-                    {c.configured && c.verified && (
+                    <button
+                      className="btn btn-ghost btn-sm"
+                      style={{ marginLeft: 8 }}
+                      disabled={busy}
+                      onClick={() => void setPlatformPaused(platform, !c.paused)}
+                    >
+                      {c.paused ? a.platformResume : a.platformPause}
+                    </button>
+                    {!c.paused && c.configured && c.verified && (
                       <div className="muted" style={{ fontSize: 12 }}>
                         {a.connectionCheckedAt} {dt(c.verified.at, locale)}
                         {c.verified.ok ? (c.verified.account ? `: ${c.verified.account}` : "") : `: ${c.verified.detail ?? ""}`}
                       </div>
                     )}
-                    {c.missing.length > 0 && (
+                    {!c.paused && c.missing.length > 0 && (
                       <div className="muted" style={{ fontSize: 12 }}>
                         {a.missing}: {c.missing.join(", ")}
                       </div>

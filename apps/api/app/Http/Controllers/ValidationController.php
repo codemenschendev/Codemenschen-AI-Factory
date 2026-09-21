@@ -129,6 +129,15 @@ class ValidationController extends Controller
         return response()->json(['limits' => $guard->limits(), 'stopped' => $stopped]);
     }
 
+    /** Switches one ad platform off or on. Off: nothing publishes there, the daily check skips it. */
+    public function platform(Request $request): JsonResponse
+    {
+        $data = $request->validate(['platform' => 'required|in:meta,google', 'paused' => 'required|boolean']);
+        $paused = PublisherRegistry::setPaused($data['platform'], (bool) $data['paused'], $request->user()->email);
+
+        return response()->json(['paused' => $paused]);
+    }
+
     /** The two limits of the guard's second wall. */
     public function limits(Request $request, SpendGuard $guard): JsonResponse
     {

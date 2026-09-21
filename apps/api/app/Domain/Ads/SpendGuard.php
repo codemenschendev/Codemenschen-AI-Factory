@@ -67,6 +67,9 @@ class SpendGuard
     {
         $limits = $this->limits();
         $out = [];
+        if (PublisherRegistry::paused((string) $campaign->platform)) {
+            $out[] = ucfirst((string) $campaign->platform).' is switched off in the admin panel.';
+        }
         if ($limits['killed']) {
             $out[] = 'The kill switch is on: no ad may start until an operator turns it off.';
         }

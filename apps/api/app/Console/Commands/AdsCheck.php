@@ -26,6 +26,12 @@ class AdsCheck extends Command
         $allOk = true;
 
         foreach ($registry->all() as $p) {
+            // A platform the owner switched off is not a fault: it is not checked and not counted.
+            if (PublisherRegistry::paused($p->key())) {
+                $rows[] = [$p->key(), 'paused', '', 'switched off in the admin panel'];
+
+                continue;
+            }
             $missing = $p->missing();
             if ($missing !== []) {
                 Setting::write(PublisherRegistry::verifiedKey($p->key()), null, 'factory:ads-check');
