@@ -97,6 +97,35 @@ class AdsConnectionsTest extends TestCase
         $this->assertStringContainsString('DEVELOPER_TOKEN_NOT_APPROVED', $v['detail']);
     }
 
+    public function test_a_permission_refusal_says_which_accounts_the_sign_in_reaches(): void
+    {
+        $this->google();
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*/customers:listAccessibleCustomers' => Http::response(['resourceNames' => ['customers/5770532500']]),
+            'googleads.googleapis.com/*' => Http::response(['error' => ['message' => "User doesn't have permission to access customer."]], 403),
+        ]);
+
+        $v = app(GoogleAdsPublisher::class)->verify();
+
+        $this->assertFalse($v['ok']);
+        $this->assertStringContainsString('577-053-2500', $v['detail'], 'the operator is told where the access actually is');
+    }
+
+    public function test_a_permission_refusal_without_any_account_says_the_grant_is_missing(): void
+    {
+        $this->google();
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*/customers:listAccessibleCustomers' => Http::response([]),
+            'googleads.googleapis.com/*' => Http::response(['error' => ['message' => "User doesn't have permission to access customer."]], 403),
+        ]);
+
+        $v = app(GoogleAdsPublisher::class)->verify();
+
+        $this->assertStringContainsString('reaches no ad account at all', $v['detail']);
+    }
+
     public function test_meta_verify_needs_both_the_account_and_the_page(): void
     {
         $this->meta();
