@@ -24,22 +24,34 @@ To write a secret without it echoing or landing in shell history:
 ## Google Ads
 
 Everything runs under **codemenschenapp@gmail.com** (decision 2026-09-15): the Cloud project
-`cm-ops`, the OAuth client, the refresh token and the Manager account. The refresh token belongs to
-the Google account that signs in, so that account must own or have access to the Manager account.
+`cm-ops` and the ad account the factory publishes to.
 
-**Sign-in: a service account** (decision 2026-09-15), not a person's refresh token. The OAuth
-consent screen cannot be published without a privacy policy link, and in Testing a refresh token
-dies after 7 days. The service account `appwerk-ads@cm-ops-507408.iam.gserviceaccount.com` never
-expires:
+**Sign-in: a service account** (decision 2026-09-15), not a person's refresh token. A refresh
+token is a person's identity: it dies when that person changes their password or withdraws
+consent, and after 7 days while the consent screen is in Testing. Every repair then needs their
+machine and their second factor. The service account
+`appwerk-ads@cm-ops-507408.iam.gserviceaccount.com` never expires and needs no browser. Google
+Ads accepts it as a user directly; domain-wide delegation and a Workspace domain are not needed.
 
 1. Key file on the server, outside the checkout, `/var/lib/ai-factory/secrets/google-ads-sa.json`
    (chmod 600). Compose mounts the directory read-only into api and horizon and sets
    `GOOGLE_ADS_SERVICE_ACCOUNT_JSON`. The OAuth keys below are then ignored.
-2. Google Ads, ad account 577-053-2500, Admin, Access and security, Users, +: add the service
-   account e-mail with Standard access.
-3. `GOOGLE_ADS_CUSTOMER_ID=5770532500`, `GOOGLE_ADS_LOGIN_CUSTOMER_ID` empty.
+2. Google Ads, **on the ad account itself**, Admin, Access and security, Users, +: add the
+   service account e-mail with **Standard** access. It counts at once, there is no invitation
+   mail to accept.
+3. `GOOGLE_ADS_CUSTOMER_ID` = that account's ten digits, `GOOGLE_ADS_LOGIN_CUSTOMER_ID` empty.
 
-The ads are for Appwerk itself, not for customers' apps.
+**Grant it on the ad account, never on a Manager** (decision 2026-09-22). Standard access on a
+Manager reaches every account under it, so a mistake could spend a client's money. Granted on one
+ad account, that account is the most the factory can ever touch.
+
+**Appwerk advertises for itself first** (decision 2026-09-22). One ad account of our own, with
+its own payment method and its own Account Spending Limit in Google Ads. A customer who wants ads
+later adds the same service account to their own account, which also keeps their spend on their
+own invoice.
+
+`authenticationError.NOT_ADS_USER` means step 2 is missing on the account named in
+`GOOGLE_ADS_CUSTOMER_ID`.
 
 Two accounts are involved and they are not the same thing.
 
@@ -55,6 +67,8 @@ access onto the Cloud project that owns the OAuth client.
    revoked`); that killed the token from 2026-09-04. The adwords scope is not sensitive, so
    publishing needs no review; the consent page only warns that the app is unverified.
 3. Credentials, create **OAuth client ID**, type **Desktop app**. Note the client id and secret.
+   Steps 2 to 4 only matter if the service account is ever abandoned; with one in place the
+   OAuth keys are dead weight.
 4. Refresh token: on the Mac, with the client id and secret in the environment,
 
         GOOGLE_ADS_CLIENT_ID=... GOOGLE_ADS_CLIENT_SECRET=... python3 apps/api/tools/google-ads-oauth.py
@@ -73,7 +87,9 @@ access onto the Cloud project that owns the OAuth client.
    account reaches the ad account through the Manager.
 
 Accounts under codemenschenapp@gmail.com (2026-09-15): Manager 669-088-3495, ad account
-577-053-2500 "codemenschen gmbh".
+577-053-2500 "codemenschen gmbh". The server's `.env` pointed at 352-091-3982 through Manager
+963-722-5111 instead; which account Appwerk actually runs on is being settled with the owner
+(2026-09-22), and both `.env` and this line follow that answer.
 
 Env keys:
 
