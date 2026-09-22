@@ -82,7 +82,8 @@ class GoogleAdsPublisher implements Publisher
                 ]);
 
             if (! $res->successful()) {
-                return ['ok' => false, 'account' => null, 'detail' => self::errorDetail($res->status(), (string) $res->body())];
+                return ['ok' => false, 'account' => null,
+                    'detail' => self::errorDetail($res->status(), (string) $res->body()).$this->reach()];
             }
 
             $c = $res->json('results.0.customer') ?? [];
@@ -96,6 +97,38 @@ class GoogleAdsPublisher implements Publisher
         } catch (\Throwable $e) {
             return ['ok' => false, 'account' => null, 'detail' => mb_substr($e->getMessage(), 0, 300)];
         }
+    }
+
+    /**
+     * Which ad accounts this sign-in actually reaches, added to a refusal.
+     *
+     * A permission error alone does not say which of three things is wrong: nobody granted the
+     * access, somebody granted it but an admin has not approved it yet, or it was granted on a
+     * different account than GOOGLE_ADS_CUSTOMER_ID names. Google answers that in one read-only
+     * call, so the check says it instead of sending a person into the Google Ads UI to guess.
+     */
+    private function reach(): string
+    {
+        try {
+            $res = Http::withToken($this->accessToken())->timeout(20)
+                ->get($this->endpoint('customers:listAccessibleCustomers'));
+            if (! $res->successful()) {
+                return '';
+            }
+            $ids = array_map(fn ($name) => self::dashed(basename((string) $name)), (array) $res->json('resourceNames', []));
+        } catch (\Throwable) {
+            return '';
+        }
+
+        return $ids === []
+            ? ' | this sign-in reaches no ad account at all: the access was never granted, or it is still waiting for an admin to approve it.'
+            : ' | this sign-in reaches '.implode(', ', $ids).'. Put one of those in GOOGLE_ADS_CUSTOMER_ID.';
+    }
+
+    /** 1234567890 as 123-456-7890, the way Google Ads shows a customer id on screen. */
+    private static function dashed(string $id): string
+    {
+        return strlen($id) === 10 ? substr($id, 0, 3).'-'.substr($id, 3, 3).'-'.substr($id, 6) : $id;
     }
 
     public function publish(MarketingCampaign $campaign): array
