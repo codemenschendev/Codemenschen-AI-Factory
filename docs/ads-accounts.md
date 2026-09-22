@@ -86,10 +86,14 @@ access onto the Cloud project that owns the OAuth client.
    Manager account is optional: set its id as `login_customer_id` only when the signed-in Google
    account reaches the ad account through the Manager.
 
-Accounts under codemenschenapp@gmail.com (2026-09-15): Manager 669-088-3495, ad account
-577-053-2500 "codemenschen gmbh". The server's `.env` pointed at 352-091-3982 through Manager
-963-722-5111 instead; which account Appwerk actually runs on is being settled with the owner
-(2026-09-22), and both `.env` and this line follow that answer.
+Appwerk runs on ad account **352-091-3982 "Codemenschen GmbH"** (EUR), connected 2026-09-22.
+`GOOGLE_ADS_LOGIN_CUSTOMER_ID` is **empty**: the service account is a user on that account
+itself, so there is no manager to sign in through. It held 963-722-5111 and that alone answered
+USER_PERMISSION_DENIED long after the access was granted, because the header asked for a manager
+the service account cannot see.
+
+Two older accounts are noted here from 2026-09-15 and are not what the factory uses: Manager
+669-088-3495 and ad account 577-053-2500.
 
 Env keys:
 
