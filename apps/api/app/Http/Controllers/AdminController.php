@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Ads\PublisherRegistry;
+use App\Domain\Ads\SpendGuard;
+use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Analytics\AnalyticsReport;
 use App\Domain\Design\Layouts;
 use App\Domain\Payments\StripeKeys;
@@ -16,7 +18,6 @@ use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Models\ProjectAd;
 use App\Models\Prototype;
-use App\Domain\Ai\PrototypeWriter;
 use App\Models\Setting;
 use App\Services\ChangeChat;
 use App\Services\ChangeShots;
@@ -43,12 +44,14 @@ class AdminController extends Controller
     private const STALE_MINUTES = 15;
 
     /** The dashboard: counts to see the shape of the day, and a list of what is actually broken. */
-    public function overview(): JsonResponse
+    public function overview(Request $request): JsonResponse
     {
         $byStatus = Project::query()->whereNull('archived_at')->selectRaw('status, count(*) as n')->groupBy('status')
             ->pluck('n', 'status');
 
         return response()->json([
+            // Who is signed in, for the foot of the console's sidebar.
+            'me' => (string) $request->user()->email,
             'projects' => [
                 'total' => (int) $byStatus->sum(),
                 'by_status' => $byStatus,
@@ -71,7 +74,7 @@ class AdminController extends Controller
             // Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone.
             'ads_mode' => PrototypeWriter::adsMode(),
             // The spend guard: kill switch, limits, and what runs now.
-            'ads_guard' => app(\App\Domain\Ads\SpendGuard::class)->limits() + ['running' => \App\Models\MarketingCampaign::where('platform_status', 'active')->count()],
+            'ads_guard' => app(SpendGuard::class)->limits() + ['running' => MarketingCampaign::where('platform_status', 'active')->count()],
             'revenue' => [
                 // Real money only: sandbox orders (and those from before the switch, all test mode) stay out.
                 'paid_orders' => Order::where('status', 'paid')->where('livemode', true)->count(),
