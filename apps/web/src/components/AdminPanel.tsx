@@ -477,6 +477,12 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
         </div>
 
         <div className="ops-user">
+          {/* The storefront's switch lived in its header, which the console no longer has. The
+              token is kept per browser, not per language, so switching keeps you signed in. */}
+          <a className="ops-nav" href={`/${locale === "de" ? "en" : "de"}/admin`} title={a.otherLanguage} lang={locale === "de" ? "en" : "de"}>
+            <OpsIcon name="language" />
+            <span className="ops-nav-label">{a.otherLanguage}</span>
+          </a>
           <a className="ops-nav" href={`/${locale}`} title={a.backToSite}>
             <OpsIcon name="site" />
             <span className="ops-nav-label">{a.backToSite}</span>

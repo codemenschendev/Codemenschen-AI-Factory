@@ -52,6 +52,13 @@ const PATHS: Record<string, React.ReactNode> = {
     </>
   ),
   references: <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4.5L5 21V4a1 1 0 0 1 1-1Z" />,
+  language: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M3 12h18" />
+      <path d="M12 3a14 14 0 0 1 0 18a14 14 0 0 1 0-18Z" />
+    </>
+  ),
   panel: (
     <>
       <rect x="3" y="4" width="18" height="16" rx="2" />

@@ -505,6 +505,7 @@ export const de = {
     groupAds: "Werbung",
     groupInsight: "Auswertung",
     groupContent: "Inhalte",
+    otherLanguage: "English",
     toggleMenu: "Menü ein- oder ausblenden",
     closeMenu: "Menü schließen",
     signInTitle: "Anmelden zur Konsole",
