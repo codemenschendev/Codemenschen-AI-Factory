@@ -386,21 +386,33 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     if (tab === "ads") await loadAds();
   }
 
-  if (token === undefined) return <p className="est-empty">{a.loading}</p>;
+  const TABS: Tab[] = ["overview", "analytics", "projects", "ads", "keywords", "prototypes", "customers", "library", "references"];
+
+  // The console's own frame. Before a token is known there is nothing to navigate to, so the
+  // sidebar stays away rather than offering nine dead links.
+  const bare = (body: React.ReactNode) => (
+    <div className="ops-main" style={{ paddingTop: 40 }}>{body}</div>
+  );
+
+  if (token === undefined) return bare(<p className="est-empty">{a.loading}</p>);
   if (!token || denied)
-    return (
+    return bare(
       <p className="est-empty">
         {a.noAccess} <a href={`/${locale}/account`}>{a.goSignIn}</a>
-      </p>
+      </p>,
     );
 
   return (
-    <div>
-      <div className="tabs" role="tablist">
-        {(["overview", "analytics", "projects", "ads", "keywords", "prototypes", "customers", "library", "references"] as Tab[]).map((t) => (
+    <div className="ops">
+      <nav className="ops-side" role="tablist" aria-label={a.title}>
+        <div className="ops-brand">
+          <strong>Appwerk</strong>
+          <span>{a.consoleName}</span>
+        </div>
+        {TABS.map((t) => (
           <button
             key={t}
-            className="tab"
+            className="ops-nav"
             role="tab"
             aria-selected={tab === t}
             onClick={() => void selectTab(t)}
@@ -408,8 +420,13 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
             {a.tabs[t]}
           </button>
         ))}
-      </div>
+        <div className="ops-foot">
+          <a href={`/${locale}`}>{a.backToSite}</a>
+        </div>
+      </nav>
 
+      <main className="ops-main">
+      <h1>{a.tabs[tab]}</h1>
       {note && <p className="note">{note}</p>}
 
       {tab === "analytics" && token && <AnalyticsPanel token={token} locale={locale} d={d} />}
@@ -1149,6 +1166,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
           </table>
         </div>
       )}
+      </main>
     </div>
   );
 }

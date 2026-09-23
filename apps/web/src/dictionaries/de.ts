@@ -500,6 +500,8 @@ export const de = {
       appliedN: "{n} zu Google gesendet, {p} zurückgezogen.",
       appliedLater: "Gespeichert. Sie gehen mit zu Google, sobald die Kampagne veröffentlicht wird.",
     },
+    consoleName: "ops",
+    backToSite: "Zurück zur Website",
     tabs: {
       overview: "Überblick",
       analytics: "Analyse",

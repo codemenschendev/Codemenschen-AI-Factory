@@ -5,7 +5,7 @@ import { APP_ART, CONCEPT_ART } from "@/lib/art";
 import { SCREENS } from "@/lib/screens";
 import { eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 import { LandingMotion } from "@/components/LandingMotion";
-import "../home.css";
+import "../../home.css";
 
 /** Inline SVG / mockup markup from our own modules, never user input. */
 function Art({ html, className }: { html: string; className?: string }) {

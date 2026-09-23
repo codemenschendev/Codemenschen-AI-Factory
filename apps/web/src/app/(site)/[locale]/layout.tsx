@@ -6,7 +6,7 @@ import { AccountLink } from "@/components/AccountLink";
 import { LangSwitch } from "@/components/LangSwitch";
 import { MobileNav } from "@/components/MobileNav";
 import { PageViews } from "@/components/PageViews";
-import "../globals.css";
+import "../../globals.css";
 
 export const metadata: Metadata = {
   title: "Appwerk · AI App Factory",
