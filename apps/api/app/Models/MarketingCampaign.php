@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -28,10 +29,14 @@ class MarketingCampaign extends Model
 
     /**
      * What the platform may spend in a day. A test with a total and an end spreads the total over
-     * its days; a project's monthly budget is a thirtieth a day.
+     * its days; a project's monthly budget is a thirtieth a day. Appwerk's own campaigns carry
+     * the day amount an admin typed, which wins over both.
      */
     public function dailyEur(): float
     {
+        if (($day = $this->strategy['daily_eur'] ?? null) !== null && (float) $day > 0) {
+            return round((float) $day, 2);
+        }
         if ($this->spend_cap_eur !== null && $this->ends_at !== null) {
             $days = max(1, (int) ceil(now()->diffInHours($this->ends_at, false) / 24));
 
@@ -39,6 +44,12 @@ class MarketingCampaign extends Model
         }
 
         return round((int) $this->ad_budget_monthly_eur / 30, 2);
+    }
+
+    /** Appwerk advertising itself: no customer project and no prototype test behind it. */
+    public function scopeOwn(Builder $query): Builder
+    {
+        return $query->whereNull('project_id')->whereNull('prototype_id');
     }
 
     public function prototype(): BelongsTo

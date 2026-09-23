@@ -1,9 +1,10 @@
 <?php
 
 use App\Http\Controllers\AdAccountController;
-use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminClientAdsController;
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminKeywordController;
+use App\Http\Controllers\AdminOwnCampaignController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
@@ -137,6 +138,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // /marketing routes above, behind the spend guard.
     Route::get('/client-ads', [AdminClientAdsController::class, 'index']);
     Route::post('/ad-accounts/{adAccount}/refresh', [AdminClientAdsController::class, 'refreshAccount'])->middleware('throttle:30,10,adlink-admin');
+    // Appwerk advertising itself, on our own Google account (AdminOwnCampaignController).
+    Route::get('/own-campaigns', [AdminOwnCampaignController::class, 'index']);
+    Route::post('/own-campaigns', [AdminOwnCampaignController::class, 'store']);
+    Route::post('/own-campaigns/write', [AdminOwnCampaignController::class, 'write'])->middleware('throttle:20,60,adcopy');
+    Route::put('/own-campaigns/{campaign}', [AdminOwnCampaignController::class, 'update']);
+    Route::delete('/own-campaigns/{campaign}', [AdminOwnCampaignController::class, 'destroy']);
+    Route::post('/own-campaigns/{campaign}/publish', [AdminOwnCampaignController::class, 'publish']);
     Route::get('/keywords', [AdminKeywordController::class, 'campaigns']);
     Route::get('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'index']);
     Route::post('/marketing/{campaign}/keywords/suggest', [AdminKeywordController::class, 'suggest'])->middleware('throttle:20,60,keywords');

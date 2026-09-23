@@ -39,7 +39,7 @@ interface State {
  * The count of what is waiting for a decision sits next to every campaign, because a list nobody
  * looks at is the same as no keywords at all.
  */
-export function KeywordsPanel({ token, d }: { token: string; d: Dict }) {
+export function KeywordsPanel({ token, d, openId }: { token: string; d: Dict; openId?: number | null }) {
   const a = d.admin;
   const k = a.keywords;
   const [campaigns, setCampaigns] = useState<CampaignRow[]>([]);
@@ -59,6 +59,19 @@ export function KeywordsPanel({ token, d }: { token: string; d: Dict }) {
       alive = false;
     };
   }, [token]);
+
+  // Arriving from a campaign screen: that campaign's list is what the person came for.
+  useEffect(() => {
+    if (!openId) return;
+    let alive = true;
+    void (async () => {
+      const r = await api<State>(`/admin/marketing/${openId}/keywords`, { token }).catch(() => null);
+      if (alive && r) setOpen(r);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [openId, token]);
 
   const fail = (e: unknown) => {
     const body = e instanceof ApiError ? (e.body as { error?: string; message?: string } | null) : null;

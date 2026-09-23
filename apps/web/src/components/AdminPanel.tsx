@@ -11,6 +11,7 @@ import { KeywordsPanel } from "./KeywordsPanel";
 import { AdminSignIn } from "./AdminSignIn";
 import { OpsIcon } from "./OpsIcon";
 import { ClientAdsPanel } from "./ClientAdsPanel";
+import { OwnCampaignsPanel } from "./OwnCampaignsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -142,7 +143,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "clientAds" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
+type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -162,6 +163,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [deniedFor, setDeniedFor] = useState<string | null>(null);
   const denied = Boolean(token) && deniedFor === token;
   const [tab, setTab] = useState<Tab>("overview");
+  const [keywordsFor, setKeywordsFor] = useState<number | null>(null);
   // "auto" until somebody presses the menu button: the width decides until then.
   const [side, setSide] = useState<"auto" | "full" | "rail">("auto");
   const [drawer, setDrawer] = useState(false);
@@ -412,7 +414,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // screens were built. Adding a screen is one entry in one group.
   const GROUPS: { label: string; tabs: Tab[] }[] = [
     { label: a.groupWork, tabs: ["overview", "projects", "customers", "prototypes"] },
-    { label: a.groupAds, tabs: ["clientAds", "ads", "keywords"] },
+    { label: a.groupAds, tabs: ["ownAds", "clientAds", "keywords", "ads"] },
     { label: a.groupInsight, tabs: ["analytics"] },
     { label: a.groupContent, tabs: ["library", "references"] },
   ];
@@ -518,7 +520,18 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "analytics" && token && <AnalyticsPanel token={token} locale={locale} d={d} />}
       {tab === "library" && token && <LibraryPanel token={token} locale={locale} d={d} />}
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
-      {tab === "keywords" && token && <KeywordsPanel token={token} d={d} />}
+      {tab === "keywords" && token && <KeywordsPanel token={token} d={d} openId={keywordsFor} />}
+      {tab === "ownAds" && token && (
+        <OwnCampaignsPanel
+          token={token}
+          locale={locale}
+          d={d}
+          onKeywords={(id) => {
+            setKeywordsFor(id);
+            setTab("keywords");
+          }}
+        />
+      )}
       {tab === "clientAds" && token && <ClientAdsPanel token={token} locale={locale} d={d} />}
 
       {tab === "overview" && overview && (

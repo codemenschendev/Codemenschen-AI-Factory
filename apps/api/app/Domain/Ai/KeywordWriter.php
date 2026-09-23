@@ -3,7 +3,6 @@
 namespace App\Domain\Ai;
 
 use App\Models\MarketingCampaign;
-use Illuminate\Support\Facades\Http;
 use RuntimeException;
 
 /**
@@ -13,8 +12,7 @@ use RuntimeException;
  * an admin keeps or removes each one by hand. Nothing here reaches Google, and nothing here can
  * spend: applying is a separate button on a separate screen.
  *
- * The call goes through the same host sidecar as AdScriptWriter, so there is one door to the
- * gateway and one place where the model is pinned.
+ * The call goes through AgentChat, the one door to the gateway.
  */
 class KeywordWriter
 {
@@ -118,29 +116,6 @@ class KeywordWriter
 
     private function ask(string $system, string $brief): string
     {
-        $baseUrl = rtrim((string) config('services.ai_image.base_url'), '/');
-        $token = (string) config('services.ai_image.token');
-        if ($baseUrl === '' || $token === '') {
-            throw new RuntimeException('AI service is not configured (AI_IMAGE_SERVICE_TOKEN).');
-        }
-
-        $request = Http::baseUrl($baseUrl)->withToken($token)->acceptJson()->timeout(120)->connectTimeout(10);
-        if (($backend = ChatBackend::pin()) !== null) {
-            $request = $request->withHeaders(['x-openclaw-model' => $backend]);
-        }
-
-        $res = $request->post('/v1/chat/completions', [
-            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
-            'messages' => [
-                ['role' => 'system', 'content' => $system],
-                ['role' => 'user', 'content' => $brief],
-            ],
-        ]);
-
-        if (! $res->successful()) {
-            throw new RuntimeException('Proposing keywords failed ('.$res->status().').');
-        }
-
-        return (string) $res->json('choices.0.message.content');
+        return app(AgentChat::class)->ask($system, $brief, 'Proposing keywords failed');
     }
 }
