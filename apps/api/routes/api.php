@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdAccountController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminClientAdsController;
 use App\Http\Controllers\AdminKeywordController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
@@ -132,6 +133,10 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/ads/settings', [ValidationController::class, 'saveSettings']);
     // The words a search campaign is bought for. Only `apply` reaches Google; suggesting and
     // ticking happen here and cost nothing.
+    // Every client's ad accounts and campaigns in one place. Starting and pausing stay on the
+    // /marketing routes above, behind the spend guard.
+    Route::get('/client-ads', [AdminClientAdsController::class, 'index']);
+    Route::post('/ad-accounts/{adAccount}/refresh', [AdminClientAdsController::class, 'refreshAccount'])->middleware('throttle:30,10,adlink-admin');
     Route::get('/keywords', [AdminKeywordController::class, 'campaigns']);
     Route::get('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'index']);
     Route::post('/marketing/{campaign}/keywords/suggest', [AdminKeywordController::class, 'suggest'])->middleware('throttle:20,60,keywords');

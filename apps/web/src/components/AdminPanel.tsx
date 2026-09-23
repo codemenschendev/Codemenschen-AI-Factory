@@ -10,6 +10,7 @@ import { ReferencePanel } from "./ReferencePanel";
 import { KeywordsPanel } from "./KeywordsPanel";
 import { AdminSignIn } from "./AdminSignIn";
 import { OpsIcon } from "./OpsIcon";
+import { ClientAdsPanel } from "./ClientAdsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -141,7 +142,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
+type Tab = "overview" | "analytics" | "projects" | "clientAds" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -411,7 +412,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // screens were built. Adding a screen is one entry in one group.
   const GROUPS: { label: string; tabs: Tab[] }[] = [
     { label: a.groupWork, tabs: ["overview", "projects", "customers", "prototypes"] },
-    { label: a.groupAds, tabs: ["ads", "keywords"] },
+    { label: a.groupAds, tabs: ["clientAds", "ads", "keywords"] },
     { label: a.groupInsight, tabs: ["analytics"] },
     { label: a.groupContent, tabs: ["library", "references"] },
   ];
@@ -518,6 +519,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "library" && token && <LibraryPanel token={token} locale={locale} d={d} />}
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
       {tab === "keywords" && token && <KeywordsPanel token={token} d={d} />}
+      {tab === "clientAds" && token && <ClientAdsPanel token={token} locale={locale} d={d} />}
 
       {tab === "overview" && overview && (
         <>

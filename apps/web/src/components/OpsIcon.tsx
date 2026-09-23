@@ -38,6 +38,13 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M17 9a4 4 0 0 1 0 6" />
     </>
   ),
+  clientAds: (
+    <>
+      <rect x="3" y="7" width="18" height="13" rx="2" />
+      <path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+      <path d="M3 13h18" />
+    </>
+  ),
   keywords: (
     <>
       <circle cx="11" cy="11" r="6.5" />

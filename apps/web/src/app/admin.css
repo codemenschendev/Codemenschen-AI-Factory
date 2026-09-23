@@ -311,6 +311,48 @@ hr { border: 0; border-top: 1px solid var(--line-soft); margin: 20px 0; }
 .badge-live { color: var(--ok); border-color: #1f4a35; }
 .badge-wait { color: var(--accent); border-color: #4a3320; }
 .badge-dim { color: var(--ink-dim); border-color: var(--line-soft); background: transparent; }
+.badge-bad { color: var(--danger); border-color: #4a1f22; }
+
+/* ---------- Numbers at the top of a screen ---------- */
+
+.ops-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 14px 0 18px; }
+.ops-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  min-width: 0;
+}
+.ops-kpi strong { font-size: 22px; font-weight: 500; line-height: 1.2; }
+.ops-kpi-label { font-size: 11.5px; color: var(--ink-dim); }
+.ops-kpi-sub { font-size: 11.5px; color: var(--ink-dim); }
+/* Only a count of problems above zero earns colour; a quiet day stays quiet. */
+.ops-kpi[data-alert="yes"] { border-color: #4a1f22; }
+.ops-kpi[data-alert="yes"] strong { color: var(--danger); }
+
+/* ---------- A row of filters above a table ---------- */
+
+.ops-toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+.ops-seg { display: inline-flex; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.ops-seg button {
+  border: 0;
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  color: var(--ink-soft);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 6px 11px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ops-seg button:last-child { border-right: 0; }
+.ops-seg button:hover { color: var(--ink); }
+.ops-seg button[aria-pressed="true"] { background: var(--panel-2); color: var(--ink); box-shadow: inset 0 -2px 0 var(--accent); }
+
+.ops-row[aria-selected="true"] td { background: var(--panel-2); }
 
 .est-empty { color: var(--ink-soft); font-size: 13.5px; }
 .detail-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
