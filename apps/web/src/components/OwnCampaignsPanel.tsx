@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
+import { TrafficPanel } from "./TrafficPanel";
 
 interface Campaign {
   id: number;
@@ -448,9 +449,11 @@ export function OwnCampaignsPanel({
                 </div>
               </div>
               <p className="muted small" style={{ margin: 0 }}>{o.funnelHint}</p>
+              <h3 style={{ margin: "20px 0 10px" }}>{d.admin.traffic.title}</h3>
+              <TrafficPanel token={token} locale={locale} d={d} campaignId={current.id} />
             </div>
           )}
-          {current && (
+          {current && current.final_url && (
             <p className="small muted" style={{ marginTop: 10, overflowWrap: "anywhere" }}>
               {o.finalUrl} <span className="num">{current.final_url}</span>
             </p>

@@ -440,3 +440,15 @@ label { font-size: 12.5px; }
   /* A table scrolls inside its own edge instead of pushing the whole page sideways. */
   .ops-main table { display: block; overflow-x: auto; white-space: nowrap; }
 }
+
+/* Bar strips for a traffic series: one column per day or hour, no chart library. */
+.ops-bars { display: flex; align-items: flex-end; gap: 2px; height: 110px; padding: 8px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+.ops-bars-sm { height: 70px; }
+.ops-bar { flex: 1 1 0; min-width: 2px; height: 100%; position: relative; display: flex; align-items: flex-end; }
+.ops-bar:hover { background: var(--panel-2); }
+.ops-bar-a, .ops-bar-b { position: absolute; bottom: 0; border-radius: 2px 2px 0 0; min-height: 0; }
+.ops-bar-a { left: 0; right: 0; background: var(--accent); opacity: 0.85; }
+.ops-bar-b { left: 25%; right: 25%; background: var(--ok); }
+.ops-key { display: inline-block; width: 9px; height: 9px; border-radius: 2px; vertical-align: -1px; }
+.ops-key-a { background: var(--accent); }
+.ops-key-b { background: var(--ok); }
