@@ -258,6 +258,12 @@ class GoogleAdsPublisher implements Publisher
         return $headers;
     }
 
+    /** Google's geo target ids for the countries a campaign may name. */
+    public const COUNTRIES = ['AT' => 2040, 'DE' => 2276, 'CH' => 2756];
+
+    /** Google's language ids for the languages Appwerk writes in. */
+    private const LANGUAGES = ['de' => 1001, 'en' => 1000];
+
     public function publish(MarketingCampaign $campaign): array
     {
         $this->assertConfigured();
@@ -271,6 +277,8 @@ class GoogleAdsPublisher implements Publisher
         // A campaign budget on Google is per DAY. It used to be sent the monthly amount, which
         // would have let a campaign spend thirty months' budget in a month.
         $dailyMicros = (int) round($campaign->dailyEur() * 1_000_000);
+        $places = array_values(array_filter(array_map(
+            fn ($c) => self::COUNTRIES[$c] ?? null, (array) ($campaign->strategy['countries'] ?? []))));
 
         // Google Ads mutates are batched under googleAdsService:mutate. Each operation refers to
         // the previous one by a temporary negative resource id, so budget -> campaign -> ad group
@@ -285,11 +293,14 @@ class GoogleAdsPublisher implements Publisher
             ]]],
             ['campaignOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/campaigns/-2",
-                'name' => 'Appwerk #'.$campaign->id.'-'.now()->timestamp,
+                'name' => trim(($campaign->strategy['name'] ?? 'Appwerk').' #'.$campaign->id).'-'.now()->timestamp,
                 'status' => 'PAUSED',
                 'advertisingChannelType' => 'SEARCH',
                 'campaignBudget' => "customers/{$cid}/campaignBudgets/-1",
                 'networkSettings' => ['targetGoogleSearch' => true, 'targetSearchNetwork' => true],
+                // With countries set, only people who are there count, not people who once looked
+                // the place up. Google's default would show a Vienna ad to someone in Hanoi.
+                ...($places !== [] ? ['geoTargetTypeSetting' => ['positiveGeoTargetType' => 'PRESENCE']] : []),
                 'manualCpc' => new \stdClass,
                 // Required for every new campaign since the EU political advertising rules.
                 'containsEuPoliticalAdvertising' => 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
@@ -327,6 +338,21 @@ class GoogleAdsPublisher implements Publisher
                     'status' => 'ENABLED',
                     'keyword' => $keyword->criterion(),
                 ]]];
+        }
+
+        // Where and in which language the ad may show. They go last, so the keyword answers keep
+        // their places in the response. A campaign without countries runs everywhere, as before.
+        foreach ($places as $geo) {
+            $ops[] = ['campaignCriterionOperation' => ['create' => [
+                'campaign' => "customers/{$cid}/campaigns/-2",
+                'location' => ['geoTargetConstant' => "geoTargetConstants/{$geo}"],
+            ]]];
+        }
+        if ($places !== [] && isset(self::LANGUAGES[$campaign->strategy['language'] ?? ''])) {
+            $ops[] = ['campaignCriterionOperation' => ['create' => [
+                'campaign' => "customers/{$cid}/campaigns/-2",
+                'language' => ['languageConstant' => 'languageConstants/'.self::LANGUAGES[$campaign->strategy['language']]],
+            ]]];
         }
 
         $res = Http::withToken($token)

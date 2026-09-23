@@ -28,7 +28,7 @@ class AdminKeywordController extends Controller
             ->latest()->limit(100)->get()
             ->map(fn (MarketingCampaign $c) => [
                 'id' => $c->id,
-                'name' => $c->project?->name ?? ('Campaign #'.$c->id),
+                'name' => $c->project?->name ?? $c->strategy['name'] ?? ('Campaign #'.$c->id),
                 'status' => $c->platform_status,
                 'published' => $c->published_at !== null,
                 'on_google' => ($c->platform_ref['ad_group'] ?? null) !== null,
@@ -148,7 +148,7 @@ class AdminKeywordController extends Controller
         return [
             'campaign' => [
                 'id' => $campaign->id,
-                'name' => $campaign->project?->name ?? ('Campaign #'.$campaign->id),
+                'name' => $campaign->project?->name ?? $campaign->strategy['name'] ?? ('Campaign #'.$campaign->id),
                 'status' => $campaign->platform_status,
                 'on_google' => ($campaign->platform_ref['ad_group'] ?? null) !== null,
             ],
