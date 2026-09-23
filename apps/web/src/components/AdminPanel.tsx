@@ -4,13 +4,16 @@ import { AnalyticsPanel } from "@/components/AnalyticsPanel";
 import { useCallback, useEffect, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import { ChatShots, type ChatMessage } from "@/components/ChangeChat";
-import { useToken } from "@/lib/token";
+import { setToken, useToken } from "@/lib/token";
 import { LibraryPanel } from "./LibraryPanel";
 import { ReferencePanel } from "./ReferencePanel";
 import { KeywordsPanel } from "./KeywordsPanel";
+import { AdminSignIn } from "./AdminSignIn";
+import { OpsIcon } from "./OpsIcon";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
+  me?: string;
   projects: { total: number; by_status: Record<string, number> };
   runs: { queued: number; running: number; failed_24h: number };
   ads: Record<string, number>;
@@ -153,8 +156,14 @@ const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const a = d.admin;
   const token = useToken();
-  const [denied, setDenied] = useState(false);
+  // Which token was refused, not just that one was: signing in again as an admin must not carry
+  // the previous account's "no access" along with it.
+  const [deniedFor, setDeniedFor] = useState<string | null>(null);
+  const denied = Boolean(token) && deniedFor === token;
   const [tab, setTab] = useState<Tab>("overview");
+  // "auto" until somebody presses the menu button: the width decides until then.
+  const [side, setSide] = useState<"auto" | "full" | "rail">("auto");
+  const [drawer, setDrawer] = useState(false);
   const [overview, setOverview] = useState<Overview | null>(null);
   const [projects, setProjects] = useState<ProjectRow[]>([]);
   const [statuses, setStatuses] = useState<string[]>([]);
@@ -177,7 +186,9 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       try {
         return await api<T>(path, { ...init, token });
       } catch (e) {
-        if (e instanceof ApiError && e.status === 403) setDenied(true);
+        if (e instanceof ApiError && e.status === 403) setDeniedFor(token);
+        // Expired or revoked: the sign-in form, not a screen of red notes.
+        else if (e instanceof ApiError && e.status === 401) setToken(null);
         else if (e instanceof ApiError) {
           const body = e.body as { message?: string } | null;
           setNote(body?.message ?? `HTTP ${e.status}`);
@@ -206,6 +217,16 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       setStages(r.stages);
     }
   }, [call, q, statusFilter]);
+
+  // The console's own sign-in link lands here with the token in the hash. Store it and take it
+  // off the URL, so it is not left in the address bar or the browser history.
+  useEffect(() => {
+    const fromHash = new URLSearchParams(window.location.hash.slice(1)).get("token");
+    if (fromHash) {
+      setToken(fromHash);
+      history.replaceState(null, "", window.location.pathname);
+    }
+  }, []);
 
   useEffect(() => {
     if (!token) return;
@@ -386,7 +407,14 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     if (tab === "ads") await loadAds();
   }
 
-  const TABS: Tab[] = ["overview", "analytics", "projects", "ads", "keywords", "prototypes", "customers", "library", "references"];
+  // The menu in groups, the way an operator thinks about the work rather than in the order the
+  // screens were built. Adding a screen is one entry in one group.
+  const GROUPS: { label: string; tabs: Tab[] }[] = [
+    { label: a.groupWork, tabs: ["overview", "projects", "customers", "prototypes"] },
+    { label: a.groupAds, tabs: ["ads", "keywords"] },
+    { label: a.groupInsight, tabs: ["analytics"] },
+    { label: a.groupContent, tabs: ["library", "references"] },
+  ];
 
   // The console's own frame. Before a token is known there is nothing to navigate to, so the
   // sidebar stays away rather than offering nine dead links.
@@ -395,37 +423,88 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   );
 
   if (token === undefined) return bare(<p className="est-empty">{a.loading}</p>);
-  if (!token || denied)
-    return bare(
-      <p className="est-empty">
-        {a.noAccess} <a href={`/${locale}/account`}>{a.goSignIn}</a>
-      </p>,
-    );
+  if (!token || denied) return <AdminSignIn locale={locale} d={d} denied={denied} />;
+
+  /**
+   * One button, three jobs. On a phone the menu is a drawer and the button opens it. Anywhere
+   * else it switches between the full menu and the icon rail. Until it is pressed the width
+   * decides (full on a wide screen, rail on a narrow one), so nothing has to be remembered.
+   */
+  const toggleSide = () => {
+    if (window.matchMedia("(max-width: 639px)").matches) {
+      setDrawer((o) => !o);
+      return;
+    }
+    const nowFull = side === "full" || (side === "auto" && window.matchMedia("(min-width: 1024px)").matches);
+    setSide(nowFull ? "rail" : "full");
+  };
+
+  const me = overview?.me ?? "";
 
   return (
-    <div className="ops">
-      <nav className="ops-side" role="tablist" aria-label={a.title}>
+    <div className="ops" data-side={side} data-drawer={drawer ? "open" : "closed"}>
+      <nav className="ops-side" aria-label={a.title}>
         <div className="ops-brand">
-          <strong>Appwerk</strong>
-          <span>{a.consoleName}</span>
+          <span className="ops-logo" aria-hidden="true">A</span>
+          <span className="ops-brand-text">
+            <strong>Appwerk</strong>
+            <span>{a.consoleName}</span>
+          </span>
         </div>
-        {TABS.map((t) => (
-          <button
-            key={t}
-            className="ops-nav"
-            role="tab"
-            aria-selected={tab === t}
-            onClick={() => void selectTab(t)}
-          >
-            {a.tabs[t]}
-          </button>
-        ))}
-        <div className="ops-foot">
-          <a href={`/${locale}`}>{a.backToSite}</a>
+
+        <div className="ops-groups" role="tablist" aria-orientation="vertical">
+          {GROUPS.map((g) => (
+            <div className="ops-group" key={g.label}>
+              <p className="ops-group-label">{g.label}</p>
+              {g.tabs.map((t) => (
+                <button
+                  key={t}
+                  className="ops-nav"
+                  role="tab"
+                  aria-selected={tab === t}
+                  title={a.tabs[t]}
+                  onClick={() => {
+                    setDrawer(false);
+                    void selectTab(t);
+                  }}
+                >
+                  <OpsIcon name={t} />
+                  <span className="ops-nav-label">{a.tabs[t]}</span>
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+
+        <div className="ops-user">
+          <a className="ops-nav" href={`/${locale}`} title={a.backToSite}>
+            <OpsIcon name="site" />
+            <span className="ops-nav-label">{a.backToSite}</span>
+          </a>
+          <div className="ops-me">
+            <span className="ops-avatar" aria-hidden="true">{(me[0] ?? "?").toUpperCase()}</span>
+            <span className="ops-me-mail" title={me}>{me}</span>
+            <button className="ops-icon-btn" onClick={() => setToken(null)} title={a.signOut} aria-label={a.signOut}>
+              <OpsIcon name="signout" />
+            </button>
+          </div>
         </div>
       </nav>
 
+      {drawer && <button className="ops-scrim" aria-label={a.closeMenu} onClick={() => setDrawer(false)} />}
+
       <main className="ops-main">
+      <header className="ops-top">
+        <button className="ops-icon-btn" onClick={toggleSide} aria-label={a.toggleMenu} title={a.toggleMenu}>
+          <OpsIcon name="panel" />
+        </button>
+        <span className="ops-crumb-sep" aria-hidden="true" />
+        <nav className="ops-crumbs" aria-label="Breadcrumb">
+          <span className="muted">{a.consoleName}</span>
+          <span className="ops-crumb-arrow" aria-hidden="true">›</span>
+          <span>{a.tabs[tab]}</span>
+        </nav>
+      </header>
       <h1>{a.tabs[tab]}</h1>
       {note && <p className="note">{note}</p>}
 
@@ -620,9 +699,9 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                     ["google_customer_id", a.googleCustomer],
                   ] as const
                 ).map(([key, label]) => (
-                  <label key={key} className="small" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                    <span style={{ minWidth: 190 }}>{label}</span>
-                    <input name={key} defaultValue={adNumbers[key]?.value ?? ""} style={{ width: 190 }} />
+                  <label key={key} className="small" style={{ display: "flex", flexWrap: "wrap", gap: "4px 8px", alignItems: "center", marginBottom: 8 }}>
+                    <span style={{ flex: "1 0 190px" }}>{label}</span>
+                    <input name={key} defaultValue={adNumbers[key]?.value ?? ""} style={{ width: 190, maxWidth: "100%" }} />
                     <span className="muted">
                       {adNumbers[key]?.source === "panel"
                         ? a.fromPanel
