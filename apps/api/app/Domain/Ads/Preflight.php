@@ -63,6 +63,12 @@ class Preflight
                     $problems[] = 'Google: description is longer than 90 characters: "'.mb_substr($b, 0, 25).'…"';
                 }
             }
+            // A search campaign is only shown to somebody who typed a search we bought. Without a
+            // keyword it is published, started, and then sits there showing nothing, which looks
+            // exactly like a broken account. Better to refuse than to let it be started.
+            if ($campaign->keywords()->where('negative', false)->whereIn('status', ['approved', 'applied'])->count() === 0) {
+                $problems[] = 'Google: no approved keyword. A search campaign without keywords shows nothing.';
+            }
         }
 
         return $problems;

@@ -51,6 +51,12 @@ class MarketingCampaign extends Model
         return $this->hasMany(Creative::class);
     }
 
+    /** The words a search campaign is bought for. Without them it shows nothing. */
+    public function keywords(): HasMany
+    {
+        return $this->hasMany(CampaignKeyword::class, 'campaign_id');
+    }
+
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
