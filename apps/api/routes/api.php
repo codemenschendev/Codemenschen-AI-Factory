@@ -21,6 +21,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\QuoteRefineController;
+use App\Http\Controllers\SiteConfigController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\ValidationController;
 use Illuminate\Support\Facades\Route;
@@ -41,6 +42,7 @@ Route::post('/landing/{prototype}/signup', [LandingController::class, 'signup'])
 Route::get('/landing/signups/{signup}/confirm', [LandingController::class, 'confirm'])->name('landing.confirm')->middleware('throttle:30,1,landing-link');
 Route::get('/landing/signups/{signup}/remove', [LandingController::class, 'remove'])->name('landing.remove')->middleware('throttle:30,1,landing-link');
 
+Route::get('/site-config', [SiteConfigController::class, 'show']);
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
 Route::post('/quotes/refine', QuoteRefineController::class)->middleware('throttle:5,1,refine');

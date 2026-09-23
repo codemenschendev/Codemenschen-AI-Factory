@@ -1,5 +1,6 @@
 /** Factory API client — the browser talks to api.appwerk.codemenschen.at. */
 import { adClickHeader } from "./adConsent";
+import { tagEvent } from "./gtm";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -33,6 +34,8 @@ export async function api<T>(
   });
   const body = res.status === 204 ? null : await res.json().catch(() => null);
   if (!res.ok) throw new ApiError(res.status, body);
+  // A request for a quote or a prototype is a lead for the tags in Tag Manager (after consent only).
+  if (init?.method === "POST" && LEAD_PATHS.includes(path)) tagEvent("generate_lead", { lead_type: path.slice(1, -1) });
   return body as T;
 }
 

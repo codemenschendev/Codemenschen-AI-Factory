@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import { TagOnMount } from "@/components/TagOnMount";
 
 export default async function SuccessPage({
   params,
@@ -14,6 +15,7 @@ export default async function SuccessPage({
 
   return (
     <main className="wrap-narrow" style={{ padding: "56px 24px 72px" }}>
+      <TagOnMount event="purchase" />
       <h1>{d.success.title}</h1>
       <p className="muted" style={{ fontSize: 17 }}>
         {d.success.p}

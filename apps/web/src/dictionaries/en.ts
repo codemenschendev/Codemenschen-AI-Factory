@@ -472,6 +472,7 @@ export const en = {
       setupTitle: "Where results go",
       setupHint: "The numbers from Events Manager (Meta) and from Google Ads under Goals, Conversions. Leave empty to fall back to the server value.",
       fields: {
+        gtm_id: "Google Tag Manager container (GTM-...)",
         meta_pixel_id: "Meta dataset id (pixel)",
         google_conversion_lead: "Google conversion action for requests",
         google_conversion_purchase: "Google conversion action for purchases",
@@ -1283,7 +1284,7 @@ export const en = {
           h: "4. What is stored in your browser",
           p: [
             "A cookie remembers your language. After you sign in, your sign-in key is kept in the browser's local storage, and so is the list of your free prototypes. All of this is needed for the site to work and is not used for analysis (§ 165(3) TKG 2021). You can delete it in your browser at any time.",
-            "If you came from an ad, the browser remembers your choice about ad measurement, and only if you agreed also the click id (see section 10).",
+            "The browser remembers your choice about statistics and ad measurement. Only if you agree are cookies from Google Analytics, Google Ads or Meta added, and for ad measurement the click id of an ad (see section 10).",
           ],
         },
         {
@@ -1321,12 +1322,13 @@ export const en = {
           ],
         },
         {
-          h: "10. Advertising for Appwerk and ad measurement",
+          h: "10. Google Analytics, advertising and ad measurement",
           p: [
-            "We advertise Appwerk on Google and Meta. Our website has no pixels or tracking codes from these providers.",
-            "If you arrive from an ad, the link carries a click id (gclid for Google, fbclid for Meta). We then ask whether we may tell the platform what happens next. Only if you agree do we keep the click id for up to 90 days in your browser and with your quote. If you then ask for a quote or a prototype or pay for an order, we report it to Google or Meta: with the click id, the time, IP address and browser details, for an order the amount, and if we have it your e-mail address as a checksum (SHA-256), never in plain text. This teaches the platform which ads work.",
-            "The legal basis is your consent (Art. 6(1)(a) GDPR, § 165(3) TKG 2021). If you decline, nothing is reported and nothing is kept except your choice. You can withdraw your consent at any time under \"Ad measurement\" at the bottom of every page. We delete the matching data on our side once the report is sent, at the latest after 90 days.",
-            "The recipients are Google Ireland Ltd. and Meta Platforms Ireland Ltd. Both process the report under their own privacy policies, also in the USA, on the basis of the EU-US Data Privacy Framework.",
+            "We advertise Appwerk on Google and Meta. On your first visit we ask whether you allow statistics and ad measurement. Both are off until you agree, and without your consent the site loads nothing from Google or Meta.",
+            "Statistics: with your consent we load Google Tag Manager and through it Google Analytics (Google Ireland Ltd.). Google Analytics sets cookies (_ga) and records which pages you open, where you came from, device, browser and approximate location. The IP address is shortened. Data is deleted after 14 months.",
+            "Ad measurement: with your consent, tags from Google Ads and Meta (Meta Platforms Ireland Ltd.) may set cookies and learn whether your visit from an ad led to a request or an order. If you came from an ad, the link carries a click id (gclid or fbclid). We keep it for up to 90 days in your browser and with your quote. If you ask for a quote or a prototype or pay for an order, we also report this directly to Google or Meta: with the click id, the time, IP address and browser details, for an order the amount, and if we have it your e-mail address as a checksum (SHA-256), never in plain text. This teaches the platform which ads work and lets it reach similar people.",
+            "The legal basis is your consent (Art. 6(1)(a) GDPR, § 165(3) TKG 2021). You can change or withdraw it at any time under \"Cookies and measurement\" at the bottom of every page. We delete the matching data on our side once the report is sent, at the latest after 90 days.",
+            "Google and Meta also process this data in the USA, on the basis of the EU-US Data Privacy Framework, and under their own privacy policies.",
           ],
         },
         {
@@ -1368,14 +1370,17 @@ export const en = {
     },
   },
   adConsent: {
-    title: "Measure our ads?",
-    text: "You came here from an ad. May we tell Google or Meta when you then ask for a quote or a prototype, or place an order? That teaches the platform which ads work. Without your yes, nothing is reported.",
+    title: "May Appwerk measure?",
+    text: "We would like to see how visitors use our site and which ads work. Both are off until you allow them.",
     more: "More in the privacy policy.",
-    allow: "Allow",
-    decline: "Decline",
-    nowYes: "Currently allowed.",
-    nowNo: "Currently declined.",
-    link: "Ad measurement",
+    statsTitle: "Statistics",
+    statsText: "Google Analytics counts visits and paths through the site. Sets cookies.",
+    adsTitle: "Ad measurement",
+    adsText: "Google Ads and Meta learn whether a visit from their ad led to a request or an order. Sets cookies.",
+    allowAll: "Allow all",
+    saveChoice: "Save choice",
+    declineAll: "Decline all",
+    link: "Cookies and measurement",
   },
   footer: {
     legal: "Terms, withdrawal information and privacy are online as a plain-language draft, with counsel review under way.",

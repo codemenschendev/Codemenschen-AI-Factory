@@ -129,6 +129,12 @@ return [
         ],
     ],
 
+    // Google Tag Manager on the storefront, loaded only after a visitor consents (2026-09-23).
+    // GA4 and any other tag are configured inside the container, not here.
+    'analytics' => [
+        'gtm_id' => env('GTM_ID'),
+    ],
+
     'media' => [
         // Marketing clips rendered by ops/make-video.py. Served only to signed-in customers.
         'videos_path' => env('MEDIA_VIDEOS_PATH', '/media/videos'),   // container path; host side is /var/appwerk-media/videos
