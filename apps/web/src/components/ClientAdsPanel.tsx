@@ -1,8 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { api, ApiError } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
+import { TrafficPanel } from "./TrafficPanel";
 
 interface Account {
   id: number;
@@ -81,6 +82,7 @@ export function ClientAdsPanel({ token, locale, d }: { token: string; locale: Lo
   const [filter, setFilter] = useState<Filter>("all");
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  const [trafficFor, setTrafficFor] = useState<number | null>(null);
 
   const money = useMemo(
     () => new Intl.NumberFormat(locale === "de" ? "de-AT" : "en-GB", { style: "currency", currency: "EUR" }),
@@ -342,7 +344,8 @@ export function ClientAdsPanel({ token, locale, d }: { token: string; locale: Lo
               </thead>
               <tbody>
                 {selected.campaigns.map((x) => (
-                  <tr key={x.id}>
+                  <Fragment key={x.id}>
+                  <tr>
                     <td>
                       <span className="muted num">#{x.id}</span> {x.project.name}
                       <div className="muted small">{x.platform === "google" ? "Google Ads" : "Meta"}</div>
@@ -379,8 +382,21 @@ export function ClientAdsPanel({ token, locale, d }: { token: string; locale: Lo
                           {c.start}
                         </button>
                       )}
+                      {x.platform === "google" && (x.status === "active" || x.status === "paused") && (
+                        <button className="btn btn-ghost btn-sm" style={{ marginLeft: 6 }} onClick={() => setTrafficFor(trafficFor === x.id ? null : x.id)}>
+                          {trafficFor === x.id ? d.admin.traffic.hide : d.admin.traffic.show}
+                        </button>
+                      )}
                     </td>
                   </tr>
+                  {trafficFor === x.id && (
+                    <tr>
+                      <td colSpan={8} style={{ whiteSpace: "normal" }}>
+                        <TrafficPanel token={token} locale={locale} d={d} campaignId={x.id} />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 ))}
               </tbody>
             </table>

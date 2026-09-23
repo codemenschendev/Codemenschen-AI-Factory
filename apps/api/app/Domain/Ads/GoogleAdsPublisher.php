@@ -510,6 +510,41 @@ class GoogleAdsPublisher implements Publisher
             'impressions' => $all['impressions'], 'clicks' => $all['clicks']];
     }
 
+    /**
+     * Runs one read-only GAQL query against the account a published campaign lives on and returns
+     * its rows. The traffic screen is built from these, so nobody needs a Google login to see them.
+     * Pages are followed up to a hard stop, a report is never worth an endless loop.
+     *
+     * @return list<array<string,mixed>>
+     */
+    public function report(MarketingCampaign $campaign, string $gaql): array
+    {
+        $this->assertConfigured();
+        $resource = $campaign->platform_ref['campaign_id'] ?? null;
+        if (! $resource) {
+            throw new RuntimeException('Google: campaign has not been published.');
+        }
+        $cid = self::customerOf($resource) ?: $this->cfg('customer_id');
+        $login = AdTarget::for($campaign, 'google')['login'];
+        $query = str_replace('{campaign}', $resource, $gaql);
+
+        $rows = [];
+        $page = null;
+        foreach (range(1, 5) as $round) {
+            $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid, $login))->timeout(30)
+                ->post($this->endpoint("customers/{$cid}/googleAds:search"), array_filter(['query' => $query, 'pageToken' => $page]));
+            if (! $res->successful()) {
+                throw new RuntimeException('Google Ads API: '.self::errorDetail($res->status(), (string) $res->body()));
+            }
+            array_push($rows, ...($res->json('results') ?? []));
+            if (! ($page = $res->json('nextPageToken'))) {
+                break;
+            }
+        }
+
+        return $rows;
+    }
+
     private function setStatus(MarketingCampaign $campaign, string $status): void
     {
         $this->assertConfigured();

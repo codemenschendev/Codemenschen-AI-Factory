@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminClientAdsController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminKeywordController;
 use App\Http\Controllers\AdminOwnCampaignController;
+use App\Http\Controllers\AdminTrafficController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
@@ -145,6 +146,7 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::put('/own-campaigns/{campaign}', [AdminOwnCampaignController::class, 'update']);
     Route::delete('/own-campaigns/{campaign}', [AdminOwnCampaignController::class, 'destroy']);
     Route::post('/own-campaigns/{campaign}/publish', [AdminOwnCampaignController::class, 'publish']);
+    Route::get('/marketing/{campaign}/traffic', [AdminTrafficController::class, 'show'])->middleware('throttle:60,10,traffic');
     Route::get('/keywords', [AdminKeywordController::class, 'campaigns']);
     Route::get('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'index']);
     Route::post('/marketing/{campaign}/keywords/suggest', [AdminKeywordController::class, 'suggest'])->middleware('throttle:20,60,keywords');
