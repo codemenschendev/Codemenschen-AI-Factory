@@ -152,6 +152,9 @@ export function KeywordsPanel({ token, d }: { token: string; d: Dict }) {
     setBusy(null);
   }
 
+  const tone = (w: Keyword) =>
+    w.status === "applied" ? "badge-live" : w.status === "proposed" ? "badge-wait" : "badge-dim";
+
   const label = (w: Keyword) =>
     w.status === "applied" ? k.stLive : w.status === "approved" ? k.stApproved : w.status === "paused" ? k.stPaused : k.stProposed;
 
@@ -165,7 +168,7 @@ export function KeywordsPanel({ token, d }: { token: string; d: Dict }) {
             <tr key={w.id}>
               <td style={{ width: "45%" }}>
                 {w.text}
-                {w.source === "ai" && <span className="badge badge-type" style={{ marginLeft: 6 }}>{k.byAi}</span>}
+                {w.source === "ai" && <span className="badge badge-dim" style={{ marginLeft: 6 }}>{k.byAi}</span>}
               </td>
               <td>
                 {!negative && (
@@ -179,7 +182,7 @@ export function KeywordsPanel({ token, d }: { token: string; d: Dict }) {
                   </select>
                 )}
               </td>
-              <td><span className="badge badge-type">{label(w)}</span></td>
+              <td><span className={`badge ${tone(w)}`}>{label(w)}</span></td>
               <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                 {w.status === "proposed" && (
                   <button className="btn btn-primary btn-sm" onClick={() => void set(w.id, { status: "approved" })} disabled={busy === `k${w.id}`}>
@@ -206,8 +209,7 @@ export function KeywordsPanel({ token, d }: { token: string; d: Dict }) {
 
   return (
     <div>
-      <h2 style={{ marginBottom: 4 }}>{k.title}</h2>
-      <p className="muted small" style={{ maxWidth: 680 }}>{k.intro}</p>
+      <p className="muted small" style={{ maxWidth: 680, marginTop: 0 }}>{k.intro}</p>
       {note && <p className="note" style={{ marginTop: 10 }}>{note}</p>}
 
       <table className="table" style={{ marginTop: 16 }}>

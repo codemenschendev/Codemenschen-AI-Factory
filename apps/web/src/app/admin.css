@@ -1,0 +1,272 @@
+/* The operator console (2026-09-23).
+ *
+ * Its own stylesheet on purpose. The storefront is a place that sells: serif headlines, wide
+ * measure, generous air. This is a place that is worked in for an hour at a time, on data that
+ * has to be scanned rather than read, and it should never be mistaken for the customer's site.
+ * So: dark, dense, one sans face, numbers in tabular monospace.
+ *
+ * It redefines the same class names the panels already use (card, table, btn, badge, note), so a
+ * component written for the storefront lands here looking like the console without being touched.
+ * Only the fonts are shared with the storefront, and only because they are already self-hosted.
+ */
+
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Inter-400-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Inter-400-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Inter-500-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Inter-500-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Inter-600-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Inter-600-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+:root {
+  --bg: #0e0e10;
+  --panel: #161619;
+  --panel-2: #1c1c20;
+  --line: #2a2a30;
+  --line-soft: #202026;
+  --ink: #e8e8ea;
+  --ink-soft: #9a9aa4;
+  --ink-dim: #6e6e78;
+  --accent: #f0883e;        /* one warm colour, for numbers and the live thing */
+  --accent-soft: #c8702f;
+  --ok: #4ec08a;
+  --warn-bg: #2a2012;
+  --warn-ink: #e0b062;
+  --danger: #e5484d;
+  --radius: 6px;
+  --font-body: "Inter", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* The storefront's token names, pointed at console colours. Panels written for the storefront
+     use them in inline styles, and an undefined variable there is an input with no edge. */
+  --border: var(--line);
+  --surface: var(--panel-2);
+  --paper: var(--bg);
+  --valid: var(--ok);
+
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 14px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 { font-family: var(--font-body); font-weight: 600; line-height: 1.25; margin: 0 0 10px; letter-spacing: -0.01em; overflow-wrap: break-word; }
+h1 { font-size: 20px; }
+h2 { font-size: 17px; }
+h3 { font-size: 15px; }
+h4 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--ink-soft); }
+p { margin: 8px 0; max-width: 78ch; }
+a { color: var(--accent); }
+hr { border: 0; border-top: 1px solid var(--line-soft); margin: 20px 0; }
+
+.muted { color: var(--ink-soft); }
+.small { font-size: 12.5px; }
+.num { font-family: var(--font-mono); font-variant-numeric: tabular-nums; font-size: 13px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* ---------- The shell ---------- */
+
+.ops { display: grid; grid-template-columns: 210px minmax(0, 1fr); min-height: 100vh; }
+
+.ops-side {
+  border-right: 1px solid var(--line);
+  background: var(--panel);
+  padding: 18px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.ops-brand { padding: 0 10px 18px; }
+.ops-brand strong { display: block; font-size: 13px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+.ops-brand span { display: block; font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-dim); }
+
+.ops-nav {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: 0;
+  border-radius: var(--radius);
+  padding: 7px 10px;
+  font: inherit;
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.ops-nav:hover { background: var(--panel-2); color: var(--ink); }
+.ops-nav[aria-selected="true"] { background: var(--panel-2); color: var(--ink); box-shadow: inset 2px 0 0 var(--accent); }
+
+.ops-foot { margin-top: auto; padding: 14px 10px 0; border-top: 1px solid var(--line-soft); font-size: 11.5px; color: var(--ink-dim); }
+.ops-foot a { color: var(--ink-dim); text-decoration: none; }
+.ops-foot a:hover { color: var(--ink-soft); }
+
+.ops-main { padding: 22px 26px 70px; min-width: 0; }
+
+/* The panels were written for the storefront's tab strip. In the console the sidebar is the
+   navigation, so the strip itself is gone and the class is kept only so nothing breaks. */
+.tabs { display: none; }
+.tab { display: none; }
+
+/* ---------- Surfaces ---------- */
+
+/* start, not stretch: a tile holding one number should not grow to the height of its neighbour. */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; align-items: start; }
+
+.card {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+.card h3 { margin: 0; }
+.card .cat { font-size: 10.5px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); }
+
+.note {
+  background: var(--warn-bg);
+  color: var(--warn-ink);
+  border: 1px solid #3a2c16;
+  border-radius: var(--radius);
+  padding: 9px 12px;
+  font-size: 13px;
+  max-width: 78ch;
+}
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  border-radius: 3px;
+  padding: 2px 6px;
+  border: 1px solid var(--line);
+  color: var(--ink-soft);
+  background: var(--panel-2);
+  width: fit-content;
+  white-space: nowrap;
+}
+.badge-type { color: var(--accent); border-color: #4a3320; }
+/* Colour means something on a status, and only three things: running for real, waiting for a
+   person, and everything else. Two oranges next to each other would say nothing. */
+.badge-live { color: var(--ok); border-color: #1f4a35; }
+.badge-wait { color: var(--accent); border-color: #4a3320; }
+.badge-dim { color: var(--ink-dim); border-color: var(--line-soft); background: transparent; }
+
+.est-empty { color: var(--ink-soft); font-size: 13.5px; }
+.detail-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+
+/* ---------- Tables: the main thing on every screen ---------- */
+
+.tbl-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); }
+
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th {
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ink-dim);
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+}
+td { padding: 7px 12px; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tbody tr:hover td { background: var(--panel-2); }
+td:first-child { font-weight: 500; }
+/* A table on its own, outside a wrapper, still needs an edge to sit on. */
+.table { border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel); overflow: hidden; }
+
+/* ---------- Controls ---------- */
+
+.btn {
+  display: inline-block;
+  font-family: var(--font-body);
+  font-weight: 500;
+  font-size: 13px;
+  border-radius: var(--radius);
+  padding: 7px 13px;
+  text-decoration: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+.btn-primary { background: var(--accent); color: #17110a; border-color: var(--accent); font-weight: 600; }
+.btn-primary:hover { background: var(--accent-soft); border-color: var(--accent-soft); }
+.btn-ghost { background: var(--panel-2); color: var(--ink); border-color: var(--line); }
+.btn-ghost:hover { border-color: var(--ink-dim); }
+.btn-sm { padding: 4px 9px; font-size: 12px; }
+.btn:disabled, .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+
+input, textarea, select {
+  font: inherit;
+  font-size: 13px;
+  color: var(--ink);
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 9px;
+}
+input[type="checkbox"], input[type="radio"] { accent-color: var(--accent); }
+input:focus, textarea:focus, select:focus, .choice:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+label { font-size: 12.5px; }
+
+.choice { display: inline-flex; align-items: center; gap: 7px; background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px; font-size: 12.5px; cursor: pointer; }
+.choice:has(input:checked) { border-color: var(--accent); }
+
+.lang-toggle { font-size: 12px; border: 1px solid var(--line); border-radius: var(--radius); padding: 3px 9px; color: var(--ink-soft); text-decoration: none; background: var(--panel-2); }
+.lang-toggle:hover { color: var(--ink); }
+
+/* ---------- The change chat, reused here as it is ---------- */
+
+.chat-card, .chat-thread { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); }
+.chat-msg { border-bottom: 1px solid var(--line-soft); padding: 10px 12px; }
+.chat-bubble { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 9px 11px; }
+.chat-customer .chat-bubble { border-color: #3a2c16; }
+.chat-who { font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--ink-dim); }
+.chat-thinking { color: var(--ink-dim); font-size: 12.5px; }
+.chat-shot { border: 1px solid var(--line); border-radius: var(--radius); }
+.chat-shots, .chat-options, .chat-actions, .chat-compose { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+.chat-option { background: var(--panel-2); border: 1px solid var(--line); border-radius: var(--radius); padding: 5px 10px; font-size: 12.5px; cursor: pointer; color: var(--ink); }
+.chat-option:hover { border-color: var(--ink-dim); }
+
+/* ---------- Narrow screens ---------- */
+
+@media (max-width: 860px) {
+  .ops { grid-template-columns: 1fr; }
+  .ops-side {
+    position: static;
+    height: auto;
+    flex-direction: row;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+    padding: 10px;
+    align-items: center;
+  }
+  .ops-brand { display: none; }
+  .ops-foot { display: none; }
+  .ops-nav { width: auto; white-space: nowrap; }
+  .ops-nav[aria-selected="true"] { box-shadow: inset 0 -2px 0 var(--accent); }
+  .ops-main { padding: 16px 14px 60px; }
+  /* A table scrolls inside its own edge instead of pushing the whole page sideways. */
+  .ops-main table { display: block; overflow-x: auto; white-space: nowrap; }
+}

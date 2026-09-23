@@ -500,6 +500,8 @@ export const en = {
       appliedN: "{n} sent to Google, {p} withdrawn.",
       appliedLater: "Saved. They travel to Google when the campaign is published.",
     },
+    consoleName: "ops",
+    backToSite: "Back to the site",
     tabs: {
       overview: "Overview",
       analytics: "Analytics",

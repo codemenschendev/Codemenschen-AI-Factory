@@ -13,6 +13,16 @@
       "port": 3000
     },
     {
+      "name": "api",
+      "runtimeExecutable": "php",
+      "runtimeArgs": [
+        "apps/api/artisan",
+        "serve",
+        "--port=8000"
+      ],
+      "port": 8000
+    },
+    {
       "name": "appwerk-prototype",
       "runtimeExecutable": "python3",
       "runtimeArgs": [
