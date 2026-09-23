@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Domain\Ads\Preflight;
 use App\Domain\Ads\PublisherRegistry;
 use App\Jobs\PublishCampaign;
+use App\Models\AnalyticsEvent;
 use App\Models\CampaignKeyword;
 use App\Models\Customer;
 use App\Models\MarketingCampaign;
@@ -129,7 +130,7 @@ class AdminOwnCampaignsTest extends TestCase
 
         $this->assertSame('paused', MarketingCampaign::find($id)->platform_status);
         $this->assertSame('applied', CampaignKeyword::first()->status);
-        Http::assertSent(function ($r) {
+        Http::assertSent(function ($r) use ($id) {
             if (! str_contains($r->url(), 'googleAds:mutate')) {
                 return false;
             }
@@ -139,7 +140,9 @@ class AdminOwnCampaignsTest extends TestCase
                 && $ops[1]['campaignOperation']['create']['geoTargetTypeSetting']['positiveGeoTargetType'] === 'PRESENCE'
                 && $ops[5]['campaignCriterionOperation']['create']['location']['geoTargetConstant'] === 'geoTargetConstants/2040'
                 && $ops[6]['campaignCriterionOperation']['create']['location']['geoTargetConstant'] === 'geoTargetConstants/2276'
-                && $ops[7]['campaignCriterionOperation']['create']['language']['languageConstant'] === 'languageConstants/1001';
+                && $ops[7]['campaignCriterionOperation']['create']['language']['languageConstant'] === 'languageConstants/1001'
+                && $ops[3]['adGroupAdOperation']['create']['ad']['finalUrls'][0]
+                    === "https://appwerk.codemenschen.at?utm_source=google&utm_medium=cpc&utm_campaign=appwerk-$id";
         });
     }
 
@@ -156,6 +159,45 @@ class AdminOwnCampaignsTest extends TestCase
             ->assertOk()
             ->assertJsonPath('headlines', ['Website in Minuten', 'Entwurf gratis', 'Festpreis'])
             ->assertJsonCount(2, 'descriptions');
+    }
+
+    public function test_a_landing_page_that_already_has_utm_is_left_alone(): void
+    {
+        $c = MarketingCampaign::create(['platform' => 'google', 'strategy' => ['landing_url' => 'https://appwerk.test/x?utm_source=newsletter#top']]);
+        $this->assertSame('https://appwerk.test/x?utm_source=newsletter#top', $c->finalUrl());
+
+        $c->update(['strategy' => ['landing_url' => 'https://appwerk.test/x?a=1#top']]);
+        $this->assertSame("https://appwerk.test/x?a=1&utm_source=google&utm_medium=cpc&utm_campaign=appwerk-{$c->id}#top", $c->finalUrl());
+    }
+
+    public function test_the_funnel_follows_a_click_to_a_paid_order_on_the_same_day(): void
+    {
+        $admin = $this->admin();
+        $id = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->form())->json('id');
+        MarketingCampaign::find($id)->update(['spent_eur' => 40, 'link_clicks' => 12]);
+        $tag = "appwerk-$id";
+        $quote = '01a0cdb4-a35c-7038-8794-31fc7ba57c36';
+        $event = fn (string $name, string $visitor, array $extra = []) => AnalyticsEvent::create($extra + ['name' => $name, 'visitor' => $visitor, 'created_at' => now()]);
+
+        $event('page_view', 'v1', ['utm_campaign' => $tag]);
+        $event('page_view', 'v1', ['utm_campaign' => $tag]);
+        $event('page_view', 'v2', ['utm_campaign' => $tag]);
+        $event('page_view', 'v3');                                   // came some other way
+        $event('wizard_step', 'v1');
+        $event('quote_created', 'v1', ['quote_id' => $quote]);
+        $event('quote_created', 'v3', ['quote_id' => '01a0cdb4-a35c-7038-8794-31fc7ba57c37']);
+        $event('quote_created', 'v2', ['created_at' => now()->subDays(2)]); // another day, another visitor hash
+        $event('order_paid', 'x', ['quote_id' => $quote, 'props' => ['amount_eur' => 900]]);
+
+        $this->actingAs($admin, 'sanctum')->getJson('/api/admin/own-campaigns')->assertOk()
+            ->assertJsonPath('campaigns.0.funnel.clicks', 12)
+            ->assertJsonPath('campaigns.0.funnel.visits', 2)
+            ->assertJsonPath('campaigns.0.funnel.interest', 1)
+            ->assertJsonPath('campaigns.0.funnel.quotes', 1)
+            ->assertJsonPath('campaigns.0.funnel.orders', 1)
+            ->assertJsonPath('campaigns.0.funnel.revenue_eur', 900)
+            ->assertJsonPath('campaigns.0.funnel.cost_per_visit', 20)
+            ->assertJsonPath('campaigns.0.funnel.cost_per_order', 40);
     }
 
     public function test_a_customer_cannot_reach_it(): void

@@ -7,6 +7,7 @@ use App\Domain\Ads\Preflight;
 use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Ads\SpendGuard;
 use App\Domain\Ai\SearchAdWriter;
+use App\Domain\Analytics\CampaignFunnel;
 use App\Jobs\PublishCampaign;
 use App\Models\MarketingCampaign;
 use Illuminate\Http\JsonResponse;
@@ -215,6 +216,10 @@ class AdminOwnCampaignController extends Controller
             'activated_at' => $c->activated_at?->toIso8601String(),
             'error' => $c->publish_error,
             'stopped_reason' => $c->stopped_reason,
+            // The address a click lands on, UTM included, and what those clicks became.
+            // What Google has, once it has it: a campaign sent before UTM existed has none.
+            'final_url' => $c->platform_ref['final_url'] ?? ($c->published_at === null ? $c->finalUrl() : ($c->strategy['landing_url'] ?? '')),
+            'funnel' => app(CampaignFunnel::class)->for($c),
         ];
     }
 }
