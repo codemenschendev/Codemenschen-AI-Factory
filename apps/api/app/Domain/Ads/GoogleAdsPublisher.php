@@ -131,6 +131,101 @@ class GoogleAdsPublisher implements Publisher
         return strlen($id) === 10 ? substr($id, 0, 3).'-'.substr($id, 3, 3).'-'.substr($id, 6) : $id;
     }
 
+    /** Codemenschen's manager account (MCC), the one that asks a customer's account to link. */
+    public function managerId(): string
+    {
+        return $this->cfg('manager_id');
+    }
+
+    /**
+     * Asks a customer's ad account to link to ours, and returns the id of the link.
+     *
+     * This is the fast way in. The customer pastes ten digits, we ask, and they press accept once
+     * in their own account. Nobody edits a user list, nobody is invited by e-mail, and no token of
+     * theirs is stored here: the link lives on Google's side and they can cut it whenever they
+     * want. The request creates nothing that can spend.
+     */
+    public function requestClientLink(string $clientCustomerId): string
+    {
+        $manager = $this->managerId();
+        if ($manager === '') {
+            throw new RuntimeException('Google: no manager account configured (GOOGLE_ADS_MANAGER_ID).');
+        }
+        $res = Http::withToken($this->accessToken())
+            ->withHeaders($this->managerHeaders($manager))
+            ->timeout(30)
+            ->post($this->endpoint("customers/{$manager}/customerClientLinks:mutate"), [
+                'operation' => ['create' => ['clientCustomer' => "customers/{$clientCustomerId}", 'status' => 'PENDING']],
+            ]);
+        if (! $res->successful()) {
+            throw new RuntimeException(self::errorDetail($res->status(), (string) $res->body()));
+        }
+
+        // customers/{manager}/customerClientLinks/{client}~{linkId}
+        $name = (string) ($res->json('result.resourceName') ?? '');
+
+        return str_contains($name, '~') ? substr($name, strpos($name, '~') + 1) : $name;
+    }
+
+    /**
+     * What the platform says about that link now: pending, active, refused, removed, or null when
+     * there is no link at all. Read from Google, never from our own hope that the request worked.
+     */
+    public function clientLinkStatus(string $clientCustomerId): ?string
+    {
+        $manager = $this->managerId();
+        if ($manager === '') {
+            return null;
+        }
+        $res = Http::withToken($this->accessToken())
+            ->withHeaders($this->managerHeaders($manager))
+            ->timeout(30)
+            ->post($this->endpoint("customers/{$manager}/googleAds:search"), [
+                'query' => 'SELECT customer_client_link.status, customer_client_link.manager_link_id '
+                    ."FROM customer_client_link WHERE customer_client_link.client_customer = 'customers/{$clientCustomerId}'",
+            ]);
+        if (! $res->successful()) {
+            throw new RuntimeException(self::errorDetail($res->status(), (string) $res->body()));
+        }
+        $status = $res->json('results.0.customerClientLink.status');
+
+        return match ($status) {
+            'ACTIVE' => 'active',
+            'PENDING' => 'pending',
+            'REFUSED' => 'refused',
+            'INACTIVE', 'CANCELED' => 'removed',
+            default => null,
+        };
+    }
+
+    /** The name Google shows for an account we can reach, or null when we cannot reach it. */
+    public function accountName(string $customerId): ?string
+    {
+        $res = Http::withToken($this->accessToken())
+            ->withHeaders($this->headers($customerId))
+            ->timeout(30)
+            ->post($this->endpoint("customers/{$customerId}/googleAds:search"), [
+                'query' => 'SELECT customer.descriptive_name, customer.currency_code FROM customer LIMIT 1',
+            ]);
+        if (! $res->successful()) {
+            return null;
+        }
+        $c = $res->json('results.0.customer') ?? [];
+
+        return trim(($c['descriptiveName'] ?? $customerId).' ('.($c['currencyCode'] ?? '?').')');
+    }
+
+    /** Link calls sign in as the manager itself, whatever GOOGLE_ADS_LOGIN_CUSTOMER_ID says. */
+    private function managerHeaders(string $manager): array
+    {
+        $headers = ['login-customer-id' => $manager];
+        if ($this->cfg('developer_token') !== '') {
+            $headers['developer-token'] = $this->cfg('developer_token');
+        }
+
+        return $headers;
+    }
+
     public function publish(MarketingCampaign $campaign): array
     {
         $this->assertConfigured();

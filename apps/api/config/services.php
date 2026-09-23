@@ -97,6 +97,9 @@ return [
             'token' => env('META_ADS_TOKEN'),            // long-lived System User token
             'ad_account_id' => env('META_ADS_ACCOUNT_ID'), // act_1234567890
             'page_id' => env('META_ADS_PAGE_ID'),
+            // Our Business Manager id. A customer pastes this one number into their own Business
+            // settings to give us partner access; it is not a secret and is shown in the portal.
+            'business_id' => env('META_BUSINESS_ID'),
             'api_version' => env('META_ADS_API_VERSION', 'v26.0'),
             // EU Digital Services Act: every ad set that reaches the EU names who benefits and who pays.
             'dsa_beneficiary' => env('META_ADS_DSA_BENEFICIARY', 'Codemenschen GmbH'),
@@ -106,6 +109,9 @@ return [
             'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'), // optional, retired by Google 2026-09-09
             'customer_id' => env('GOOGLE_ADS_CUSTOMER_ID'),         // 10 digits, no dashes
             'login_customer_id' => env('GOOGLE_ADS_LOGIN_CUSTOMER_ID'),
+            // Codemenschen's manager account (MCC). A customer's account is linked to it with one
+            // request and one click on their side, instead of adding users by hand.
+            'manager_id' => env('GOOGLE_ADS_MANAGER_ID'),
             'client_id' => env('GOOGLE_ADS_CLIENT_ID'),
             'client_secret' => env('GOOGLE_ADS_CLIENT_SECRET'),
             'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
