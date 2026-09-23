@@ -81,6 +81,45 @@ class AdAccountLinkTest extends TestCase
             && $r->header('login-customer-id')[0] === '9637225111');
     }
 
+    public function test_a_google_account_is_connected_when_the_customer_added_our_address(): void
+    {
+        // The path that needs no manager and no account management call: our service account is a
+        // user of their account, so reading it works and that is the whole proof.
+        $this->google();
+        Http::fake([
+            'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
+            'googleads.googleapis.com/*/customerClientLinks:mutate' => Http::response([
+                'error' => ['details' => [['errors' => [['errorCode' => ['authorizationError' => 'DEVELOPER_TOKEN_NOT_APPROVED'], 'message' => 'explorer']]]]],
+            ], 403),
+            'googleads.googleapis.com/*' => Http::response(['results' => [
+                ['customer' => ['descriptiveName' => 'Huber GmbH', 'currencyCode' => 'EUR']],
+            ]]),
+        ]);
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+
+        $res = $this->actingAs($customer, 'sanctum')
+            ->postJson('/api/me/ad-accounts', ['platform' => 'google', 'external_id' => '352-091-3982'])
+            ->assertCreated();
+
+        $res->assertJsonPath('account.status', 'active');
+        $res->assertJsonPath('account.name', 'Huber GmbH (EUR)');
+        // A refused link request is our side's business, not something to show the customer.
+        $res->assertJsonPath('account.error', null);
+        // Signed in as their own account, not as our manager.
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'customers/3520913982/googleAds:search')
+            && $r->header('login-customer-id')[0] === '3520913982');
+    }
+
+    public function test_the_address_a_customer_has_to_add_is_shown_to_them(): void
+    {
+        $this->google();
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+
+        $this->actingAs($customer, 'sanctum')->getJson('/api/me/ad-accounts')
+            ->assertOk()
+            ->assertJsonStructure(['ours' => ['google_manager_id', 'google_service_account', 'meta_business_id']]);
+    }
+
     public function test_the_link_turns_active_only_when_google_says_so(): void
     {
         $this->google();
@@ -91,6 +130,8 @@ class AdAccountLinkTest extends TestCase
         Http::fake([
             'oauth2.googleapis.com/token' => Http::response(['access_token' => 'at']),
             'googleads.googleapis.com/*' => Http::sequence()
+                // No direct grant on their account, so it comes down to the manager link.
+                ->push(['results' => []])
                 ->push(['results' => [['customerClientLink' => ['status' => 'ACTIVE']]]])
                 ->push(['results' => [['customer' => ['descriptiveName' => 'Bäckerei Huber', 'currencyCode' => 'EUR']]]]),
         ]);

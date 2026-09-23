@@ -668,13 +668,18 @@ export const en = {
     stRemoved: "disconnected",
     pendingHint: "Accept the request inside your ad account, then press Check status here.",
     ourId: "Our number",
+    ourEmail: "Our address",
+    copy: "Copy",
+    copied: "Copied",
     google: {
       name: "Google Ads",
       hint: "Ten digits, shown at the top right in Google Ads, for example 123-456-7890.",
       steps: [
         "Enter your account number above and press Ask to connect.",
-        "In your Google Ads account go to Admin, then Access and security, tab Managers.",
-        "Accept the request from Codemenschen GmbH.",
+        "In your Google Ads account go to Admin, then Access and security, tab Users, and press the plus.",
+        "Paste our address shown here, choose Standard, and send the invitation.",
+        "If Google says the address is not in an allowed domain, add the part after the @ under the Security tab, Allowed domains, then try again.",
+        "Come back here and press Check status.",
       ],
     },
     meta: {

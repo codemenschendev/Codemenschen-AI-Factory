@@ -670,13 +670,18 @@ export const de = {
     stRemoved: "getrennt",
     pendingHint: "Bestätigen Sie die Anfrage in Ihrem Werbekonto, dann hier auf Status prüfen drücken.",
     ourId: "Unsere Nummer",
+    ourEmail: "Unsere Adresse",
+    copy: "Kopieren",
+    copied: "Kopiert",
     google: {
       name: "Google Ads",
       hint: "Zehn Stellen, steht rechts oben in Google Ads, zum Beispiel 123-456-7890.",
       steps: [
         "Kontonummer oben eintragen und Verbindung anfragen drücken.",
-        "In Ihrem Google Ads Konto auf Administrator, dann Zugriff und Sicherheit, Reiter Verwaltungskonten.",
-        "Die Anfrage von Codemenschen GmbH mit Annehmen bestätigen.",
+        "In Ihrem Google Ads Konto auf Administrator, dann Zugriff und Sicherheit, Reiter Nutzer, dann auf das Plus.",
+        "Unsere hier angezeigte Adresse einfügen, Standard auswählen und die Einladung senden.",
+        "Wenn Google meldet, die Adresse liege nicht in einer zugelassenen Domain: den Teil nach dem @ im Reiter Sicherheit unter Zugelassene Domains eintragen und es noch einmal versuchen.",
+        "Danach hier auf Status prüfen drücken.",
       ],
     },
     meta: {
