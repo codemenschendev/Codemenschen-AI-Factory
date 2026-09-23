@@ -235,6 +235,31 @@ class MetaAdsPublisher implements Publisher
         }
     }
 
+    /** Our Business Manager id: the one number a customer pastes to give us partner access. */
+    public function businessId(): string
+    {
+        return $this->cfg('business_id');
+    }
+
+    /**
+     * The name of a customer's ad account if our token already reaches it, else null.
+     *
+     * Meta has no call that asks a business for access; the customer grants it in their own
+     * Business settings. So the honest test of whether the link exists is to read the account and
+     * see whether Meta lets us. Reads only; nothing is created and nothing spends.
+     */
+    public function accountName(string $adAccountId): ?string
+    {
+        try {
+            $body = $this->get($adAccountId, 'name,account_status,currency');
+        } catch (\Throwable) {
+            return null;
+        }
+        $name = (string) ($body['name'] ?? $adAccountId);
+
+        return trim($name.' ('.($body['currency'] ?? '?').')');
+    }
+
     private function base(): PendingRequest
     {
         $v = $this->cfg('api_version') ?: 'v26.0';

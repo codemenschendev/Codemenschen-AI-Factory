@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdAccountController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\DesignLibraryController;
 use App\Http\Controllers\InternalRunController;
+use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
@@ -15,6 +17,7 @@ use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\QuoteRefineController;
 use App\Http\Controllers\StripeWebhookController;
+use App\Http\Controllers\ValidationController;
 use Illuminate\Support\Facades\Route;
 
 // First-party analytics beacon from the portal (App\Domain\Analytics\Analytics). No cookies.
@@ -29,9 +32,9 @@ Route::post('/prototypes/questions', [PrototypeController::class, 'questions'])-
 Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
 Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);
 // A campaign's live landing page: the sign-up and the two links in its mails.
-Route::post('/landing/{prototype}/signup', [\App\Http\Controllers\LandingController::class, 'signup'])->middleware('throttle:6,10,landing-signup');
-Route::get('/landing/signups/{signup}/confirm', [\App\Http\Controllers\LandingController::class, 'confirm'])->name('landing.confirm')->middleware('throttle:30,1,landing-link');
-Route::get('/landing/signups/{signup}/remove', [\App\Http\Controllers\LandingController::class, 'remove'])->name('landing.remove')->middleware('throttle:30,1,landing-link');
+Route::post('/landing/{prototype}/signup', [LandingController::class, 'signup'])->middleware('throttle:6,10,landing-signup');
+Route::get('/landing/signups/{signup}/confirm', [LandingController::class, 'confirm'])->name('landing.confirm')->middleware('throttle:30,1,landing-link');
+Route::get('/landing/signups/{signup}/remove', [LandingController::class, 'remove'])->name('landing.remove')->middleware('throttle:30,1,landing-link');
 
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
@@ -53,9 +56,9 @@ Route::get('/auth/join', [AuthController::class, 'join'])
 Route::middleware('auth:sanctum')->group(function () {
     // The one free change to a prototype, for a visitor who signed in.
     Route::post('/prototypes/{prototype}/revise', [PrototypeController::class, 'revise'])->middleware('throttle:6,60,revise');
-    Route::post('/prototypes/{prototype}/publish', [\App\Http\Controllers\LandingController::class, 'publish']);
-    Route::get('/prototypes/{prototype}/signups', [\App\Http\Controllers\LandingController::class, 'signups']);
-    Route::get('/prototypes/{prototype}/report', [\App\Http\Controllers\LandingController::class, 'report']);
+    Route::post('/prototypes/{prototype}/publish', [LandingController::class, 'publish']);
+    Route::get('/prototypes/{prototype}/signups', [LandingController::class, 'signups']);
+    Route::get('/prototypes/{prototype}/report', [LandingController::class, 'report']);
     Route::get('/me/projects', [MeController::class, 'projects']);
     Route::get('/me/projects/{project}', [MeController::class, 'project']);
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
@@ -79,6 +82,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/me/ads', [MediaController::class, 'index']);
     Route::post('/me/projects/{project}/ads', [MediaController::class, 'store'])->middleware('throttle:10,60,media');
     Route::get('/me/ads/{ad}/download', [MediaController::class, 'download']);
+
+    // The customer's own ad accounts. Asking costs nothing and spends nothing; the customer
+    // presses accept on the platform and can cut the link there at any time.
+    Route::get('/me/ad-accounts', [AdAccountController::class, 'index']);
+    Route::post('/me/ad-accounts', [AdAccountController::class, 'store'])->middleware('throttle:10,60,adlink');
+    Route::post('/me/ad-accounts/{adAccount}/refresh', [AdAccountController::class, 'refresh'])->middleware('throttle:30,10,adlink');
+    Route::delete('/me/ad-accounts/{adAccount}', [AdAccountController::class, 'destroy']);
 
     // Running campaigns on Codemenschen's ad accounts. publish creates them PAUSED; activate is
     // the one action that starts spend and is only ever called by a person.
@@ -109,13 +119,13 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/layouts', [AdminController::class, 'layoutsSettings']);
     Route::post('/ads-mode', [AdminController::class, 'adsMode']);
     // The validation test and the spend guard (ValidationController, SpendGuard).
-    Route::get('/prototypes/{prototype}/validation', [\App\Http\Controllers\ValidationController::class, 'show']);
-    Route::post('/prototypes/{prototype}/validation', [\App\Http\Controllers\ValidationController::class, 'store']);
-    Route::post('/marketing/{campaign}/activate', [\App\Http\Controllers\ValidationController::class, 'activate']);
-    Route::post('/marketing/{campaign}/pause', [\App\Http\Controllers\ValidationController::class, 'pause']);
-    Route::post('/ads/kill', [\App\Http\Controllers\ValidationController::class, 'kill']);
-    Route::post('/ads/limits', [\App\Http\Controllers\ValidationController::class, 'limits']);
-    Route::post('/ads/platform', [\App\Http\Controllers\ValidationController::class, 'platform']);
+    Route::get('/prototypes/{prototype}/validation', [ValidationController::class, 'show']);
+    Route::post('/prototypes/{prototype}/validation', [ValidationController::class, 'store']);
+    Route::post('/marketing/{campaign}/activate', [ValidationController::class, 'activate']);
+    Route::post('/marketing/{campaign}/pause', [ValidationController::class, 'pause']);
+    Route::post('/ads/kill', [ValidationController::class, 'kill']);
+    Route::post('/ads/limits', [ValidationController::class, 'limits']);
+    Route::post('/ads/platform', [ValidationController::class, 'platform']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');

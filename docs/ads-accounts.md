@@ -108,6 +108,30 @@ release and then answers 404 (v18 to v21 did by 2026-09); bump the default when 
 Check a version with a real token: without one, every version answers 401, even one that does
 not exist (v26 looked alive that way on 2026-09-15 and was a 404 "Method not found").
 
+## Connecting a customer's own ad account
+
+A customer never repeats what we went through on 2026-09-22. Adding a user by hand hit an allowed
+domain list, an approval by a second admin, and a reauth loop that never closed. Three hours for one
+account. Instead, in their account settings in the portal, they paste one number and press one
+button (`AdAccountController`, `Domain\Ads\AccountLink`, 2026-09-23).
+
+**Google.** We send a link request from our manager account (`GOOGLE_ADS_MANAGER_ID`) to the ten
+digits they gave us. It shows up in their own Google Ads under Admin, Access and security,
+Managers, and they press accept. The link lives on Google's side, we store no credential of theirs,
+and they can cut it there whenever they want. The request itself creates nothing that can spend.
+
+**Meta** has no call that asks a business for access, so the customer adds our Business id
+(`META_BUSINESS_ID`) as a partner in their own Business settings. We prove the link by reading
+their ad account: if Meta answers, it is connected.
+
+A link is only ever stored as `active` because the platform said so. Our own request succeeding
+says nothing about whether the customer accepted, so `AccountLink::refresh()` asks and the
+portal's "check status" button is what the customer presses after accepting.
+
+The service account needs to be a user on the manager account for the Google request to go out at
+all. It is a user on 352-091-3982 only, so this flow is configured but untested against a real
+customer account.
+
 ## Meta (Facebook and Instagram)
 
 Everything lives in **Meta Business Suite** for the Codemenschen business.

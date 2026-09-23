@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { getToken, setToken, useToken } from "@/lib/token";
 import Link from "next/link";
 import { api } from "@/lib/api";
+import { AdAccountsPanel } from "@/components/AdAccountsPanel";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 
 interface ProjectRow {
@@ -160,6 +161,9 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
           </div>
         ))}
       </div>
+      {/* The customer's own ad accounts. Their settings, not ours: the connection is theirs to
+          make and theirs to cut, so the steps live next to the field. */}
+      <AdAccountsPanel d={d} token={token} />
     </div>
   );
 }
