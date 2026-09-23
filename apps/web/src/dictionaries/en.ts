@@ -505,6 +505,7 @@ export const en = {
     groupAds: "Advertising",
     groupInsight: "Insight",
     groupContent: "Content",
+    otherLanguage: "Deutsch",
     toggleMenu: "Show or hide the menu",
     closeMenu: "Close the menu",
     signInTitle: "Sign in to the console",

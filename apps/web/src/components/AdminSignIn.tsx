@@ -79,6 +79,12 @@ export function AdminSignIn({ locale, d, denied }: { locale: Locale; d: Dict; de
           {failed && <p className="note" style={{ marginTop: 10 }}>{a.signInFailed}</p>}
         </form>
       )}
+
+      <p className="small" style={{ marginTop: 22 }}>
+        <a href={`/${locale === "de" ? "en" : "de"}/admin`} lang={locale === "de" ? "en" : "de"} style={{ color: "var(--ink-soft)" }}>
+          {a.otherLanguage}
+        </a>
+      </p>
     </div>
   );
 }
