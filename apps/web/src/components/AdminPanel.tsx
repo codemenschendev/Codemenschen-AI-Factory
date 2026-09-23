@@ -7,6 +7,7 @@ import { ChatShots, type ChatMessage } from "@/components/ChangeChat";
 import { useToken } from "@/lib/token";
 import { LibraryPanel } from "./LibraryPanel";
 import { ReferencePanel } from "./ReferencePanel";
+import { KeywordsPanel } from "./KeywordsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -137,7 +138,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "ads" | "prototypes" | "customers" | "library" | "references";
+type Tab = "overview" | "analytics" | "projects" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -396,7 +397,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   return (
     <div>
       <div className="tabs" role="tablist">
-        {(["overview", "analytics", "projects", "ads", "prototypes", "customers", "library", "references"] as Tab[]).map((t) => (
+        {(["overview", "analytics", "projects", "ads", "keywords", "prototypes", "customers", "library", "references"] as Tab[]).map((t) => (
           <button
             key={t}
             className="tab"
@@ -414,6 +415,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "analytics" && token && <AnalyticsPanel token={token} locale={locale} d={d} />}
       {tab === "library" && token && <LibraryPanel token={token} locale={locale} d={d} />}
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
+      {tab === "keywords" && token && <KeywordsPanel token={token} d={d} />}
 
       {tab === "overview" && overview && (
         <>

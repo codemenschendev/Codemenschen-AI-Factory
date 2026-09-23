@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AdAccountController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AdminKeywordController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
@@ -129,6 +130,15 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     // Appwerk's own ad account numbers, editable here instead of in the server env.
     Route::get('/ads/settings', [ValidationController::class, 'settings']);
     Route::post('/ads/settings', [ValidationController::class, 'saveSettings']);
+    // The words a search campaign is bought for. Only `apply` reaches Google; suggesting and
+    // ticking happen here and cost nothing.
+    Route::get('/keywords', [AdminKeywordController::class, 'campaigns']);
+    Route::get('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'index']);
+    Route::post('/marketing/{campaign}/keywords/suggest', [AdminKeywordController::class, 'suggest'])->middleware('throttle:20,60,keywords');
+    Route::post('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'store']);
+    Route::post('/marketing/{campaign}/keywords/apply', [AdminKeywordController::class, 'apply']);
+    Route::patch('/keywords/{keyword}', [AdminKeywordController::class, 'update']);
+    Route::delete('/keywords/{keyword}', [AdminKeywordController::class, 'destroy']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');

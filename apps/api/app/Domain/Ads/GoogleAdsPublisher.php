@@ -2,7 +2,9 @@
 
 namespace App\Domain\Ads;
 
+use App\Models\CampaignKeyword;
 use App\Models\MarketingCampaign;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
@@ -309,6 +311,24 @@ class GoogleAdsPublisher implements Publisher
             ]]],
         ];
 
+        // The keywords ride along in the same batch, so a published campaign is never one that
+        // cannot serve. They point at the temporary ids above and commit or fail with everything
+        // else. Rows still waiting for an admin stay behind; only approved ones travel.
+        $approved = $campaign->keywords()->where('status', 'approved')->orderBy('id')->get();
+        foreach ($approved as $keyword) {
+            $ops[] = $keyword->negative
+                ? ['campaignCriterionOperation' => ['create' => [
+                    'campaign' => "customers/{$cid}/campaigns/-2",
+                    'negative' => true,
+                    'keyword' => $keyword->criterion(),
+                ]]]
+                : ['adGroupCriterionOperation' => ['create' => [
+                    'adGroup' => "customers/{$cid}/adGroups/-3",
+                    'status' => 'ENABLED',
+                    'keyword' => $keyword->criterion(),
+                ]]];
+        }
+
         $res = Http::withToken($token)
             ->withHeaders($this->headers($cid, $login))
             ->timeout(60)
@@ -321,12 +341,108 @@ class GoogleAdsPublisher implements Publisher
 
         $results = $body['mutateOperationResponses'] ?? [];
 
+        // The keyword answers start after the four objects above, in the order they were sent.
+        foreach ($approved as $i => $keyword) {
+            $result = $results[4 + $i] ?? [];
+            $keyword->update([
+                'status' => 'applied',
+                'applied_at' => now(),
+                'error' => null,
+                'resource_name' => $result['adGroupCriterionResult']['resourceName']
+                    ?? $result['campaignCriterionResult']['resourceName'] ?? null,
+            ]);
+        }
+
         return [
             'budget' => $results[0]['campaignBudgetResult']['resourceName'] ?? null,
             'campaign_id' => $results[1]['campaignResult']['resourceName'] ?? null,
             'ad_group' => $results[2]['adGroupResult']['resourceName'] ?? null,
             'ad' => $results[3]['adGroupAdResult']['resourceName'] ?? null,
         ];
+    }
+
+    /**
+     * Sends keyword changes to a campaign that is already on Google.
+     *
+     * Everything goes in one batch: either the whole change lands or nothing does. That matters
+     * more here than saving a failed keyword, because half an applied list is a campaign nobody
+     * can reason about afterwards.
+     *
+     * A keyword that was taken out of service is paused rather than deleted, so what it cost stays
+     * readable in Google's own reports. A negative keyword has no paused state, so that one is
+     * removed; it has no history worth keeping, it only ever prevented spend.
+     *
+     * @param  Collection<int,CampaignKeyword>  $keywords
+     * @return array{applied:int,paused:int}
+     */
+    public function applyKeywords(MarketingCampaign $campaign, $keywords): array
+    {
+        $this->assertConfigured();
+        $adGroup = $campaign->platform_ref['ad_group'] ?? null;
+        $campaignRef = $campaign->platform_ref['campaign_id'] ?? null;
+        if (! $adGroup || ! $campaignRef) {
+            throw new RuntimeException('Google: this campaign is not on Google yet, so there is nothing to add keywords to.');
+        }
+        $cid = self::customerOf((string) $campaignRef) ?: $this->cfg('customer_id');
+        $login = AdTarget::for($campaign, 'google')['login'];
+
+        $ops = [];
+        $order = [];
+        foreach ($keywords as $keyword) {
+            $op = match (true) {
+                $keyword->status === 'approved' && $keyword->resource_name === null && $keyword->negative => ['campaignCriterionOperation' => ['create' => [
+                    'campaign' => $campaignRef, 'negative' => true, 'keyword' => $keyword->criterion(),
+                ]]],
+                $keyword->status === 'approved' && $keyword->resource_name === null => ['adGroupCriterionOperation' => ['create' => [
+                    'adGroup' => $adGroup, 'status' => 'ENABLED', 'keyword' => $keyword->criterion(),
+                ]]],
+                $keyword->status === 'paused' && $keyword->resource_name !== null && $keyword->negative => ['campaignCriterionOperation' => ['remove' => $keyword->resource_name]],
+                $keyword->status === 'paused' && $keyword->resource_name !== null => ['adGroupCriterionOperation' => [
+                    'update' => ['resourceName' => $keyword->resource_name, 'status' => 'PAUSED'], 'updateMask' => 'status',
+                ]],
+                default => null,
+            };
+            if ($op !== null) {
+                $ops[] = $op;
+                $order[] = $keyword;
+            }
+        }
+
+        if ($ops === []) {
+            return ['applied' => 0, 'paused' => 0];
+        }
+
+        $res = Http::withToken($this->accessToken())
+            ->withHeaders($this->headers($cid, $login))
+            ->timeout(60)
+            ->post($this->endpoint("customers/{$cid}/googleAds:mutate"), ['mutateOperations' => $ops]);
+
+        if (! $res->successful()) {
+            throw new RuntimeException(self::errorDetail($res->status(), (string) $res->body()));
+        }
+
+        $results = $res->json('mutateOperationResponses') ?? [];
+        $applied = 0;
+        $paused = 0;
+        foreach ($order as $i => $keyword) {
+            if ($keyword->status === 'paused') {
+                $keyword->update(['error' => null]);
+                $paused++;
+
+                continue;
+            }
+            $result = $results[$i] ?? [];
+            $keyword->update([
+                'status' => 'applied',
+                'applied_at' => now(),
+                'error' => null,
+                'resource_name' => $result['adGroupCriterionResult']['resourceName']
+                    ?? $result['campaignCriterionResult']['resourceName'] ?? null,
+            ]);
+            $applied++;
+        }
+
+        return ['applied' => $applied, 'paused' => $paused];
     }
 
     public function activate(MarketingCampaign $campaign): void
