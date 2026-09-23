@@ -137,6 +137,19 @@ class GoogleAdsPublisher implements Publisher
         return strlen($id) === 10 ? substr($id, 0, 3).'-'.substr($id, 3, 3).'-'.substr($id, 6) : $id;
     }
 
+    /**
+     * The address a customer adds as a user on their own ad account.
+     *
+     * This is the second way in, and the one that works today: Google lets a service account be a
+     * user of an ad account directly, and reading that account afterwards needs no manager and no
+     * account-management call. The link request below is the nicer path, but it is an account
+     * management method, so a Cloud project on Explorer access cannot send one at all.
+     */
+    public function serviceAccountEmail(): string
+    {
+        return (string) ($this->serviceAccount()['client_email'] ?? '');
+    }
+
     /** Codemenschen's manager account (MCC), the one that asks a customer's account to link. */
     public function managerId(): string
     {
@@ -204,11 +217,17 @@ class GoogleAdsPublisher implements Publisher
         };
     }
 
-    /** The name Google shows for an account we can reach, or null when we cannot reach it. */
-    public function accountName(string $customerId): ?string
+    /**
+     * The name Google shows for an account we can reach, or null when we cannot reach it.
+     *
+     * With no $login the call signs in as the account itself, which is what a direct grant looks
+     * like: the customer added our address as a user there. Pass the manager to read an account
+     * that is linked to us instead.
+     */
+    public function accountName(string $customerId, ?string $login = null): ?string
     {
         $res = Http::withToken($this->accessToken())
-            ->withHeaders($this->headers($customerId))
+            ->withHeaders($login === null ? $this->headers($customerId, $customerId) : $this->headers($customerId, $login))
             ->timeout(30)
             ->post($this->endpoint("customers/{$customerId}/googleAds:search"), [
                 'query' => 'SELECT customer.descriptive_name, customer.currency_code FROM customer LIMIT 1',
@@ -216,7 +235,12 @@ class GoogleAdsPublisher implements Publisher
         if (! $res->successful()) {
             return null;
         }
-        $c = $res->json('results.0.customer') ?? [];
+        // No customer row means the search reached Google but not this account, and a link that
+        // calls itself connected on the strength of an empty answer is the bug worth avoiding.
+        $c = $res->json('results.0.customer');
+        if (! is_array($c) || $c === []) {
+            return null;
+        }
 
         return trim(($c['descriptiveName'] ?? $customerId).' ('.($c['currencyCode'] ?? '?').')');
     }

@@ -115,10 +115,25 @@ domain list, an approval by a second admin, and a reauth loop that never closed.
 account. Instead, in their account settings in the portal, they paste one number and press one
 button (`AdAccountController`, `Domain\Ads\AccountLink`, 2026-09-23).
 
-**Google.** We send a link request from our manager account (`GOOGLE_ADS_MANAGER_ID`) to the ten
-digits they gave us. It shows up in their own Google Ads under Admin, Access and security,
-Managers, and they press accept. The link lives on Google's side, we store no credential of theirs,
-and they can cut it there whenever they want. The request itself creates nothing that can spend.
+**Google has two ways in and the portal tries both.**
+
+1. *The customer adds our address.* In their own Google Ads, Admin, Access and security, tab Users,
+   they invite `appwerk-ads@cm-ops-507408.iam.gserviceaccount.com` with Standard access. Google
+   allows a service account as a user directly. If that account keeps an allowed domain list, the
+   part after the @ has to be added first under the Security tab. We prove it by reading their
+   account signed in as the account itself: if Google answers with the customer row, it is
+   connected. This path needs no manager and no account management call, which is why it is the one
+   that works today.
+2. *A link request from our manager.* We send it from `GOOGLE_ADS_MANAGER_ID` to the ten digits they
+   gave us and it shows up under Managers for them to accept. Shorter for the customer, but
+   `CustomerClientLink` is an account management method and the Cloud project `cm-ops-507408` holds
+   only **Explorer** API access, which refuses it: `DEVELOPER_TOKEN_NOT_APPROVED: This method is not
+   allowed for use with explorer access` (2026-09-23). Applying for **Basic** access on the Google
+   Ads API page of that project is what unlocks it. Until then the refusal is logged and the
+   customer only sees the steps for path 1.
+
+Either way the link lives on Google's side, we store no credential of theirs, and they can cut it
+there whenever they want. Neither path creates anything that can spend.
 
 **Meta** has no call that asks a business for access, so the customer adds our Business id
 (`META_BUSINESS_ID`) as a partner in their own Business settings. We prove the link by reading

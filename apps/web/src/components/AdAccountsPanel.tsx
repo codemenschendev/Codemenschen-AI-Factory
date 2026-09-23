@@ -18,6 +18,8 @@ interface Account {
 
 interface Ours {
   google_manager_id: string;
+  /** The address the customer adds as a user on their own Google account. Not a secret. */
+  google_service_account: string;
   meta_business_id: string;
 }
 
@@ -39,6 +41,8 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
   const [page, setPage] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // The address is long and one wrong character costs the customer a support mail.
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     api<{ ours: Ours; accounts: Account[] }>("/me/ad-accounts", { token })
@@ -46,7 +50,7 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
         setOurs(r.ours);
         setAccounts(r.accounts);
       })
-      .catch(() => setOurs({ google_manager_id: "", meta_business_id: "" }));
+      .catch(() => setOurs({ google_manager_id: "", google_service_account: "", meta_business_id: "" }));
   }, [token]);
 
   const fail = (key: string, e: unknown) => {
@@ -119,6 +123,22 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
               {ourNumber && (
                 <p className="small muted">
                   {a.ourId}: <strong className="num">{ourNumber}</strong>
+                </p>
+              )}
+              {platform === "google" && ours.google_service_account && (
+                <p className="small muted" style={{ display: "flex", gap: 8, alignItems: "baseline", flexWrap: "wrap" }}>
+                  {a.ourEmail}:{" "}
+                  <strong className="num" style={{ wordBreak: "break-all" }}>{ours.google_service_account}</strong>
+                  <button
+                    type="button"
+                    className="btn btn-ghost"
+                    onClick={() => {
+                      void navigator.clipboard?.writeText(ours.google_service_account);
+                      setCopied(true);
+                    }}
+                  >
+                    {copied ? a.copied : a.copy}
+                  </button>
                 </p>
               )}
 
