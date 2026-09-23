@@ -46,6 +46,29 @@ class MarketingCampaign extends Model
         return round((int) $this->ad_budget_monthly_eur / 30, 2);
     }
 
+    /** The utm_campaign our own campaigns carry, so a visit can be traced back to the ad. */
+    public function trackingTag(): string
+    {
+        return 'appwerk-'.$this->id;
+    }
+
+    /**
+     * Where a click goes. Our own campaigns get UTM parameters added, so the analytics can tell
+     * one campaign's visitors from another's; Google's own gclid only says "from Google". A URL
+     * that already carries a utm_source is left as the admin wrote it.
+     */
+    public function finalUrl(): string
+    {
+        $url = (string) ($this->strategy['landing_url'] ?? 'https://appwerk.codemenschen.at');
+        if ($this->project_id !== null || $this->prototype_id !== null || str_contains($url, 'utm_source=')) {
+            return $url;
+        }
+        [$base, $fragment] = array_pad(explode('#', $url, 2), 2, null);
+        $query = http_build_query(['utm_source' => 'google', 'utm_medium' => 'cpc', 'utm_campaign' => $this->trackingTag()]);
+
+        return $base.(str_contains($base, '?') ? '&' : '?').$query.($fragment !== null ? '#'.$fragment : '');
+    }
+
     /** Appwerk advertising itself: no customer project and no prototype test behind it. */
     public function scopeOwn(Builder $query): Builder
     {

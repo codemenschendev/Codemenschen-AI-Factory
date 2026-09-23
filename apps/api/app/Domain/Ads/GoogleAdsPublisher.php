@@ -318,7 +318,7 @@ class GoogleAdsPublisher implements Publisher
                 'ad' => ['responsiveSearchAd' => [
                     'headlines' => $this->assets($campaign, 'headline', 3, 15),
                     'descriptions' => $this->assets($campaign, 'ad_copy', 2, 4),
-                ], 'finalUrls' => [(string) ($campaign->strategy['landing_url'] ?? 'https://appwerk.codemenschen.at')]],
+                ], 'finalUrls' => [$campaign->finalUrl()]],
             ]]],
         ];
 
@@ -384,6 +384,7 @@ class GoogleAdsPublisher implements Publisher
             'campaign_id' => $results[1]['campaignResult']['resourceName'] ?? null,
             'ad_group' => $results[2]['adGroupResult']['resourceName'] ?? null,
             'ad' => $results[3]['adGroupAdResult']['resourceName'] ?? null,
+            'final_url' => $campaign->finalUrl(),
         ];
     }
 

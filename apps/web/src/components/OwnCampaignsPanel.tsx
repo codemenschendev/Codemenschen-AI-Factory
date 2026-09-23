@@ -28,6 +28,22 @@ interface Campaign {
   published_at: string | null;
   error: string | null;
   stopped_reason: string | null;
+  final_url: string;
+  funnel: Funnel;
+}
+
+/** Google's clicks, then what our own analytics saw of the same visitors on the same day. */
+interface Funnel {
+  tag: string;
+  clicks: number;
+  visits: number;
+  interest: number;
+  quotes: number;
+  orders: number;
+  revenue_eur: number;
+  cost_per_visit: number | null;
+  cost_per_quote: number | null;
+  cost_per_order: number | null;
 }
 
 interface Report {
@@ -338,6 +354,7 @@ export function OwnCampaignsPanel({
               <th style={{ textAlign: "right" }}>{o.perDay}</th>
               <th style={{ textAlign: "right" }}>{o.spent}</th>
               <th style={{ textAlign: "right" }}>{o.reach}</th>
+              <th style={{ textAlign: "right" }}>{o.results}</th>
               <th>{o.keywords}</th>
               <th />
             </tr>
@@ -368,6 +385,12 @@ export function OwnCampaignsPanel({
                   {count.format(c.impressions)}
                   <div className="muted small">{o.clicksN.replace("{n}", count.format(c.clicks))}</div>
                 </td>
+                <td className="num" style={{ textAlign: "right" }}>
+                  {o.resultShort.replace("{q}", String(c.funnel.quotes)).replace("{o}", String(c.funnel.orders))}
+                  <div className="muted small">
+                    {c.funnel.cost_per_order !== null ? o.perOrder.replace("{eur}", money.format(c.funnel.cost_per_order)) : o.visitsN.replace("{n}", count.format(c.funnel.visits))}
+                  </div>
+                </td>
                 <td>
                   <button className="btn btn-ghost btn-sm" onClick={() => onKeywords(c.id)}>
                     {o.keywordsN.replace("{n}", String(c.keywords.approved))}
@@ -388,7 +411,7 @@ export function OwnCampaignsPanel({
               </tr>
             ))}
             {report.campaigns.length === 0 && (
-              <tr><td colSpan={7} className="muted">{o.empty}</td></tr>
+              <tr><td colSpan={8} className="muted">{o.empty}</td></tr>
             )}
           </tbody>
         </table>
@@ -400,6 +423,38 @@ export function OwnCampaignsPanel({
             <h2 style={{ margin: 0 }}>{editing === "new" ? o.newTitle : form.name}</h2>
             {current && <span className={`badge ${tone(current.status)}`}>{status[current.status] ?? current.status}</span>}
           </div>
+          {current && current.published_at !== null && (
+            <div style={{ marginTop: 14 }}>
+              <div className="ops-kpis" style={{ margin: "0 0 6px" }}>
+                {(
+                  [
+                    ["clicks", current.funnel.clicks, null],
+                    ["visits", current.funnel.visits, current.funnel.cost_per_visit],
+                    ["interest", current.funnel.interest, null],
+                    ["quotes", current.funnel.quotes, current.funnel.cost_per_quote],
+                    ["orders", current.funnel.orders, current.funnel.cost_per_order],
+                  ] as const
+                ).map(([step, n, cost]) => (
+                  <div className="ops-kpi" key={step}>
+                    <span className="ops-kpi-label">{o.steps[step]}</span>
+                    <strong className="num">{count.format(n)}</strong>
+                    {cost !== null && <span className="ops-kpi-sub">{o.each.replace("{eur}", money.format(cost))}</span>}
+                  </div>
+                ))}
+                <div className="ops-kpi">
+                  <span className="ops-kpi-label">{o.revenue}</span>
+                  <strong className="num">{money.format(current.funnel.revenue_eur)}</strong>
+                  <span className="ops-kpi-sub">{o.spentOf.replace("{eur}", money.format(current.spent_eur))}</span>
+                </div>
+              </div>
+              <p className="muted small" style={{ margin: 0 }}>{o.funnelHint}</p>
+            </div>
+          )}
+          {current && (
+            <p className="small muted" style={{ marginTop: 10, overflowWrap: "anywhere" }}>
+              {o.finalUrl} <span className="num">{current.final_url}</span>
+            </p>
+          )}
           {readOnly && <p className="muted small">{o.readOnly}</p>}
 
           <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: "14px 0 0", display: "grid", gap: 14 }}>
