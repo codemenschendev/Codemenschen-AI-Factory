@@ -60,11 +60,16 @@ class AccountLink
     }
 
     /** Asks for the link. Creates the row first, so a failed ask is visible instead of lost. */
-    public function request(Customer $customer, string $platform, string $rawId): AdAccountLink
+    public function request(Customer $customer, string $platform, string $rawId, ?string $pageId = null): AdAccountLink
     {
         $id = self::normalise($platform, $rawId);
         $link = AdAccountLink::firstOrNew(['customer_id' => $customer->id, 'platform' => $platform, 'external_id' => $id]);
-        $link->fill(['status' => 'pending', 'requested_at' => now(), 'error' => null])->save();
+        $fields = ['status' => 'pending', 'requested_at' => now(), 'error' => null];
+        if ($platform === 'meta' && $pageId !== null) {
+            $digits = preg_replace('~\D~', '', $pageId) ?? '';
+            $fields['page_id'] = $digits === '' ? null : $digits;
+        }
+        $link->fill($fields)->save();
 
         if ($platform === 'google') {
             $google = $this->registry->for('google');
@@ -131,6 +136,11 @@ class AccountLink
             return [$link->status, null];
         }
         $name = $publisher->accountName($link->external_id);
+        if ($name !== null && (string) $link->page_id !== '') {
+            // A Meta ad is published by a page. Reading it now is the difference between finding
+            // out here and finding out when a campaign fails.
+            $link->page_name = $publisher->pageName((string) $link->page_id);
+        }
 
         return [$name === null ? 'pending' : 'active', $name];
     }

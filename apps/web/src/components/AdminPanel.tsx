@@ -301,6 +301,30 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     setBusy(false);
   }
 
+  // Appwerk's own account numbers. Loaded when the ads area is looked at, not with the overview:
+  // they change once a year and an overview that waits on them helps nobody.
+  const [adNumbers, setAdNumbers] = useState<Record<string, { value: string; source: string }> | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const r = await call<{ settings: Record<string, { value: string; source: string }> }>("/admin/ads/settings");
+      if (alive && r) setAdNumbers(r.settings);
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [call]);
+
+  async function saveAdNumbers(values: Record<string, string>) {
+    const r = await call<{ settings: Record<string, { value: string; source: string }> }>("/admin/ads/settings", {
+      method: "POST",
+      body: JSON.stringify(values),
+    });
+    if (r) setAdNumbers(r.settings);
+  }
+
   async function saveGuardLimits(max_campaign_eur: number, max_daily_total_eur: number) {
     setBusy(true);
     const r = await call<{ limits: Omit<Overview["ads_guard"], "running"> }>("/admin/ads/limits", { method: "POST", body: JSON.stringify({ max_campaign_eur, max_daily_total_eur }) });
@@ -556,6 +580,43 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
               {overview.ads_guard.killed ? a.guardUnkill : a.guardKill}
             </button>
           </div>
+
+          {adNumbers && (
+            <div className="card" style={{ marginBottom: 26 }}>
+              <span className="cat">{a.adsSettings}</span>
+              <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.adsSettingsHint}</p>
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const f = new FormData(e.currentTarget);
+                  void saveAdNumbers(Object.fromEntries([...f.entries()].map(([k, v]) => [k, String(v)])));
+                }}
+              >
+                {(
+                  [
+                    ["meta_business_id", a.metaBusiness],
+                    ["meta_ad_account_id", a.metaAccount],
+                    ["meta_page_id", a.metaPage],
+                    ["google_manager_id", a.googleManager],
+                    ["google_customer_id", a.googleCustomer],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label key={key} className="small" style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
+                    <span style={{ minWidth: 190 }}>{label}</span>
+                    <input name={key} defaultValue={adNumbers[key]?.value ?? ""} style={{ width: 190 }} />
+                    <span className="muted">
+                      {adNumbers[key]?.source === "panel"
+                        ? a.fromPanel
+                        : adNumbers[key]?.source === "env"
+                          ? a.fromEnv
+                          : a.notSet}
+                    </span>
+                  </label>
+                ))}
+                <button className="btn btn-ghost btn-sm" disabled={busy} style={{ marginTop: 6 }}>{a.guardSave}</button>
+              </form>
+            </div>
+          )}
 
           <div className="card" style={{ marginBottom: 26 }}>
             <span className="cat">{a.adsModeTile}</span>

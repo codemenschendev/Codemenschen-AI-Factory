@@ -126,6 +126,9 @@ Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function ()
     Route::post('/ads/kill', [ValidationController::class, 'kill']);
     Route::post('/ads/limits', [ValidationController::class, 'limits']);
     Route::post('/ads/platform', [ValidationController::class, 'platform']);
+    // Appwerk's own ad account numbers, editable here instead of in the server env.
+    Route::get('/ads/settings', [ValidationController::class, 'settings']);
+    Route::post('/ads/settings', [ValidationController::class, 'saveSettings']);
     Route::get('/projects/{project}/messages', [AdminController::class, 'changeMessages']);
     Route::post('/projects/{project}/messages', [AdminController::class, 'sendChangeMessage']);
     Route::get('/projects/{project}/messages/{message}/images/{n}', [AdminController::class, 'changeMessageImage'])->whereNumber('n');

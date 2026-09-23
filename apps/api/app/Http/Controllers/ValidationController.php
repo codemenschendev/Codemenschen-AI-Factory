@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ads\AdSettings;
 use App\Domain\Ads\Preflight;
 use App\Domain\Ads\PublisherRegistry;
 use App\Domain\Ads\SpendGuard;
@@ -9,6 +10,8 @@ use App\Domain\Analytics\ValidationReport;
 use App\Jobs\PublishCampaign;
 use App\Models\MarketingCampaign;
 use App\Models\Prototype;
+use App\Models\Setting;
+use App\Services\Notify;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -106,7 +109,7 @@ class ValidationController extends Controller
         }
         $registry->for($campaign->platform)->activate($campaign);
         $campaign->update(['platform_status' => 'active', 'activated_at' => now(), 'stopped_reason' => null]);
-        app(\App\Services\Notify::class)->money("Ad #{$campaign->id} started", sprintf('%s started ad campaign #%d (%s): up to %s EUR, until %s.',
+        app(Notify::class)->money("Ad #{$campaign->id} started", sprintf('%s started ad campaign #%d (%s): up to %s EUR, until %s.',
             $request->user()->email, $campaign->id, $campaign->platform, $campaign->spend_cap_eur ?? '?', $campaign->ends_at?->toDateString() ?? '?'));
 
         return response()->json(self::row($campaign->fresh()));
@@ -143,10 +146,30 @@ class ValidationController extends Controller
     {
         $data = $request->validate(['max_campaign_eur' => 'required|integer|min:20|max:10000',
             'max_daily_total_eur' => 'required|integer|min:5|max:5000']);
-        \App\Models\Setting::write(SpendGuard::MAX_CAMPAIGN, $data['max_campaign_eur'], $request->user()->email);
-        \App\Models\Setting::write(SpendGuard::MAX_DAILY_TOTAL, $data['max_daily_total_eur'], $request->user()->email);
+        Setting::write(SpendGuard::MAX_CAMPAIGN, $data['max_campaign_eur'], $request->user()->email);
+        Setting::write(SpendGuard::MAX_DAILY_TOTAL, $data['max_daily_total_eur'], $request->user()->email);
 
         return response()->json(['limits' => $guard->limits()]);
+    }
+
+    /** Appwerk's own account numbers, and where each value comes from. */
+    public function settings(): JsonResponse
+    {
+        return response()->json(['settings' => AdSettings::all()]);
+    }
+
+    /**
+     * Sets them. Account numbers only: a token or a key file is never editable from a browser,
+     * and an empty field clears that number back to whatever the server env holds.
+     */
+    public function saveSettings(Request $request): JsonResponse
+    {
+        $rules = [];
+        foreach (array_keys(AdSettings::FIELDS) as $field) {
+            $rules[$field] = 'nullable|string|max:40';
+        }
+
+        return response()->json(['settings' => AdSettings::put($request->validate($rules), $request->user()->email)]);
     }
 
     /** @return array{0:?Prototype,1:?Prototype} the landing page and the ad */

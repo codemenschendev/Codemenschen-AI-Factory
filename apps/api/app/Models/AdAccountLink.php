@@ -14,7 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  */
 class AdAccountLink extends Model
 {
-    protected $fillable = ['customer_id', 'platform', 'external_id', 'status', 'name',
+    protected $fillable = ['customer_id', 'platform', 'external_id', 'page_id', 'page_name', 'status', 'name',
         'manager_link_id', 'requested_at', 'activated_at', 'checked_at', 'error'];
 
     protected function casts(): array

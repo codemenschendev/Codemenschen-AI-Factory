@@ -8,6 +8,8 @@ interface Account {
   id: number;
   platform: "google" | "meta";
   external_id: string;
+  page_id: string | null;
+  page_name: string | null;
   status: "pending" | "active" | "refused" | "removed";
   name: string | null;
   checked_at: string | null;
@@ -33,6 +35,8 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
   const [ours, setOurs] = useState<Ours | null>(null);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [drafts, setDrafts] = useState<Record<string, string>>({ google: "", meta: "" });
+  // Meta publishes an ad from a page, so a Meta account without one cannot run anything.
+  const [page, setPage] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -57,10 +61,15 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
       const r = await api<{ account: Account }>("/me/ad-accounts", {
         method: "POST",
         token,
-        body: JSON.stringify({ platform, external_id: drafts[platform] }),
+        body: JSON.stringify({
+          platform,
+          external_id: drafts[platform],
+          ...(platform === "meta" ? { page_id: page } : {}),
+        }),
       });
       setAccounts((prev) => [...prev.filter((x) => x.id !== r.account.id), r.account]);
       setDrafts((p) => ({ ...p, [platform]: "" }));
+      if (platform === "meta") setPage("");
     } catch (e) {
       fail(platform, e);
     }
@@ -120,6 +129,11 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
                     <span className="badge badge-type">{label(account.status)}</span>
                   </div>
                   {account.name && <p className="small muted" style={{ marginTop: 2 }}>{account.name}</p>}
+                  {account.platform === "meta" && (
+                    <p className="small muted" style={{ marginTop: 2 }}>
+                      {a.pageLabel}: {account.page_name ?? account.page_id ?? a.pageMissing}
+                    </p>
+                  )}
                   {account.status === "pending" && <p className="note" style={{ marginTop: 6 }}>{a.pendingHint}</p>}
                   {account.error && <p className="note" style={{ marginTop: 6 }}>{account.error}</p>}
                   <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
@@ -162,6 +176,29 @@ export function AdAccountsPanel({ d, token }: { d: Dict; token: string }) {
                   </button>
                 </div>
                 <p className="small muted" style={{ marginTop: 4 }}>{text.hint}</p>
+                {platform === "meta" && (
+                  <>
+                    <label className="small muted" htmlFor="adacc-page" style={{ display: "block", marginTop: 8 }}>
+                      {a.pageLabel}
+                    </label>
+                    <input
+                      id="adacc-page"
+                      value={page}
+                      onChange={(e) => setPage(e.target.value)}
+                      style={{
+                        width: "100%",
+                        marginTop: 4,
+                        padding: "9px 10px",
+                        fontSize: 14.5,
+                        border: "1px solid var(--border)",
+                        borderRadius: "var(--radius)",
+                        background: "var(--surface)",
+                        fontFamily: "var(--font-body)",
+                      }}
+                    />
+                    <p className="small muted" style={{ marginTop: 4 }}>{a.pageHint}</p>
+                  </>
+                )}
                 {errors[platform] && <p className="note" style={{ marginTop: 6 }}>{errors[platform]}</p>}
               </form>
 

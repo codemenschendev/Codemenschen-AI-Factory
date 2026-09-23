@@ -125,6 +125,12 @@ class GoogleAdsPublisher implements Publisher
             : ' | this sign-in reaches '.implode(', ', $ids).'. Put one of those in GOOGLE_ADS_CUSTOMER_ID.';
     }
 
+    /** The account a resource belongs to: customers/1234567890/campaigns/55 is that account's. */
+    private static function customerOf(string $resource): string
+    {
+        return preg_match('~^customers/(\d+)/~', $resource, $m) === 1 ? $m[1] : '';
+    }
+
     /** 1234567890 as 123-456-7890, the way Google Ads shows a customer id on screen. */
     private static function dashed(string $id): string
     {
@@ -230,7 +236,11 @@ class GoogleAdsPublisher implements Publisher
     {
         $this->assertConfigured();
 
-        $cid = $this->cfg('customer_id');
+        // Whose account this runs on. A customer who connected their own account runs on it, and
+        // it is reached through our manager account (owner's decision 2026-09-23).
+        $target = AdTarget::for($campaign, 'google');
+        $cid = $target['account'];
+        $login = $target['login'];
         $token = $this->accessToken();
         // A campaign budget on Google is per DAY. It used to be sent the monthly amount, which
         // would have let a campaign spend thirty months' budget in a month.
@@ -276,7 +286,7 @@ class GoogleAdsPublisher implements Publisher
         ];
 
         $res = Http::withToken($token)
-            ->withHeaders($this->headers($cid))
+            ->withHeaders($this->headers($cid, $login))
             ->timeout(60)
             ->post($this->endpoint("customers/{$cid}/googleAds:mutate"), ['mutateOperations' => $ops]);
 
@@ -312,9 +322,10 @@ class GoogleAdsPublisher implements Publisher
         if (! $resource) {
             throw new RuntimeException('Google: campaign has not been published.');
         }
-        $cid = $this->cfg('customer_id');
-        $read = function (string $during) use ($cid, $resource): array {
-            $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid))->timeout(30)
+        $cid = self::customerOf($resource) ?: $this->cfg('customer_id');
+        $login = AdTarget::for($campaign, 'google')['login'];
+        $read = function (string $during) use ($cid, $login, $resource): array {
+            $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid, $login))->timeout(30)
                 ->post($this->endpoint("customers/{$cid}/googleAds:search"), ['query' => "SELECT metrics.cost_micros, metrics.impressions, metrics.clicks FROM campaign WHERE campaign.resource_name = '{$resource}'".$during]);
             if (! $res->successful()) {
                 throw new RuntimeException('Google Ads API: '.mb_substr((string) $res->body(), 0, 300));
@@ -339,10 +350,13 @@ class GoogleAdsPublisher implements Publisher
         if (! $resource) {
             throw new RuntimeException('Google: campaign has not been published.');
         }
-        $cid = $this->cfg('customer_id');
+        // The account is read out of the resource name the campaign was published under, so a
+        // customer's campaign is always paused on the customer's account, even if their link was
+        // removed since.
+        $cid = self::customerOf($resource) ?: $this->cfg('customer_id');
 
         $res = Http::withToken($this->accessToken())
-            ->withHeaders($this->headers($cid))
+            ->withHeaders($this->headers($cid, AdTarget::for($campaign, 'google')['login']))
             ->timeout(30)
             ->post($this->endpoint("customers/{$cid}/campaigns:mutate"), [
                 'operations' => [['updateMask' => 'status', 'update' => ['resourceName' => $resource, 'status' => $status]]],
@@ -468,9 +482,9 @@ class GoogleAdsPublisher implements Publisher
     }
 
     /** login-customer-id always; developer-token only while one is still configured (Google ignores it). */
-    private function headers(string $cid): array
+    private function headers(string $cid, ?string $login = null): array
     {
-        $headers = ['login-customer-id' => $this->cfg('login_customer_id') ?: $cid];
+        $headers = ['login-customer-id' => $login ?: ($this->cfg('login_customer_id') ?: $cid)];
         if ($this->cfg('developer_token') !== '') {
             $headers['developer-token'] = $this->cfg('developer_token');
         }
@@ -485,9 +499,14 @@ class GoogleAdsPublisher implements Publisher
         return "https://googleads.googleapis.com/{$v}/{$path}";
     }
 
+    /** Account numbers an admin may set in the panel win over the server env; secrets never are. */
+    private const IN_PANEL = ['customer_id' => 'google_customer_id', 'manager_id' => 'google_manager_id'];
+
     private function cfg(string $k): string
     {
-        return (string) config("services.ads.google.$k");
+        return isset(self::IN_PANEL[$k])
+            ? AdSettings::get(self::IN_PANEL[$k])
+            : (string) config("services.ads.google.$k");
     }
 
     private function assertConfigured(): void
