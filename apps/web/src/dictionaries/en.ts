@@ -463,6 +463,36 @@ export const en = {
       devices: "Devices",
       empty: "No data yet.",
     },
+    conversions: {
+      intro: "Results reported back to the ad platform: requests (a quote or a prototype) and paid orders. Only from visitors who came from an ad and allowed ad measurement. This is how Meta and Google learn which ads bring customers.",
+      ready: "Ready",
+      notReady: "Not set up",
+      missing: "Missing: {x}",
+      sentSummary: "{l} requests, {p} purchases reported · {eur}",
+      setupTitle: "Where results go",
+      setupHint: "The numbers from Events Manager (Meta) and from Google Ads under Goals, Conversions. Leave empty to fall back to the server value.",
+      fields: {
+        meta_pixel_id: "Meta dataset id (pixel)",
+        google_conversion_lead: "Google conversion action for requests",
+        google_conversion_purchase: "Google conversion action for purchases",
+      },
+      tokenHint: "The Meta access token (META_CAPI_TOKEN) lives on the server only and cannot be set here.",
+      save: "Save and send what is waiting",
+      saved: "Saved. What was waiting is being sent now.",
+      latest: "Latest reports",
+      retry: "Send waiting again",
+      retried: "{n} reports are being sent again.",
+      when: "When",
+      platform: "Platform",
+      event: "Result",
+      value: "Value",
+      status: "Status",
+      detail: "Sent or reason",
+      events: { lead: "Request", purchase: "Purchase" },
+      statuses: { pending: "waiting", sent: "reported", failed: "refused", expired: "too old" },
+      attemptsN: "{n} tries",
+      empty: "Nothing reported yet. It starts when someone comes from an ad, agrees, and sends a request.",
+    },
     traffic: {
       title: "Traffic",
       period: "Period",
@@ -702,6 +732,7 @@ export const en = {
     signOut: "Sign out",
     backToSite: "Back to the site",
     tabs: {
+      conversions: "Conversions",
       ownAds: "Appwerk campaigns",
       clientAds: "Client campaigns",
       overview: "Overview",
@@ -1224,7 +1255,7 @@ export const en = {
     },
     privacy: {
       title: "Privacy",
-      updated: "Last updated: 15 September 2026",
+      updated: "Last updated: 23 September 2026",
       lede: "What data Appwerk processes, why, for how long, and who else sees it.",
       sections: [
         {
@@ -1252,6 +1283,7 @@ export const en = {
           h: "4. What is stored in your browser",
           p: [
             "A cookie remembers your language. After you sign in, your sign-in key is kept in the browser's local storage, and so is the list of your free prototypes. All of this is needed for the site to work and is not used for analysis (§ 165(3) TKG 2021). You can delete it in your browser at any time.",
+            "If you came from an ad, the browser remembers your choice about ad measurement, and only if you agreed also the click id (see section 10).",
           ],
         },
         {
@@ -1289,9 +1321,12 @@ export const en = {
           ],
         },
         {
-          h: "10. Advertising for Appwerk",
+          h: "10. Advertising for Appwerk and ad measurement",
           p: [
-            "We advertise Appwerk on Google and Meta. Our website has no pixels or tracking code from these providers. If you arrive through an ad, we only note that the visit came from an ad (see section 3). What Google and Meta process when showing and clicking ads is covered by their own privacy policies.",
+            "We advertise Appwerk on Google and Meta. Our website has no pixels or tracking codes from these providers.",
+            "If you arrive from an ad, the link carries a click id (gclid for Google, fbclid for Meta). We then ask whether we may tell the platform what happens next. Only if you agree do we keep the click id for up to 90 days in your browser and with your quote. If you then ask for a quote or a prototype or pay for an order, we report it to Google or Meta: with the click id, the time, IP address and browser details, for an order the amount, and if we have it your e-mail address as a checksum (SHA-256), never in plain text. This teaches the platform which ads work.",
+            "The legal basis is your consent (Art. 6(1)(a) GDPR, § 165(3) TKG 2021). If you decline, nothing is reported and nothing is kept except your choice. You can withdraw your consent at any time under \"Ad measurement\" at the bottom of every page. We delete the matching data on our side once the report is sent, at the latest after 90 days.",
+            "The recipients are Google Ireland Ltd. and Meta Platforms Ireland Ltd. Both process the report under their own privacy policies, also in the USA, on the basis of the EU-US Data Privacy Framework.",
           ],
         },
         {
@@ -1331,6 +1366,16 @@ export const en = {
         },
       ],
     },
+  },
+  adConsent: {
+    title: "Measure our ads?",
+    text: "You came here from an ad. May we tell Google or Meta when you then ask for a quote or a prototype, or place an order? That teaches the platform which ads work. Without your yes, nothing is reported.",
+    more: "More in the privacy policy.",
+    allow: "Allow",
+    decline: "Decline",
+    nowYes: "Currently allowed.",
+    nowNo: "Currently declined.",
+    link: "Ad measurement",
   },
   footer: {
     legal: "Terms, withdrawal information and privacy are online as a plain-language draft, with counsel review under way.",

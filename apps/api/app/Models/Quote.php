@@ -15,5 +15,6 @@ class Quote extends Model
         'features' => 'array',
         'breakdown' => 'array',
         'valid_until' => 'datetime',
+        'ad_click' => 'array',
     ];
 }

@@ -2,10 +2,12 @@
 
 namespace App\Services;
 
+use App\Domain\Ads\Conversions;
 use App\Domain\Analytics\Analytics;
 use App\Models\Order;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class OrderFulfillment
 {
@@ -20,6 +22,15 @@ class OrderFulfillment
         app(Analytics::class)->record('order_paid', null, ['quote_id' => $order->quote_id, 'order_id' => $order->id, 'customer_id' => $order->customer_id, 'locale' => $order->locale], [
             'amount_eur' => $amountEur, 'listing' => $order->quote?->listing_slug,
         ]);
+        // Reported to the ad platform only when the quote carries a consented ad click. A failure
+        // here must never stand between a payment and the project it paid for.
+        try {
+            if ($order->quote !== null) {
+                app(Conversions::class)->purchase($order->quote, (float) $amountEur, $order->customer?->email);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('conversion.purchase_failed', ['order' => $order->id, 'error' => mb_substr($e->getMessage(), 0, 200)]);
+        }
 
         $project = DB::transaction(function () use ($order, $paymentIntent, $amountEur, $rawEvent) {
             $order->update(['status' => 'paid']);

@@ -463,6 +463,36 @@ export const de = {
       devices: "Geräte",
       empty: "Noch keine Daten.",
     },
+    conversions: {
+      intro: "Ergebnisse, die an die Werbeplattform zurückgemeldet werden: Anfragen (Angebot oder Prototyp) und bezahlte Bestellungen. Nur von Besuchern, die über eine Anzeige kamen und der Werbe-Messung zugestimmt haben. So lernen Meta und Google, welche Anzeigen Kunden bringen.",
+      ready: "Bereit",
+      notReady: "Nicht eingerichtet",
+      missing: "Fehlt: {x}",
+      sentSummary: "{l} Anfragen, {p} Käufe gemeldet · {eur}",
+      setupTitle: "Wohin gemeldet wird",
+      setupHint: "Die Nummern aus dem Events Manager (Meta) und aus Google Ads unter Ziele, Conversions. Leer lassen setzt auf den Wert vom Server zurück.",
+      fields: {
+        meta_pixel_id: "Meta Datensatz ID (Pixel)",
+        google_conversion_lead: "Google Conversion-Aktion für Anfragen",
+        google_conversion_purchase: "Google Conversion-Aktion für Käufe",
+      },
+      tokenHint: "Der Zugriffsschlüssel für Meta (META_CAPI_TOKEN) liegt nur auf dem Server und ist hier nicht einstellbar.",
+      save: "Speichern und Wartendes senden",
+      saved: "Gespeichert. Was gewartet hat, wird jetzt gesendet.",
+      latest: "Letzte Meldungen",
+      retry: "Wartendes erneut senden",
+      retried: "{n} Meldungen werden erneut gesendet.",
+      when: "Wann",
+      platform: "Plattform",
+      event: "Ergebnis",
+      value: "Wert",
+      status: "Status",
+      detail: "Gesendet oder Grund",
+      events: { lead: "Anfrage", purchase: "Kauf" },
+      statuses: { pending: "wartet", sent: "gemeldet", failed: "abgelehnt", expired: "zu alt" },
+      attemptsN: "{n} Versuche",
+      empty: "Noch nichts gemeldet. Das beginnt, sobald jemand über eine Anzeige kommt, zustimmt und anfragt.",
+    },
     traffic: {
       title: "Traffic",
       period: "Zeitraum",
@@ -702,6 +732,7 @@ export const de = {
     signOut: "Abmelden",
     backToSite: "Zurück zur Website",
     tabs: {
+      conversions: "Conversions",
       ownAds: "Appwerk-Kampagnen",
       clientAds: "Kunden-Kampagnen",
       overview: "Überblick",
@@ -1226,7 +1257,7 @@ export const de = {
     },
     privacy: {
       title: "Datenschutz",
-      updated: "Stand: 15. September 2026",
+      updated: "Stand: 23. September 2026",
       lede: "Welche Daten Appwerk verarbeitet, wofür, wie lange und wer sie noch sieht.",
       sections: [
         {
@@ -1254,6 +1285,7 @@ export const de = {
           h: "4. Was im Browser gespeichert wird",
           p: [
             "Ein Cookie merkt sich deine Sprache. Nach der Anmeldung liegt dein Anmeldeschlüssel im lokalen Speicher des Browsers, und die Liste deiner kostenlosen Prototypen ebenfalls. Das alles ist nötig, damit die Seite funktioniert, und wird nicht zur Analyse verwendet (§ 165 Abs. 3 TKG 2021). Du kannst es jederzeit im Browser löschen.",
+            "Kamst du über eine Anzeige, merkt sich der Browser deine Entscheidung zur Werbe-Messung, und nur bei Zustimmung auch die Klick-Kennung (siehe Punkt 10).",
           ],
         },
         {
@@ -1291,9 +1323,12 @@ export const de = {
           ],
         },
         {
-          h: "10. Werbung für Appwerk",
+          h: "10. Werbung für Appwerk und Werbe-Messung",
           p: [
-            "Wir werben für Appwerk bei Google und Meta. Auf unserer Website gibt es keine Pixel oder Tracking-Codes dieser Anbieter. Kommst du über eine Anzeige, merken wir uns nur, dass der Besuch von einer Anzeige kam (siehe Punkt 3). Was Google und Meta beim Anzeigen und Klicken selbst verarbeiten, regeln deren Datenschutzerklärungen.",
+            "Wir werben für Appwerk bei Google und Meta. Auf unserer Website gibt es keine Pixel oder Tracking-Codes dieser Anbieter.",
+            "Kommst du über eine Anzeige, enthält der Link eine Klick-Kennung (gclid bei Google, fbclid bei Meta). Wir fragen dich dann, ob wir der Plattform melden dürfen, was danach passiert. Nur wenn du zustimmst, speichern wir die Klick-Kennung bis zu 90 Tage in deinem Browser und mit deinem Angebot. Fragst du danach ein Angebot oder einen Prototyp an oder bezahlst du eine Bestellung, melden wir das an Google oder Meta: mit der Klick-Kennung, dem Zeitpunkt, IP-Adresse und Browserangabe, bei einer Bestellung dem Betrag, und falls vorhanden deiner E-Mail-Adresse als Prüfsumme (SHA-256), nie im Klartext. Daraus lernt die Plattform, welche Anzeigen wirken.",
+            "Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 165 Abs. 3 TKG 2021). Lehnst du ab, wird nichts gemeldet und nichts gespeichert außer deiner Entscheidung. Du kannst die Einwilligung jederzeit unten auf jeder Seite unter „Werbe-Messung“ widerrufen. Die Daten für den Abgleich löschen wir bei uns, sobald die Meldung verschickt ist, spätestens nach 90 Tagen.",
+            "Empfänger sind Google Ireland Ltd. und Meta Platforms Ireland Ltd. Beide verarbeiten die Meldung nach ihren eigenen Datenschutzerklärungen, auch in den USA, auf Grundlage des EU-US Data Privacy Framework.",
           ],
         },
         {
@@ -1333,6 +1368,16 @@ export const de = {
         },
       ],
     },
+  },
+  adConsent: {
+    title: "Werbung messen?",
+    text: "Du kommst über eine Anzeige. Dürfen wir Google oder Meta melden, wenn du danach ein Angebot oder einen Prototyp anfragst oder bestellst? So lernt die Plattform, welche Anzeigen wirken. Ohne dein Ja wird nichts gemeldet.",
+    more: "Mehr dazu im Datenschutz.",
+    allow: "Erlauben",
+    decline: "Ablehnen",
+    nowYes: "Derzeit erlaubt.",
+    nowNo: "Derzeit abgelehnt.",
+    link: "Werbe-Messung",
   },
   footer: {
     legal: "Bedingungen, Widerrufsbelehrung und Datenschutz stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft.",

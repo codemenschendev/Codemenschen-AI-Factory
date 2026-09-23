@@ -1,4 +1,5 @@
 /** Factory API client — the browser talks to api.appwerk.codemenschen.at. */
+import { adClickHeader } from "./adConsent";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -11,10 +12,14 @@ export class ApiError extends Error {
   }
 }
 
+/** The two requests a lead is counted on carry the ad click, when the visitor allowed it. */
+const LEAD_PATHS = ["/quotes", "/prototypes"];
+
 export async function api<T>(
   path: string,
   init?: RequestInit & { token?: string },
 ): Promise<T> {
+  const click = init?.method === "POST" && LEAD_PATHS.includes(path) ? adClickHeader() : null;
   const res = await fetch(`${API_BASE}/api${path}`, {
     ...init,
     headers: {
@@ -22,6 +27,7 @@ export async function api<T>(
       ...(init?.body instanceof FormData ? {} : { "content-type": "application/json" }),
       accept: "application/json",
       ...(init?.token ? { authorization: `Bearer ${init.token}` } : {}),
+      ...(click ? { "x-ad-click": click } : {}),
       ...init?.headers,
     },
   });
