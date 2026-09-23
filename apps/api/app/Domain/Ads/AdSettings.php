@@ -28,6 +28,8 @@ class AdSettings
         'meta_pixel_id' => 'services.ads.meta.pixel_id',
         'google_conversion_lead' => 'services.ads.google.conversion_lead',
         'google_conversion_purchase' => 'services.ads.google.conversion_purchase',
+        // The storefront's Tag Manager container (GTM-XXXXXXX). Public by nature: it is in the page.
+        'gtm_id' => 'services.analytics.gtm_id',
     ];
 
     private const KEY = 'ads.appwerk';
@@ -73,7 +75,7 @@ class AdSettings
             if (! array_key_exists($field, self::FIELDS)) {
                 continue;
             }
-            $clean = preg_replace('~[^A-Za-z0-9_]~', '', (string) $value) ?? '';
+            $clean = preg_replace('~[^A-Za-z0-9_\-]~', '', (string) $value) ?? '';
             if ($clean === '') {
                 unset($now[$field]);
             } else {

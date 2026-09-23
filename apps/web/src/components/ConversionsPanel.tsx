@@ -27,7 +27,7 @@ interface Report {
 
 type Settings = Record<string, { value: string; source: string }>;
 
-const IDS = ["meta_pixel_id", "google_conversion_lead", "google_conversion_purchase"] as const;
+const IDS = ["gtm_id", "meta_pixel_id", "google_conversion_lead", "google_conversion_purchase"] as const;
 
 /**
  * Conversion tracking: whether Meta and Google are ready to take results, and what was reported.
@@ -150,7 +150,7 @@ export function ConversionsPanel({ token, locale, d }: { token: string; locale: 
           {IDS.map((key) => (
             <label key={key} className="small" style={{ display: "flex", flexWrap: "wrap", gap: "4px 10px", alignItems: "center", marginBottom: 8 }}>
               <span style={{ flex: "1 0 220px" }}>{c.fields[key]}</span>
-              <input name={key} defaultValue={settings[key]?.value ?? ""} inputMode="numeric" style={{ width: 200, maxWidth: "100%" }} />
+              <input name={key} defaultValue={settings[key]?.value ?? ""} style={{ width: 200, maxWidth: "100%" }} />
               <span className="muted">{settings[key]?.source === "panel" ? d.admin.fromPanel : settings[key]?.source === "env" ? d.admin.fromEnv : d.admin.notSet}</span>
             </label>
           ))}

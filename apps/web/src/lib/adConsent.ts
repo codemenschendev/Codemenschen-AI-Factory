@@ -1,18 +1,23 @@
 /**
- * Ad measurement consent and the ad click it covers (2026-09-23).
+ * Consent on the storefront (2026-09-23): two purposes, each off until the visitor says yes.
  *
- * A visitor who arrives from an ad (a gclid or fbclid in the link) is asked once whether we may
- * report to that platform what happens next. Only a yes keeps the click, in this browser, for up
- * to 90 days, and only then does it travel with a quote or prototype request in the X-Ad-Click
- * header. A no is remembered so the question is not asked again; the click is dropped.
- * Every read and write is guarded: private windows and blocked storage just mean no measurement.
+ * - stats: Google Analytics, through Google Tag Manager.
+ * - ads: ad measurement. Tag Manager may load Google Ads and Meta tags, and a visitor who came from
+ *   an ad has the click (gclid or fbclid) kept, for up to 90 days, so the API can report a request
+ *   or an order back to that platform (X-Ad-Click header).
+ *
+ * The choice is kept in this browser so the question is asked once. Every read and write is
+ * guarded: private windows and blocked storage just mean nothing is measured.
  */
 
-const CHOICE = "appwerk.adMeasure";
+const CONSENT = "appwerk.consent";
+const LEGACY = "appwerk.adMeasure"; // the first version asked about ads only
 const CLICK = "appwerk.adClick";
 const MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
-export const OPEN_EVENT = "appwerk:ad-consent";
+export const OPEN_EVENT = "appwerk:consent-open";
+export const CHANGE_EVENT = "appwerk:consent-change";
 
+export type Consent = { stats: boolean; ads: boolean };
 type Click = { gclid?: string; fbclid?: string; ts: number; url: string };
 
 let arrived: Click | null | undefined;
@@ -30,12 +35,12 @@ function write(key: string, value: string | null): void {
     if (value === null) window.localStorage.removeItem(key);
     else window.localStorage.setItem(key, value);
   } catch {
-    /* storage blocked: nothing is kept, nothing is reported */
+    /* storage blocked: nothing is kept, nothing is measured */
   }
 }
 
 /** The click in the link this page was opened with, read once per page load. */
-function arrivedClick(): Click | null {
+export function arrivedClick(): Click | null {
   if (arrived !== undefined) return arrived;
   arrived = null;
   try {
@@ -51,32 +56,37 @@ function arrivedClick(): Click | null {
   return arrived;
 }
 
-export function choice(): "yes" | "no" | null {
-  const v = read(CHOICE);
-  return v === "yes" || v === "no" ? v : null;
+/** The visitor's choice, or null when they have not been asked yet. */
+export function consent(): Consent | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const v = JSON.parse(read(CONSENT) ?? "null") as Partial<Consent> | null;
+    if (v && typeof v.stats === "boolean" && typeof v.ads === "boolean") return { stats: v.stats, ads: v.ads };
+  } catch {
+    /* unreadable: ask again */
+  }
+  const legacy = read(LEGACY);
+  return legacy === "yes" || legacy === "no" ? { stats: false, ads: legacy === "yes" } : null;
 }
 
-/** True when this visitor came from an ad and has not been asked yet. */
-export function shouldAsk(): boolean {
-  return typeof window !== "undefined" && arrivedClick() !== null && choice() === null;
-}
-
-export function decide(value: "yes" | "no"): void {
-  write(CHOICE, value);
+export function decide(value: Consent): void {
+  write(CONSENT, JSON.stringify(value));
+  write(LEGACY, null);
   const click = arrivedClick();
-  if (value === "yes" && click) write(CLICK, JSON.stringify(click));
-  if (value === "no") write(CLICK, null);
+  if (value.ads && click) write(CLICK, JSON.stringify(click));
+  if (!value.ads) write(CLICK, null);
+  window.dispatchEvent(new CustomEvent(CHANGE_EVENT, { detail: value }));
 }
 
-/** A yes keeps the newest ad click; called on every page load so a second ad click replaces the first. */
+/** A yes to ads keeps the newest ad click; called on every page load so a second click replaces the first. */
 export function keepArrivedClick(): void {
   const click = arrivedClick();
-  if (click && choice() === "yes") write(CLICK, JSON.stringify(click));
+  if (click && consent()?.ads) write(CLICK, JSON.stringify(click));
 }
 
 /** The header value for the API, or null: no consent, no click, or the click is too old. */
 export function adClickHeader(): string | null {
-  if (typeof window === "undefined" || choice() !== "yes") return null;
+  if (typeof window === "undefined" || !consent()?.ads) return null;
   try {
     const click = JSON.parse(read(CLICK) ?? "null") as Click | null;
     if (!click || Date.now() - click.ts > MAX_AGE_MS) return null;

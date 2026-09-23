@@ -472,6 +472,7 @@ export const de = {
       setupTitle: "Wohin gemeldet wird",
       setupHint: "Die Nummern aus dem Events Manager (Meta) und aus Google Ads unter Ziele, Conversions. Leer lassen setzt auf den Wert vom Server zurück.",
       fields: {
+        gtm_id: "Google Tag Manager Container (GTM-...)",
         meta_pixel_id: "Meta Datensatz ID (Pixel)",
         google_conversion_lead: "Google Conversion-Aktion für Anfragen",
         google_conversion_purchase: "Google Conversion-Aktion für Käufe",
@@ -1285,7 +1286,7 @@ export const de = {
           h: "4. Was im Browser gespeichert wird",
           p: [
             "Ein Cookie merkt sich deine Sprache. Nach der Anmeldung liegt dein Anmeldeschlüssel im lokalen Speicher des Browsers, und die Liste deiner kostenlosen Prototypen ebenfalls. Das alles ist nötig, damit die Seite funktioniert, und wird nicht zur Analyse verwendet (§ 165 Abs. 3 TKG 2021). Du kannst es jederzeit im Browser löschen.",
-            "Kamst du über eine Anzeige, merkt sich der Browser deine Entscheidung zur Werbe-Messung, und nur bei Zustimmung auch die Klick-Kennung (siehe Punkt 10).",
+            "Der Browser merkt sich deine Entscheidung zu Statistik und Werbe-Messung. Nur wenn du zustimmst, kommen Cookies von Google Analytics, Google Ads oder Meta dazu und bei Werbe-Messung die Klick-Kennung einer Anzeige (siehe Punkt 10).",
           ],
         },
         {
@@ -1323,12 +1324,13 @@ export const de = {
           ],
         },
         {
-          h: "10. Werbung für Appwerk und Werbe-Messung",
+          h: "10. Google Analytics, Werbung und Werbe-Messung",
           p: [
-            "Wir werben für Appwerk bei Google und Meta. Auf unserer Website gibt es keine Pixel oder Tracking-Codes dieser Anbieter.",
-            "Kommst du über eine Anzeige, enthält der Link eine Klick-Kennung (gclid bei Google, fbclid bei Meta). Wir fragen dich dann, ob wir der Plattform melden dürfen, was danach passiert. Nur wenn du zustimmst, speichern wir die Klick-Kennung bis zu 90 Tage in deinem Browser und mit deinem Angebot. Fragst du danach ein Angebot oder einen Prototyp an oder bezahlst du eine Bestellung, melden wir das an Google oder Meta: mit der Klick-Kennung, dem Zeitpunkt, IP-Adresse und Browserangabe, bei einer Bestellung dem Betrag, und falls vorhanden deiner E-Mail-Adresse als Prüfsumme (SHA-256), nie im Klartext. Daraus lernt die Plattform, welche Anzeigen wirken.",
-            "Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 165 Abs. 3 TKG 2021). Lehnst du ab, wird nichts gemeldet und nichts gespeichert außer deiner Entscheidung. Du kannst die Einwilligung jederzeit unten auf jeder Seite unter „Werbe-Messung“ widerrufen. Die Daten für den Abgleich löschen wir bei uns, sobald die Meldung verschickt ist, spätestens nach 90 Tagen.",
-            "Empfänger sind Google Ireland Ltd. und Meta Platforms Ireland Ltd. Beide verarbeiten die Meldung nach ihren eigenen Datenschutzerklärungen, auch in den USA, auf Grundlage des EU-US Data Privacy Framework.",
+            "Wir werben für Appwerk bei Google und Meta. Beim ersten Besuch fragen wir, ob du Statistik und Werbe-Messung erlaubst. Beides ist aus, bis du zustimmst, und ohne Zustimmung lädt die Seite nichts von Google oder Meta.",
+            "Statistik: Mit deiner Zustimmung laden wir den Google Tag Manager und darüber Google Analytics (Google Ireland Ltd.). Google Analytics setzt Cookies (_ga) und erfasst, welche Seiten du aufrufst, woher du kommst, Gerät, Browser und ungefähren Ort. Die IP-Adresse wird dabei gekürzt. Daten werden nach 14 Monaten gelöscht.",
+            "Werbe-Messung: Mit deiner Zustimmung dürfen Tags von Google Ads und Meta (Meta Platforms Ireland Ltd.) Cookies setzen und erfahren, ob dein Besuch über eine Anzeige zu einer Anfrage oder Bestellung führt. Kommst du über eine Anzeige, enthält der Link eine Klick-Kennung (gclid oder fbclid). Diese speichern wir bis zu 90 Tage in deinem Browser und mit deinem Angebot. Fragst du ein Angebot oder einen Prototyp an oder bezahlst du eine Bestellung, melden wir das zusätzlich direkt an Google oder Meta: mit der Klick-Kennung, dem Zeitpunkt, IP-Adresse und Browserangabe, bei einer Bestellung dem Betrag, und falls vorhanden deiner E-Mail-Adresse als Prüfsumme (SHA-256), nie im Klartext. So lernt die Plattform, welche Anzeigen wirken, und kann ähnliche Personen ansprechen.",
+            "Rechtsgrundlage ist deine Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 165 Abs. 3 TKG 2021). Du kannst sie jederzeit unten auf jeder Seite unter „Cookies und Messung“ ändern oder widerrufen. Die Daten für den Abgleich löschen wir bei uns, sobald die Meldung verschickt ist, spätestens nach 90 Tagen.",
+            "Google und Meta verarbeiten diese Daten auch in den USA, auf Grundlage des EU-US Data Privacy Framework, und nach ihren eigenen Datenschutzerklärungen.",
           ],
         },
         {
@@ -1370,14 +1372,17 @@ export const de = {
     },
   },
   adConsent: {
-    title: "Werbung messen?",
-    text: "Du kommst über eine Anzeige. Dürfen wir Google oder Meta melden, wenn du danach ein Angebot oder einen Prototyp anfragst oder bestellst? So lernt die Plattform, welche Anzeigen wirken. Ohne dein Ja wird nichts gemeldet.",
+    title: "Darf Appwerk messen?",
+    text: "Wir möchten sehen, wie Besucher unsere Seite nutzen und welche Anzeigen wirken. Beides ist aus, bis du es erlaubst.",
     more: "Mehr dazu im Datenschutz.",
-    allow: "Erlauben",
-    decline: "Ablehnen",
-    nowYes: "Derzeit erlaubt.",
-    nowNo: "Derzeit abgelehnt.",
-    link: "Werbe-Messung",
+    statsTitle: "Statistik",
+    statsText: "Google Analytics zählt Besuche und Wege durch die Seite. Setzt Cookies.",
+    adsTitle: "Werbe-Messung",
+    adsText: "Google Ads und Meta erfahren, ob ein Besuch über ihre Anzeige zu einer Anfrage oder Bestellung führt. Setzt Cookies.",
+    allowAll: "Alle erlauben",
+    saveChoice: "Auswahl speichern",
+    declineAll: "Alle ablehnen",
+    link: "Cookies und Messung",
   },
   footer: {
     legal: "Bedingungen, Widerrufsbelehrung und Datenschutz stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft.",
