@@ -7,8 +7,12 @@ Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote');
 
+use App\Http\Controllers\PrototypeController;
+use App\Models\AdConversion;
 use App\Models\AnalyticsEvent;
 use App\Models\Prototype;
+use App\Models\Quote;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Schedule;
 
 Schedule::command('pipeline:tick')->everyMinute();
@@ -27,7 +31,7 @@ Schedule::command('factory:vision-check')->dailyAt('07:10');
 Schedule::call(function () {
     // The pictures a visitor uploaded go with the prototype; a query delete fires no model event.
     Prototype::where('expires_at', '<', now())->whereNull('project_id')->pluck('id')->each(function (string $id) {
-        \Illuminate\Support\Facades\File::deleteDirectory(\App\Http\Controllers\PrototypeController::uploadDir($id));
+        File::deleteDirectory(PrototypeController::uploadDir($id));
     });
     Prototype::where('expires_at', '<', now())->whereNull('project_id')->delete();
 })->dailyAt('03:30');
@@ -37,6 +41,15 @@ Schedule::command('factory:ads-check')->dailyAt('07:20');
 
 // The spend guard's watch (SpendGuard): every running ad, every 15 minutes.
 Schedule::command('factory:ads-guard')->everyFifteenMinutes()->withoutOverlapping();
+
+// Conversion reports that could not go out yet (platform not set up, or a refusal worth a retry).
+Schedule::command('factory:conversions')->everyFifteenMinutes()->withoutOverlapping();
+// A consented ad click is kept with its quote for 90 days at most (privacy policy, section 10),
+// and the matching data of a report that never went out goes with it.
+Schedule::call(function () {
+    Quote::whereNotNull('ad_click')->where('created_at', '<', now()->subDays(90))->update(['ad_click' => null]);
+    AdConversion::whereNotNull('match')->where('created_at', '<', now()->subDays(90))->update(['match' => null]);
+})->dailyAt('03:50');
 
 // The validation report of a campaign, mailed once its test or first week is over.
 Schedule::command('factory:validation-reports')->dailyAt('08:30')->timezone('Europe/Vienna');

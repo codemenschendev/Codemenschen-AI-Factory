@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ads\AdClick;
+use App\Domain\Ads\Conversions;
 use App\Domain\Analytics\Analytics;
 use App\Domain\Catalog\Listings;
 use App\Domain\Pricing\Estimator;
@@ -67,6 +69,13 @@ class QuoteController extends Controller
             'listing' => $quote->listing_slug,
             'price_eur' => $quote->price_eur,
         ]);
+
+        // A visitor who came from an ad and allowed ad measurement: the click is kept with the
+        // quote (a purchase may follow days later) and the lead is reported now.
+        if (($click = AdClick::fromRequest($request)) !== null) {
+            $quote->update(['ad_click' => Conversions::forQuote($click, $request)]);
+            app(Conversions::class)->lead($click, $request, $quote);
+        }
 
         return response()->json($this->present($quote), 201);
     }

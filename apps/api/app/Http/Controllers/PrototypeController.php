@@ -2,21 +2,23 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\Ads\AdClick;
+use App\Domain\Ads\Conversions;
 use App\Domain\Ai\Campaign;
 use App\Domain\Ai\PrototypeQuestions;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Analytics\Analytics;
 use App\Jobs\BuildPrototype;
 use App\Jobs\RevisePrototype;
-use App\Models\Prototype;
 use App\Models\Customer;
+use App\Models\Prototype;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\URL;
-use Illuminate\Http\Request;
-use Illuminate\Http\Response;
 
 /**
  * Public prompt-to-prototype, the lead magnet. Every build needs an e-mail: a visitor who is not
@@ -135,6 +137,9 @@ class PrototypeController extends Controller
 
         app(Analytics::class)->record('prototype_requested', $request, [], ['kind' => $kind, 'prototype' => $proto->id,
             'uploads' => count($files), 'details' => trim($data['details'] ?? '') !== '', 'waiting' => $user === null]);
+        if (($click = AdClick::fromRequest($request)) !== null) {
+            app(Conversions::class)->lead($click, $request, prototype: $proto, email: $user?->email ?? ($data['email'] ?? null));
+        }
         if ($user === null) {
             self::sendBuildLink($proto, strtolower($data['email']), $data['locale'] ?? 'de');
 

@@ -38,6 +38,14 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M17 9a4 4 0 0 1 0 6" />
     </>
   ),
+  conversions: (
+    <>
+      <path d="M4 12a8 8 0 0 1 14-5.3" />
+      <path d="M18 3v4h-4" />
+      <path d="M20 12a8 8 0 0 1-14 5.3" />
+      <path d="M6 21v-4h4" />
+    </>
+  ),
   ownAds: (
     <>
       <path d="M4 20V10l8-6 8 6v10" />

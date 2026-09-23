@@ -6,6 +6,7 @@ import { AccountLink } from "@/components/AccountLink";
 import { LangSwitch } from "@/components/LangSwitch";
 import { MobileNav } from "@/components/MobileNav";
 import { PageViews } from "@/components/PageViews";
+import { AdConsentBanner, AdConsentLink } from "@/components/AdConsent";
 import "../../globals.css";
 
 export const metadata: Metadata = {
@@ -75,12 +76,14 @@ export default async function LocaleLayout({
               <Link href={`/${locale}/privacy`}>{dict.legal.privacy.title}</Link>
               <Link href={`/${locale}/terms`}>{dict.legal.terms.title}</Link>
               <Link href={`/${locale}/withdrawal`}>{dict.legal.withdrawal.title}</Link>
+              <AdConsentLink label={dict.adConsent.link} />
             </div>
           </div>
           <div className="wrap">
             <p className="footer-legal">{dict.footer.legal}</p>
           </div>
         </footer>
+        <AdConsentBanner d={dict} locale={locale as Locale} />
       </body>
     </html>
   );

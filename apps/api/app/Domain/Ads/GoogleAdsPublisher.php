@@ -511,6 +511,36 @@ class GoogleAdsPublisher implements Publisher
     }
 
     /**
+     * Reports one result (a lead or a purchase) against the click that brought it, on our own
+     * account, so Google's bidding learns which clicks turn into customers. The visitor allowed
+     * ad measurement on the site, which is what the consent field below says to Google.
+     *
+     * @param  array{gclid:string,conversionActionId:string,conversionDateTime:string,conversionValue:float|int,currencyCode:string,orderId:string}  $c
+     */
+    public function uploadClickConversion(array $c): void
+    {
+        $this->assertConfigured();
+        $cid = $this->cfg('customer_id');
+        $id = $c['conversionActionId'];
+        unset($c['conversionActionId']);
+        $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid))->timeout(30)
+            ->post($this->endpoint("customers/{$cid}:uploadClickConversions"), [
+                'conversions' => [$c + [
+                    'conversionAction' => "customers/{$cid}/conversionActions/{$id}",
+                    'consent' => ['adUserData' => 'GRANTED', 'adPersonalization' => 'DENIED'],
+                ]],
+                'partialFailure' => true,
+            ]);
+        if (! $res->successful()) {
+            throw new RuntimeException('Google Ads API: '.self::errorDetail($res->status(), (string) $res->body()));
+        }
+        // With partial failure on, a refused conversion is a 200 with the reason inside.
+        if (($error = $res->json('partialFailureError.message')) !== null) {
+            throw new RuntimeException('Google Ads API: '.mb_substr((string) $error, 0, 300));
+        }
+    }
+
+    /**
      * Runs one read-only GAQL query against the account a published campaign lives on and returns
      * its rows. The traffic screen is built from these, so nobody needs a Google login to see them.
      * Pages are followed up to a hard stop, a report is never worth an endless loop.

@@ -24,6 +24,10 @@ class AdSettings
         'meta_page_id' => 'services.ads.meta.page_id',
         'google_manager_id' => 'services.ads.google.manager_id',
         'google_customer_id' => 'services.ads.google.customer_id',
+        // Where results are reported to (conversion tracking). Ids, not credentials.
+        'meta_pixel_id' => 'services.ads.meta.pixel_id',
+        'google_conversion_lead' => 'services.ads.google.conversion_lead',
+        'google_conversion_purchase' => 'services.ads.google.conversion_purchase',
     ];
 
     private const KEY = 'ads.appwerk';

@@ -104,6 +104,11 @@ return [
             // EU Digital Services Act: every ad set that reaches the EU names who benefits and who pays.
             'dsa_beneficiary' => env('META_ADS_DSA_BENEFICIARY', 'Codemenschen GmbH'),
             'dsa_payor' => env('META_ADS_DSA_PAYOR', 'Codemenschen GmbH'),
+            // Conversions API: results reported back so Meta learns which ads bring buyers.
+            // The dataset (pixel) id is a number; the token falls back to the ads token.
+            'pixel_id' => env('META_PIXEL_ID'),
+            'capi_token' => env('META_CAPI_TOKEN'),
+            'capi_test_code' => env('META_CAPI_TEST_CODE'), // set while testing in Events Manager
         ],
         'google' => [
             'developer_token' => env('GOOGLE_ADS_DEVELOPER_TOKEN'), // optional, retired by Google 2026-09-09
@@ -117,7 +122,10 @@ return [
             'refresh_token' => env('GOOGLE_ADS_REFRESH_TOKEN'),
             // Preferred over the refresh token: path to a service account key file, mounted read-only.
             'service_account_json' => env('GOOGLE_ADS_SERVICE_ACCOUNT_JSON'),
-            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v25'), // v26 does not exist yet, v18 to v21 are retired (404)
+            'api_version' => env('GOOGLE_ADS_API_VERSION', 'v25'),
+            // Conversion actions (numeric ids) that sign-ups and purchases are uploaded to.
+            'conversion_lead' => env('GOOGLE_ADS_CONVERSION_LEAD'),
+            'conversion_purchase' => env('GOOGLE_ADS_CONVERSION_PURCHASE'), // v26 does not exist yet, v18 to v21 are retired (404)
         ],
     ],
 

@@ -12,6 +12,7 @@ import { AdminSignIn } from "./AdminSignIn";
 import { OpsIcon } from "./OpsIcon";
 import { ClientAdsPanel } from "./ClientAdsPanel";
 import { OwnCampaignsPanel } from "./OwnCampaignsPanel";
+import { ConversionsPanel } from "./ConversionsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -143,7 +144,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
+type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -414,7 +415,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // screens were built. Adding a screen is one entry in one group.
   const GROUPS: { label: string; tabs: Tab[] }[] = [
     { label: a.groupWork, tabs: ["overview", "projects", "customers", "prototypes"] },
-    { label: a.groupAds, tabs: ["ownAds", "clientAds", "keywords", "ads"] },
+    { label: a.groupAds, tabs: ["ownAds", "clientAds", "keywords", "conversions", "ads"] },
     { label: a.groupInsight, tabs: ["analytics"] },
     { label: a.groupContent, tabs: ["library", "references"] },
   ];
@@ -521,6 +522,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "library" && token && <LibraryPanel token={token} locale={locale} d={d} />}
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
       {tab === "keywords" && token && <KeywordsPanel token={token} d={d} openId={keywordsFor} />}
+      {tab === "conversions" && token && <ConversionsPanel token={token} locale={locale} d={d} />}
       {tab === "ownAds" && token && (
         <OwnCampaignsPanel
           token={token}
