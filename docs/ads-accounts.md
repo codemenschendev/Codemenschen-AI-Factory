@@ -124,6 +124,18 @@ and they can cut it there whenever they want. The request itself creates nothing
 (`META_BUSINESS_ID`) as a partner in their own Business settings. We prove the link by reading
 their ad account: if Meta answers, it is connected.
 
+**Whose account a campaign runs on** (owner's decision 2026-09-23): once a customer has connected
+their own account, their campaigns run there. Their card, their invoice, their spending limit.
+Codemenschen does not front the money. `Domain\Ads\AdTarget` resolves it per campaign and falls
+back to our own account for Appwerk's own ads and anything with no customer behind it. A Meta ad is
+published by a page, so a connected Meta account without a page refuses to run rather than
+publishing from ours.
+
+**Our own account numbers are editable in the admin panel** (`Domain\Ads\AdSettings`), not only in
+the server env: the manager account, the Business id, our ad account and page. They are numbers, not
+credentials; tokens and the service account key file stay in the env and are never editable from a
+browser. An empty field clears that number back to the env.
+
 A link is only ever stored as `active` because the platform said so. Our own request succeeding
 says nothing about whether the customer accepted, so `AccountLink::refresh()` asks and the
 portal's "check status" button is what the customer presses after accepting.

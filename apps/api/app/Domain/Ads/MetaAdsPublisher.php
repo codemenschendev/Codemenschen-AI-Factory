@@ -75,7 +75,10 @@ class MetaAdsPublisher implements Publisher
     public function publish(MarketingCampaign $campaign): array
     {
         $this->assertConfigured();
-        $act = $this->cfg('ad_account_id');
+        // Whose account this runs on. A customer who connected their own account runs on it, with
+        // their own page: their card, their invoice (owner's decision 2026-09-23).
+        $target = AdTarget::for($campaign, 'meta');
+        $act = $target['account'];
         $path = $campaign->creativePath();
         if ($path === null) {
             throw new RuntimeException('Meta: no creative file to publish.');
@@ -152,7 +155,7 @@ class MetaAdsPublisher implements Publisher
         $creative = $this->post("{$act}/adcreatives", [
             'name' => $this->name($campaign).': creative',
             'object_story_spec' => json_encode([
-                'page_id' => $this->cfg('page_id'),
+                'page_id' => $target['page'],
                 'link_data' => $linkData,
             ]),
         ]);
@@ -223,15 +226,30 @@ class MetaAdsPublisher implements Publisher
         return $c ? mb_substr((string) $c->content, 0, 500) : '';
     }
 
+    /** Account numbers an admin may set in the panel win over the server env; the token never is. */
+    private const IN_PANEL = ['ad_account_id' => 'meta_ad_account_id', 'page_id' => 'meta_page_id', 'business_id' => 'meta_business_id'];
+
     private function cfg(string $k): string
     {
-        return (string) config("services.ads.meta.$k");
+        return isset(self::IN_PANEL[$k])
+            ? AdSettings::get(self::IN_PANEL[$k])
+            : (string) config("services.ads.meta.$k");
     }
 
     private function assertConfigured(): void
     {
         if (! $this->isConfigured()) {
             throw new RuntimeException('Meta Ads is not configured (META_ADS_TOKEN / ACCOUNT_ID / PAGE_ID).');
+        }
+    }
+
+    /** The name of a page our token can see, or null. A Meta ad is published by a page. */
+    public function pageName(string $pageId): ?string
+    {
+        try {
+            return (string) ($this->get($pageId, 'name')['name'] ?? '') ?: null;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

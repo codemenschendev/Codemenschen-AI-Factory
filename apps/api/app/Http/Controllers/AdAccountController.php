@@ -31,10 +31,12 @@ class AdAccountController extends Controller
         $data = $request->validate([
             'platform' => 'required|in:meta,google',
             'external_id' => 'required|string|max:40',
+            // Meta only: the page the ad is published by. Google has no equivalent.
+            'page_id' => 'nullable|string|max:40',
         ]);
 
         try {
-            $link = $links->request($request->user(), $data['platform'], $data['external_id']);
+            $link = $links->request($request->user(), $data['platform'], $data['external_id'], $data['page_id'] ?? null);
         } catch (RuntimeException $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
@@ -81,6 +83,8 @@ class AdAccountController extends Controller
             'id' => $l->id,
             'platform' => $l->platform,
             'external_id' => $l->platform === 'google' ? AccountLink::dashed($l->external_id) : $l->external_id,
+            'page_id' => $l->page_id,
+            'page_name' => $l->page_name,
             'status' => $l->status,
             'name' => $l->name,
             'checked_at' => $l->checked_at?->toIso8601String(),

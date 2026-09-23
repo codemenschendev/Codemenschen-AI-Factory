@@ -2,8 +2,14 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Ads\AdSettings;
+use App\Domain\Ads\AdTarget;
 use App\Models\AdAccountLink;
 use App\Models\Customer;
+use App\Models\MarketingCampaign;
+use App\Models\Order;
+use App\Models\Project;
+use App\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -33,6 +39,18 @@ class AdAccountLinkTest extends TestCase
             'token' => 'tok', 'ad_account_id' => 'act_1', 'page_id' => '99',
             'business_id' => '55501', 'api_version' => 'v26.0',
         ]]);
+    }
+
+    /** A project with an owner, the shortest real chain: quote, order, project. */
+    private function projectOf(Customer $customer): Project
+    {
+        $quote = Quote::create(['customer_id' => $customer->id, 'breakdown' => [],
+            'price_eur' => 1000, 'app_type' => 'A', 'valid_until' => now()->addWeek()]);
+        $order = Order::create(['customer_id' => $customer->id, 'quote_id' => $quote->id,
+            'packages' => [], 'total_one_time_eur' => 1000, 'status' => 'paid']);
+
+        return Project::create(['customer_id' => $customer->id, 'order_id' => $order->id,
+            'name' => 'Huber', 'status' => 'live']);
     }
 
     public function test_a_google_account_is_asked_to_link_and_stays_pending_until_the_customer_accepts(): void
@@ -138,5 +156,82 @@ class AdAccountLinkTest extends TestCase
         $this->actingAs($mine, 'sanctum')->postJson("/api/me/ad-accounts/{$other->id}/refresh")->assertNotFound();
         $this->actingAs($mine, 'sanctum')->deleteJson("/api/me/ad-accounts/{$other->id}")->assertNotFound();
         $this->assertNotNull($other->fresh());
+    }
+
+    public function test_a_clients_campaign_runs_on_the_clients_account_and_page(): void
+    {
+        $this->meta();
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+        AdAccountLink::create(['customer_id' => $customer->id, 'platform' => 'meta',
+            'external_id' => 'act_777', 'page_id' => '4242', 'status' => 'active']);
+        $project = $this->projectOf($customer);
+        $campaign = MarketingCampaign::create(['project_id' => $project->id, 'platform' => 'meta', 'status' => 'approved', 'strategy' => []]);
+
+        $target = AdTarget::for($campaign, 'meta');
+
+        $this->assertSame('client', $target['owner']);
+        $this->assertSame('act_777', $target['account']);
+        $this->assertSame('4242', $target['page']);
+    }
+
+    public function test_without_a_connected_account_the_campaign_stays_on_ours(): void
+    {
+        $this->meta(['ad_account_id' => 'act_1', 'page_id' => '99']);
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+        $project = $this->projectOf($customer);
+        $campaign = MarketingCampaign::create(['project_id' => $project->id, 'platform' => 'meta', 'status' => 'approved', 'strategy' => []]);
+
+        $target = AdTarget::for($campaign, 'meta');
+
+        $this->assertSame('appwerk', $target['owner']);
+        $this->assertSame('act_1', $target['account']);
+    }
+
+    public function test_a_connected_meta_account_without_a_page_refuses_to_run(): void
+    {
+        $this->meta();
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+        AdAccountLink::create(['customer_id' => $customer->id, 'platform' => 'meta', 'external_id' => 'act_777', 'status' => 'active']);
+        $project = $this->projectOf($customer);
+        $campaign = MarketingCampaign::create(['project_id' => $project->id, 'platform' => 'meta', 'status' => 'approved', 'strategy' => []]);
+
+        $this->expectExceptionMessage('Facebook page');
+        AdTarget::for($campaign, 'meta');
+    }
+
+    public function test_a_google_client_account_is_reached_through_our_manager(): void
+    {
+        $this->google();
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+        AdAccountLink::create(['customer_id' => $customer->id, 'platform' => 'google', 'external_id' => '5550001111', 'status' => 'active']);
+        $project = $this->projectOf($customer);
+        $campaign = MarketingCampaign::create(['project_id' => $project->id, 'platform' => 'google', 'status' => 'approved', 'strategy' => []]);
+
+        $target = AdTarget::for($campaign, 'google');
+
+        $this->assertSame('5550001111', $target['account']);
+        $this->assertSame('9637225111', $target['login'], 'a customer account is never its own login-customer-id');
+    }
+
+    public function test_an_admin_number_wins_over_the_server_env_and_an_empty_field_clears_it(): void
+    {
+        $this->meta(['ad_account_id' => 'act_env']);
+        $admin = Customer::create(['email' => 'chef@example.com', 'locale' => 'de', 'is_admin' => true]);
+
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/ads/settings', ['meta_ad_account_id' => 'act_panel'])
+            ->assertOk()->assertJsonPath('settings.meta_ad_account_id.value', 'act_panel')
+            ->assertJsonPath('settings.meta_ad_account_id.source', 'panel');
+        $this->assertSame('act_panel', AdSettings::get('meta_ad_account_id'));
+
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/ads/settings', ['meta_ad_account_id' => ''])
+            ->assertOk()->assertJsonPath('settings.meta_ad_account_id.value', 'act_env')
+            ->assertJsonPath('settings.meta_ad_account_id.source', 'env');
+    }
+
+    public function test_only_an_admin_reads_or_writes_our_numbers(): void
+    {
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+        $this->actingAs($customer, 'sanctum')->getJson('/api/admin/ads/settings')->assertForbidden();
+        $this->actingAs($customer, 'sanctum')->postJson('/api/admin/ads/settings', ['meta_page_id' => '1'])->assertForbidden();
     }
 }
