@@ -34,7 +34,7 @@ export default async function LocaleLayout({
     { href: `/${locale}#services`, label: dict.nav.services },
     { href: `/${locale}#how`, label: dict.nav.how },
     { href: `/${locale}#prices`, label: dict.nav.pricing },
-    { href: `/${locale}#apps`, label: dict.nav.ideas },
+    { href: `/${locale}/app`, label: dict.nav.appDev },
     { href: `/${locale}/prototype`, label: dict.proto.navLink },
   ];
 

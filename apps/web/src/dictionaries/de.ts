@@ -1,5 +1,6 @@
 export const de = {
   nav: {
+    appDev: "App-Entwicklung",
     by: "von codemenschen",
     ideas: "App-Ideen",
     create: "Eigene Idee",
@@ -208,6 +209,54 @@ export const de = {
       title: "Du hast eine Idee? Sieh sie dir zuerst kostenlos an.",
       lede: "Ein Satz reicht. Die Vorschau ist in wenigen Minuten fertig.",
       checks: ["Kostenlose Vorschau", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
+    },
+  },
+  appDev: {
+    metaTitle: "App entwickeln lassen zum Festpreis · Appwerk",
+    metaDesc: "Wir programmieren deine App, bauen die Landingpage dazu und bewerben sie auf Google und Meta. Kostenlose Vorschau, Festpreis, Team in Wien.",
+    eyebrow: "App-Entwicklung aus einer Hand",
+    titleA: "Deine App.",
+    titleB: "Programmiert und beworben.",
+    titleC: "Aus einer Hand.",
+    lede: "Beschreib deine Idee in einem Satz. Appwerk AI baut dir kostenlos eine klickbare Vorschau. Danach programmieren wir die App, bauen die Landingpage und starten die Werbung.",
+    cta: "Kostenlose App-Vorschau",
+    cta2: "Preise ansehen",
+    stackLabel: "Dein Projekt",
+    stack: ["App programmiert", "Landingpage online", "Werbung läuft"],
+    trust: [
+      { h: "Kostenlose Vorschau", p: "Du siehst deine App, bevor du zahlst." },
+      { h: "Festpreis", p: "Umfang und Preis stehen vor dem Checkout fest." },
+      { h: "Die App gehört dir", p: "Code, Repository und Store-Eintrag gehen an dich." },
+      { h: "Team in Wien", p: "Echte Menschen, per E-Mail und Telefon erreichbar." },
+    ],
+    one: {
+      eyebrow: "Aus einer Hand",
+      title: "Programmieren, Landingpage, Werbung.",
+      lede: "Eine App allein bringt noch keine Kunden. Darum machen wir alle drei Teile, und sie passen zusammen.",
+      items: {
+        app: { h: "Wir programmieren deine App", p: "Als Web-App oder fürs Handy, mit deinen eigenen Funktionen.", points: ["Web, iPhone oder Android", "Deine eigenen Funktionen", "Veröffentlichung im Store optional"] },
+        site: { h: "Wir bauen die Landingpage", p: "Eine Seite, die deine App erklärt und Anmeldungen sammelt.", points: ["Eigenes Design", "Fürs Handy gemacht", "Anmeldeformular mit Double-Opt-in"] },
+        ads: { h: "Wir bewerben deine App", p: "Anzeigen auf Google und Meta, die auf deine Landingpage führen.", points: ["Anzeigentexte und Bilder inklusive", "Feste Budgetgrenze", "Nichts läuft, bevor du auf Start drückst"] },
+      },
+    },
+    how: {
+      title: "In vier Schritten zu deiner App.",
+      steps: [
+        { h: "App beschreiben", p: "Ein Satz reicht. Oder wähl eine fertige App-Idee." },
+        { h: "Kostenlose Vorschau ansehen", p: "Appwerk AI baut in wenigen Minuten eine klickbare Vorschau deiner App." },
+        { h: "Umfang und Festpreis freigeben", p: "Du siehst, was du bekommst und was es kostet, bevor du zahlst." },
+        { h: "Online gehen und werben", p: "Deine App geht online. Die Werbung startet erst, wenn du auf Start drückst." },
+      ],
+    },
+    prices: {
+      title: "Preise für deine App",
+      lede: "Du siehst jeden Betrag vor der Bezahlung. Das Werbebudget ist getrennt und fließt 1:1 in Anzeigen.",
+      landing: { h: "Landingpage für die App", fig: "{price} Festpreis", p: "Hosting ist {months} Monate inklusive, danach {monthly} im Monat." },
+    },
+    faqTitle: "Häufige Fragen",
+    final: {
+      title: "Deine App-Idee? Sieh sie dir zuerst kostenlos an.",
+      lede: "Ein Satz reicht. Die Vorschau ist in wenigen Minuten fertig.",
     },
   },
   detail: {
