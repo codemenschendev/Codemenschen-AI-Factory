@@ -1,34 +1,41 @@
-/* AI Factory storefront — design system ported from the appwerk prototype
-   (appwerk/site/styles.css + fonts.css). Self-hosted fonts, GDPR: no CDN. */
+/* AI Factory storefront. Tokens and type follow the 2026-09 redesign: white, blue to violet,
+   Manrope headings (800 hero, 700 sections), Inter body, buttons 600. Self-hosted fonts, GDPR: no CDN. */
 
 /* ---------- Fonts ---------- */
-@font-face { font-family: "Fraunces"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Fraunces-400-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "Fraunces"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Fraunces-400-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "Fraunces"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Fraunces-500-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "Fraunces"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Fraunces-500-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
-@font-face { font-family: "Fraunces"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Fraunces-600-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
-@font-face { font-family: "Fraunces"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Fraunces-600-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Inter-400-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: "Inter"; font-weight: 400; font-style: normal; font-display: swap; src: url("/fonts/Inter-400-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Inter-500-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: "Inter"; font-weight: 500; font-style: normal; font-display: swap; src: url("/fonts/Inter-500-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 @font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Inter-600-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
 @font-face { font-family: "Inter"; font-weight: 600; font-style: normal; font-display: swap; src: url("/fonts/Inter-600-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/Inter-700-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/Inter-700-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Inter"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/Inter-800-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Inter"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/Inter-800-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+
+@font-face { font-family: "Manrope"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/Manrope-700-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Manrope"; font-weight: 700; font-style: normal; font-display: swap; src: url("/fonts/Manrope-700-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/Manrope-800-normal-latin.woff2") format("woff2"); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Manrope"; font-weight: 800; font-style: normal; font-display: swap; src: url("/fonts/Manrope-800-normal-latin-ext.woff2") format("woff2"); unicode-range: U+0100-02AF, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF; }
 
 /* ---------- Tokens (appwerk styles.css:4-17) ---------- */
 :root {
-  --ink: #0b0e14;
-  --ink-soft: #3c4250;
-  --paper: #faf9f6;
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --paper: #ffffff;
+  --tint: #f5f7fc;
   --surface: #ffffff;
-  --accent: #2b5be3;
-  --accent-hover: #1e47c2;
-  --valid: #1a7f5a;
-  --border: #e6e3dc;
+  --accent: #1d4ed8;
+  --accent-hover: #1e40af;
+  --violet: #7c3aed;
+  --accent-soft: #eef2ff;
+  --valid: #15803d;
+  --border: #e4e7ee;
   --warn-bg: #fbf3e4;
   --warn-ink: #9a5b00;
-  --radius: 10px;
-  --font-display: "Fraunces", Georgia, serif;
+  --radius: 12px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px rgba(15, 23, 42, 0.06);
+  --font-display: "Manrope", "Inter", -apple-system, "Segoe UI", sans-serif;
   --font-body: "Inter", -apple-system, "Segoe UI", sans-serif;
 }
 
@@ -47,8 +54,8 @@ body {
 }
 /* overflow-wrap + hyphens: a German compound like "Widerrufsbelehrung" is one word wider
    than a 320px screen, and without these it pushes the whole page sideways. */
-h1, h2, h3 { font-family: var(--font-display); font-weight: 600; line-height: 1.15; text-wrap: balance; margin: 0 0 14px; overflow-wrap: break-word; hyphens: auto; }
-h1 { font-size: clamp(34px, 5vw, 52px); }
+h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.03em; line-height: 1.12; text-wrap: balance; margin: 0 0 14px; overflow-wrap: break-word; hyphens: auto; }
+h1 { font-size: clamp(34px, 5vw, 52px); font-weight: 800; }
 h2 { font-size: clamp(26px, 3.4vw, 34px); }
 h3 { font-size: 19px; }
 p { margin: 10px 0; max-width: 68ch; }
@@ -61,11 +68,13 @@ section { padding: 72px 0; }
 .num { font-variant-numeric: tabular-nums; }
 
 /* ---------- Nav (appwerk styles.css:51-70) ---------- */
-.nav { position: sticky; top: 0; z-index: 50; background: rgba(250, 249, 246, 0.92); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
-.nav-inner { display: flex; align-items: center; height: 64px; gap: 16px; }
-.nav-logo { font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: var(--ink); text-decoration: none; white-space: nowrap; }
-.logo-dot { color: var(--accent); }
-.logo-by { font-family: var(--font-body); font-size: 0.7rem; font-weight: 400; color: var(--ink-soft); margin-left: 8px; }
+.nav { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
+.nav-inner { display: flex; align-items: center; height: 72px; gap: 16px; }
+.nav-logo { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-display); color: var(--ink); text-decoration: none; white-space: nowrap; line-height: 1; }
+.logo-mark { width: 30px; height: 26px; flex: none; }
+.logo-text { display: grid; gap: 3px; }
+.logo-name { font-family: var(--font-body); font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; }
+.logo-by { font-family: var(--font-body); font-size: 0.68rem; font-weight: 500; color: var(--ink-soft); letter-spacing: 0; }
 .nav-links { display: flex; gap: 22px; margin: 0 auto; }
 .nav-links a { color: var(--ink-soft); text-decoration: none; font-size: 0.92rem; font-weight: 500; white-space: nowrap; }
 .nav-links a:hover { color: var(--ink); }
@@ -88,7 +97,7 @@ section { padding: 72px 0; }
 
 /* ---------- Buttons ---------- */
 .btn { display: inline-block; font-family: var(--font-body); font-weight: 600; font-size: 15px; border-radius: var(--radius); padding: 12px 22px; text-decoration: none; border: 1px solid transparent; cursor: pointer; }
-.btn-primary { background: var(--accent); color: #fff; }
+.btn-primary { background: var(--accent); color: #fff; box-shadow: 0 6px 16px rgba(29, 78, 216, 0.22); }
 .btn-primary:hover { background: var(--accent-hover); }
 .btn-ghost { background: transparent; color: var(--ink); border-color: var(--border); }
 .btn-ghost:hover { border-color: var(--ink-soft); }
@@ -171,7 +180,8 @@ textarea:focus, .choice:focus-within { outline: 2px solid var(--accent); outline
 /* ---------- Footer (appwerk styles.css:175-183) ---------- */
 footer.site { background: var(--ink); color: #b8becd; padding: 56px 0 40px; margin-top: 0; font-size: 15px; }
 footer.site .wrap { max-width: 1120px; }
-footer.site .nav-logo { color: var(--paper); }
+footer.site .nav-logo { color: #fff; }
+footer.site .logo-by { color: #94a3b8; }
 .footer-inner { display: flex; justify-content: space-between; align-items: flex-start; gap: 24px; flex-wrap: wrap; margin-bottom: 32px; }
 .footer-small { font-size: 0.85rem; margin: 6px 0 0; }
 .footer-links { display: flex; gap: 24px; flex-wrap: wrap; }

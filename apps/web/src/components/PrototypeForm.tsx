@@ -51,11 +51,22 @@ async function shrink(file: File): Promise<File> {
   }
 }
 
-export function PrototypeForm({ locale, d }: { locale: Locale; d: Dict }) {
+export type ProtoKind = "site" | "app" | "ads" | "email" | "campaign";
+
+export function PrototypeForm({
+  locale,
+  d,
+  initialKind = "site",
+}: {
+  locale: Locale;
+  d: Dict;
+  /** From `?kind=`: a service card on the home page opens the form on its own kind. */
+  initialKind?: ProtoKind;
+}) {
   const p = d.proto;
   const router = useRouter();
   const [prompt, setPrompt] = useState("");
-  const [kind, setKind] = useState<"site" | "app" | "ads" | "email" | "campaign">("site");
+  const [kind, setKind] = useState<ProtoKind>(initialKind);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   // Every build needs an e-mail (owner's decision 2026-09-19). A visitor who is not signed in

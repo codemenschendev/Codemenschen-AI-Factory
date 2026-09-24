@@ -1,20 +1,37 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import {
+  PACKAGE_PRICES,
+  PRICE_MIN,
+  SITE_HOSTING_FREE_MONTHS,
+  SITE_HOSTING_MONTHLY_EUR,
+  SITE_PRICE_EUR,
+} from "@ai-factory/pricing";
 import { CATALOG } from "@/lib/catalog";
 import { APP_ART, CONCEPT_ART } from "@/lib/art";
 import { SCREENS } from "@/lib/screens";
 import { eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 import { LandingMotion } from "@/components/LandingMotion";
+import { Logo } from "@/components/Logo";
 import "../../home.css";
 
 /** Inline SVG / mockup markup from our own modules, never user input. */
 function Art({ html, className }: { html: string; className?: string }) {
-  return <div className={className} aria-hidden dangerouslySetInnerHTML={{ __html: html }} />;
+  return (
+    <div
+      className={className}
+      aria-hidden
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  );
 }
 
 function PhoneFrame({ html, className }: { html: string; className?: string }) {
   return (
-    <div className={className ? `ph-frame ${className}` : "ph-frame"} aria-hidden>
+    <div
+      className={className ? `ph-frame ${className}` : "ph-frame"}
+      aria-hidden
+    >
       <Art html={html} />
     </div>
   );
@@ -33,16 +50,119 @@ function CardVisual({ slug }: { slug: string }) {
   return <Art className="card-art" html={APP_ART[slug] ?? ""} />;
 }
 
-export default async function Home({ params }: { params: Promise<{ locale: string }> }) {
+/** Line icons, 24px grid, stroke follows currentColor. */
+const ICONS: Record<string, string> = {
+  site: '<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/>',
+  app: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  ads: '<path d="M3 10v4a1 1 0 0 0 1 1h3l6 4V5L7 9H4a1 1 0 0 0-1 1Z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.5 6a8.5 8.5 0 0 1 0 12"/>',
+  email:
+    '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+  campaign: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+  preview:
+    '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z"/><circle cx="12" cy="12" r="3"/>',
+  euro: '<path d="M17.5 6.5A7 7 0 1 0 17.5 17.5M4 10.5h9M4 13.5h9"/>',
+  team: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18.5 20a6.5 6.5 0 0 0-2.5-5.1"/>',
+  shield:
+    '<path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
+  check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
+  arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  bulb: '<path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2V16h6v-.9c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5Z"/>',
+  doc: '<path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8Z"/><path d="M14 2.5V8h5.5M8.5 15l2.5 2.5 4.5-5"/>',
+  rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2-.1-2.8A2.1 2.1 0 0 0 5 15Z"/><path d="m12 15-3-3a22 22 0 0 1 2-4A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
+  store: '<path d="M4 7h16l-1 13H5Z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  server: '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01"/>',
+};
+
+function Icon({ name, className }: { name: string; className?: string }) {
+  return (
+    <svg
+      className={className ?? "ico"}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      dangerouslySetInnerHTML={{ __html: ICONS[name] ?? "" }}
+    />
+  );
+}
+
+const fill = (s: string, v: Record<string, string>) =>
+  s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
+
+/** The ad-spend meter: the SpendGuard promise in one picture. */
+function BudgetMeter({
+  of,
+  stop,
+  className,
+}: {
+  of: string;
+  stop: string;
+  className?: string;
+}) {
+  return (
+    <div className={className} aria-hidden="true">
+      <p className="budget-head">
+        <Icon name="ads" className="meta-ico" /> Meta Ads
+      </p>
+      <div className="meter">
+        <span style={{ width: "38%" }} />
+      </div>
+      <p className="budget-fig">{of}</p>
+      <p className="budget-note">{stop}</p>
+    </div>
+  );
+}
+
+export default async function Home({
+  params,
+}: {
+  params: Promise<{ locale: string }>;
+}) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
   const d = getDict(locale);
+  const h = d.home;
+  const a = h.art;
+  const n = (x: number) =>
+    x.toLocaleString(locale === "de" ? "de-AT" : "en-IE");
 
-  const open = CATALOG.filter((a) => a.status === "available");
-  const cheapest = Math.min(...open.map((a) => a.price ?? Infinity));
-  const stepArt = ["validate", "license", "build", "dashboard"];
-  const ownArt = ["build", "dashboard", "validate", "license"];
+  // A price only where one exists in the pricing package; the rest says "after the preview".
+  const services: {
+    kind: keyof typeof h.services.items;
+    price?: number;
+    from?: boolean;
+  }[] = [
+    { kind: "site", price: SITE_PRICE_EUR },
+    { kind: "app", price: PRICE_MIN, from: true },
+    { kind: "ads", price: PACKAGE_PRICES.marketingLaunch, from: true },
+    { kind: "email" },
+    { kind: "campaign" },
+  ];
+  const trustIcons = ["preview", "euro", "team", "shield"];
+  const stepIcons = ["bulb", "preview", "doc", "rocket"];
+  const priceIcons = ["site", "app", "store", "user", "ads", "server"];
+  const prices = [
+    {
+      h: h.site.h,
+      fig: fill(h.site.fig, { price: eur(SITE_PRICE_EUR, locale) }),
+      p: fill(h.site.p, {
+        months: String(SITE_HOSTING_FREE_MONTHS),
+        monthly: eur(SITE_HOSTING_MONTHLY_EUR, locale),
+      }),
+    },
+    ...d.pricing.items,
+  ];
+  const budgetOf = fill(a.budgetOf, {
+    spent: eur(38, locale),
+    cap: eur(100, locale),
+  });
+  const budgetStop = fill(a.budgetStop, { cap: eur(100, locale) });
+  const proto = `/${locale}/prototype`;
 
   return (
     <main className="lp">
@@ -51,110 +171,284 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
       </noscript>
       <LandingMotion />
 
-      {/* Hero: the promise, the two paths in, and the product itself */}
+      {/* Hero: the promise on the left, a real Appwerk site with its ad and numbers on the right */}
       <section className="hero">
         <div className="wrap hero-grid">
-          <div>
-            <p className="eyebrow reveal">{d.hero.eyebrow}</p>
+          <div className="hero-copy">
+            <p className="pill reveal">{h.eyebrow}</p>
             <h1 className="reveal">
-              {d.hero.titleA}
+              {h.titleA}
               <br />
-              {d.hero.titleB}
+              <span className="grad">{h.titleB}</span>
+              <br />
+              {h.titleC}
             </h1>
-            <p className="lede reveal">{d.hero.lede}</p>
+            <p className="lede reveal">{h.lede}</p>
             <div className="hero-ctas reveal">
-              <a className="btn btn-primary" href="#apps">
-                {d.hero.ctaIdeas}
-              </a>
-              <Link className="btn btn-ghost" href={`/${locale}/create`}>
-                {d.hero.ctaCreate}
+              <Link className="btn btn-primary" href={proto}>
+                {h.cta} <Icon name="arrow" className="btn-ico" />
               </Link>
-            </div>
-            <div className="trust-chips reveal">
-              {d.hero.chips.map((c) => (
-                <span className="tchip" key={c}>
-                  {c}
-                </span>
-              ))}
+              <a className="btn btn-ghost" href="#prices">
+                {h.cta2}
+              </a>
             </div>
           </div>
-          <div className="hero-art reveal">
-            <div className="hero-phones">
-              <PhoneFrame html={SCREENS.praxo[2]} />
-              <PhoneFrame html={SCREENS.formpilot[2]} className="hero-phone-2" />
+
+          {/* The photo carries its own cards; ours sit exactly on top of them, so every word
+              and number on the picture comes from the dictionary in the page's language. */}
+          <div className="hero-photo" aria-hidden="true">
+            {/* eslint-disable-next-line @next/next/no-img-element -- one fixed hero picture */}
+            <img
+              src="/home/hero-people.webp"
+              alt=""
+              width={886}
+              height={480}
+              fetchPriority="high"
+            />
+            <div className="float stats">
+              <p className="float-label">{a.period}</p>
+              <div className="stats-row">
+                <div>
+                  <small>{a.visits}</small>
+                  <b>{n(2384)}</b>
+                  <em>↑ 12%</em>
+                </div>
+                <div>
+                  <small>{a.signups}</small>
+                  <b>186</b>
+                  <em>↑ 24%</em>
+                </div>
+                <div>
+                  <small>{a.spend}</small>
+                  <b>{eur(128, locale)}</b>
+                </div>
+              </div>
             </div>
+
+            <BudgetMeter
+              className="float budget"
+              of={budgetOf}
+              stop={budgetStop}
+            />
           </div>
         </div>
       </section>
 
-      {/* Proof band: three honest numbers, right under the fold */}
-      <section className="statband">
-        <div className="wrap statband-inner">
-          <div className="stat">
-            <span className="stat-n">{open.length}</span>
-            <span>{d.stats.apps}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-n">{eur(cheapest, locale)}</span>
-            <span>{d.stats.price}</span>
-          </div>
-          <div className="stat">
-            <span className="stat-n">{d.stats.ownN}</span>
-            <span>{d.stats.own}</span>
-          </div>
-        </div>
-      </section>
-
-      <section className="section" id="how">
+      {/* Four promises, each one something the checkout and the terms actually hold */}
+      <section className="trustbar">
         <div className="wrap">
-          <p className="eyebrow reveal">{d.how.eyebrow}</p>
-          <h2 className="reveal">{d.how.title}</h2>
-          <div className="steps">
-            {d.how.steps.map((s, i) => (
-              <div className="step reveal" key={s.h}>
-                <Art className="step-art" html={CONCEPT_ART[stepArt[i]] ?? ""} />
-                <span className="step-num">{String(i + 1).padStart(2, "0")}</span>
-                <h3>{s.h}</h3>
-                <p>{s.p}</p>
+          <div className="trust-grid">
+            {h.trust.map((it, i) => (
+              <div className="trust reveal" key={it.h}>
+                <span className="trust-ico">
+                  <Icon name={trustIcons[i]} />
+                </span>
+                <div>
+                  <h3>{it.h}</h3>
+                  <p>{it.p}</p>
+                </div>
               </div>
             ))}
           </div>
-          <p className="reveal" style={{ textAlign: "center", marginTop: "2.6rem" }}>
-            <a className="btn btn-primary" href="#apps">
-              {d.how.cta}
-            </a>
-          </p>
         </div>
       </section>
 
-      {/* Division of labor: what the factory does, what stays your call */}
-      <section className="section section-dark">
+      <section className="section" id="services">
         <div className="wrap">
-          <p className="eyebrow reveal">{d.split.eyebrow}</p>
-          <h2 className="reveal">{d.split.title}</h2>
-          <div className="split">
-            <div className="split-col reveal">
-              <h3>{d.split.weH}</h3>
-              <ul>
-                {d.split.we.map((li) => (
-                  <li key={li}>{li}</li>
-                ))}
-              </ul>
+          <div className="sec-head">
+            <div>
+              <p className="eyebrow reveal">{h.services.eyebrow}</p>
+              <h2 className="reveal">{h.services.title}</h2>
+              <p className="section-lede reveal">{h.services.lede}</p>
             </div>
-            <div className="split-col reveal">
-              <h3>{d.split.youH}</h3>
-              <ul>
-                {d.split.you.map((li) => (
-                  <li key={li}>{li}</li>
-                ))}
-              </ul>
+            <Link className="sec-link" href={proto}>
+              {h.services.all} <Icon name="arrow" className="btn-ico" />
+            </Link>
+          </div>
+          <div className="svc-grid">
+            {services.map((s) => {
+              const it = h.services.items[s.kind];
+              return (
+                <Link className="svc reveal" key={s.kind} href={`${proto}?kind=${s.kind}`}>
+                  <div className="svc-thumb">
+                    {s.kind === "app" ? (
+                      <div className="svc-phones">
+                        <PhoneFrame html={SCREENS.praxo[0]} />
+                        <PhoneFrame html={SCREENS.formpilot[0]} />
+                      </div>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- screenshots of real Appwerk previews
+                      <img src={`/home/svc-${s.kind}.webp`} alt="" width={640} height={400} loading="lazy" />
+                    )}
+                  </div>
+                  <span className="svc-ico">
+                    <Icon name={s.kind} />
+                  </span>
+                  <h3>{it.h}</h3>
+                  <p>{it.p}</p>
+                  <div className="svc-foot">
+                    <div>
+                      <small>{s.price ? (s.from ? h.services.from : h.services.fixed) : h.services.try}</small>
+                      <b className={s.price ? undefined : "svc-free"}>
+                        {s.price ? eur(s.price, locale) : h.services.afterPreview}
+                      </b>
+                    </div>
+                    <span className="svc-go">
+                      <Icon name="arrow" />
+                    </span>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+
+          {/* One idea, three parts, next to the budget guard that keeps the ads safe */}
+          <div className="combo">
+            <div className="combo-card reveal">
+              <h2 className="combo-title">{h.campaign.title}</h2>
+              <p className="combo-p">{h.campaign.p}</p>
+              <div className="flow">
+                <div className="flow-offer">
+                  <p className="flow-label">{h.campaign.offerLabel}</p>
+                  <p className="flow-input">{h.campaign.offerExample}</p>
+                  <Link className="btn btn-primary btn-sm" href={`${proto}?kind=campaign`}>
+                    {h.campaign.offerBtn} <Icon name="arrow" className="btn-ico" />
+                  </Link>
+                </div>
+                <span className="flow-arrow" aria-hidden="true">
+                  <Icon name="arrow" />
+                </span>
+                <div className="flow-parts" aria-hidden="true">
+                  <div className="part">
+                    <p className="part-tag">
+                      <span>1</span> {h.campaign.parts[0]}
+                    </p>
+                    <div className="mini mini-ad">
+                      <div className="mini-ad-head">
+                        <span className="mini-av">BL</span>
+                        <span>
+                          <b>Bäckerei Lang</b>
+                          <small>{h.campaign.sponsored}</small>
+                        </span>
+                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+                      <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
+                      <p className="mini-text">{h.campaign.adLine}</p>
+                      <span className="mini-btn">{h.campaign.adCta}</span>
+                    </div>
+                  </div>
+                  <span className="part-arrow">
+                    <Icon name="arrow" />
+                  </span>
+                  <div className="part">
+                    <p className="part-tag">
+                      <span>2</span> {h.campaign.parts[1]}
+                    </p>
+                    <div className="mini mini-page">
+                      <div className="mini-bar">
+                        <i />
+                        <i />
+                        <i />
+                      </div>
+                      <div className="mini-hero">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+                        <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
+                        <b>{h.campaign.pageTitle}</b>
+                      </div>
+                      <span className="mini-field">{h.campaign.pageField}</span>
+                      <span className="mini-btn">{h.campaign.pageBtn}</span>
+                    </div>
+                  </div>
+                  <span className="part-arrow">
+                    <Icon name="arrow" />
+                  </span>
+                  <div className="part">
+                    <p className="part-tag">
+                      <span>3</span> {h.campaign.parts[2]}
+                    </p>
+                    <div className="mini mini-mail">
+                      <div className="mini-mail-head">
+                        <span className="mini-av">BL</span> Bäckerei Lang
+                      </div>
+                      <b>{h.campaign.mailHi}</b>
+                      <p className="mini-text">{h.campaign.mailText}</p>
+                      <span className="mini-btn">{h.campaign.mailBtn}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="combo-card budget-card reveal">
+              <h2 className="combo-title">{h.budget.title}</h2>
+              <p className="combo-p">{h.budget.p}</p>
+              <div className="budget-box">
+                <p className="budget-big">{fill(h.budget.spentOf, { spent: eur(38, locale), cap: eur(100, locale) })}</p>
+                <div className="meter">
+                  <span style={{ width: "38%" }} />
+                </div>
+                <dl className="budget-rows">
+                  {h.budget.rows.map(([k, v], i) => (
+                    <div key={k}>
+                      <dt>{k}</dt>
+                      <dd className={i === h.budget.rows.length - 1 ? "on" : undefined}>
+                        {fill(v, { cap: eur(100, locale) })}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
             </div>
           </div>
-          <p className="split-note reveal">{d.split.note}</p>
         </div>
       </section>
 
-      <section className="section" id="apps">
+      <section className="section section-tint" id="how">
+        <div className="wrap">
+          <p className="eyebrow reveal">{d.how.eyebrow}</p>
+          <h2 className="reveal">{d.how.title}</h2>
+          <ol className="steps">
+            {d.how.steps.map((s, i) => (
+              <li className="step reveal" key={s.h}>
+                <span className="step-ico">
+                  <Icon name={stepIcons[i]} />
+                  <span className="step-num">{i + 1}</span>
+                </span>
+                <h3>{s.h}</h3>
+                <p>{s.p}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      <section className="section" id="prices">
+        <div className="wrap">
+          <div className="sec-head">
+            <div>
+              <h2 className="reveal">{h.prices.title}</h2>
+              <p className="section-lede reveal">{h.prices.lede}</p>
+            </div>
+          </div>
+          <div className="price-grid">
+            {prices.map((it, i) => (
+              <div className="price-item reveal" key={it.h}>
+                <span className="price-ico">
+                  <Icon name={priceIcons[i]} />
+                </span>
+                <div>
+                  <h3>{it.h}</h3>
+                  <p className="price-fig">{it.fig}</p>
+                  <p className="price-p">{it.p}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="price-note reveal">{d.pricing.note}</p>
+        </div>
+      </section>
+
+      <section className="section section-tint" id="apps">
         <div className="wrap">
           <p className="eyebrow reveal">{d.ideas.eyebrow}</p>
           <h2 className="reveal">{d.ideas.title}</h2>
@@ -179,9 +473,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
                     <div>
                       <dt>{d.ideas.delivery}</dt>
                       <dd>
-                        {taken || !app.weeksLo
-                          ? "—"
-                          : `${app.weeksLo}–${app.weeksHi} ${d.detail.weeksUnit}`}
+                        {taken || !app.weeksLo ? "—" : `${app.weeksLo}–${app.weeksHi} ${d.detail.weeksUnit}`}
                       </dd>
                     </div>
                     <div>
@@ -214,63 +506,50 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
         </div>
       </section>
 
-      {/* Honest risk: same typographic dignity as everything else, no primary
-          CTA adjacent (appwerk docs 15/19/26). */}
-      <section className="section section-risk" id="honest">
-        <div className="wrap">
-          <p className="eyebrow reveal">{d.honest.eyebrow}</p>
-          <h2 className="reveal">{d.honest.title}</h2>
-          <div className="ways-grid ways-2">
-            {d.honest.items.map((it, i) => (
-              <div className="way reveal" key={it.h}>
-                <Art className="way-art" html={CONCEPT_ART[ownArt[i]] ?? ""} />
-                <h3>{it.h}</h3>
-                <p>{it.p}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="section section-dark" id="about">
-        <div className="wrap wrap-narrow">
+      <section className="section" id="about">
+        <div className="wrap wrap-narrow center">
           <p className="eyebrow reveal">{d.about.eyebrow}</p>
           <h2 className="reveal">{d.about.title}</h2>
-          <p className="section-lede reveal">{d.about.p}</p>
-          <a
-            className="btn btn-ghost reveal"
-            href="https://www.codemenschen.at"
-            target="_blank"
-            rel="noopener"
-          >
+          <p className="section-lede reveal about-p">{d.about.p}</p>
+          <a className="btn btn-ghost reveal" href="https://www.codemenschen.at" target="_blank" rel="noopener">
             {d.about.cta}
           </a>
         </div>
       </section>
 
-      <section className="section section-final">
-        <div className="wrap wrap-narrow center">
-          <h2 className="reveal">{d.final.title}</h2>
-          <p className="section-lede reveal">{d.final.lede}</p>
-          <div className="hero-ctas reveal" style={{ justifyContent: "center" }}>
-            <a className="btn btn-primary" href="#apps">
-              {d.final.cta1}
-            </a>
-            <Link className="btn btn-ghost" href={`/${locale}/create`}>
-              {d.final.cta2}
+      {/* Closing bar: the one next step, and the three promises once more */}
+      <section className="section-final">
+        <div className="wrap">
+          <div className="final-bar reveal">
+            <span className="final-logo">
+              <Logo />
+            </span>
+            <div className="final-text">
+              <h2>{h.final.title}</h2>
+              <p>{h.final.lede}</p>
+            </div>
+            <Link className="btn btn-primary" href={proto}>
+              {h.cta} <Icon name="arrow" className="btn-ico" />
             </Link>
+            <ul className="final-checks">
+              {h.final.checks.map((c) => (
+                <li key={c}>
+                  <Icon name="check" className="tick" />
+                  {c}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
 
-      {/* Sticky CTA: appears after the first screen, keeps the catalog one tap away */}
+      {/* Sticky CTA: appears after the first screen */}
       <div className="cta-bar" id="ctaBar">
-        <span className="cta-name">{d.bar.title}</span>
-        <span className="cta-price">{d.bar.sub}</span>
+        <span className="cta-name">{h.final.title}</span>
         <span className="cta-spacer" />
-        <a className="btn btn-primary btn-sm" href="#apps">
-          {d.bar.cta}
-        </a>
+        <Link className="btn btn-primary btn-sm" href={proto}>
+          {h.cta}
+        </Link>
       </div>
     </main>
   );
