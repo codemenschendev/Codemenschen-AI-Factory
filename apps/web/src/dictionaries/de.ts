@@ -74,8 +74,9 @@ export const de = {
   },
   createBanner: {
     title: "Deine eigene Idee?",
-    p: "Beschreib deine App in wenigen Klicks. Du bekommst sofort eine Preis-Schätzung und den vollen Umfang vor dem Checkout.",
-    cta: "App-Assistent starten →",
+    p: "Beschreib deine App in wenigen Klicks. Du bekommst sofort eine Preisschätzung und den vollen Umfang, bevor wir starten.",
+    ph: "z. B. Buchungs-App für ein Yogastudio mit Online-Zahlung",
+    cta: "Schätzung erhalten",
   },
   honest: {
     eyebrow: "Vor dem Kauf",

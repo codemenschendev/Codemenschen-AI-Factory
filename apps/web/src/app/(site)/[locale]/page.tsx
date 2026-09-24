@@ -8,21 +8,9 @@ import {
   SITE_PRICE_EUR,
 } from "@ai-factory/pricing";
 import { CATALOG } from "@/lib/catalog";
-import { APP_ART } from "@/lib/art";
 import { eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 import { LandingMotion } from "@/components/LandingMotion";
 import "../../home.css";
-
-/** Inline SVG / mockup markup from our own modules, never user input. */
-function Art({ html, className }: { html: string; className?: string }) {
-  return (
-    <div
-      className={className}
-      aria-hidden
-      dangerouslySetInnerHTML={{ __html: html }}
-    />
-  );
-}
 
 /** Line icons, 24px grid, stroke follows currentColor. */
 const ICONS: Record<string, string> = {
@@ -40,6 +28,11 @@ const ICONS: Record<string, string> = {
     '<path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  fork: '<path d="M7 2.5v7a2.5 2.5 0 0 0 5 0v-7M9.5 2.5v19M17 2.5c-1.7 1.5-2.5 4-2.5 7v3h2.5v9"/>',
+  box: '<path d="m12 2.5 8.5 4.5v10L12 21.5 3.5 17V7Z"/><path d="M3.5 7 12 11.5 20.5 7M12 11.5v10"/>',
+  leaf: '<path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-4 6-7 10-9"/>',
+  calendar: '<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/>',
+  spark: '<path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.9L12 18.5l-1.8-5.8L4.5 10.8 10.2 9Z"/><path d="M19 3.5v3M17.5 5h3M5 17.5v3M3.5 19h3"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
   pin: '<path d="M12 21.5s-7-6.3-7-11.5a7 7 0 0 1 14 0c0 5.2-7 11.5-7 11.5Z"/><circle cx="12" cy="10" r="2.5"/>',
   bulb: '<path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2V16h6v-.9c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5Z"/>',
@@ -66,8 +59,15 @@ function Icon({ name, className }: { name: string; className?: string }) {
   );
 }
 
-/** Ideas that have a picture of a person holding the app; the rest keep their drawing. */
-const IDEA_PICS = new Set(["formpilot", "mealgrid", "countbee", "praxo", "rechni"]);
+/** One icon per app idea, matching what the app does. */
+const IDEA_ICONS: Record<string, string> = {
+  formpilot: "doc",
+  mealgrid: "fork",
+  countbee: "box",
+  praxo: "leaf",
+  rechni: "campaign",
+  shiftly: "calendar",
+};
 
 const fill = (s: string, v: Record<string, string>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
@@ -180,8 +180,8 @@ export default async function Home({
             <img
               src="/home/hero-people.webp"
               alt=""
-              width={886}
-              height={480}
+              width={1200}
+              height={650}
               fetchPriority="high"
             />
             <div className="float stats">
@@ -382,52 +382,66 @@ export default async function Home({
               <p className="section-lede reveal">{d.ideas.lede}</p>
             </div>
           </div>
-          <div className="idea-rows">
+          <div className="idea-grid">
             {CATALOG.map((app) => {
               const taken = app.status === "built";
-              const pic = IDEA_PICS.has(app.slug);
-              const inner = (
-                <>
-                  <div className="idea-pic">
-                    {pic ? (
-                      // eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures
-                      <img src={`/home/idea-${app.slug}.webp`} alt="" width={240} height={290} loading="lazy" />
+              const Tag = taken ? "div" : Link;
+              return (
+                <Tag
+                  className={taken ? "idea idea-taken reveal" : "idea reveal"}
+                  key={app.slug}
+                  href={`/${locale}/apps/${app.slug}`}
+                >
+                  <div className="idea-body">
+                    <p className="idea-head">
+                      <span className="idea-ico">
+                        <Icon name={IDEA_ICONS[app.slug] ?? "app"} />
+                      </span>
+                      <b>{app.name}</b>
+                    </p>
+                    {taken ? (
+                      <p className="idea-price idea-price-taken">{d.ideas.built}</p>
                     ) : (
-                      <Art html={APP_ART[app.slug] ?? ""} />
+                      <p className="idea-price">{app.price ? eur(app.price, locale) : d.detail.sample}</p>
+                    )}
+                    <p className="idea-desc">{t(app.cardDesc, locale)}</p>
+                    <ul className="idea-points">
+                      {(app.highlights ?? []).map((pt) => (
+                        <li key={pt.en}>
+                          <Icon name="check" className="tick" />
+                          {t(pt, locale)}
+                        </li>
+                      ))}
+                    </ul>
+                    {!taken && (
+                      <span className="svc-go idea-go">
+                        <Icon name="arrow" />
+                      </span>
                     )}
                   </div>
-                  <div className="idea-text">
-                    <b>{app.name}</b>
-                    <span className="idea-price">{taken ? d.ideas.built : app.price ? eur(app.price, locale) : d.detail.sample}</span>
-                    <small>{t(app.cardDesc, locale)}</small>
+                  <div className="idea-pic">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
+                    <img src={`/home/idea-${app.slug}.webp`} alt="" width={256} height={352} loading="lazy" />
                   </div>
-                  {!taken && (
-                    <span className="svc-go">
-                      <Icon name="arrow" />
-                    </span>
-                  )}
-                </>
-              );
-              return taken ? (
-                <div className="idea idea-taken reveal" key={app.slug}>
-                  {inner}
-                </div>
-              ) : (
-                <Link className="idea reveal" key={app.slug} href={`/${locale}/apps/${app.slug}`}>
-                  {inner}
-                </Link>
+                </Tag>
               );
             })}
-            <Link className="idea idea-create reveal" href={`/${locale}/create`}>
-              <div className="idea-text">
-                <b>{d.createBanner.title}</b>
-                <small>{d.createBanner.p}</small>
-              </div>
-              <span className="svc-go">
-                <Icon name="arrow" />
-              </span>
-            </Link>
           </div>
+
+          {/* The own-idea box: one sentence, then the wizard with it already filled in */}
+          <form className="own-idea reveal" action={`/${locale}/create`} method="get">
+            <span className="own-idea-ico">
+              <Icon name="spark" />
+            </span>
+            <div className="own-idea-text">
+              <b>{d.createBanner.title}</b>
+              <small>{d.createBanner.p}</small>
+            </div>
+            <input className="own-idea-input" type="text" name="idea" maxLength={800} placeholder={d.createBanner.ph} />
+            <button className="btn btn-primary" type="submit">
+              {d.createBanner.cta} <Icon name="arrow" className="btn-ico" />
+            </button>
+          </form>
           <p className="placeholder-note reveal">{d.ideas.note}</p>
         </div>
       </section>

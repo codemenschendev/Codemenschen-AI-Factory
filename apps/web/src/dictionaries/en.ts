@@ -74,8 +74,9 @@ export const en = {
   },
   createBanner: {
     title: "Your own idea?",
-    p: "Describe your app in a few clicks. You get an instant price estimate and the full scope before checkout.",
-    cta: "Start the app wizard →",
+    p: "Describe your app in a few clicks. You get an instant price estimate and the full scope before we start.",
+    ph: "e.g. Booking app for a yoga studio with online payments",
+    cta: "Get an estimate",
   },
   honest: {
     eyebrow: "Before you buy",
