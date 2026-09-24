@@ -1,6 +1,6 @@
 # A bought Appwerk website on the customer's own domain. Copy to
 # /etc/apache2/sites-available/DOMAIN.conf, replace DOMAIN, a2ensite, reload, then certbot.
-# Only the page and its sign-up form reach the API; the rest of the API stays on its own host.
+# Only the page, its Impressum and its sign-up form reach the API; the rest stays on its own host.
 <VirtualHost *:80>
     ServerName DOMAIN
     ServerAlias www.DOMAIN
@@ -10,7 +10,7 @@
     ProxyPassReverse /api/landing/ http://127.0.0.1:8181/api/landing/
     ProxyPass        / http://127.0.0.1:8181/
     ProxyPassReverse / http://127.0.0.1:8181/
-    <LocationMatch "^/(?!$|api/landing/)">
+    <LocationMatch "^/(?!$|impressum$|api/landing/)">
         Require all denied
     </LocationMatch>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
 use App\Domain\Analytics\ValidationReport;
+use App\Domain\Sites\Imprint;
 use App\Models\LandingSignup;
 use App\Models\Project;
 use App\Models\Prototype;
@@ -90,7 +91,7 @@ class LandingController extends Controller
             'click_id' => collect(['fbclid', 'gclid', 'msclkid'])->first(fn ($k) => $request->query($k) !== null),
         ], ['prototype' => $prototype->id, 'campaign' => $prototype->parent_id]);
 
-        $html = self::withSignup((string) $prototype->html, $prototype, $lang, $source);
+        $html = self::withSignup((string) $prototype->html, $prototype, $lang, $source, self::imprintHref($request, $prototype));
         $csp = implode('; ', [
             "default-src 'none'",
             "style-src 'unsafe-inline'",
@@ -114,6 +115,55 @@ class LandingController extends Controller
         ]));
     }
 
+    /** A bought website's Impressum, at /l/{id}/impressum. */
+    public function imprint(Request $request, Prototype $prototype): Response
+    {
+        $project = $prototype->project;
+        abort_unless($project !== null && $prototype->published_at !== null && $prototype->isLive() && Imprint::complete($project->imprint), 404);
+
+        return self::imprintResponse($project, self::lang($prototype), self::url($prototype));
+    }
+
+    /** The same page on the customer's own domain, at /impressum. */
+    public function imprintByHost(Request $request): Response
+    {
+        $project = self::projectForHost($request);
+        abort_unless($project !== null && $project->prototype !== null && Imprint::complete($project->imprint), 404);
+
+        return self::imprintResponse($project, self::lang($project->prototype), '/');
+    }
+
+    private static function imprintResponse(Project $project, string $lang, string $home): Response
+    {
+        return response(Imprint::page($project, $lang, $home), 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'",
+            'X-Content-Type-Options' => 'nosniff',
+            'Referrer-Policy' => 'strict-origin-when-cross-origin',
+        ]);
+    }
+
+    /** Where a bought page's footer points for the Impressum, or null while it is not filled in. */
+    private static function imprintHref(Request $request, Prototype $prototype): ?string
+    {
+        $project = $prototype->project;
+        if ($project === null || ! Imprint::complete($project->imprint)) {
+            return null;
+        }
+        $host = preg_replace('~^www\.~', '', strtolower($request->getHost()));
+
+        return $project->domain !== null && $host === $project->domain ? '/impressum' : '/l/'.$prototype->id.'/impressum';
+    }
+
+    /** The bought, live website whose owner named this request's host as their domain. */
+    private static function projectForHost(Request $request): ?Project
+    {
+        $host = preg_replace('~^www\.~', '', strtolower($request->getHost()));
+        $own = preg_replace('~^www\.~', '', strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)));
+
+        return $host === $own ? null : Project::where('kind', 'site')->where('status', 'PUBLISHED')->where('domain', $host)->first();
+    }
+
     /**
      * A bought website on the customer's own domain: the request arrives with their host name
      * (Apache passes it through), and the project that asked for that domain is the page. Any
@@ -121,9 +171,7 @@ class LandingController extends Controller
      */
     public function byHost(Request $request): Response|View
     {
-        $host = preg_replace('~^www\.~', '', strtolower($request->getHost()));
-        $own = preg_replace('~^www\.~', '', strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)));
-        $project = $host === $own ? null : Project::where('kind', 'site')->where('status', 'PUBLISHED')->where('domain', $host)->first();
+        $project = self::projectForHost($request);
         if ($project === null || $project->prototype === null) {
             return view('welcome');
         }
@@ -270,7 +318,7 @@ class LandingController extends Controller
     }
 
     /** The page as generated, with the form wired to the waitlist and the consent line under it. */
-    public static function withSignup(string $html, Prototype $prototype, string $lang, ?string $source): string
+    public static function withSignup(string $html, Prototype $prototype, string $lang, ?string $source, ?string $imprint = null): string
     {
         $de = $lang === 'de';
         $privacy = rtrim((string) config('services.frontend_url'), '/').'/'.($de ? 'de' : 'en').'/privacy';
@@ -295,7 +343,9 @@ document.addEventListener('submit',function(e){var f=e.target;if(!f.querySelecto
 document.addEventListener('click',function(e){var b=e.target.closest&&e.target.closest('button,input[type=submit]');var f=b&&b.closest('form');if(!f||!f.querySelector('input[type=email]'))return;e.preventDefault();e.stopImmediatePropagation();send(f)},true);
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',ready);else ready()})();</script>
 HTML;
-        $foot = '<div class="aw-foot">'.($de ? 'Erstellt mit' : 'Made with').' <a href="'.e(rtrim((string) config('services.frontend_url'), '/')).'" target="_blank" rel="noopener">Appwerk</a> · <a href="'.e($privacy).'" target="_blank" rel="noopener">'.($de ? 'Datenschutz' : 'Privacy').'</a></div>';
+        $foot = '<div class="aw-foot">'
+            .($imprint !== null ? '<a href="'.e($imprint).'">'.($de ? 'Impressum' : 'Legal notice').'</a> · ' : '')
+            .($de ? 'Erstellt mit' : 'Made with').' <a href="'.e(rtrim((string) config('services.frontend_url'), '/')).'" target="_blank" rel="noopener">Appwerk</a> · <a href="'.e($privacy).'" target="_blank" rel="noopener">'.($de ? 'Datenschutz' : 'Privacy').'</a></div>';
 
         $html = stripos($html, '</head>') !== false ? preg_replace('~</head>~i', $inject.'</head>', $html, 1) : $inject.$html;
 

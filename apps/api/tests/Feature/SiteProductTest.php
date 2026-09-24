@@ -114,7 +114,8 @@ class SiteProductTest extends TestCase
         $project = app(OrderFulfillment::class)->markPaid($order, 'pi_test', 42800, ['type' => 'test']);
         Mail::assertSent(CustomerNotice::class, function ($m) use ($project) {
             return str_contains($m->body, 'Deine Website ist online: '.url("/l/{$project->prototype->id}"))
-                && str_contains($m->body, 'die ersten 12 Monate sind inklusive');
+                && str_contains($m->body, 'die ersten 12 Monate sind inklusive')
+                && str_contains($m->body, 'trag im Dashboard dein Impressum ein');
         });
     }
 
@@ -148,6 +149,50 @@ class SiteProductTest extends TestCase
         $this->actingAs($owner, 'sanctum')->postJson("/api/me/projects/{$project->id}/domain", ['domain' => ''])->assertOk()->assertJsonPath('domain', null);
         $this->get('http://baeckerei-lang.at/')->assertDontSee('Bäckerei Lang', false);
         $this->assertNull(Project::find($project->id)->domain);
+    }
+
+    /** @return array<string,string> */
+    private function imprintForm(array $over = []): array
+    {
+        return $over + ['name' => 'Bäckerei Lang e.U.', 'owner' => 'Anna Lang', 'street' => 'Hauptplatz 1', 'zip_city' => '4020 Linz',
+            'country' => 'Österreich', 'email' => 'office@baeckerei-lang.at', 'vat_id' => 'ATU12345678',
+            'register' => 'FN 123456a, Landesgericht Linz', 'chamber' => 'WKO Oberösterreich', 'authority' => 'Magistrat Linz', 'trade' => 'Bäcker'];
+    }
+
+    public function test_the_owner_fills_in_the_impressum_and_the_page_links_it(): void
+    {
+        Mail::fake();
+        [$order, $preview] = $this->order();
+        $project = app(OrderFulfillment::class)->markPaid($order, 'pi_test', 42800, ['type' => 'test']);
+        $owner = $order->customer;
+
+        // Not there until it is filled in; the page says nothing about it yet.
+        $this->get("/l/{$preview->id}/impressum")->assertNotFound();
+        $this->get("/l/{$preview->id}")->assertOk()->assertDontSee('Impressum</a>', false);
+        $this->actingAs($owner, 'sanctum')->getJson("/api/me/projects/{$project->id}")
+            ->assertJsonPath('site.imprint_complete', false)->assertJsonPath('site.imprint_url', null);
+
+        // The fields every business needs are required.
+        $this->actingAs($owner, 'sanctum')->postJson("/api/me/projects/{$project->id}/imprint", $this->imprintForm(['street' => '', 'email' => 'nope']))
+            ->assertStatus(422)->assertJsonValidationErrors(['street', 'email']);
+        $this->actingAs(Customer::create(['email' => 'other@example.com', 'locale' => 'de']), 'sanctum')
+            ->postJson("/api/me/projects/{$project->id}/imprint", $this->imprintForm())->assertNotFound();
+
+        $this->actingAs($owner, 'sanctum')->postJson("/api/me/projects/{$project->id}/imprint", $this->imprintForm(['extra' => '<script>x</script>']))
+            ->assertOk()->assertJsonPath('imprint_complete', true)->assertJsonPath('imprint_url', url("/l/{$preview->id}/impressum"))
+            ->assertJsonPath('imprint.vat_id', 'ATU12345678');
+
+        $res = $this->get("/l/{$preview->id}/impressum")->assertOk()
+            ->assertSee('Bäckerei Lang e.U.', false)->assertSee('4020 Linz', false)->assertSee('ATU12345678', false)
+            ->assertSee('§ 5 ECG', false)->assertDontSee('<script>x</script>', false);
+        $this->assertStringContainsString("default-src 'none'", $res->headers->get('Content-Security-Policy'));
+        $this->get("/l/{$preview->id}")->assertOk()->assertSee('href="/l/'.$preview->id.'/impressum"', false);
+
+        // On the customer's own domain the footer and the page live at /impressum.
+        $project->update(['domain' => 'baeckerei-lang.at']);
+        $this->get('http://www.baeckerei-lang.at/')->assertOk()->assertSee('href="/impressum"', false);
+        $this->get('http://baeckerei-lang.at/impressum')->assertOk()->assertSee('Anna Lang', false);
+        $this->get('http://nobody.example/impressum')->assertNotFound();
     }
 
     public function test_an_app_order_is_untouched(): void
