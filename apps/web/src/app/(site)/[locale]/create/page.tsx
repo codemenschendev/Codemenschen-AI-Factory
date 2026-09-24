@@ -33,13 +33,15 @@ export default async function CreatePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ from?: string }>;
+  searchParams: Promise<{ from?: string; idea?: string }>;
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
   const d = getDict(locale);
-  const initialIdea = await ideaFrom((await searchParams).from);
+  const sp = await searchParams;
+  // The home page's "your own idea" box sends the sentence itself as ?idea=.
+  const initialIdea = sp.idea ? sp.idea.slice(0, 800) : await ideaFrom(sp.from);
 
   return (
     <main className="wrap" style={{ padding: "40px 24px 72px" }}>

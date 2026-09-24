@@ -21,6 +21,8 @@ export interface CatalogEntry {
   weeksHi?: number;
   cat: I18nText;
   cardDesc: I18nText;
+  /** Four short points for the idea card on the home page. */
+  highlights?: I18nText[];
   lede?: I18nText;
   aud?: { i: string; en: string; de: string }[];
   why?: { h: I18nText; p: I18nText }[];
@@ -43,6 +45,12 @@ export const CATALOG: CatalogEntry[] = [
       en: "Turns PDF forms into fillable web flows for small agencies.",
       de: "Macht aus PDF-Formularen ausfüllbare Web-Flows für kleine Agenturen.",
     },
+    highlights: [
+      { en: "Form upload", de: "Formular hochladen" },
+      { en: "Smart web forms", de: "Smarte Webformulare" },
+      { en: "Automatic PDFs", de: "Automatische PDFs" },
+      { en: "Submissions in one place", de: "Einsendungen an einem Ort" },
+    ],
     lede: {
       en: "FormPilot turns PDF forms into fillable web flows: upload a PDF, get a shareable web form with submissions in a dashboard. Selected by our AI analysis of app-store data; built exclusively for you, owned by you.",
       de: "FormPilot macht aus PDF-Formularen ausfüllbare Web-Flows: PDF hochladen, teilbares Webformular erhalten, Einsendungen im Dashboard. Von unserer KI-Analyse von App-Store-Daten ausgewählt; exklusiv für dich gebaut, dir gehörend.",
@@ -117,6 +125,12 @@ export const CATALOG: CatalogEntry[] = [
       en: "Weekly meal plans from what's already in your fridge.",
       de: "Wochenpläne aus dem, was ohnehin im Kühlschrank ist.",
     },
+    highlights: [
+      { en: "Recipe suggestions", de: "Rezeptvorschläge" },
+      { en: "Meal plan for the week", de: "Wochenplan" },
+      { en: "Shopping list", de: "Einkaufsliste" },
+      { en: "Based on your ingredients", de: "Nach deinen Zutaten" },
+    ],
     lede: {
       en: "Mealgrid builds a weekly meal plan from what's already in your fridge: enter what you have, get a plan and a minimal shopping list. Runs fully on the device: no accounts, no monthly fee.",
       de: "Mealgrid erstellt einen Wochen-Essensplan aus dem, was ohnehin im Kühlschrank ist: eingeben, was da ist, Plan und minimale Einkaufsliste erhalten. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
@@ -191,6 +205,12 @@ export const CATALOG: CatalogEntry[] = [
       en: "Stocktaking for small shops: scan, count, export.",
       de: "Inventur für kleine Läden: scannen, zählen, exportieren.",
     },
+    highlights: [
+      { en: "Scan products", de: "Produkte scannen" },
+      { en: "Live stock overview", de: "Lagerbestand live" },
+      { en: "Export as CSV or Excel", de: "Export als CSV oder Excel" },
+      { en: "Simple and fast", de: "Einfach und schnell" },
+    ],
     lede: {
       en: "Countbee turns a phone into a stocktake scanner for small retail: scan barcodes, count stock, export a clean sheet for the accountant. Runs fully on the device: no accounts, no monthly fee.",
       de: "Countbee macht aus dem Handy einen Inventur-Scanner für kleine Läden: Barcodes scannen, Bestand zählen, saubere Tabelle für die Buchhaltung exportieren. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
@@ -265,6 +285,12 @@ export const CATALOG: CatalogEntry[] = [
       en: "SMS appointment reminders for physio and massage practices.",
       de: "SMS-Terminerinnerungen für Physio- und Massagepraxen.",
     },
+    highlights: [
+      { en: "Online booking", de: "Online-Buchung" },
+      { en: "Automatic SMS reminders", de: "Automatische SMS-Erinnerungen" },
+      { en: "Client management", de: "Kundenverwaltung" },
+      { en: "Fewer no-shows", de: "Weniger Ausfälle" },
+    ],
     lede: {
       en: "Praxo sends automatic SMS reminders synced from a practice calendar. No-shows drop, the front desk stops phoning. Selected by our AI analysis; built exclusively for you, owned by you.",
       de: "Praxo verschickt automatische SMS-Erinnerungen aus dem Praxiskalender. No-Shows sinken, die Rezeption telefoniert nicht mehr hinterher. Von unserer KI-Analyse ausgewählt; exklusiv für dich gebaut, dir gehörend.",
@@ -339,6 +365,12 @@ export const CATALOG: CatalogEntry[] = [
       en: "Polite, automatic payment reminders for Austrian freelancers.",
       de: "Höfliche, automatische Zahlungserinnerungen für österreichische Freelancer.",
     },
+    highlights: [
+      { en: "Automatic reminders", de: "Automatische Erinnerungen" },
+      { en: "Your own wording", de: "Eigene Formulierungen" },
+      { en: "Payment tracking", de: "Zahlungsübersicht" },
+      { en: "Paid on time more often", de: "Öfter pünktlich bezahlt" },
+    ],
     lede: {
       en: "Rechni chases unpaid invoices for freelancers: connect your invoicing, and overdue clients get polite, escalating reminders automatically. Selected by our AI analysis; built exclusively for you, owned by you.",
       de: "Rechni mahnt offene Rechnungen für Freelancer: Rechnungsstellung verbinden, säumige Kunden bekommen automatisch höfliche, eskalierende Erinnerungen. Von unserer KI-Analyse ausgewählt; exklusiv für dich gebaut, dir gehörend.",
@@ -409,6 +441,12 @@ export const CATALOG: CatalogEntry[] = [
       en: "Simple shift planning for hospitality teams.",
       de: "Einfache Schichtplanung für Gastro-Teams.",
     },
+    highlights: [
+      { en: "Shift planning", de: "Schichtplanung" },
+      { en: "Team overview", de: "Teamübersicht" },
+      { en: "Availability per person", de: "Verfügbarkeit pro Person" },
+      { en: "Simple and clear", de: "Einfach und klar" },
+    ],
   },
 ];
 
