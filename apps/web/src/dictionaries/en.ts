@@ -63,8 +63,9 @@ export const en = {
   ideas: {
     eyebrow: "Available app ideas",
     title: "Every idea shows price and scope up front.",
-    lede: "Selected by our AI analysis of app-store data: real complaints, real gaps. Every idea is built exclusively for one customer. Once it is taken, it is gone.",
+    lede: "Ready-made app ideas with a fixed price. Every idea is built for one customer only.",
     note: "⚠ All market figures are AI-generated estimates from public sources, not measurements.",
+    all: "All app ideas",
     from: "Fixed price",
     delivery: "Delivery estimate",
     type: "App type",
@@ -103,6 +104,11 @@ export const en = {
     title: "A real company in Vienna, not a landing page.",
     p: "Built and operated by codemenschen.at, a software company in Vienna. Look us up, read the Impressum, and you know exactly who is accountable.",
     cta: "Visit codemenschen.at ↗",
+      chips: [
+        { h: "Experienced team", p: "Apps and web for small businesses" },
+        { h: "Personal support", p: "By e-mail and phone, in German and English" },
+        { h: "Austrian company", p: "Codemenschen GmbH, Vienna" },
+      ],
   },
   faq: {
     eyebrow: "FAQ",
@@ -197,6 +203,7 @@ export const en = {
     },
     site: { h: "Website", fig: "{price} fixed", p: "Your preview goes live as it is. Hosting is included for {months} months, then {monthly} a month." },
     final: {
+      eyebrow: "Get started",
       title: "Have an idea? See it for free first.",
       lede: "One sentence is enough. The preview is ready in a few minutes.",
       checks: ["Free preview", "Fixed price before you pay", "Money back if we cannot deliver"],

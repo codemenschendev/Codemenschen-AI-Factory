@@ -63,8 +63,9 @@ export const de = {
   ideas: {
     eyebrow: "Verfügbare App-Ideen",
     title: "Jede Idee zeigt Preis und Umfang vorab.",
-    lede: "Ausgewählt von unserer KI-Analyse von App-Store-Daten: echte Beschwerden, echte Lücken. Jede Idee wird exklusiv für einen Kunden gebaut. Einmal vergeben, ist sie weg.",
+    lede: "Fertige App-Ideen mit Festpreis. Jede Idee wird nur für einen Kunden gebaut.",
     note: "⚠ Alle Marktzahlen sind KI-generierte Schätzungen aus öffentlichen Quellen, keine Messungen.",
+    all: "Alle App-Ideen",
     from: "Fixpreis",
     delivery: "Liefer-Schätzung",
     type: "App-Typ",
@@ -103,6 +104,11 @@ export const de = {
     title: "Ein echtes Unternehmen in Wien, keine Landing-Page.",
     p: "Gebaut und betrieben von codemenschen.at, einem Software-Unternehmen in Wien. Schau uns nach, lies das Impressum, dann weißt du genau, wer verantwortlich ist.",
     cta: "codemenschen.at besuchen ↗",
+      chips: [
+        { h: "Erfahrenes Team", p: "Apps und Web für kleine Unternehmen" },
+        { h: "Persönliche Betreuung", p: "Per E-Mail und Telefon, auf Deutsch und Englisch" },
+        { h: "Österreichisches Unternehmen", p: "Codemenschen GmbH, Wien" },
+      ],
   },
   faq: {
     eyebrow: "FAQ",
@@ -197,6 +203,7 @@ export const de = {
     },
     site: { h: "Website", fig: "{price} Festpreis", p: "Deine Vorschau geht so online, wie sie ist. Hosting ist {months} Monate inklusive, danach {monthly} im Monat." },
     final: {
+      eyebrow: "Jetzt starten",
       title: "Du hast eine Idee? Sieh sie dir zuerst kostenlos an.",
       lede: "Ein Satz reicht. Die Vorschau ist in wenigen Minuten fertig.",
       checks: ["Kostenlose Vorschau", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
