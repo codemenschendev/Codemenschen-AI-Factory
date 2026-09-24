@@ -4,6 +4,7 @@ import { useSyncExternalStore } from "react";
 import Link from "next/link";
 import { daysLeft, forget, getServerSnapshot, getSnapshot, subscribe } from "@/lib/history";
 import type { Dict, Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 /**
  * What this browser built before, under the box that builds the next one.
@@ -26,32 +27,22 @@ export function PrototypeHistory({ locale, d }: { locale: Locale; d: Dict }) {
   if (mine.length === 0) return null;
 
   return (
-    <section style={{ marginTop: 44, maxWidth: 640 }}>
-      <h2 style={{ fontSize: "1.1rem", marginBottom: 4 }}>{p.mine}</h2>
-      <p className="est-empty" style={{ marginTop: 0, marginBottom: 16 }}>{p.mineHint}</p>
+    <section className="pp-history">
+      <h2>{p.mine}</h2>
+      <p className="pp-note">{p.mineHint}</p>
 
-      <ul style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 10 }}>
+      <ul>
         {mine.map((e) => {
           const left = daysLeft(e);
 
           return (
-            <li
-              key={e.id}
-              style={{
-                display: "flex",
-                gap: 12,
-                alignItems: "baseline",
-                justifyContent: "space-between",
-                border: "1px solid var(--border)",
-                borderRadius: 12,
-                padding: "12px 14px",
-              }}
-            >
-              <div style={{ minWidth: 0 }}>
-                <Link href={`/${locale}/p/${e.id}`} style={{ fontWeight: 600 }}>
-                  {e.title ?? label(e.prompt)}
-                </Link>
-                <p className="small muted" style={{ margin: "4px 0 0" }}>
+            <li key={e.id}>
+              <span className="pp-history-ico">
+                <Icon name={e.kind} />
+              </span>
+              <div className="pp-history-text">
+                <Link href={`/${locale}/p/${e.id}`}>{e.title ?? label(e.prompt)}</Link>
+                <p>
                   {p.kinds[e.kind]}
                   {" · "}
                   {new Date(e.at).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB")}
@@ -59,12 +50,7 @@ export function PrototypeHistory({ locale, d }: { locale: Locale; d: Dict }) {
                   {left === 1 ? p.oneDayLeft : p.daysLeft.replace("{n}", String(left))}
                 </p>
               </div>
-              <button
-                type="button"
-                className="lang-toggle"
-                onClick={() => forget(e.id)}
-                style={{ cursor: "pointer", flex: "0 0 auto" }}
-              >
+              <button type="button" className="pp-link" onClick={() => forget(e.id)}>
                 {p.forget}
               </button>
             </li>
