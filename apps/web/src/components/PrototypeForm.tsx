@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { remember } from "@/lib/history";
 import { getToken, useToken } from "@/lib/token";
 import type { Dict, Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 /**
  * The public, anonymous prompt box: this is the lead magnet. The sentence, and any pictures of
@@ -52,6 +53,7 @@ async function shrink(file: File): Promise<File> {
 }
 
 export type ProtoKind = "site" | "app" | "ads" | "email" | "campaign";
+const KINDS: ProtoKind[] = ["site", "app", "ads", "email", "campaign"];
 
 export function PrototypeForm({
   locale,
@@ -83,6 +85,7 @@ export function PrototypeForm({
   const [own, setOwn] = useState<Record<number, string>>({});
   // The business's own pictures. They go up with the build, never on their own.
   const [files, setFiles] = useState<File[]>([]);
+  const [dragging, setDragging] = useState(false);
   const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 
@@ -92,7 +95,7 @@ export function PrototypeForm({
       if (draft && typeof draft.prompt === "string") {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage exists only in the browser, after hydration
         setPrompt(draft.prompt);
-        if (["site", "app", "ads", "email", "campaign"].includes(draft.kind)) setKind(draft.kind);
+        if (KINDS.includes(draft.kind)) setKind(draft.kind);
         localStorage.removeItem(DRAFT);
       }
     } catch {}
@@ -177,23 +180,22 @@ export function PrototypeForm({
   if (step === "answer") {
     const q = p.questions;
     return (
-      <div style={{ display: "grid", gap: 20, maxWidth: 640 }}>
+      <div className="pp-form">
         <div>
-          <h2 style={{ margin: "0 0 4px" }}>{q.title}</h2>
-          <p className="small muted" style={{ margin: 0 }}>{q.lead}</p>
+          <h2 className="pp-form-title">{q.title}</h2>
+          <p className="pp-note">{q.lead}</p>
         </div>
         {questions.map((item, i) => (
-          <fieldset key={i} style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 8 }}>
-            <legend style={{ padding: 0, marginBottom: 4, fontWeight: 600 }}>{item.q}</legend>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <fieldset key={i} className="pp-field">
+            <legend className="pp-label">{item.q}</legend>
+            <div className="pp-chips">
               {item.options.map((o) => (
                 <button
                   key={o}
                   type="button"
-                  className="tab"
+                  className="pp-chip"
                   aria-pressed={picked[i] === o}
                   onClick={() => setPicked((cur) => ({ ...cur, [i]: cur[i] === o ? "" : o }))}
-                  style={{ borderColor: picked[i] === o ? "currentColor" : undefined, fontWeight: picked[i] === o ? 600 : undefined }}
                 >
                   {o}
                 </button>
@@ -201,6 +203,7 @@ export function PrototypeForm({
             </div>
             <input
               type="text"
+              className="pp-input"
               value={own[i] ?? ""}
               onChange={(e) => {
                 const v = e.target.value.slice(0, 300);
@@ -208,88 +211,104 @@ export function PrototypeForm({
               }}
               placeholder={q.own}
               aria-label={`${item.q} ${q.own}`}
-              style={{ padding: 10, fontSize: "1rem" }}
             />
           </fieldset>
         ))}
-        {error && <p className="est-empty">{error}</p>}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
-          <button type="button" onClick={() => build(questions)} disabled={busy}>
+        {error && <p className="pp-error">{error}</p>}
+        <div className="pp-actions">
+          <button type="button" className="btn btn-primary pp-submit" onClick={() => build(questions)} disabled={busy}>
             {busy ? p.building : q.build}
+            {!busy && <Icon name="arrow" className="pp-btn-ico" />}
           </button>
-          <button type="button" className="tab" onClick={() => build([])} disabled={busy}>{q.skip}</button>
-          <button type="button" className="tab" onClick={() => setStep("write")} disabled={busy}>{q.back}</button>
+          <button type="button" className="pp-link" onClick={() => build([])} disabled={busy}>{q.skip}</button>
+          <button type="button" className="pp-link" onClick={() => setStep("write")} disabled={busy}>{q.back}</button>
         </div>
       </div>
     );
   }
 
+  const waiting = busy || step === "asking";
   return (
-    <form onSubmit={next} style={{ display: "grid", gap: 16, maxWidth: 640 }}>
+    <form onSubmit={next} className="pp-form">
       {/* The choice comes before the sentence on purpose: what gets drawn changes what is worth
           writing, and a visitor who picks "app" describes screens rather than a company. */}
-      <fieldset style={{ border: 0, padding: 0, margin: 0, display: "grid", gap: 8 }}>
-        <legend style={{ padding: 0, marginBottom: 4 }}>{p.kindLabel}</legend>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {(["site", "app", "ads", "email", "campaign"] as const).map((k) => (
+      <fieldset className="pp-field">
+        <legend className="pp-label"><span className="pp-step">1</span>{p.kindLabel}</legend>
+        <div className="pp-kinds">
+          {KINDS.map((k) => (
             <button
               key={k}
               type="button"
-              className="tab"
+              className="pp-kind"
               aria-pressed={kind === k}
               onClick={() => setKind(k)}
-              style={{
-                borderColor: kind === k ? "currentColor" : undefined,
-                fontWeight: kind === k ? 600 : undefined,
-              }}
             >
+              <Icon name={k} className="pp-kind-ico" />
               {p.kinds[k]}
             </button>
           ))}
         </div>
-        <p className="small muted" style={{ margin: 0 }}>{p.kindHints[kind]}</p>
+        <div className="pp-kind-hint">
+          {/* eslint-disable-next-line @next/next/no-img-element -- the home page's fixed service pictures */}
+          <img src={`/home/svc-${kind}.webp`} alt="" width={348} height={178} />
+          <p>{p.kindHints[kind]}</p>
+        </div>
       </fieldset>
 
-      <label>
-        {p.label}
+      <label className="pp-field">
+        <span className="pp-label"><span className="pp-step">2</span>{p.label}</span>
         <textarea
+          className="pp-textarea"
           value={prompt}
           onChange={(e) => setPrompt(e.target.value.slice(0, MAX_PROMPT))}
-          rows={prompt.length > 400 ? 10 : 4}
+          rows={prompt.length > 400 ? 10 : 5}
           maxLength={MAX_PROMPT}
           placeholder={p.hints[kind]}
-          style={{ width: "100%", marginTop: 8, fontSize: "1rem", padding: 12 }}
         />
       </label>
       {/* The count only appears once there is something to count against: a visitor typing one
           sentence should not be told about a ceiling they will never reach. */}
       {prompt.length >= MAX_PROMPT / 2 && (
-        <p className="small muted" style={{ margin: "-8px 0 0", textAlign: "right" }}>
+        <p className="pp-note pp-count">
           {prompt.length} / {MAX_PROMPT}
         </p>
       )}
-      <div style={{ display: "grid", gap: 8 }}>
-        <span>{p.uploads.label}</span>
-        <p className="small muted" style={{ margin: 0 }}>{p.uploads.hint.replace("{max}", String(MAX_UPLOADS))}</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}>
+      <div className="pp-field">
+        <span className="pp-label"><span className="pp-step">3</span>{p.uploads.label}</span>
+        <div className="pp-uploads">
           {previews.map((src, i) => (
-            <div key={src} style={{ position: "relative", width: 72, height: 72 }}>
+            <div key={src} className="pp-thumb">
               {/* eslint-disable-next-line @next/next/no-img-element -- a local blob preview, nothing to optimise */}
-              <img src={src} alt="" style={{ width: 72, height: 72, objectFit: "cover", borderRadius: 8, display: "block" }} />
+              <img src={src} alt="" />
               <button
                 type="button"
                 aria-label={p.uploads.remove}
                 title={p.uploads.remove}
                 onClick={() => setFiles(files.filter((_, k) => k !== i))}
-                style={{ position: "absolute", top: -8, right: -8, width: 24, height: 24, padding: 0, borderRadius: 12, lineHeight: "20px" }}
               >
                 ×
               </button>
             </div>
           ))}
           {files.length < MAX_UPLOADS && (
-            <label className="tab" style={{ cursor: "pointer", position: "relative" }}>
-              {p.uploads.add}
+            <label
+              className={`pp-drop${dragging ? " is-over" : ""}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setDragging(true);
+              }}
+              onDragLeave={() => setDragging(false)}
+              onDrop={(e) => {
+                e.preventDefault();
+                setDragging(false);
+                addFiles(e.dataTransfer.files);
+              }}
+            >
+              <Icon name="image" className="pp-drop-ico" />
+              <span>
+                <b>{files.length === 0 ? p.page.drop : p.uploads.add}</b>
+                <small>{p.uploads.hint.replace("{max}", String(MAX_UPLOADS))}</small>
+              </span>
               <input
                 type="file"
                 accept={ACCEPT.join(",")}
@@ -298,30 +317,37 @@ export function PrototypeForm({
                   addFiles(e.target.files);
                   e.target.value = "";
                 }}
-                style={{ position: "absolute", width: 1, height: 1, opacity: 0 }}
               />
             </label>
           )}
         </div>
       </div>
       {needsEmail && (
-        <label style={{ display: "grid", gap: 6 }}>
-          {p.email.label}
+        <label className="pp-field">
+          <span className="pp-label"><span className="pp-step">4</span>{p.email.label}</span>
           <input
             type="email"
+            className="pp-input pp-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder={p.signIn.email}
             autoComplete="email"
-            style={{ padding: 10, fontSize: "1rem", maxWidth: 360 }}
           />
-          <span className="small muted">{p.email.hint}</span>
+          <span className="pp-note">{p.email.hint}</span>
         </label>
       )}
-      {error && <p className="est-empty">{error}</p>}
-      <button type="submit" disabled={busy || step === "asking" || prompt.trim().length < 12 || !emailOk} style={{ justifySelf: "start" }}>
-        {busy ? p.building : step === "asking" ? p.asking : p.next}
-      </button>
+      {error && <p className="pp-error">{error}</p>}
+      <div className="pp-actions">
+        <button
+          type="submit"
+          className="btn btn-primary pp-submit"
+          disabled={waiting || prompt.trim().length < 12 || !emailOk}
+        >
+          {busy ? p.building : step === "asking" ? p.asking : p.next}
+          {!waiting && <Icon name="arrow" className="pp-btn-ico" />}
+        </button>
+        <p className="pp-note">{p.page.free}</p>
+      </div>
     </form>
   );
 }

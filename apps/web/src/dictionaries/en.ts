@@ -1306,6 +1306,12 @@ export const en = {
     daysLeft: "{n} days left",
     oneDayLeft: "1 day left",
     forget: "Remove",
+    page: {
+      pill: "Free · no credit card",
+      asideTitle: "What happens next",
+      free: "Free, no strings attached. You only pay when you start a project.",
+      drop: "Drag pictures here or choose them",
+    },
     stages: {
       studying: "Studying the best of the trade before drawing.",
       writing: "Writing the page. This takes two to four minutes.",

@@ -1308,6 +1308,12 @@ export const de = {
     daysLeft: "noch {n} Tage",
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
+    page: {
+      pill: "Kostenlos · ohne Kreditkarte",
+      asideTitle: "So geht es weiter",
+      free: "Kostenlos und unverbindlich. Du zahlst erst, wenn du ein Projekt startest.",
+      drop: "Bilder hierher ziehen oder auswählen",
+    },
     stages: {
       studying: "Schaut sich die Besten der Branche an, bevor gezeichnet wird.",
       writing: "Schreibt gerade die Seite. Das dauert zwei bis vier Minuten.",
