@@ -31,7 +31,7 @@ class LayoutsTest extends TestCase
         config(['services.layouts.path' => $this->dir, 'services.buzz.alert_dir' => null]);
 
         $admin = Customer::create(['email' => 'admin@example.com', 'locale' => 'de', 'is_admin' => true]);
-        $this->token = $admin->createToken('portal')->plainTextToken;
+        $this->token = $this->consoleToken($admin);
     }
 
     protected function tearDown(): void

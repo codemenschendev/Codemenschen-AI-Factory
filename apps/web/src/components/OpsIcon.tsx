@@ -38,6 +38,12 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M17 9a4 4 0 0 1 0 6" />
     </>
   ),
+  audit: (
+    <>
+      <path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6Z" />
+      <path d="m8.5 12 2.5 2.5 4.5-5" />
+    </>
+  ),
   conversions: (
     <>
       <path d="M4 12a8 8 0 0 1 14-5.3" />

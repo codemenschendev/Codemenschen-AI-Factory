@@ -45,7 +45,7 @@ class AdminTest extends TestCase
         $this->customerToken = $order->customer->createToken('portal')->plainTextToken;
 
         $admin = Customer::create(['email' => 'admin@example.com', 'locale' => 'de', 'is_admin' => true]);
-        $this->adminToken = $admin->createToken('portal')->plainTextToken;
+        $this->adminToken = $this->consoleToken($admin);
     }
 
     private function asAdmin(): array

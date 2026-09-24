@@ -52,8 +52,7 @@ class DesignLibraryTest extends TestCase
         ]]));
 
         config(['services.media.design_library_path' => $this->dir]);
-        $this->adminToken = Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true])
-            ->createToken('portal')->plainTextToken;
+        $this->adminToken = $this->consoleToken(Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true]));
     }
 
     protected function tearDown(): void

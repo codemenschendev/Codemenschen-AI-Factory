@@ -168,8 +168,7 @@ class AdsConnectionsTest extends TestCase
     public function test_the_admin_overview_carries_the_connection_status(): void
     {
         config(['services.ads.meta' => ['token' => '', 'ad_account_id' => '', 'page_id' => '']]);
-        $token = Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true])
-            ->createToken('portal')->plainTextToken;
+        $token = $this->consoleToken(Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true]));
 
         $this->getJson('/api/admin/overview', ['Authorization' => 'Bearer '.$token])
             ->assertOk()

@@ -6,6 +6,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminConversionController;
 use App\Http\Controllers\AdminKeywordController;
 use App\Http\Controllers\AdminOwnCampaignController;
+use App\Http\Controllers\AdminSecurityController;
 use App\Http\Controllers\AdminTrafficController;
 use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
@@ -105,9 +106,21 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/campaigns/{campaign}/pause', [AdsController::class, 'pause']);
 });
 
+// The console's second factor. Open to an admin whose token has not passed it yet, which is the
+// point: these are how it gets passed. Written to the audit log like every other console change.
+Route::middleware(['auth:sanctum', 'admin', 'audit'])->prefix('admin/2fa')->group(function () {
+    Route::get('/', [AdminSecurityController::class, 'status']);
+    Route::post('/setup', [AdminSecurityController::class, 'setup'])->middleware('throttle:10,10,2fa-setup');
+    Route::post('/enable', [AdminSecurityController::class, 'enable'])->middleware('throttle:5,1,2fa');
+    Route::post('/verify', [AdminSecurityController::class, 'verify'])->middleware('throttle:5,1,2fa');
+});
+
 // Operator lane. Same magic-link login as a customer; the `admin` middleware is the whole
-// difference, and it is checked on the server for every single one of these routes.
-Route::middleware(['auth:sanctum', 'admin'])->prefix('admin')->group(function () {
+// difference, and it is checked on the server for every single one of these routes. Since
+// 2026-09-24 the token must also have passed the authenticator code (admin.2fa), and every change
+// made here is written to the audit log.
+Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admin')->group(function () {
+    Route::get('/audit', [AdminSecurityController::class, 'audit']);
     Route::get('/overview', [AdminController::class, 'overview']);
     Route::get('/projects', [AdminController::class, 'projects']);
     Route::get('/projects/{project}', [AdminController::class, 'project']);
