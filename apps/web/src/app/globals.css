@@ -94,6 +94,13 @@ section { padding: 72px 0; }
 .nav-panel a:hover { background: var(--bg); }
 @media (max-width: 1000px) { .nav-burger { display: block; } }
 @media (max-width: 560px) { .logo-by { display: none; } }
+/* German "Anmelden" made the bar 11px wider than a 360px phone; tighten it there */
+@media (max-width: 420px) {
+  .nav-inner { gap: 8px; }
+  .nav-right { gap: 6px; }
+  .nav-right .lang-toggle { padding: 4px 9px; }
+  .logo-name { font-size: 1.25rem; }
+}
 
 /* ---------- Buttons ---------- */
 .btn { display: inline-block; font-family: var(--font-body); font-weight: 600; font-size: 15px; border-radius: var(--radius); padding: 12px 22px; text-decoration: none; border: 1px solid transparent; cursor: pointer; }

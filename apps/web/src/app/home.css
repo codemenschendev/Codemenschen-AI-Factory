@@ -86,16 +86,17 @@
 .lp .svc-thumb { margin: 0 -6px; height: 128px; border-radius: 10px; overflow: hidden; background: var(--tint); }
 .lp .svc-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .lp .svc-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #fff; color: var(--accent); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12); margin: -22px 0 12px 4px; position: relative; }
-.lp .svc h3 { font-size: 1rem; }
-.lp .svc p { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; margin-bottom: 12px; }
+.lp .svc h3 { font-size: 1rem; line-height: 1.3; min-height: 2.6em; }
+.lp .svc p { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; min-height: 4.5em; margin-bottom: 12px; }
 .lp .svc-points { display: grid; gap: 5px; margin-bottom: 18px; font-size: 0.8rem; }
-.lp .svc-grid { align-items: start; }
 .lp .svc-points li { display: flex; align-items: center; gap: 7px; }
 .lp .svc-points .tick { width: 16px; height: 16px; padding: 2px; }
 .lp .svc-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
+/* same height for "€299" and the two-line "Price after the preview", so labels and arrows line up */
+.lp .svc-foot > div { display: flex; flex-direction: column; justify-content: space-between; min-height: 3.65rem; }
 .lp .svc-foot small { display: block; font-size: 0.74rem; color: var(--ink-soft); }
-.lp .svc-foot b { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
-.lp .svc-foot .svc-free { display: block; font-family: var(--font-body); font-size: 0.88rem; font-weight: 600; letter-spacing: 0; }
+.lp .svc-foot b { display: block; line-height: 1.2; font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }
+.lp .svc-foot .svc-free { display: block; font-family: var(--font-body); font-size: 0.88rem; font-weight: 600; line-height: 1.35; letter-spacing: 0; }
 .lp .svc-go { flex: none; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; border: 1px solid var(--border); color: var(--accent); }
 .lp .svc-go .ico { width: 16px; height: 16px; }
 
