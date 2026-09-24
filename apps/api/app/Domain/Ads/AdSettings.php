@@ -28,6 +28,7 @@ class AdSettings
         'meta_pixel_id' => 'services.ads.meta.pixel_id',
         'google_conversion_lead' => 'services.ads.google.conversion_lead',
         'google_conversion_purchase' => 'services.ads.google.conversion_purchase',
+        'google_conversion_goal' => 'services.ads.google.conversion_goal',
         // The storefront's Tag Manager container (GTM-XXXXXXX). Public by nature: it is in the page.
         'gtm_id' => 'services.analytics.gtm_id',
     ];

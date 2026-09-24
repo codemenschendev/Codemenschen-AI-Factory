@@ -27,7 +27,7 @@ interface Report {
 
 type Settings = Record<string, { value: string; source: string }>;
 
-const IDS = ["gtm_id", "meta_pixel_id", "google_conversion_lead", "google_conversion_purchase"] as const;
+const IDS = ["gtm_id", "meta_pixel_id", "google_conversion_lead", "google_conversion_purchase", "google_conversion_goal"] as const;
 
 /**
  * Conversion tracking: whether Meta and Google are ready to take results, and what was reported.

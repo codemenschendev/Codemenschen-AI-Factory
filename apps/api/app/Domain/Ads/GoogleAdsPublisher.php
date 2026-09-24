@@ -379,7 +379,24 @@ class GoogleAdsPublisher implements Publisher
             ]);
         }
 
+        // Our own campaigns count and bid on Appwerk's results only. The account is shared with
+        // other products, whose purchases would otherwise be this campaign's conversions too. A
+        // failure here leaves a working, paused campaign on the account goals, and says so.
+        $campaignResource = $results[1]['campaignResult']['resourceName'] ?? null;
+        $goal = null;
+        $goalError = null;
+        if ($campaignResource && $campaign->project_id === null && $campaign->prototype_id === null
+            && ($goalId = AdSettings::get('google_conversion_goal')) !== '') {
+            try {
+                $goal = $this->useGoal($cid, $login, $campaignResource, $goalId);
+            } catch (\Throwable $e) {
+                $goalError = mb_substr($e->getMessage(), 0, 300);
+            }
+        }
+
         return [
+            'goal' => $goal,
+            'goal_error' => $goalError,
             'budget' => $results[0]['campaignBudgetResult']['resourceName'] ?? null,
             'campaign_id' => $results[1]['campaignResult']['resourceName'] ?? null,
             'ad_group' => $results[2]['adGroupResult']['resourceName'] ?? null,
@@ -508,6 +525,27 @@ class GoogleAdsPublisher implements Publisher
 
         return ['total' => $all['cost'], 'today' => $read(' AND segments.date DURING TODAY')['cost'],
             'impressions' => $all['impressions'], 'clicks' => $all['clicks']];
+    }
+
+    /** Sets one campaign to count and bid on a custom conversion goal instead of the account's goals. */
+    private function useGoal(string $cid, string $login, string $campaignResource, string $goalId): string
+    {
+        $campaignId = substr($campaignResource, strrpos($campaignResource, '/') + 1);
+        $goal = "customers/{$cid}/customConversionGoals/{$goalId}";
+        $res = Http::withToken($this->accessToken())->withHeaders($this->headers($cid, $login))->timeout(30)
+            ->post($this->endpoint("customers/{$cid}/conversionGoalCampaignConfigs:mutate"), ['operations' => [[
+                'update' => [
+                    'resourceName' => "customers/{$cid}/conversionGoalCampaignConfigs/{$campaignId}",
+                    'goalConfigLevel' => 'CAMPAIGN',
+                    'customConversionGoal' => $goal,
+                ],
+                'updateMask' => 'goalConfigLevel,customConversionGoal',
+            ]]]);
+        if (! $res->successful()) {
+            throw new RuntimeException('Google Ads API: '.self::errorDetail($res->status(), (string) $res->body()));
+        }
+
+        return $goal;
     }
 
     /**

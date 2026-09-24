@@ -216,6 +216,9 @@ class AdminOwnCampaignController extends Controller
             'activated_at' => $c->activated_at?->toIso8601String(),
             'error' => $c->publish_error,
             'stopped_reason' => $c->stopped_reason,
+            // Whether Google counts this campaign on Appwerk's own goal, or why it does not.
+            'goal' => $c->platform_ref['goal'] ?? null,
+            'goal_warning' => $c->platform_ref['goal_error'] ?? null,
             // The address a click lands on, UTM included, and what those clicks became.
             // What Google has, once it has it: a campaign sent before UTM existed has none.
             'final_url' => $c->platform_ref['final_url'] ?? ($c->published_at === null ? $c->finalUrl() : ($c->strategy['landing_url'] ?? '')),
