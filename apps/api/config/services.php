@@ -125,7 +125,10 @@ return [
             'api_version' => env('GOOGLE_ADS_API_VERSION', 'v25'),
             // Conversion actions (numeric ids) that sign-ups and purchases are uploaded to.
             'conversion_lead' => env('GOOGLE_ADS_CONVERSION_LEAD'),
-            'conversion_purchase' => env('GOOGLE_ADS_CONVERSION_PURCHASE'), // v26 does not exist yet, v18 to v21 are retired (404)
+            'conversion_purchase' => env('GOOGLE_ADS_CONVERSION_PURCHASE'),
+            // A custom conversion goal holding the two actions above. Our own campaigns are set to
+            // it, so they count and bid on Appwerk's results only, not on other products' sales.
+            'conversion_goal' => env('GOOGLE_ADS_CONVERSION_GOAL'), // v26 does not exist yet, v18 to v21 are retired (404)
         ],
     ],
 

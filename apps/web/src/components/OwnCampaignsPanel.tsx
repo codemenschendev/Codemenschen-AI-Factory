@@ -31,6 +31,8 @@ interface Campaign {
   stopped_reason: string | null;
   final_url: string;
   funnel: Funnel;
+  goal: string | null;
+  goal_warning: string | null;
 }
 
 /** Google's clicks, then what our own analytics saw of the same visitors on the same day. */
@@ -373,6 +375,9 @@ export function OwnCampaignsPanel({
                 <td>
                   <span className={`badge ${tone(c.status)}`}>{status[c.status] ?? c.status}</span>
                   {c.stopped_reason && <div className="muted small">{c.stopped_reason}</div>}
+                  {c.goal_warning && (
+                    <div className="small" style={{ color: "var(--warn-ink)", whiteSpace: "normal" }} title={c.goal_warning}>{o.goalMissing}</div>
+                  )}
                 </td>
                 <td className="num" style={{ textAlign: "right" }}>
                   {money.format(c.daily_eur)}

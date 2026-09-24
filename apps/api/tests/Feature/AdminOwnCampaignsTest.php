@@ -120,6 +120,7 @@ class AdminOwnCampaignsTest extends TestCase
                 [], [], [],
             ]]),
         ]);
+        config(['services.ads.google.conversion_goal' => '6459']);
         $admin = $this->admin();
         $id = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->form(['countries' => ['AT', 'DE']]))->json('id');
         CampaignKeyword::create(['campaign_id' => $id, 'text' => 'website erstellen lassen', 'match_type' => 'phrase',
@@ -129,6 +130,11 @@ class AdminOwnCampaignsTest extends TestCase
         (new PublishCampaign($id))->handle(app(PublisherRegistry::class), app(Preflight::class));
 
         $this->assertSame('paused', MarketingCampaign::find($id)->platform_status);
+        $this->assertSame('customers/1234567890/customConversionGoals/6459', MarketingCampaign::find($id)->platform_ref['goal']);
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'conversionGoalCampaignConfigs:mutate')
+            && $r['operations'][0]['update']['resourceName'] === 'customers/1234567890/conversionGoalCampaignConfigs/2'
+            && $r['operations'][0]['update']['goalConfigLevel'] === 'CAMPAIGN'
+            && $r['operations'][0]['update']['customConversionGoal'] === 'customers/1234567890/customConversionGoals/6459');
         $this->assertSame('applied', CampaignKeyword::first()->status);
         Http::assertSent(function ($r) use ($id) {
             if (! str_contains($r->url(), 'googleAds:mutate')) {
@@ -144,6 +150,39 @@ class AdminOwnCampaignsTest extends TestCase
                 && $ops[3]['adGroupAdOperation']['create']['ad']['finalUrls'][0]
                     === "https://appwerk.codemenschen.at?utm_source=google&utm_medium=cpc&utm_campaign=appwerk-$id";
         });
+    }
+
+    public function test_a_goal_google_refuses_leaves_the_campaign_published_with_a_warning(): void
+    {
+        $this->google();
+        config(['services.ads.google.conversion_goal' => '6459']);
+        Http::fake(function ($r) {
+            if (str_contains($r->url(), 'oauth2')) {
+                return Http::response(['access_token' => 'at', 'expires_in' => 3600]);
+            }
+            if (str_contains($r->url(), 'conversionGoalCampaignConfigs')) {
+                return Http::response(['error' => ['message' => 'Goal not found.', 'status' => 'NOT_FOUND']], 404);
+            }
+
+            return Http::response(['mutateOperationResponses' => [
+                ['campaignBudgetResult' => ['resourceName' => 'customers/1234567890/campaignBudgets/1']],
+                ['campaignResult' => ['resourceName' => 'customers/1234567890/campaigns/2']],
+                ['adGroupResult' => ['resourceName' => 'customers/1234567890/adGroups/3']],
+                ['adGroupAdResult' => ['resourceName' => 'customers/1234567890/adGroupAds/3~4']],
+                ['adGroupCriterionResult' => ['resourceName' => 'customers/1234567890/adGroupCriteria/3~5']],
+            ]]);
+        });
+        $admin = $this->admin();
+        $id = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->form())->json('id');
+        CampaignKeyword::create(['campaign_id' => $id, 'text' => 'website erstellen lassen', 'match_type' => 'phrase',
+            'negative' => false, 'status' => 'approved', 'source' => 'admin']);
+
+        (new PublishCampaign($id))->handle(app(PublisherRegistry::class), app(Preflight::class));
+
+        $this->assertSame('paused', MarketingCampaign::find($id)->platform_status);
+        $this->actingAs($admin, 'sanctum')->getJson('/api/admin/own-campaigns')
+            ->assertJsonPath('campaigns.0.goal', null)
+            ->assertJsonPath('campaigns.0.goal_warning', 'Google Ads API: NOT_FOUND: Goal not found.');
     }
 
     public function test_the_ai_draft_drops_lines_over_googles_limits(): void
