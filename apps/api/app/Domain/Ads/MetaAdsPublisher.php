@@ -140,7 +140,9 @@ class MetaAdsPublisher implements Publisher
         $ref['adset_id'] = $adset['id'] ?? null;
 
         // 4. the creative: first headline as the link name, first ad_copy as the message.
-        $link = (string) ($campaign->strategy['landing_url'] ?? 'https://appwerk.codemenschen.at');
+        // Our own campaigns get their UTM added here, so the funnel finds their visitors.
+        $link = $campaign->finalUrl();
+        $ref['final_url'] = $link;
         $linkData = [
             'message' => $this->firstCreative($campaign, 'ad_copy'),
             'name' => $this->firstCreative($campaign, 'headline'),
@@ -216,7 +218,7 @@ class MetaAdsPublisher implements Publisher
 
     private function name(MarketingCampaign $campaign): string
     {
-        return 'Appwerk #'.$campaign->id.' '.mb_substr((string) ($campaign->project?->name ?? $campaign->prototype?->title), 0, 40);
+        return 'Appwerk #'.$campaign->id.' '.mb_substr((string) ($campaign->project?->name ?? $campaign->prototype?->title ?? $campaign->strategy['name'] ?? ''), 0, 40);
     }
 
     private function firstCreative(MarketingCampaign $campaign, string $kind): string
