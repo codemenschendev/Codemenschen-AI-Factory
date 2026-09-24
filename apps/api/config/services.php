@@ -78,6 +78,10 @@ return [
         // prototypes, `paid_backend` for paid ads, which fall back to the API when Codex fails.
         'backend' => env('AI_IMAGE_BACKEND', 'openai'),
         'paid_backend' => env('AI_IMAGE_PAID_BACKEND', 'openai'),
+        // Paid renders on the owner's own OpenAI key, when one is set in the admin panel
+        // (App\Domain\Ai\OpenAiImageKey). The key itself is never in the env.
+        'openai_url' => env('AI_IMAGE_OPENAI_URL', 'https://api.openai.com'),
+        'openai_model' => env('AI_IMAGE_OPENAI_MODEL', 'gpt-image-1'),
         'codex_url' => env('AI_IMAGE_CODEX_URL', 'http://imagegen:8400'),
         'codex_token' => env('AI_IMAGE_CODEX_TOKEN'),
         'codex_timeout' => (int) env('AI_IMAGE_CODEX_TIMEOUT', 420),

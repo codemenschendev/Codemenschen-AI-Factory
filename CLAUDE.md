@@ -20,6 +20,10 @@
   sets words, and only because the owner chose to test it; it never writes text for Claude's pages.
   `App\Domain\Ai\ChatBackend` refuses an OpenAI chat backend before a request is sent; keep every
   `x-openclaw-model` header going through it.
+- **Paid renders on the owner's OpenAI key** (2026-09-24): with a key entered in the admin panel
+  (`OpenAiImageKey`, stored encrypted, never read back), a paying customer's ad pictures
+  (`RenderProjectAd` -> `ImageService::generate`) go straight to the OpenAI Images API on it; no key,
+  or a failing key, falls back to the sidecar. Free prototypes stay on Codex and never use the key.
 - **No model experiment without asking.** A benchmark against another provider or model spends
   real generations on the owner's accounts. Ask first, naming the provider and the number of
   calls. This rule exists because on 2026-09-05 one gpt-5.5 build and one Haiku build were run
