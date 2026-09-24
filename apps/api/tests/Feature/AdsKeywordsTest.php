@@ -200,6 +200,30 @@ class AdsKeywordsTest extends TestCase
         $this->assertContains('Google: no approved keyword. A search campaign without keywords shows nothing.', $problems);
     }
 
+    public function test_keep_all_keeps_only_proposals_on_one_side(): void
+    {
+        $campaign = $this->campaign();
+        $make = fn (string $text, bool $negative, string $status) => CampaignKeyword::create([
+            'campaign_id' => $campaign->id, 'text' => $text, 'match_type' => 'phrase',
+            'negative' => $negative, 'status' => $status, 'source' => 'ai',
+        ]);
+        $make('dachreparatur graz', false, 'proposed');
+        $make('dach undicht', false, 'proposed');
+        $make('dachdecker job', true, 'proposed');
+        $make('dach kostenlos', false, 'paused');
+
+        $this->actingAs($this->admin(), 'sanctum')
+            ->postJson("/api/admin/marketing/{$campaign->id}/keywords/keep-all", ['negative' => false])
+            ->assertOk()
+            ->assertJsonPath('campaign.on_google', false);
+
+        $this->assertSame('approved', CampaignKeyword::where('text', 'dachreparatur graz')->first()->status);
+        $this->assertSame('approved', CampaignKeyword::where('text', 'dach undicht')->first()->status);
+        // The other side and a keyword someone took out stay as they were.
+        $this->assertSame('proposed', CampaignKeyword::where('text', 'dachdecker job')->first()->status);
+        $this->assertSame('paused', CampaignKeyword::where('text', 'dach kostenlos')->first()->status);
+    }
+
     public function test_the_keyword_screen_is_closed_to_a_customer(): void
     {
         $this->google();
