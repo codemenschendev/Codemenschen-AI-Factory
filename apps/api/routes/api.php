@@ -4,6 +4,7 @@ use App\Http\Controllers\AdAccountController;
 use App\Http\Controllers\AdminClientAdsController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AdminConversionController;
+use App\Http\Controllers\AdminImageKeyController;
 use App\Http\Controllers\AdminKeywordController;
 use App\Http\Controllers\AdminOwnCampaignController;
 use App\Http\Controllers\AdminSecurityController;
@@ -150,6 +151,10 @@ Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admi
     // Appwerk's own ad account numbers, editable here instead of in the server env.
     Route::get('/ads/settings', [ValidationController::class, 'settings']);
     Route::post('/ads/settings', [ValidationController::class, 'saveSettings']);
+    // The OpenAI key paid renders are billed to. Write-only: nothing reads the key back.
+    Route::get('/image-key', [AdminImageKeyController::class, 'show']);
+    Route::post('/image-key', [AdminImageKeyController::class, 'store'])->middleware('throttle:10,10,image-key');
+    Route::delete('/image-key', [AdminImageKeyController::class, 'destroy']);
     // The words a search campaign is bought for. Only `apply` reaches Google; suggesting and
     // ticking happen here and cost nothing.
     // Every client's ad accounts and campaigns in one place. Starting and pausing stay on the

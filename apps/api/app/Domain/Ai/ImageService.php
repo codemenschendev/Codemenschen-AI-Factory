@@ -19,7 +19,7 @@ use RuntimeException;
  */
 class ImageService
 {
-    /** Which backend rendered the last picture: 'codex' or 'openai'. */
+    /** Which backend rendered the last picture: 'openai-key', 'codex' or 'openai'. */
     public ?string $lastBackend = null;
 
     /**
@@ -28,6 +28,21 @@ class ImageService
      */
     public function generate(string $prompt, string $size, array $refs = []): string
     {
+        // A paying customer's pictures go on the owner's own OpenAI key when one is set in the
+        // admin panel (OpenAiImageKey). The sidecar stays the fallback, so a key over its quota
+        // does not cost the customer their ad.
+        $key = OpenAiImageKey::get();
+        if ($key !== '') {
+            try {
+                $bytes = $this->openaiDirect($key, $prompt, $size);
+                $this->lastBackend = 'openai-key';
+
+                return $bytes;
+            } catch (\Throwable $e) {
+                Log::warning('image: the OpenAI key could not render, falling back to the sidecar', ['error' => mb_substr($e->getMessage(), 0, 300)]);
+            }
+        }
+
         // Paid ads stay on the metered API unless switched on separately: a clip can need a
         // picture per scene, and the subscription's quota is for the ad prototypes.
         if (config('services.ai_image.paid_backend') === 'codex' && (string) config('services.ai_image.codex_token') !== '') {
@@ -132,6 +147,58 @@ class ImageService
         }
 
         return $bytes;
+    }
+
+    /** The OpenAI Images API on the key from the admin panel, no sidecar in between. */
+    private function openaiDirect(string $key, string $prompt, string $size): string
+    {
+        $payload = array_filter([
+            'model' => config('services.ai_image.openai_model') ?: 'gpt-image-1',
+            'prompt' => $prompt,
+            'size' => $size,
+            'quality' => config('services.ai_image.quality'),
+            'output_format' => 'png',
+            'n' => 1,
+        ], fn ($v) => $v !== null && $v !== '');
+
+        $res = Http::baseUrl(rtrim((string) config('services.ai_image.openai_url'), '/'))
+            ->withToken($key)
+            ->acceptJson()
+            ->timeout((int) config('services.ai_image.timeout', 180))
+            ->connectTimeout(10)
+            ->post('/v1/images/generations', $payload);
+
+        if (! $res->successful()) {
+            throw new RuntimeException('OpenAI answered '.$res->status().': '.mb_substr((string) $res->json('error.message', $res->body()), 0, 300));
+        }
+        $b64 = (string) $res->json('data.0.b64_json');
+        $bytes = $b64 === '' ? false : base64_decode($b64, true);
+        if ($bytes === false || $bytes === '') {
+            throw new RuntimeException('OpenAI returned no picture.');
+        }
+
+        return $bytes;
+    }
+
+    /**
+     * Whether OpenAI accepts a key, asked before it is stored. Reading one model costs nothing.
+     *
+     * @return array{ok:bool,detail:?string}
+     */
+    public function checkKey(string $key): array
+    {
+        $model = (string) (config('services.ai_image.openai_model') ?: 'gpt-image-1');
+        try {
+            $res = Http::baseUrl(rtrim((string) config('services.ai_image.openai_url'), '/'))
+                ->withToken($key)->acceptJson()->timeout(15)->connectTimeout(10)
+                ->get('/v1/models/'.$model);
+        } catch (\Throwable $e) {
+            return ['ok' => false, 'detail' => 'OpenAI is not reachable: '.mb_substr($e->getMessage(), 0, 200)];
+        }
+
+        return $res->successful()
+            ? ['ok' => true, 'detail' => null]
+            : ['ok' => false, 'detail' => 'OpenAI answered '.$res->status().': '.mb_substr((string) $res->json('error.message', $res->body()), 0, 200)];
     }
 
     private function openai(string $prompt, string $size): string

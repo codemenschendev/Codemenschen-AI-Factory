@@ -380,6 +380,42 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     if (r) setAdNumbers(r.settings);
   }
 
+  // The OpenAI key paid renders are billed to. The API never sends the key back, only whether
+  // one is set and its last four characters.
+  type ImageKey = { set: boolean; hint: string | null; by: string | null; at: string | null };
+  const [imageKey, setImageKey] = useState<ImageKey | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const r = await call<{ key: ImageKey }>("/admin/image-key");
+      if (alive && r) setImageKey(r.key);
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [call]);
+
+  async function saveImageKey(form: HTMLFormElement) {
+    const input = form.elements.namedItem("api_key") as HTMLInputElement;
+    setBusy(true);
+    const r = await call<{ key: ImageKey }>("/admin/image-key", { method: "POST", body: JSON.stringify({ api_key: input.value.trim() }) });
+    if (r) {
+      setImageKey(r.key);
+      input.value = "";
+    }
+    setBusy(false);
+  }
+
+  async function removeImageKey() {
+    if (!window.confirm(a.imageKeyRemoveConfirm)) return;
+    setBusy(true);
+    const r = await call<{ key: ImageKey }>("/admin/image-key", { method: "DELETE" });
+    if (r) setImageKey(r.key);
+    setBusy(false);
+  }
+
   async function saveGuardLimits(max_campaign_eur: number, max_daily_total_eur: number) {
     setBusy(true);
     const r = await call<{ limits: Omit<Overview["ads_guard"], "running"> }>("/admin/ads/limits", { method: "POST", body: JSON.stringify({ max_campaign_eur, max_daily_total_eur }) });
@@ -771,6 +807,45 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   </label>
                 ))}
                 <button className="btn btn-ghost btn-sm" disabled={busy} style={{ marginTop: 6 }}>{a.guardSave}</button>
+              </form>
+            </div>
+          )}
+
+          {imageKey && (
+            <div className="card" style={{ marginBottom: 26 }}>
+              <span className="cat">{a.imageKeyTile}</span>
+              <strong style={{ fontSize: 22 }}>{imageKey.set ? `${a.imageKeySet} ${imageKey.hint ?? ""}` : a.imageKeyNone}</strong>
+              {imageKey.set && imageKey.by && (
+                <p className="small muted" style={{ margin: "2px 0 0" }}>
+                  {a.imageKeyBy} {imageKey.by}
+                  {imageKey.at && ` · ${new Date(imageKey.at).toLocaleString(locale)}`}
+                </p>
+              )}
+              <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.imageKeyHint}</p>
+              <form
+                style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center" }}
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  void saveImageKey(e.currentTarget);
+                }}
+              >
+                <input
+                  name="api_key"
+                  type="password"
+                  autoComplete="off"
+                  required
+                  minLength={20}
+                  placeholder={a.imageKeyPlaceholder}
+                  style={{ width: 280, maxWidth: "100%" }}
+                />
+                <button className="btn btn-primary btn-sm" disabled={busy}>
+                  {imageKey.set ? a.imageKeyReplace : a.imageKeySave}
+                </button>
+                {imageKey.set && (
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => void removeImageKey()}>
+                    {a.imageKeyRemove}
+                  </button>
+                )}
               </form>
             </div>
           )}
