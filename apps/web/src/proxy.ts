@@ -1,21 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { DEFAULT_LOCALE, LOCALES, isLocale } from "@/lib/i18n";
 
-/** Redirect locale-less paths to /de|/en. Cookie (manual choice) wins over
-    Accept-Language; a manual choice is never auto-overridden (appwerk doc 12). */
+/** Redirect locale-less paths to /de|/en. A manual choice (cookie) wins and is never
+    auto-overridden; everyone else gets German, whatever the browser language. */
 export function proxy(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (LOCALES.some((l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`))) {
     return NextResponse.next();
   }
+  // German first: Appwerk starts in Austria. English only when the visitor picked it (cookie).
   const cookie = req.cookies.get("locale")?.value;
-  const fromHeader = req.headers
-    .get("accept-language")
-    ?.toLowerCase()
-    .startsWith("de")
-    ? "de"
-    : "en";
-  const locale = cookie && isLocale(cookie) ? cookie : (fromHeader ?? DEFAULT_LOCALE);
+  const locale = cookie && isLocale(cookie) ? cookie : DEFAULT_LOCALE;
   const url = req.nextUrl.clone();
   url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
   return NextResponse.redirect(url, 302);

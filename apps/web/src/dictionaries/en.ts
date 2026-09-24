@@ -1,5 +1,6 @@
 export const en = {
   nav: {
+    appDev: "App development",
     by: "by codemenschen",
     ideas: "App ideas",
     create: "Your own idea",
@@ -208,6 +209,54 @@ export const en = {
       title: "Have an idea? See it for free first.",
       lede: "One sentence is enough. The preview is ready in a few minutes.",
       checks: ["Free preview", "Fixed price before you pay", "Money back if we cannot deliver"],
+    },
+  },
+  appDev: {
+    metaTitle: "Have your app built at a fixed price · Appwerk",
+    metaDesc: "We code your app, build its landing page and advertise it on Google and Meta. Free preview, fixed price, team in Vienna.",
+    eyebrow: "App development from one hand",
+    titleA: "Your app.",
+    titleB: "Coded and promoted.",
+    titleC: "From one hand.",
+    lede: "Describe your idea in one sentence. Appwerk AI builds you a free clickable preview. Then we code the app, build its landing page and start the ads.",
+    cta: "Free app preview",
+    cta2: "See prices",
+    stackLabel: "Your project",
+    stack: ["App coded", "Landing page live", "Ads running"],
+    trust: [
+      { h: "Free preview", p: "You see your app before you pay." },
+      { h: "Fixed price", p: "Scope and price are set before checkout." },
+      { h: "You own the app", p: "Code, repository and store listing go to you." },
+      { h: "Team in Vienna", p: "Real people, reachable by e-mail and phone." },
+    ],
+    one: {
+      eyebrow: "From one hand",
+      title: "Code, landing page, ads.",
+      lede: "An app on its own brings no customers. So we do all three parts, and they fit together.",
+      items: {
+        app: { h: "We code your app", p: "As a web app or for phones, with your own features.", points: ["Web, iPhone or Android", "Your own features", "Store release optional"] },
+        site: { h: "We build the landing page", p: "A page that explains your app and collects sign-ups.", points: ["Own design", "Made for phones", "Sign-up form with double opt-in"] },
+        ads: { h: "We advertise your app", p: "Ads on Google and Meta that lead to your landing page.", points: ["Ad copy and images included", "Fixed budget cap", "Nothing runs before you press start"] },
+      },
+    },
+    how: {
+      title: "Your app in four steps.",
+      steps: [
+        { h: "Describe the app", p: "One sentence is enough. Or pick a ready app idea." },
+        { h: "See the free preview", p: "Appwerk AI builds a clickable preview of your app in a few minutes." },
+        { h: "Approve scope and price", p: "You see what you get and what it costs before you pay." },
+        { h: "Go live and advertise", p: "Your app goes live. The ads start only when you press start." },
+      ],
+    },
+    prices: {
+      title: "Prices for your app",
+      lede: "You see every amount before you pay. The ad budget is separate and goes 1:1 into ads.",
+      landing: { h: "Landing page for the app", fig: "{price} fixed price", p: "Hosting is included for {months} months, then {monthly} a month." },
+    },
+    faqTitle: "Common questions",
+    final: {
+      title: "Got an app idea? See it for free first.",
+      lede: "One sentence is enough. The preview is ready in a few minutes.",
     },
   },
   detail: {
