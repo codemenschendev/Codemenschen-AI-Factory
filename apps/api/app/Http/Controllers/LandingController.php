@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Domain\Analytics\Analytics;
 use App\Domain\Analytics\ValidationReport;
 use App\Models\LandingSignup;
+use App\Models\Project;
 use App\Models\Prototype;
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -35,6 +37,7 @@ class LandingController extends Controller
     {
         $this->authorizeOwner($request, $prototype);
         abort_unless(self::isLanding($prototype) && $prototype->isLive(), 422, 'Only a finished campaign landing page can go live.');
+        abort_if($prototype->parent_id === null, 422, 'A bought website is switched on by its payment.');
 
         $until = now()->addDays(self::LIVE_DAYS);
         $prototype->update(['published_at' => $prototype->published_at ?? now()]);
@@ -101,13 +104,31 @@ class LandingController extends Controller
             "frame-ancestors 'self' https://appwerk.codemenschen.at",
         ]);
 
-        return response($html, 200, [
+        // A campaign's test page is kept out of search; a bought website wants to be found.
+        return response($html, 200, array_filter([
             'Content-Type' => 'text/html; charset=UTF-8',
             'Content-Security-Policy' => $csp,
             'X-Content-Type-Options' => 'nosniff',
-            'X-Robots-Tag' => 'noindex',
+            'X-Robots-Tag' => $prototype->project_id === null ? 'noindex' : null,
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
-        ]);
+        ]));
+    }
+
+    /**
+     * A bought website on the customer's own domain: the request arrives with their host name
+     * (Apache passes it through), and the project that asked for that domain is the page. Any
+     * other host gets the API's plain front page, as before.
+     */
+    public function byHost(Request $request): Response|View
+    {
+        $host = preg_replace('~^www\.~', '', strtolower($request->getHost()));
+        $own = preg_replace('~^www\.~', '', strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)));
+        $project = $host === $own ? null : Project::where('kind', 'site')->where('status', 'PUBLISHED')->where('domain', $host)->first();
+        if ($project === null || $project->prototype === null) {
+            return view('welcome');
+        }
+
+        return $this->page($request, $project->prototype);
     }
 
     /** The form. Always answers the same to a visitor, so it tells nobody who is on the list. */
@@ -181,10 +202,10 @@ class LandingController extends Controller
         return rtrim((string) config('app.url'), '/').'/l/'.$prototype->id;
     }
 
-    /** A campaign's landing page: the site part of a campaign. */
+    /** A page this controller serves: a campaign's landing page, or a website somebody bought. */
     public static function isLanding(Prototype $prototype): bool
     {
-        return $prototype->kind === 'site' && $prototype->parent_id !== null && $prototype->html !== null;
+        return $prototype->kind === 'site' && $prototype->html !== null && ($prototype->parent_id !== null || $prototype->project_id !== null);
     }
 
     private function authorizeOwner(Request $request, Prototype $prototype): void

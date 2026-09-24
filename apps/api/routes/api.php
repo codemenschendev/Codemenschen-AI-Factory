@@ -86,6 +86,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/marketing/generate', [MeController::class, 'generateMarketing']);
     Route::post('/me/projects/{project}/campaigns/{campaignId}/decide', [MeController::class, 'decideCampaign']);
     Route::get('/me/projects/{project}/builds/{buildId}/download', [MeController::class, 'downloadBuild']);
+    // A bought website's own domain: the customer names it, our team connects it.
+    Route::post('/me/projects/{project}/domain', [MeController::class, 'domain'])->middleware('throttle:10,10,site-domain');
 
     // Ad creatives (video or image), scoped to the customer's own projects.
     Route::get('/me/ads', [MediaController::class, 'index']);

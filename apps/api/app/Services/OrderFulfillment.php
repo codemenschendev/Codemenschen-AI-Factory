@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Domain\Ads\Conversions;
 use App\Domain\Analytics\Analytics;
+use App\Domain\Sites\SiteService;
 use App\Models\Order;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
@@ -43,16 +44,18 @@ class OrderFulfillment
             $order->quote->update(['status' => 'converted']);
 
             $quote = $order->quote;
+            $site = $quote->kind === 'site';
             $name = $quote->listing_slug
                 ? ucfirst($quote->listing_slug)
-                : mb_substr($quote->idea ?? 'Custom app', 0, 60);
+                : mb_substr($quote->idea ?? ($site ? 'Website' : 'Custom app'), 0, 60);
 
             $project = Project::create([
                 'order_id' => $order->id,
                 'customer_id' => $order->customer_id,
                 'name' => $name,
+                'kind' => $site ? 'site' : 'app',
                 'status' => 'PAID',
-                'stack' => ($quote->platform ?? 'mobile') === 'web' ? 'nextjs' : 'expo',
+                'stack' => $site ? 'site' : (($quote->platform ?? 'mobile') === 'web' ? 'nextjs' : 'expo'),
                 'build_starts_at' => $order->fagg_waiver ? now() : now()->addDays(14),
             ]);
             $project->recordEvent('project.created', [
@@ -61,9 +64,16 @@ class OrderFulfillment
                 'build_starts_at' => $project->build_starts_at->toIso8601String(),
             ]);
 
-            // Immediate-start orders enter the pipeline right away; deferred
-            // ones are picked up by pipeline:tick when the FAGG period ends.
-            if (! $project->build_starts_at->isFuture()) {
+            // A website is the bought preview: nothing to build, it goes live now, or when the
+            // withdrawal period is over (pipeline:tick). Immediate-start apps enter the pipeline
+            // right away; deferred ones are picked up by pipeline:tick when the FAGG period ends.
+            if ($site) {
+                $sites = app(SiteService::class);
+                $sites->claim($project, $quote->prototype, $order);
+                if (! $project->build_starts_at->isFuture()) {
+                    $sites->goLive($project);
+                }
+            } elseif (! $project->build_starts_at->isFuture()) {
                 app(PipelineOrchestrator::class)->start($project);
             }
 

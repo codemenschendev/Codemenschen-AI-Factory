@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class Project extends Model
 {
@@ -20,11 +21,17 @@ class Project extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['archived_at' => 'datetime', 'build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean'];
+    protected $casts = ['archived_at' => 'datetime', 'build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean', 'domain_requested_at' => 'datetime'];
 
     public function customer(): BelongsTo
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /** A website project's page: the preview the customer bought (kind site). */
+    public function prototype(): HasOne
+    {
+        return $this->hasOne(Prototype::class);
     }
 
     public function order(): BelongsTo

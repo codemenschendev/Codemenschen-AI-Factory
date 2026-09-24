@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Domain\Pricing\Estimator;
+use App\Domain\Sites\SiteService;
+use App\Http\Controllers\LandingController;
 use App\Mail\CustomerNotice;
 use App\Models\ChangeRequest;
 use App\Models\Customer;
@@ -44,6 +47,12 @@ class CustomerMail
             ? "Deine Bestellung bei Appwerk: {$project->name}"
             : "Your Appwerk order: {$project->name}";
 
+        if ($project->kind === 'site') {
+            $this->send($customer, $subject, $this->siteBody($order, $project, $customer, $de, $link));
+
+            return;
+        }
+
         $body = $de ? implode("\n", [
             $this->hello($customer, true),
             '',
@@ -85,6 +94,56 @@ class CustomerMail
         ]);
 
         $this->send($customer, $subject, $body);
+    }
+
+    /** A bought website: it is live (or when it will be), where, and how the domain and changes work. */
+    private function siteBody(Order $order, Project $project, Customer $customer, bool $de, string $link): string
+    {
+        $start = $project->build_starts_at;
+        $now = $start === null || ! $start->isFuture();
+        $url = SiteService::url($project) ?? ($project->prototype !== null ? LandingController::url($project->prototype) : '');
+        $months = Estimator::SITE_HOSTING_FREE_MONTHS;
+        $hosting = Estimator::SITE_HOSTING_MONTHLY_EUR;
+
+        return $de ? implode("\n", [
+            $this->hello($customer, true),
+            '',
+            'danke, deine Zahlung ist angekommen.',
+            '',
+            "Website: {$project->name}",
+            "Betrag: {$order->total_one_time_eur} Euro",
+            $now ? "Deine Website ist online: {$url}" : 'Online ab: '.$start->format('d.m.Y').", nach Ablauf der 14-tägigen Widerrufsfrist. Adresse: {$url}",
+            '',
+            'Dein Dashboard (Link 24 Stunden gültig):',
+            $link,
+            '',
+            'Eigene Domain: trag sie im Dashboard ein. Wir verbinden sie innerhalb von einem Werktag und sagen dir, welchen DNS-Eintrag du setzen musst.',
+            'Änderungen: eine Änderung ist inklusive, direkt auf der Vorschau-Seite. Für weitere Änderungen antworte einfach auf diese E-Mail.',
+            "Hosting: die ersten {$months} Monate sind inklusive, danach {$hosting} Euro im Monat. Wir melden uns rechtzeitig vorher.",
+            '',
+            'Fragen jederzeit: einfach auf diese E-Mail antworten.',
+            '',
+            $this->footer(true),
+        ]) : implode("\n", [
+            $this->hello($customer, false),
+            '',
+            'thank you, your payment has arrived.',
+            '',
+            "Website: {$project->name}",
+            "Amount: {$order->total_one_time_eur} euro",
+            $now ? "Your website is live: {$url}" : 'Live from: '.$start->format('d.m.Y').", after the 14-day withdrawal period. Address: {$url}",
+            '',
+            'Your dashboard (link valid for 24 hours):',
+            $link,
+            '',
+            'Your own domain: enter it in the dashboard. We connect it within one working day and tell you which DNS record to set.',
+            'Changes: one change is included, right on the preview page. For further changes, just reply to this e-mail.',
+            "Hosting: the first {$months} months are included, then {$hosting} euro a month. We tell you in good time.",
+            '',
+            'Questions at any time: just reply to this e-mail.',
+            '',
+            $this->footer(false),
+        ]);
     }
 
     /** REVIEW, READY and FAILED are the moments a customer should hear about; the rest is ours. */

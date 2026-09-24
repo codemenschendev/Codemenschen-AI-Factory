@@ -53,6 +53,22 @@ Provisioner starts one PocketBase container per app on a loopback port,
 writes an Apache vhost for `<slug>.apps.codemenschen.at` (wildcard DNS already
 in place), and issues a per-host certbot cert. No DNS changes needed per app.
 
+## Bought websites on a customer's domain (2026-09-24)
+
+A bought website (project kind `site`) is served by the API at `/l/<prototype id>` and, once
+its owner entered a domain in the portal (`projects.domain`, the admin gets a mail), on that
+domain too: `GET /` on the API answers with the page when the request's host name is the
+project's domain (`LandingController::byHost`). Connecting a domain is a hand step, one per
+customer:
+
+1. The customer sets `A <domain> -> 65.108.206.249` and `A www.<domain> -> 65.108.206.249`
+   (the portal shows them this).
+2. On `manager`, copy `infra/apache/site-domain.conf.example` to
+   `/etc/apache2/sites-available/<domain>.conf`, replace `DOMAIN`, `a2ensite <domain>` and reload.
+   The vhost proxies only `/` and `/api/landing/` (the form) to the API on 8181, nothing else.
+3. `certbot --apache -d <domain> -d www.<domain>`.
+4. Tell the customer (reply to their order mail). Nothing changes in the database.
+
 ## Notes
 
 - OpenClaw gateway already runs on this host at 127.0.0.1:18789 — keep

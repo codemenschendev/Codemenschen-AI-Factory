@@ -48,6 +48,18 @@ class Estimator
 
     public const AD_BUDGET_OPTIONS = [0, 300, 500, 1000, 2000];
 
+    /**
+     * A website (2026-09-24): the one-page site preview, bought as it is and live at payment. One
+     * price, set from the market (the cheapest one-off one-pager in Austria is 299 EUR, agencies
+     * start at 500): the free preview and the ads from the same hand are what we add.
+     */
+    public const SITE_PRICE_EUR = 299;
+
+    /** Hosting for a website after the included months; billed by subscription once that exists. */
+    public const SITE_HOSTING_MONTHLY_EUR = 19;
+
+    public const SITE_HOSTING_FREE_MONTHS = 12;
+
     private static function rnd(float $n, int $s): int
     {
         return (int) (round($n / $s) * $s);
