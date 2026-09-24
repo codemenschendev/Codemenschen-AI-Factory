@@ -1258,7 +1258,7 @@ export const en = {
     },
     privacy: {
       title: "Privacy",
-      updated: "Last updated: 23 September 2026",
+      updated: "Last updated: 24 September 2026",
       lede: "What data Appwerk processes, why, for how long, and who else sees it.",
       sections: [
         {
@@ -1273,6 +1273,7 @@ export const en = {
           p: [
             "Our server logs the IP address, time, requested address and browser details of each request. This is for security and troubleshooting. The logs are deleted after 14 days. The legal basis is our legitimate interest in running the service securely (Art. 6(1)(f) GDPR).",
             "The server and database are run by Hetzner Online GmbH (Germany) in a data centre in Finland, inside the EU.",
+            "Every night the database and the project files are backed up. One copy is stored at Amazon Web Services in its Frankfurt data centre (Germany) and deleted after 90 days. The legal basis is our legitimate interest in being able to restore data after a failure (Art. 6(1)(f) GDPR).",
           ],
         },
         {
@@ -1388,7 +1389,7 @@ export const en = {
         h: "Where your data lives",
         p: [
           "Server and database are run by Hetzner Online GmbH, a provider from Germany, in its data centre in Helsinki (Finland). The data stays in the EU and under the GDPR. The connection to the website is always encrypted (HTTPS).",
-          "A backup is made every night and also stored outside the server. The server may only add new backups there. It can neither read nor delete old ones, so a backup survives even if the server itself is attacked.",
+          "A backup is made every night and also stored outside the server, at Amazon Web Services in Frankfurt. The server may only add new backups there. It can neither read nor delete old ones, so a backup survives even if the server itself is attacked.",
         ],
       },
       {
@@ -1437,7 +1438,7 @@ export const en = {
     processorsHead: ["Provider", "Purpose", "Based in"],
     processors: [
       ["Hetzner Online GmbH", "Server and database, data centre in Finland", "Germany"],
-      ["Amazon Web Services", "Backup copy outside the server", "Luxembourg"],
+      ["Amazon Web Services", "Backup copy, Frankfurt data centre", "Luxembourg"],
       ["World4You Internet Services GmbH", "E-mails", "Austria"],
       ["Stripe Payments Europe, Ltd.", "Payments", "Ireland"],
       ["Anthropic PBC", "Text and code (AI)", "USA"],
