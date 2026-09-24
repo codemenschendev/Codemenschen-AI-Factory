@@ -13,10 +13,11 @@ use Laravel\Sanctum\PersonalAccessToken;
 /**
  * Two-factor sign-in for the console and the audit log (2026-09-24).
  *
- * Setting up: the console asks for a secret, shows it as a QR code, and the admin proves the app
- * reads it by typing one code. Only then is 2FA on, and the admin gets ten recovery codes, shown
- * once. From then on every new sign-in asks for a code before /admin opens. A lost phone is reset
- * from the shell (factory:admin-2fa-reset), never from a browser.
+ * Optional per admin. Switching it on: the console asks for a secret, shows it as a QR code, and
+ * the admin proves the app reads it by typing one code. Only then is 2FA on, and the admin gets ten
+ * recovery codes, shown once. From then on every new sign-in asks for a code before /admin opens.
+ * Switching it off takes a current code too, so a stolen session cannot remove it. A lost phone is
+ * reset from the shell (factory:admin-2fa-reset), never from a browser.
  */
 class AdminSecurityController extends Controller
 {
@@ -27,7 +28,8 @@ class AdminSecurityController extends Controller
 
         return response()->json([
             'enabled' => $me->two_factor_enabled_at !== null,
-            'passed' => ! $token instanceof PersonalAccessToken || $token->two_factor_at !== null,
+            // Nothing to pass while it is off.
+            'passed' => $me->two_factor_enabled_at === null || ! $token instanceof PersonalAccessToken || $token->two_factor_at !== null,
             'recovery_left' => count($me->two_factor_recovery ?? []),
         ]);
     }
@@ -73,27 +75,44 @@ class AdminSecurityController extends Controller
         $data = $request->validate(['code' => 'required|string|max:20']);
         $me = $request->user();
         abort_if($me->two_factor_enabled_at === null, 409, 'Two-factor sign-in is not set up yet.');
-        $code = trim($data['code']);
+        abort_unless($this->accepts($me, trim($data['code'])), 422, 'That code does not match.');
+        $this->pass($me);
 
+        return response()->json(['passed' => true, 'recovery_left' => count($me->two_factor_recovery ?? [])]);
+    }
+
+    /** A fresh code from the app, or a recovery code, which is used up by this. */
+    private function accepts($me, string $code): bool
+    {
         $step = Totp::verify($me->two_factor_secret, $code, $me->two_factor_last_step);
         if ($step !== null) {
             $me->forceFill(['two_factor_last_step' => $step])->save();
-            $this->pass($me);
 
-            return response()->json(['passed' => true]);
+            return true;
         }
-
         $left = $me->two_factor_recovery ?? [];
         foreach ($left as $i => $hash) {
             if (Hash::check(Str::lower($code), $hash)) {
                 unset($left[$i]);
                 $me->forceFill(['two_factor_recovery' => array_values($left)])->save();
-                $this->pass($me);
 
-                return response()->json(['passed' => true, 'recovery_left' => count($left)]);
+                return true;
             }
         }
-        abort(422, 'That code does not match.');
+
+        return false;
+    }
+
+    /** Switches 2FA off. Needs a code from the app or a recovery code, like a sign-in. */
+    public function disable(Request $request): JsonResponse
+    {
+        $data = $request->validate(['code' => 'required|string|max:20']);
+        $me = $request->user();
+        abort_if($me->two_factor_enabled_at === null, 409, 'Two-factor sign-in is already off.');
+        abort_unless($this->accepts($me, trim($data['code'])), 422, 'That code does not match.');
+        $me->forceFill(['two_factor_secret' => null, 'two_factor_enabled_at' => null, 'two_factor_recovery' => null, 'two_factor_last_step' => null])->save();
+
+        return response()->json(['enabled' => false]);
     }
 
     /** The newest entries first, 100 at a time; `before` pages back. */

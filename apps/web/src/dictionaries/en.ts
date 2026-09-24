@@ -725,7 +725,15 @@ export const en = {
     groupSecurity: "Security",
     twoFactor: {
       setupTitle: "Set up a second factor",
-      setupText: "From now on the console needs a code from an authenticator app next to the e-mail link, for example Google Authenticator, Microsoft Authenticator or 1Password. Scan the QR code and enter the code the app shows.",
+      setupText: "Scan the QR code with an authenticator app, for example Google Authenticator, Microsoft Authenticator or 1Password, and enter the code the app shows.",
+      intro: "With a second factor, signing in to the console needs a code from your authenticator app next to the e-mail link. Access to your mailbox alone is then not enough. The setting applies to your account only.",
+      on: "On",
+      off: "Off",
+      recoveryLeft: "{n} recovery codes left",
+      start: "Switch on second factor",
+      disableTitle: "Switch off second factor",
+      disableText: "To confirm, enter a current code from the app or a recovery code.",
+      disable: "Switch off",
       qrAlt: "QR code for the authenticator app",
       manual: "No scanner? Enter the key by hand:",
       enable: "Switch on",
@@ -739,7 +747,7 @@ export const en = {
       lost: "Lost your phone? Enter one of your recovery codes. If they are all gone, an admin resets the second factor on the server.",
       savedTitle: "Recovery codes",
       savedText: "Save these ten codes somewhere safe now, for example in your password manager. Each works once if your phone is missing. They are never shown again.",
-      savedDone: "Saved, go to the console",
+      savedDone: "Saved",
     },
     audit: {
       intro: "Every change made in the console, every admin sign-in and every stop by the spend guard. Newest first, kept 12 months. Secrets such as codes and keys are never written down.",
@@ -765,6 +773,7 @@ export const en = {
     signOut: "Sign out",
     backToSite: "Back to the site",
     tabs: {
+      twoFactor: "Two-factor",
       audit: "Audit log",
       conversions: "Conversions",
       ownAds: "Appwerk campaigns",
@@ -1441,7 +1450,7 @@ export const en = {
         h: "Sign-in and payment",
         p: [
           "You sign in with a link sent by e-mail. There is no password that could be stolen or guessed.",
-          "Our team also needs a code from an authenticator app to open the admin console. Every change made there is logged with name and time.",
+          "The admin console can additionally be protected with a code from an authenticator app. Every change made there is logged with name and time.",
           "Payments run through Stripe (Ireland). You enter card details directly at Stripe. We never see them.",
         ],
       },

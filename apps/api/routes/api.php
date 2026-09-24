@@ -113,12 +113,13 @@ Route::middleware(['auth:sanctum', 'admin', 'audit'])->prefix('admin/2fa')->grou
     Route::post('/setup', [AdminSecurityController::class, 'setup'])->middleware('throttle:10,10,2fa-setup');
     Route::post('/enable', [AdminSecurityController::class, 'enable'])->middleware('throttle:5,1,2fa');
     Route::post('/verify', [AdminSecurityController::class, 'verify'])->middleware('throttle:5,1,2fa');
+    Route::post('/disable', [AdminSecurityController::class, 'disable'])->middleware('throttle:5,1,2fa');
 });
 
 // Operator lane. Same magic-link login as a customer; the `admin` middleware is the whole
 // difference, and it is checked on the server for every single one of these routes. Since
-// 2026-09-24 the token must also have passed the authenticator code (admin.2fa), and every change
-// made here is written to the audit log.
+// 2026-09-24 an admin who switched on 2FA must also have passed the authenticator code on this
+// token (admin.2fa), and every change made here is written to the audit log.
 Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admin')->group(function () {
     Route::get('/audit', [AdminSecurityController::class, 'audit']);
     Route::get('/overview', [AdminController::class, 'overview']);

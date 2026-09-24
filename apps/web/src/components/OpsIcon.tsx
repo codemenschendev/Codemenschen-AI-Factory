@@ -38,6 +38,14 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M17 9a4 4 0 0 1 0 6" />
     </>
   ),
+  twoFactor: (
+    <>
+      <rect x="6" y="2.5" width="12" height="19" rx="2.5" />
+      <path d="M10 18h4" />
+      <rect x="9.5" y="9.5" width="5" height="4" rx="1" />
+      <path d="M10.5 9.5V8a1.5 1.5 0 0 1 3 0v1.5" />
+    </>
+  ),
   audit: (
     <>
       <path d="M12 3 4 6v6c0 4.5 3.4 8.2 8 9 4.6-.8 8-4.5 8-9V6Z" />
