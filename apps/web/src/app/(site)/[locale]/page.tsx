@@ -287,89 +287,41 @@ export default async function Home({
                     {h.campaign.offerBtn} <Icon name="arrow" className="btn-ico" />
                   </Link>
                 </div>
-                <span className="flow-arrow" aria-hidden="true">
-                  <Icon name="arrow" />
-                </span>
-                <div className="flow-parts" aria-hidden="true">
-                  <div className="part">
-                    <p className="part-tag">
-                      <span>1</span> {h.campaign.parts[0]}
+                {/* One rendered picture: the ad on a phone, the page on a laptop, the e-mail on a
+                    phone. The three labels are real text placed over their part of the picture. */}
+                <div className="flow-pic" aria-hidden="true">
+                  {h.campaign.parts.map((label, i) => (
+                    <p className={`part-tag part-tag-${i + 1}`} key={label}>
+                      <span>{i + 1}</span> {label}
                     </p>
-                    <div className="mini mini-ad">
-                      <div className="mini-ad-head">
-                        <span className="mini-av">BL</span>
-                        <span>
-                          <b>Bäckerei Lang</b>
-                          <small>{h.campaign.sponsored}</small>
-                        </span>
-                      </div>
-                      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
-                      <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
-                      <p className="mini-text">{h.campaign.adLine}</p>
-                      <span className="mini-btn">{h.campaign.adCta}</span>
-                    </div>
-                  </div>
-                  <span className="part-arrow">
-                    <Icon name="arrow" />
-                  </span>
-                  <div className="part">
-                    <p className="part-tag">
-                      <span>2</span> {h.campaign.parts[1]}
-                    </p>
-                    <div className="mini mini-page">
-                      <div className="mini-bar">
-                        <i />
-                        <i />
-                        <i />
-                      </div>
-                      <div className="mini-hero">
-                        {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
-                        <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
-                        <b>{h.campaign.pageTitle}</b>
-                      </div>
-                      <span className="mini-field">{h.campaign.pageField}</span>
-                      <span className="mini-btn">{h.campaign.pageBtn}</span>
-                    </div>
-                  </div>
-                  <span className="part-arrow">
-                    <Icon name="arrow" />
-                  </span>
-                  <div className="part">
-                    <p className="part-tag">
-                      <span>3</span> {h.campaign.parts[2]}
-                    </p>
-                    <div className="mini mini-mail">
-                      <div className="mini-mail-head">
-                        <span className="mini-av">BL</span> Bäckerei Lang
-                      </div>
-                      <b>{h.campaign.mailHi}</b>
-                      <p className="mini-text">{h.campaign.mailText}</p>
-                      <span className="mini-btn">{h.campaign.mailBtn}</span>
-                    </div>
-                  </div>
+                  ))}
+                  {/* eslint-disable-next-line @next/next/no-img-element -- one fixed picture */}
+                  <img src="/home/campaign-flow.webp" alt="" width={1696} height={680} loading="lazy" />
                 </div>
               </div>
             </div>
 
             <div className="combo-card budget-card reveal">
-              <h2 className="combo-title">{h.budget.title}</h2>
-              <p className="combo-p">{h.budget.p}</p>
+              <div className="budget-text">
+                <h2 className="combo-title">{h.budget.title}</h2>
+                <p className="combo-p">{h.budget.p}</p>
+              </div>
               <div className="budget-box">
                 <p className="budget-big">{fill(h.budget.spentOf, { spent: eur(38, locale), cap: eur(100, locale) })}</p>
                 <div className="meter">
                   <span style={{ width: "38%" }} />
                 </div>
-                <dl className="budget-rows">
-                  {h.budget.rows.map(([k, v], i) => (
-                    <div key={k}>
-                      <dt>{k}</dt>
-                      <dd className={i === h.budget.rows.length - 1 ? "on" : undefined}>
-                        {fill(v, { cap: eur(100, locale) })}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
               </div>
+              <dl className="budget-rows">
+                {h.budget.rows.map(([k, v], i) => (
+                  <div key={k}>
+                    <dt>{k}</dt>
+                    <dd className={i === h.budget.rows.length - 1 ? "on" : undefined}>
+                      {fill(v, { cap: eur(100, locale) })}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           </div>
         </div>
