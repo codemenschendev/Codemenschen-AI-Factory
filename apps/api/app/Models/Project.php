@@ -21,7 +21,7 @@ class Project extends Model
 
     protected $guarded = [];
 
-    protected $casts = ['archived_at' => 'datetime', 'build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean', 'domain_requested_at' => 'datetime'];
+    protected $casts = ['archived_at' => 'datetime', 'build_starts_at' => 'datetime', 'care_started_at' => 'datetime', 'care_ends_at' => 'datetime', 'assistant_paused' => 'boolean', 'domain_requested_at' => 'datetime', 'imprint' => 'array'];
 
     public function customer(): BelongsTo
     {

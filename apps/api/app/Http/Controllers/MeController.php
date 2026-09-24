@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
 use App\Domain\Pricing\Estimator;
+use App\Domain\Sites\Imprint;
 use App\Domain\Sites\SiteService;
 use App\Models\ChangeMessage;
 use App\Models\Project;
@@ -303,7 +304,26 @@ class MeController extends Controller
             'server_ip' => SiteService::serverIp(),
             'hosting_monthly_eur' => Estimator::SITE_HOSTING_MONTHLY_EUR,
             'hosting_free_months' => Estimator::SITE_HOSTING_FREE_MONTHS,
+            'imprint' => $project->imprint,
+            'imprint_complete' => Imprint::complete($project->imprint),
+            'imprint_url' => Imprint::complete($project->imprint) && $project->prototype?->published_at !== null
+                ? LandingController::url($project->prototype).'/impressum' : null,
         ];
+    }
+
+    /** The customer fills in their Impressum; the site's footer links it from then on. */
+    public function imprint(Request $request, Project $project): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id && $project->kind === 'site', 404);
+        $data = $request->validate(Imprint::rules());
+        $clean = [];
+        foreach ([...Imprint::REQUIRED, ...Imprint::OPTIONAL] as $f) {
+            $clean[$f] = trim((string) ($data[$f] ?? ''));
+        }
+        $project->update(['imprint' => $clean]);
+        $project->recordEvent('site.imprint_saved', []);
+
+        return response()->json(self::site($project->fresh()));
     }
 
     /** The customer names their domain (or clears it); a person connects it. */

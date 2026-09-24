@@ -15,7 +15,14 @@ export interface SiteInfo {
   server_ip: string;
   hosting_monthly_eur: number;
   hosting_free_months: number;
+  imprint: Record<string, string> | null;
+  imprint_complete: boolean;
+  imprint_url: string | null;
 }
+
+/** The Impressum fields, in the order of the form; the required ones match Imprint::REQUIRED. */
+const IMPRINT_FIELDS = ["name", "owner", "trade", "street", "zip_city", "country", "email", "phone", "vat_id", "register", "chamber", "authority", "extra"] as const;
+const IMPRINT_REQUIRED = new Set(["name", "street", "zip_city", "country", "email"]);
 
 /**
  * A bought website in the portal: where it is, the customer's own domain, and where changes
@@ -43,6 +50,9 @@ export function SiteDetail({
   const [domain, setDomain] = useState(site.domain ?? "");
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
+  const [imprint, setImprint] = useState<Record<string, string>>(site.imprint ?? {});
+  const [imprintBad, setImprintBad] = useState<string[]>([]);
+  const [imprintNote, setImprintNote] = useState<string | null>(null);
   const date = (iso: string) => new Date(iso).toLocaleDateString(locale === "de" ? "de-AT" : "en-IE");
 
   const save = async (value: string) => {
@@ -58,7 +68,27 @@ export function SiteDetail({
     setBusy(false);
   };
 
+  const saveImprint = async () => {
+    setBusy(true);
+    setImprintNote(null);
+    setImprintBad([]);
+    try {
+      const r = await api<SiteInfo>(`/me/projects/${projectId}/imprint`, { method: "POST", token, body: JSON.stringify(imprint) });
+      setInfo(r);
+      setImprintNote(s.imprintSaved);
+    } catch (e) {
+      const errors = e instanceof ApiError ? (e.body as { errors?: Record<string, string[]> } | null)?.errors : undefined;
+      setImprintBad(Object.keys(errors ?? {}));
+      setImprintNote(errors ? s.imprintInvalid : d.checkout.errors.generic);
+    }
+    setBusy(false);
+  };
+
+  const inputStyle = { width: "100%", padding: 10, fontSize: 14.5, border: "1px solid var(--border)", borderRadius: "var(--radius)", background: "var(--paper)", fontFamily: "var(--font-body)" } as const;
+
   return (
+    <>
+    {!info.imprint_complete && <p className="note" style={{ marginBottom: 16 }}>{s.imprintMissing}</p>}
     <div className="detail-layout">
       <div className="detail-stack">
         <div className="card">
@@ -117,6 +147,39 @@ export function SiteDetail({
           )}
         </div>
         <div className="card">
+          <h3>{s.imprintTitle}</h3>
+          {info.imprint_complete ? (
+            <p className="small" style={{ margin: "0 0 8px" }}>
+              {s.imprintDone}{" "}
+              {info.imprint_url && <a href={info.imprint_url} target="_blank" rel="noopener noreferrer">{s.imprintOpen}</a>}
+            </p>
+          ) : (
+            <p className="small muted" style={{ margin: "0 0 8px" }}>{s.imprintHint}</p>
+          )}
+          <div style={{ display: "grid", gap: 10 }}>
+            {IMPRINT_FIELDS.map((f) => (
+              <label key={f} style={{ display: "grid", gap: 4 }}>
+                <span className="small" style={{ color: imprintBad.includes(f) ? "var(--danger, #b42318)" : undefined }}>{s.imprintFields[f]}</span>
+                {f === "extra" ? (
+                  <textarea rows={3} maxLength={1500} value={imprint[f] ?? ""} onChange={(e) => setImprint((v) => ({ ...v, [f]: e.target.value }))} style={inputStyle} />
+                ) : (
+                  <input
+                    type={f === "email" ? "email" : "text"}
+                    maxLength={200}
+                    required={IMPRINT_REQUIRED.has(f)}
+                    aria-invalid={imprintBad.includes(f)}
+                    value={imprint[f] ?? ""}
+                    onChange={(e) => setImprint((v) => ({ ...v, [f]: e.target.value }))}
+                    style={{ ...inputStyle, borderColor: imprintBad.includes(f) ? "var(--danger, #b42318)" : undefined }}
+                  />
+                )}
+              </label>
+            ))}
+          </div>
+          <button className="btn btn-primary" style={{ marginTop: 12 }} disabled={busy} onClick={() => void saveImprint()}>{s.imprintSave}</button>
+          {imprintNote && <p className="small" style={{ margin: "8px 0 0" }}>{imprintNote}</p>}
+        </div>
+        <div className="card">
           <h3>{s.hostingTitle}</h3>
           <p className="small muted" style={{ margin: 0 }}>
             {s.hostingHint.replace("{months}", String(hostingFreeMonths)).replace("{eur}", eur(hostingMonthlyEur, locale))}
@@ -124,5 +187,6 @@ export function SiteDetail({
         </div>
       </div>
     </div>
+    </>
   );
 }

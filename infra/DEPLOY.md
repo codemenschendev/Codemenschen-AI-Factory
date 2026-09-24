@@ -68,6 +68,8 @@ customer:
    The vhost proxies only `/` and `/api/landing/` (the form) to the API on 8181, nothing else.
 3. `certbot --apache -d <domain> -d www.<domain>`.
 4. Tell the customer (reply to their order mail). Nothing changes in the database.
+5. Check that the portal shows their Impressum as complete (`/impressum` answers on the domain).
+   A business site in AT/DE must have one; if it is missing, remind them in the same mail.
 
 ## Notes
 
