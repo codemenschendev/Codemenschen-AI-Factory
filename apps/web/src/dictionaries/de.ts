@@ -1378,7 +1378,7 @@ export const de = {
     updated: "Stand: 24. September 2026",
     lede: "Für Unternehmen in Österreich und Deutschland. Hier steht, wo deine Daten liegen, wer sie sieht und was ohne deine Freigabe nie passiert.",
     promises: [
-      { h: "Server in der EU", p: "Datenbank, Code und Vorschauen liegen bei Hetzner, einem deutschen Anbieter, in einem Rechenzentrum in der EU." },
+      { h: "Server in der EU", p: "Datenbank, Code und Vorschauen liegen bei Hetzner, einem deutschen Anbieter, im Rechenzentrum Helsinki in Finnland, also in der EU." },
       { h: "Deine Konten bleiben deine", p: "Anzeigen laufen auf deinem eigenen Google Ads oder Meta Konto. Wir speichern kein Passwort und keinen Zugangsschlüssel von dir." },
       { h: "Kein Euro ohne Freigabe", p: "Keine Anzeige startet, bevor ein Mensch auf Start drückt. Budgetgrenzen gelten an drei Stellen." },
       { h: "Keine Kartendaten bei uns", p: "Du bezahlst direkt bei Stripe. Wir erfahren nur, ob und wie viel bezahlt wurde." },
@@ -1389,7 +1389,7 @@ export const de = {
       {
         h: "Wo deine Daten liegen",
         p: [
-          "Server und Datenbank betreibt Hetzner Online GmbH, ein Anbieter aus Deutschland, in einem Rechenzentrum in der EU. Die Verbindung zur Website ist immer verschlüsselt (HTTPS).",
+          "Server und Datenbank betreibt Hetzner Online GmbH, ein Anbieter aus Deutschland, in seinem Rechenzentrum in Helsinki (Finnland). Die Daten bleiben damit in der EU und unterliegen der DSGVO. Die Verbindung zur Website ist immer verschlüsselt (HTTPS).",
           "Jede Nacht wird eine Sicherung erstellt und zusätzlich außerhalb des Servers abgelegt. Der Server darf dort nur neue Sicherungen ablegen. Er kann alte weder lesen noch löschen. So bleibt eine Sicherung auch dann erhalten, wenn der Server selbst angegriffen wird.",
         ],
       },
@@ -1438,7 +1438,7 @@ export const de = {
     processorsTitle: "Wer außer uns Daten verarbeitet",
     processorsHead: ["Anbieter", "Wofür", "Sitz"],
     processors: [
-      ["Hetzner Online GmbH", "Server und Datenbank", "Deutschland"],
+      ["Hetzner Online GmbH", "Server und Datenbank, Rechenzentrum in Finnland", "Deutschland"],
       ["Amazon Web Services", "Sicherungskopie außerhalb des Servers", "Luxemburg"],
       ["World4You Internet Services GmbH", "E-Mails", "Österreich"],
       ["Stripe Payments Europe, Ltd.", "Zahlungen", "Irland"],
