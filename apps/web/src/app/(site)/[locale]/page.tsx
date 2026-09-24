@@ -173,43 +173,43 @@ export default async function Home({
             </div>
           </div>
 
-          {/* The photo carries its own cards; ours sit exactly on top of them, so every word
-              and number on the picture comes from the dictionary in the page's language. */}
-          <div className="hero-photo" aria-hidden="true">
-            {/* eslint-disable-next-line @next/next/no-img-element -- one fixed hero picture */}
-            <img
-              src="/home/hero-people.webp"
-              alt=""
-              width={1200}
-              height={650}
-              fetchPriority="high"
-            />
-            <div className="float stats">
-              <p className="float-label">{a.period}</p>
-              <div className="stats-row">
-                <div>
-                  <small>{a.visits}</small>
-                  <b>{n(2384)}</b>
-                  <em>↑ 12%</em>
-                </div>
-                <div>
-                  <small>{a.signups}</small>
-                  <b>186</b>
-                  <em>↑ 24%</em>
-                </div>
-                <div>
-                  <small>{a.spend}</small>
-                  <b>{eur(128, locale)}</b>
-                </div>
+        </div>
+        {/* The photo fills the whole banner; the copy sits on its bright window side. The two
+            cards are page text, so they read in the page's language. */}
+        <div className="hero-photo" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element -- one fixed hero picture */}
+          <img
+            src="/home/hero-people.webp"
+            alt=""
+            width={1960}
+            height={802}
+            fetchPriority="high"
+          />
+          <div className="float stats">
+            <p className="float-label">{a.period}</p>
+            <div className="stats-row">
+              <div>
+                <small>{a.visits}</small>
+                <b>{n(2384)}</b>
+                <em>↑ 12%</em>
+              </div>
+              <div>
+                <small>{a.signups}</small>
+                <b>186</b>
+                <em>↑ 24%</em>
+              </div>
+              <div>
+                <small>{a.spend}</small>
+                <b>{eur(128, locale)}</b>
               </div>
             </div>
-
-            <BudgetMeter
-              className="float budget"
-              of={budgetOf}
-              stop={budgetStop}
-            />
           </div>
+
+          <BudgetMeter
+            className="float budget"
+            of={budgetOf}
+            stop={budgetStop}
+          />
         </div>
       </section>
 
@@ -304,7 +304,7 @@ export default async function Home({
                     </p>
                   ))}
                   {/* eslint-disable-next-line @next/next/no-img-element -- one fixed picture */}
-                  <img src="/home/campaign-flow.webp" alt="" width={1696} height={680} loading="lazy" />
+                  <img src="/home/campaign-flow.webp" alt="" width={1656} height={680} loading="lazy" />
                 </div>
               </div>
             </div>
