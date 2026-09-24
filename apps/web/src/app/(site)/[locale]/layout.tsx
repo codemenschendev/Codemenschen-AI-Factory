@@ -4,14 +4,15 @@ import { notFound } from "next/navigation";
 import { LOCALES, getDict, isLocale, type Locale } from "@/lib/i18n";
 import { AccountLink } from "@/components/AccountLink";
 import { LangSwitch } from "@/components/LangSwitch";
+import { Logo } from "@/components/Logo";
 import { MobileNav } from "@/components/MobileNav";
 import { PageViews } from "@/components/PageViews";
 import { AdConsentBanner, AdConsentLink } from "@/components/AdConsent";
 import "../../globals.css";
 
 export const metadata: Metadata = {
-  title: "Appwerk · AI App Factory",
-  description: "Pick an app idea, pay a fixed price, own the finished app.",
+  title: "Appwerk · Website, app and ads from one hand",
+  description: "Describe your idea and get a free preview in minutes. Website, app, ads and e-mails at a fixed price.",
 };
 
 export function generateStaticParams() {
@@ -28,11 +29,12 @@ export default async function LocaleLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const dict = getDict(locale as Locale);
-  // The same four links in the bar and, on a phone, behind the menu button.
+  // The same links in the bar and, on a phone, behind the menu button.
   const navLinks = [
+    { href: `/${locale}#services`, label: dict.nav.services },
     { href: `/${locale}#how`, label: dict.nav.how },
+    { href: `/${locale}#prices`, label: dict.nav.pricing },
     { href: `/${locale}#apps`, label: dict.nav.ideas },
-    { href: `/${locale}/create`, label: dict.nav.create },
     { href: `/${locale}/prototype`, label: dict.proto.navLink },
   ];
 
@@ -43,9 +45,8 @@ export default async function LocaleLayout({
         {/* Sticky header, ported from the appwerk prototype (site/index.html:14-30) */}
         <header className="nav" id="top">
           <div className="wrap nav-inner">
-            <Link href={`/${locale}`} className="nav-logo">
-              Appwerk<span className="logo-dot">.</span>
-              <span className="logo-by">{dict.nav.by}</span>
+            <Link href={`/${locale}`} className="nav-logo" aria-label="Appwerk">
+              <Logo by={dict.nav.by} />
             </Link>
             <nav className="nav-links">
               {navLinks.map((l) => (
@@ -55,7 +56,7 @@ export default async function LocaleLayout({
             <div className="nav-right">
               <AccountLink locale={locale as Locale} labels={{ account: dict.nav.account, login: dict.nav.login }} />
               <LangSwitch current={locale as Locale} />
-              <Link className="btn btn-primary btn-sm nav-cta" href={`/${locale}#apps`}>
+              <Link className="btn btn-primary btn-sm nav-cta" href={`/${locale}/prototype`}>
                 {dict.nav.cta}
               </Link>
               <MobileNav links={navLinks} />
@@ -67,7 +68,7 @@ export default async function LocaleLayout({
           <div className="wrap footer-inner">
             <div>
               <p className="nav-logo">
-                Appwerk<span className="logo-dot">.</span>
+                <Logo />
               </p>
               <p className="footer-small">{dict.footer.by}</p>
             </div>
