@@ -43,8 +43,8 @@ class QuoteController extends Controller
             $breakdown = [
                 'kind' => 'site',
                 'price' => Estimator::SITE_PRICE_EUR,
-                'weeksLo' => 0,
-                'weeksHi' => 0,
+                'daysLo' => 0,
+                'daysHi' => 0,
                 'appType' => 'A',
                 'hostingMonthly' => Estimator::SITE_HOSTING_MONTHLY_EUR,
                 'hostingFreeMonths' => Estimator::SITE_HOSTING_FREE_MONTHS,
@@ -55,8 +55,8 @@ class QuoteController extends Controller
             abort_if($listing === null, 404, 'Unknown listing');
             $breakdown = [
                 'price' => $listing['price'],
-                'weeksLo' => $listing['weeksLo'],
-                'weeksHi' => $listing['weeksHi'],
+                'daysLo' => Estimator::DELIVERY_DAYS_LO,
+                'daysHi' => Estimator::DELIVERY_DAYS_HI,
                 'appType' => $listing['appType'],
                 'hostingMonthly' => Estimator::HOSTING_MONTHLY[$listing['appType']],
                 'listing' => $data['listing_slug'],

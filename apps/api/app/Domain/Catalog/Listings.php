@@ -10,14 +10,14 @@ namespace App\Domain\Catalog;
 class Listings
 {
     public const ALL = [
-        'formpilot' => ['name' => 'FormPilot', 'price' => 3900, 'appType' => 'B', 'weeksLo' => 6, 'weeksHi' => 9],
-        'mealgrid' => ['name' => 'Mealgrid', 'price' => 1400, 'appType' => 'A', 'weeksLo' => 4, 'weeksHi' => 7],
-        'countbee' => ['name' => 'Countbee', 'price' => 300, 'appType' => 'A', 'weeksLo' => 3, 'weeksHi' => 5],
-        'praxo' => ['name' => 'Praxo', 'price' => 2400, 'appType' => 'B', 'weeksLo' => 5, 'weeksHi' => 8],
-        'rechni' => ['name' => 'Rechni', 'price' => 3000, 'appType' => 'B', 'weeksLo' => 5, 'weeksHi' => 8],
+        'formpilot' => ['name' => 'FormPilot', 'price' => 3900, 'appType' => 'B'],
+        'mealgrid' => ['name' => 'Mealgrid', 'price' => 1400, 'appType' => 'A'],
+        'countbee' => ['name' => 'Countbee', 'price' => 300, 'appType' => 'A'],
+        'praxo' => ['name' => 'Praxo', 'price' => 2400, 'appType' => 'B'],
+        'rechni' => ['name' => 'Rechni', 'price' => 3000, 'appType' => 'B'],
     ];
 
-    /** @return array{name:string,price:int,appType:string,weeksLo:int,weeksHi:int}|null */
+    /** @return array{name:string,price:int,appType:string}|null */
     public static function find(string $slug): ?array
     {
         return self::ALL[$slug] ?? null;

@@ -26,6 +26,10 @@ export const FEATURES = {
 } as const;
 
 /** Development price clamp (EUR), mirror of Estimator::PRICE_MIN/MAX. */
+/** Delivery time of every app, in working days, the same for every scope (Patrick, 2026-09-24). */
+export const DELIVERY_DAYS_LO = 1;
+export const DELIVERY_DAYS_HI = 2;
+
 export const PRICE_MIN = 149;
 export const PRICE_MAX = 1500;
 
@@ -50,8 +54,9 @@ export interface Estimate {
   retainerPctLabel: string;
   retainerLo: number;
   retainerHi: number;
-  weeksLo: number;
-  weeksHi: number;
+  /** Delivery in working days: Appwerk AI writes the code, a person checks it. */
+  daysLo: number;
+  daysHi: number;
   appType: AppType;
   /** Which selected features forced Type B (empty for Type A). */
   backendFeatures: FeatureKey[];
@@ -89,8 +94,6 @@ export function estimate(input: EstimateInput): Estimate {
   const retainerLo = rnd(price * (nf <= 2 ? 0.05 : nf <= 5 ? 0.06 : 0.08), 5);
   const retainerHi = rnd(price * (nf <= 2 ? 0.06 : nf <= 5 ? 0.08 : 0.1), 5);
 
-  const weeksLo = 3 + nf;
-  const weeksHi = 6 + nf + (platform === "both" ? 2 : 0);
 
   return {
     devLo,
@@ -101,8 +104,8 @@ export function estimate(input: EstimateInput): Estimate {
     retainerPctLabel,
     retainerLo,
     retainerHi,
-    weeksLo,
-    weeksHi,
+    daysLo: DELIVERY_DAYS_LO,
+    daysHi: DELIVERY_DAYS_HI,
     ...classifyAppType(features),
   };
 }

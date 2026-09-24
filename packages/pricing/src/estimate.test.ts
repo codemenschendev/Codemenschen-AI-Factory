@@ -9,8 +9,8 @@ test("web consumer app with no features matches prototype floor", () => {
   assert.equal(e.devHi, 250); // round(260, 50)
   assert.equal(e.price, 250);
   assert.equal(e.retainerPctLabel, "5–6%");
-  assert.equal(e.weeksLo, 3);
-  assert.equal(e.weeksHi, 6);
+  assert.equal(e.daysLo, 1);
+  assert.equal(e.daysHi, 2);
   assert.equal(e.appType, "A");
 });
 
@@ -23,7 +23,7 @@ test("mobile b2b app with many features stays under the 1500 cap", () => {
   // dev = (450 + 75) * 1.15 = 603.75 → * 1.2 = 724.5 → 700
   assert.equal(e.price, 700);
   assert.equal(e.retainerPctLabel, "8–10%");
-  assert.equal(e.weeksHi, 6 + 6 + 2);
+  assert.equal(e.daysHi, 2);
   assert.equal(e.appType, "B");
 });
 

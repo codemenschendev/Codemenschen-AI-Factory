@@ -17,8 +17,6 @@ export interface CatalogEntry {
   /** Fixed development price in EUR (undefined for built/taken listings). */
   price?: number;
   appType?: AppType;
-  weeksLo?: number;
-  weeksHi?: number;
   cat: I18nText;
   cardDesc: I18nText;
   /** Four short points for the idea card on the home page. */
@@ -38,8 +36,6 @@ export const CATALOG: CatalogEntry[] = [
     status: "available",
     price: 3900,
     appType: "B",
-    weeksLo: 6,
-    weeksHi: 9,
     cat: { en: "B2B · Form automation", de: "B2B · Formular-Automatisierung" },
     cardDesc: {
       en: "Turns PDF forms into fillable web flows for small agencies.",
@@ -118,8 +114,6 @@ export const CATALOG: CatalogEntry[] = [
     status: "available",
     price: 1400,
     appType: "A",
-    weeksLo: 4,
-    weeksHi: 7,
     cat: { en: "Consumer · Meal planning", de: "Consumer · Essensplanung" },
     cardDesc: {
       en: "Weekly meal plans from what's already in your fridge.",
@@ -198,8 +192,6 @@ export const CATALOG: CatalogEntry[] = [
     status: "available",
     price: 300,
     appType: "A",
-    weeksLo: 3,
-    weeksHi: 5,
     cat: { en: "B2B · Inventory", de: "B2B · Inventur" },
     cardDesc: {
       en: "Stocktaking for small shops: scan, count, export.",
@@ -278,8 +270,6 @@ export const CATALOG: CatalogEntry[] = [
     status: "available",
     price: 2400,
     appType: "B",
-    weeksLo: 5,
-    weeksHi: 8,
     cat: { en: "B2B · Appointment reminders", de: "B2B · Terminerinnerungen" },
     cardDesc: {
       en: "SMS appointment reminders for physio and massage practices.",
@@ -358,8 +348,6 @@ export const CATALOG: CatalogEntry[] = [
     status: "available",
     price: 3000,
     appType: "B",
-    weeksLo: 5,
-    weeksHi: 8,
     cat: { en: "B2B · Invoice reminders", de: "B2B · Zahlungserinnerungen" },
     cardDesc: {
       en: "Polite, automatic payment reminders for Austrian freelancers.",

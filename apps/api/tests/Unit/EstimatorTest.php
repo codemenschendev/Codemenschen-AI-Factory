@@ -14,8 +14,8 @@ class EstimatorTest extends TestCase
         $this->assertSame(150, $e['devLo']);
         $this->assertSame(250, $e['devHi']);
         $this->assertSame(250, $e['price']); // 200 * 1.2 = 240 → rounded to 50
-        $this->assertSame(3, $e['weeksLo']);
-        $this->assertSame(6, $e['weeksHi']);
+        $this->assertSame(1, $e['daysLo']);
+        $this->assertSame(2, $e['daysHi']);
         $this->assertSame('A', $e['appType']);
         $this->assertSame(0, $e['hostingMonthly']);
     }
@@ -25,7 +25,7 @@ class EstimatorTest extends TestCase
         $e = Estimator::estimate('b2b', 'both', ['auth', 'pay', 'dash', 'ai', 'notif', 'api']);
         // (450 + 75) * 1.15 = 603.75 → * 1.2 = 724.5 → 700; cap is 1500
         $this->assertSame(700, $e['price']);
-        $this->assertSame(14, $e['weeksHi']);
+        $this->assertSame(2, $e['daysHi']);
         $this->assertSame('B', $e['appType']);
         $this->assertSame(19, $e['hostingMonthly']);
     }
