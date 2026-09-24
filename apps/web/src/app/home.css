@@ -91,11 +91,14 @@
 .lp .svc-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; }
 .lp .svc { display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 12px 18px 16px; color: var(--ink); text-decoration: none; box-shadow: var(--shadow); transition: transform 0.2s ease, border-color 0.2s ease; position: relative; }
 .lp .svc:hover { transform: translateY(-3px); border-color: #c7d2fe; }
-.lp .svc-thumb { margin: 0 -6px; height: 124px; border-radius: 10px; overflow: hidden; background: var(--tint); }
+.lp .svc-thumb { margin: 0 -6px; height: 128px; border-radius: 10px; overflow: hidden; background: var(--tint); }
 .lp .svc-thumb img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .lp .svc-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #fff; color: var(--accent); box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12); margin: -22px 0 12px 4px; position: relative; }
 .lp .svc h3 { font-size: 1rem; }
-.lp .svc p { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; margin-bottom: 16px; }
+.lp .svc p { font-size: 0.86rem; color: var(--ink-soft); line-height: 1.5; margin-bottom: 12px; }
+.lp .svc-points { display: grid; gap: 5px; margin-bottom: 18px; font-size: 0.8rem; }
+.lp .svc-points li { display: flex; align-items: center; gap: 7px; }
+.lp .svc-points .tick { width: 16px; height: 16px; padding: 2px; }
 .lp .svc-foot { margin-top: auto; display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; }
 .lp .svc-foot small { display: block; font-size: 0.74rem; color: var(--ink-soft); }
 .lp .svc-foot b { font-size: 1.35rem; font-weight: 800; letter-spacing: -0.02em; }

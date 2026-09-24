@@ -164,11 +164,11 @@ export const en = {
       all: "Try it for free",
       try: "Try it free",
       items: {
-        site: { h: "Website and landing page", p: "Modern, fast and made for phones." },
-        app: { h: "App (web or mobile)", p: "For your own business idea." },
-        ads: { h: "Google and Meta ads", p: "Ads that bring new customers, with a hard budget limit." },
-        email: { h: "Automated e-mails", p: "Welcome mail, confirmation and follow-ups." },
-        campaign: { h: "Complete campaign", p: "Ad, landing page and e-mails from one message." },
+        site: { h: "Website and landing page", p: "Modern, fast and made for phones.", points: ["Your own design", "Made for phones", "Live as soon as you pay"] },
+        app: { h: "App (web or mobile)", p: "For your own business idea.", points: ["Web or mobile", "Your own functions", "Store publishing optional"] },
+        ads: { h: "Google and Meta ads", p: "Ads that bring new customers, with a hard budget limit.", points: ["Google and Meta", "Creatives and setup included", "Hard budget limit"] },
+        email: { h: "Automated e-mails", p: "Welcome mail, confirmation and follow-ups.", points: ["Written for you", "Sent automatically", "Double opt-in built in"] },
+        campaign: { h: "Complete campaign", p: "Ad, landing page and e-mails from one message.", points: ["Everything from one idea", "Ad, page and e-mail match", "Nothing runs before you press start"] },
       },
     },
     campaign: {
