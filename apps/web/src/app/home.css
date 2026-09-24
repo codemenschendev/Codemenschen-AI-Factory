@@ -33,29 +33,22 @@
 .lp .btn-ico { width: 18px; height: 18px; }
 
 /* ---------- Hero ---------- */
-.lp .hero { padding: 56px 0 40px; overflow-x: clip; }
-.lp .hero .hero-grid { grid-template-columns: minmax(0, 620px) 1fr; }
-.lp h1, .lp h2, .lp h3 { hyphens: manual; }
-.lp .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 36px; align-items: center; }
+/* Copy and picture share one grid inside the page width, so on a wide screen the
+   photo stays next to the text and lines up with the trust bar below. */
+.lp .hero { padding: 48px 0 32px; overflow-x: clip; }
+.lp .hero-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 48px; align-items: center; }
 .lp .hero-grid > * { min-width: 0; }
 .lp .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
-
-/* The picture reaches the right edge of the window. Its box keeps the photo's own aspect, so the
-   cards (in per cent of the box) always land on the ones printed in the photo. */
-.lp .hero { position: relative; }
-.lp .hero-grid { min-height: min(28.2vw, 488px); }
-.lp .hero-photo { position: absolute; top: 0; right: 0; width: min(52vw, 900px); aspect-ratio: 886 / 480; }
-.lp .hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18%), linear-gradient(0deg, transparent 0, #000 14%); -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0, #000 18%), linear-gradient(0deg, transparent 0, #000 14%); mask-composite: intersect; }
-.lp .hero-copy { position: relative; z-index: 1; }
+.lp .hero-photo { position: relative; aspect-ratio: 886 / 480; border-radius: 24px; overflow: hidden; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.16); container-type: inline-size; }
+.lp .hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
 /* Card text scales with the picture (container units), so it covers the printed cards at any width. */
-.lp .hero-photo { container-type: inline-size; }
 .lp .hero-photo .float { border-radius: 1.8cqw; }
 .lp .hero-photo .float-label { font-size: 1.25cqw; margin-bottom: 0.6cqw; }
 .lp .hero-photo .stats-row { gap: 2.2cqw; }
 .lp .hero-photo .stats-row small, .lp .hero-photo .stats-row em { font-size: 1.15cqw; }
 .lp .hero-photo .stats-row b { font-size: 2cqw; }
 .lp .hero-photo .budget-head { font-size: 1.55cqw; gap: 0.8cqw; }
-.lp .hero-photo .meta-dot { font-size: 2.3cqw; }
+.lp .hero-photo .meta-ico { width: 2.2cqw; height: 2.2cqw; }
 .lp .hero-photo .meter { height: 0.8cqw; margin: 1.1cqw 0 0.9cqw; }
 .lp .hero-photo .budget-fig { font-size: 1.7cqw; }
 .lp .hero-photo .budget-note { font-size: 1.3cqw; }
@@ -68,7 +61,6 @@
 .lp .stats-row em { font-style: normal; font-size: 0.64rem; font-weight: 700; color: var(--valid); }
 .lp .budget { left: 68.8%; top: 64.8%; width: 25.2%; min-height: 34%; padding: 2.4% 2.2%; }
 .lp .budget-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem; }
-.lp .meta-dot { color: #0866ff; font-size: 1.3rem; line-height: 1; font-weight: 800; }
 .lp .meter { height: 7px; border-radius: 99px; background: #e2e8f0; margin: 10px 0 8px; overflow: hidden; }
 .lp .meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #16a34a, #22c55e); }
 .lp .budget-fig { font-weight: 800; font-size: 0.95rem; }
@@ -239,10 +231,8 @@
   .lp .final-checks { grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; gap: 22px; }
 }
 @media (max-width: 900px) {
-  .lp .hero-grid { grid-template-columns: 1fr; min-height: 0; }
-  .lp .hero .hero-grid { grid-template-columns: 1fr; }
-  .lp .hero-photo { position: relative; width: calc(100% + 24px); margin: 28px -24px 0 0; }
-  .lp .hero-photo img { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 10%); mask-image: linear-gradient(90deg, transparent 0, #000 10%); }
+  .lp .hero-grid { grid-template-columns: 1fr; gap: 28px; }
+  .lp .hero-photo { border-radius: 18px; }
   .lp .price-grid { grid-template-columns: 1fr 1fr; }
   .lp .cards { grid-template-columns: 1fr; }
   .lp .flow { grid-template-columns: 1fr; }
