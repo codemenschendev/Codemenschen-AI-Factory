@@ -119,20 +119,36 @@
 .lp .combo-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 24px; box-shadow: var(--shadow); }
 .lp .combo-title { font-size: 1.35rem; margin-bottom: 6px; }
 .lp .combo-p { font-size: 0.9rem; color: var(--ink-soft); margin-bottom: 18px; }
-.lp .flow { display: grid; grid-template-columns: 1.1fr auto 2.4fr; gap: 12px; align-items: center; }
-.lp .flow-offer { border: 1px solid var(--border); border-radius: 12px; padding: 14px; background: var(--tint); }
-.lp .flow-label { font-size: 0.8rem; color: var(--ink-soft); }
-.lp .flow-example { font-size: 0.86rem; margin: 4px 0 12px; line-height: 1.4; }
+.lp .flow { display: grid; grid-template-columns: 200px auto 1fr; gap: 14px; align-items: center; }
+.lp .flow-offer { border: 1px solid #dfe3fb; border-radius: 14px; padding: 16px; background: linear-gradient(180deg, #f5f7ff, #fff); }
+.lp .flow-label { font-size: 0.74rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); }
+.lp .flow-input { margin: 8px 0 12px; padding: 10px 12px; background: #fff; border: 1px solid var(--border); border-radius: 10px; font-size: 0.84rem; line-height: 1.45; color: var(--ink); min-height: 84px; }
 .lp .flow-offer .btn { width: 100%; padding: 9px 10px; font-size: 0.82rem; white-space: nowrap; }
-.lp .flow-arrow { color: var(--accent); }
-.lp .flow-parts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.lp .camp-card { background: #fff; border: 1px solid var(--border); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
-.lp .camp-tag { font-size: 0.74rem; font-weight: 700; color: var(--ink); }
-.lp .camp-card img { width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: cover; border-radius: 8px; }
-.lp .camp-line, .lp .camp-title { font-weight: 700; font-size: 0.82rem; line-height: 1.3; }
-.lp .camp-field { display: block; border: 1px solid var(--border); border-radius: 7px; padding: 6px 8px; font-size: 0.72rem; color: #94a3b8; }
-.lp .camp-btn { display: block; border-radius: 7px; padding: 6px; background: var(--accent); color: #fff; font-size: 0.72rem; font-weight: 700; text-align: center; }
-.lp .camp-mail { font-size: 0.76rem; color: var(--ink-soft); line-height: 1.45; }
+.lp .flow-arrow, .lp .part-arrow { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); }
+.lp .flow-arrow .ico, .lp .part-arrow .ico { width: 15px; height: 15px; }
+.lp .flow-parts { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 8px; align-items: center; }
+.lp .part { display: grid; gap: 8px; }
+.lp .part-tag { display: flex; align-items: center; gap: 6px; font-size: 0.78rem; font-weight: 700; }
+.lp .part-tag span { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: 0.68rem; }
+/* The three parts drawn as what they are: a feed post, a page in a browser, an e-mail. */
+.lp .mini { background: #fff; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; box-shadow: 0 8px 20px rgba(15, 23, 42, 0.07); display: flex; flex-direction: column; height: 226px; }
+.lp .mini img { display: block; width: 100%; height: auto; object-fit: cover; }
+.lp .mini-av { width: 20px; height: 20px; flex: none; border-radius: 50%; background: #c2410c; color: #fff; font-size: 0.5rem; font-weight: 700; display: inline-grid; place-items: center; }
+.lp .mini-ad-head { display: flex; align-items: center; gap: 6px; padding: 7px 8px; line-height: 1.1; }
+.lp .mini-ad-head b { display: block; font-size: 0.66rem; }
+.lp .mini-ad-head small { display: block; font-size: 0.56rem; color: var(--ink-soft); }
+.lp .mini-ad img { aspect-ratio: 16 / 10; }
+.lp .mini-text { font-size: 0.7rem; line-height: 1.35; padding: 7px 8px 0; color: var(--ink); }
+.lp .mini-btn { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin: auto 8px 8px; padding: 6px; border-radius: 7px; background: var(--accent); color: #fff; font-size: 0.64rem; font-weight: 700; text-align: center; }
+.lp .mini-bar { display: flex; gap: 4px; padding: 6px 8px; background: #f1f5f9; border-bottom: 1px solid var(--border); }
+.lp .mini-bar i { width: 6px; height: 6px; border-radius: 50%; background: #cbd5e1; }
+.lp .mini-hero { position: relative; }
+.lp .mini-hero img { aspect-ratio: 5 / 4; filter: brightness(0.62); }
+.lp .mini-hero b { position: absolute; left: 8px; right: 8px; bottom: 8px; color: #fff; font-family: var(--font-display); font-size: 0.8rem; line-height: 1.2; }
+.lp .mini-field { display: block; margin: auto 8px 0; border: 1px solid var(--border); border-radius: 6px; padding: 5px 7px; font-size: 0.62rem; color: #94a3b8; }
+.lp .mini-page .mini-btn { margin-top: 6px; }
+.lp .mini-mail-head { display: flex; align-items: center; gap: 6px; padding: 8px; background: #fff7ed; border-bottom: 1px solid #fde7d2; font-size: 0.66rem; font-weight: 700; }
+.lp .mini-mail > b { display: block; padding: 12px 8px 0; font-family: var(--font-display); font-size: 0.86rem; }
 .lp .budget-box { border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
 .lp .budget-big { font-size: 1.25rem; font-weight: 800; letter-spacing: -0.02em; }
 .lp .budget-box .meter { height: 10px; margin: 12px 0 14px; }
@@ -142,16 +158,16 @@
 .lp .budget-rows dd { margin: 0; font-weight: 600; }
 .lp .budget-rows .on::before { content: ""; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #22c55e; margin-right: 7px; vertical-align: 1px; }
 
-/* ---------- Steps: four in a row, arrows between ---------- */
-.lp .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 28px; margin-top: 1.6rem; }
-.lp .step { display: flex; gap: 12px; align-items: flex-start; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 18px 16px; box-shadow: var(--shadow); position: relative; }
+/* ---------- Steps: a timeline, one line through four round icons ---------- */
+.lp .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 32px; margin-top: 2.4rem; position: relative; }
+.lp .steps::before { content: ""; position: absolute; top: 32px; left: 32px; right: calc(25% - 8px); height: 2px; background: repeating-linear-gradient(90deg, #c7d2fe 0 8px, transparent 8px 14px); }
+.lp .step { position: relative; background: none; border: 0; padding: 0; box-shadow: none; }
 .lp .step::before { content: none; }
-.lp .step + .step::after { content: "→"; position: absolute; left: -22px; top: 50%; transform: translateY(-50%); color: var(--ink-soft); }
-.lp .step-num { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-weight: 800; }
-.lp .step-ico { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
-.lp .step-ico .ico { width: 18px; height: 18px; }
-.lp .step h3 { font-size: 0.95rem; }
-.lp .step p { font-size: 0.82rem; color: var(--ink-soft); line-height: 1.45; }
+.lp .step-ico { position: relative; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; margin-bottom: 20px; background: linear-gradient(135deg, var(--accent), var(--violet)); color: #fff; box-shadow: 0 10px 24px rgba(29, 78, 216, 0.25), 0 0 0 8px var(--tint); }
+.lp .step-ico .ico { width: 26px; height: 26px; }
+.lp .step-num { position: absolute; top: -4px; right: -6px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; background: #fff; color: var(--accent); font-size: 0.78rem; font-weight: 800; box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15); }
+.lp .step h3 { font-size: 1.08rem; margin-bottom: 6px; }
+.lp .step p { font-size: 0.92rem; color: var(--ink-soft); line-height: 1.55; max-width: 26ch; }
 
 /* ---------- Prices: compact cards with an icon ---------- */
 .lp .price-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
@@ -216,8 +232,8 @@
   .lp .trust-grid { grid-template-columns: 1fr 1fr; row-gap: 22px; }
   .lp .trust:nth-child(3) { border-left: 0; }
   .lp .combo { grid-template-columns: 1fr; }
-  .lp .steps { grid-template-columns: 1fr 1fr; }
-  .lp .step + .step::after { content: none; }
+  .lp .steps { grid-template-columns: 1fr 1fr; row-gap: 40px; }
+  .lp .steps::before { content: none; }
   .lp .final-bar { grid-template-columns: 1fr auto; }
   .lp .final-logo { display: none; }
   .lp .final-checks { grid-column: 1 / -1; grid-auto-flow: column; justify-content: start; gap: 22px; }
@@ -231,6 +247,7 @@
   .lp .cards { grid-template-columns: 1fr; }
   .lp .flow { grid-template-columns: 1fr; }
   .lp .flow-arrow { transform: rotate(90deg); justify-self: center; }
+  .lp .flow-input { min-height: 0; }
   .lp .sec-head { display: block; }
   .lp .sec-link { margin: -1rem 0 1.4rem; }
 }
@@ -238,13 +255,21 @@
   .lp .hero { padding: 36px 0 24px; }
   .lp .section { padding: 56px 0; }
   .lp .hero-ctas .btn { width: 100%; }
-  .lp .trust-grid, .lp .steps, .lp .price-grid { grid-template-columns: 1fr; }
+  .lp .trust-grid, .lp .price-grid { grid-template-columns: 1fr; }
+  .lp .steps { grid-template-columns: 1fr; row-gap: 28px; }
+  .lp .step { display: grid; grid-template-columns: 64px 1fr; column-gap: 18px; }
+  .lp .step-ico { grid-row: span 2; margin: 0; }
+  .lp .step p { max-width: none; }
   .lp .trust { border-left: 0; }
   /* services swipe sideways on a phone, like the prototype */
   .lp .svc-grid { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 24px; gap: 12px; margin: 0 -24px; padding: 4px 24px 12px; scrollbar-width: none; }
   .lp .svc-grid::-webkit-scrollbar { display: none; }
   .lp .svc { flex: 0 0 78%; scroll-snap-align: start; }
-  .lp .flow-parts { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+  .lp .flow-parts { grid-template-columns: 1fr; max-width: 260px; margin: 0 auto; }
+  .lp .part-arrow { transform: rotate(90deg); justify-self: center; }
+  .lp .mini { height: auto; }
+  .lp .mini-ad img, .lp .mini-hero img { aspect-ratio: 16 / 9; }
+  .lp .mini-btn, .lp .mini-field { margin-top: 10px; }
   .lp .final-bar { grid-template-columns: 1fr; padding: 24px 20px; gap: 16px; }
   .lp .final-bar .btn { width: 100%; }
   .lp .final-checks { grid-auto-flow: row; }

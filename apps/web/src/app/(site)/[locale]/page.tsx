@@ -310,7 +310,7 @@ export default async function Home({
               <div className="flow">
                 <div className="flow-offer">
                   <p className="flow-label">{h.campaign.offerLabel}</p>
-                  <p className="flow-example">{h.campaign.offerExample}</p>
+                  <p className="flow-input">{h.campaign.offerExample}</p>
                   <Link className="btn btn-primary btn-sm" href={`${proto}?kind=campaign`}>
                     {h.campaign.offerBtn} <Icon name="arrow" className="btn-ico" />
                   </Link>
@@ -319,22 +319,61 @@ export default async function Home({
                   <Icon name="arrow" />
                 </span>
                 <div className="flow-parts" aria-hidden="true">
-                  <div className="camp-card">
-                    <p className="camp-tag">1. {h.campaign.parts[0]}</p>
-                    {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
-                    <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
-                    <p className="camp-line">{h.campaign.adLine}</p>
+                  <div className="part">
+                    <p className="part-tag">
+                      <span>1</span> {h.campaign.parts[0]}
+                    </p>
+                    <div className="mini mini-ad">
+                      <div className="mini-ad-head">
+                        <span className="mini-av">BL</span>
+                        <span>
+                          <b>Bäckerei Lang</b>
+                          <small>{h.campaign.sponsored}</small>
+                        </span>
+                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+                      <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
+                      <p className="mini-text">{h.campaign.adLine}</p>
+                      <span className="mini-btn">{h.campaign.adCta}</span>
+                    </div>
                   </div>
-                  <div className="camp-card">
-                    <p className="camp-tag">2. {h.campaign.parts[1]}</p>
-                    <p className="camp-title">{h.campaign.pageTitle}</p>
-                    <span className="camp-field">{h.campaign.pageField}</span>
-                    <span className="camp-btn">{h.campaign.pageBtn}</span>
+                  <span className="part-arrow">
+                    <Icon name="arrow" />
+                  </span>
+                  <div className="part">
+                    <p className="part-tag">
+                      <span>2</span> {h.campaign.parts[1]}
+                    </p>
+                    <div className="mini mini-page">
+                      <div className="mini-bar">
+                        <i />
+                        <i />
+                        <i />
+                      </div>
+                      <div className="mini-hero">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+                        <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
+                        <b>{h.campaign.pageTitle}</b>
+                      </div>
+                      <span className="mini-field">{h.campaign.pageField}</span>
+                      <span className="mini-btn">{h.campaign.pageBtn}</span>
+                    </div>
                   </div>
-                  <div className="camp-card">
-                    <p className="camp-tag">3. {h.campaign.parts[2]}</p>
-                    <p className="camp-title">{h.campaign.mailHi}</p>
-                    <p className="camp-mail">{h.campaign.mailText}</p>
+                  <span className="part-arrow">
+                    <Icon name="arrow" />
+                  </span>
+                  <div className="part">
+                    <p className="part-tag">
+                      <span>3</span> {h.campaign.parts[2]}
+                    </p>
+                    <div className="mini mini-mail">
+                      <div className="mini-mail-head">
+                        <span className="mini-av">BL</span> Bäckerei Lang
+                      </div>
+                      <b>{h.campaign.mailHi}</b>
+                      <p className="mini-text">{h.campaign.mailText}</p>
+                      <span className="mini-btn">{h.campaign.mailBtn}</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -366,18 +405,17 @@ export default async function Home({
 
       <section className="section section-tint" id="how">
         <div className="wrap">
+          <p className="eyebrow reveal">{d.how.eyebrow}</p>
           <h2 className="reveal">{d.how.title}</h2>
           <ol className="steps">
             {d.how.steps.map((s, i) => (
               <li className="step reveal" key={s.h}>
-                <span className="step-num">{i + 1}</span>
                 <span className="step-ico">
                   <Icon name={stepIcons[i]} />
+                  <span className="step-num">{i + 1}</span>
                 </span>
-                <div>
-                  <h3>{s.h}</h3>
-                  <p>{s.p}</p>
-                </div>
+                <h3>{s.h}</h3>
+                <p>{s.p}</p>
               </li>
             ))}
           </ol>
