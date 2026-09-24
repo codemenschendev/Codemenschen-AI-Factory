@@ -426,7 +426,10 @@ export default async function Home({
               </div>
             ))}
           </div>
-          <p className="price-note reveal">{d.pricing.note}</p>
+          <p className="price-note reveal">
+            <Icon name="shield" className="price-note-ico" />
+            {d.pricing.note}
+          </p>
         </div>
       </section>
 
@@ -566,7 +569,8 @@ export default async function Home({
 
       {/* Closing band: the one next step */}
       <section className="section-final">
-        <div className="wrap final-band reveal">
+        <div className="wrap">
+          <div className="final-band reveal">
           <div className="final-text">
             <p className="eyebrow">{h.final.eyebrow}</p>
             <h2>{h.final.title}</h2>
@@ -575,6 +579,7 @@ export default async function Home({
           <Link className="btn btn-light" href={proto}>
             {h.cta} <Icon name="arrow" className="btn-ico" />
           </Link>
+  </div>
         </div>
       </section>
 
