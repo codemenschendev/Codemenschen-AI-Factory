@@ -22,7 +22,7 @@ class PaymentModeTest extends TestCase
             'services.buzz.alert_dir' => null, 'services.openclaw.hook_url' => null,
         ]);
         $admin = Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true]);
-        $this->admin = ['Authorization' => 'Bearer '.$admin->createToken('portal')->plainTextToken];
+        $this->admin = ['Authorization' => 'Bearer '.$this->consoleToken($admin)];
     }
 
     public function test_sandbox_is_the_default_and_uses_the_test_key(): void

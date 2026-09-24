@@ -13,6 +13,8 @@ import { OpsIcon } from "./OpsIcon";
 import { ClientAdsPanel } from "./ClientAdsPanel";
 import { OwnCampaignsPanel } from "./OwnCampaignsPanel";
 import { ConversionsPanel } from "./ConversionsPanel";
+import { AuditPanel } from "./AuditPanel";
+import { TwoFactorGate } from "./TwoFactorGate";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -144,7 +146,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references";
+type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references" | "audit";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -163,6 +165,9 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // the previous account's "no access" along with it.
   const [deniedFor, setDeniedFor] = useState<string | null>(null);
   const denied = Boolean(token) && deniedFor === token;
+  // Where this token stands with the second factor. Nothing in /admin answers until it has passed.
+  const [twoFactor, setTwoFactor] = useState<{ for: string; enabled: boolean; passed: boolean } | null>(null);
+  const passed = Boolean(token) && twoFactor?.for === token && twoFactor?.passed === true;
   const [tab, setTab] = useState<Tab>("overview");
   const [keywordsFor, setKeywordsFor] = useState<number | null>(null);
   // "auto" until somebody presses the menu button: the width decides until then.
@@ -190,7 +195,9 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       try {
         return await api<T>(path, { ...init, token });
       } catch (e) {
-        if (e instanceof ApiError && e.status === 403) setDeniedFor(token);
+        const factor = e instanceof ApiError ? (e.body as { two_factor?: "setup" | "verify" } | null)?.two_factor : undefined;
+        if (factor) setTwoFactor({ for: token, enabled: factor === "verify", passed: false });
+        else if (e instanceof ApiError && e.status === 403) setDeniedFor(token);
         // Expired or revoked: the sign-in form, not a screen of red notes.
         else if (e instanceof ApiError && e.status === 401) setToken(null);
         else if (e instanceof ApiError) {
@@ -232,12 +239,32 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     }
   }, []);
 
+  // First the second factor, then the factory. A customer's token is refused here already and
+  // lands on the "no access" state.
   useEffect(() => {
     if (!token) return;
+    let alive = true;
+    void (async () => {
+      try {
+        const r = await api<{ enabled: boolean; passed: boolean }>("/admin/2fa", { token });
+        if (alive) setTwoFactor({ for: token, enabled: r.enabled, passed: r.passed });
+      } catch (e) {
+        if (!alive) return;
+        if (e instanceof ApiError && e.status === 401) setToken(null);
+        else setDeniedFor(token);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [token]);
+
+  useEffect(() => {
+    if (!passed) return;
     // eslint-disable-next-line react-hooks/set-state-in-effect -- the state is set after an await inside the loader, not in the effect body
     void loadOverview();
     void loadProjects();
-  }, [token, loadOverview, loadProjects]);
+  }, [passed, loadOverview, loadProjects]);
 
   const loadAds = useCallback(async () => {
     const r = await call<{ ads: AdRow[] }>("/admin/ads");
@@ -418,6 +445,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     { label: a.groupAds, tabs: ["ownAds", "clientAds", "keywords", "conversions", "ads"] },
     { label: a.groupInsight, tabs: ["analytics"] },
     { label: a.groupContent, tabs: ["library", "references"] },
+    { label: a.groupSecurity, tabs: ["audit"] },
   ];
 
   // The console's own frame. Before a token is known there is nothing to navigate to, so the
@@ -428,6 +456,10 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   if (token === undefined) return bare(<p className="est-empty">{a.loading}</p>);
   if (!token || denied) return <AdminSignIn locale={locale} d={d} denied={denied} />;
+  if (twoFactor?.for !== token) return bare(<p className="est-empty">{a.loading}</p>);
+  if (!twoFactor.passed) {
+    return <TwoFactorGate token={token} d={d} enabled={twoFactor.enabled} onPassed={() => setTwoFactor({ ...twoFactor, passed: true })} />;
+  }
 
   /**
    * One button, three jobs. On a phone the menu is a drawer and the button opens it. Anywhere
@@ -523,6 +555,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
       {tab === "keywords" && token && <KeywordsPanel token={token} d={d} openId={keywordsFor} />}
       {tab === "conversions" && token && <ConversionsPanel token={token} locale={locale} d={d} />}
+      {tab === "audit" && token && <AuditPanel token={token} locale={locale} d={d} />}
       {tab === "ownAds" && token && (
         <OwnCampaignsPanel
           token={token}

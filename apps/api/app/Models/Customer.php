@@ -12,7 +12,14 @@ class Customer extends Authenticatable
 
     protected $guarded = [];
 
-    protected $casts = ['is_admin' => 'boolean'];
+    protected $casts = [
+        'is_admin' => 'boolean',
+        'two_factor_secret' => 'encrypted',
+        'two_factor_enabled_at' => 'datetime',
+        'two_factor_recovery' => 'array',
+    ];
+
+    protected $hidden = ['two_factor_secret', 'two_factor_recovery', 'two_factor_last_step'];
 
     /** The operator lane: sees every project in the factory and can push a stuck one along. */
     public function isAdmin(): bool

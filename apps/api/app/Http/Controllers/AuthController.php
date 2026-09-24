@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
+use App\Domain\Security\Audit;
 use App\Models\Customer;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -106,6 +107,9 @@ class AuthController extends Controller
         // Named apart so a console session can be told from a customer's in the token table.
         $token = $customer->createToken($console ? 'ops' : 'portal', ['portal'])->plainTextToken;
         app(Analytics::class)->record('signin_completed', $request, ['customer_id' => $customer->id]);
+        if ($customer->is_admin) {
+            Audit::record('signin', $customer, null, ['console' => $console], $request);
+        }
         $front = rtrim(config('services.frontend_url'), '/');
         $locale = in_array($request->query('locale'), ['de', 'en'], true) ? $request->query('locale') : ($customer->locale ?: 'de');
 

@@ -10,6 +10,7 @@ Artisan::command('inspire', function () {
 use App\Http\Controllers\PrototypeController;
 use App\Models\AdConversion;
 use App\Models\AnalyticsEvent;
+use App\Models\AuditLog;
 use App\Models\Prototype;
 use App\Models\Quote;
 use Illuminate\Support\Facades\File;
@@ -53,3 +54,6 @@ Schedule::call(function () {
 
 // The validation report of a campaign, mailed once its test or first week is over.
 Schedule::command('factory:validation-reports')->dailyAt('08:30')->timezone('Europe/Vienna');
+
+// The audit log is kept 12 months (see the security page).
+Schedule::call(fn () => AuditLog::where('created_at', '<', now()->subMonths(12))->delete())->dailyAt('03:42');

@@ -91,7 +91,7 @@ class AnalyticsTest extends TestCase
 
         $this->app['auth']->forgetGuards();
         $admin = Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true]);
-        $this->withHeaders(['Authorization' => 'Bearer '.$admin->createToken('portal')->plainTextToken])
+        $this->withHeaders(['Authorization' => 'Bearer '.$this->consoleToken($admin)])
             ->getJson('/api/admin/analytics?days=7')->assertOk()->assertJsonPath('days', 7);
     }
 }

@@ -264,7 +264,7 @@ class ChangeChatTest extends TestCase
     {
         $project = $this->reviewedProject();
         $admin = Customer::create(['email' => 'ops@example.com', 'locale' => 'de', 'is_admin' => true]);
-        $adminToken = $admin->createToken('portal')->plainTextToken;
+        $adminToken = $this->consoleToken($admin);
         $adminHeaders = ['Authorization' => 'Bearer '.$adminToken];
 
         $this->withHeaders($adminHeaders)->postJson("/api/admin/projects/{$project->id}/assistant", ['paused' => true])

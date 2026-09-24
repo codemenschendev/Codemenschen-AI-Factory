@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ads;
 
+use App\Domain\Security\Audit;
 use App\Models\MarketingCampaign;
 use App\Models\Setting;
 use App\Services\Notify;
@@ -142,6 +143,7 @@ class SpendGuard
         } catch (\Throwable $e) {
             $error = mb_substr($e->getMessage(), 0, 200);
         }
+        Audit::system('ads.stopped', 'campaign:'.$campaign->id, ['reason' => $reason, 'platform' => $campaign->platform, 'error' => $error]);
         $campaign->update(['platform_status' => $error === null ? 'paused' : 'failed', 'stopped_reason' => $reason,
             'publish_error' => $error === null ? $campaign->publish_error : "Pause failed: $error"]);
         $this->notify->money("Ad #{$campaign->id} stopped: $reason", sprintf(
