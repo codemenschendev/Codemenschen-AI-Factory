@@ -1260,7 +1260,7 @@ export const de = {
     },
     privacy: {
       title: "Datenschutz",
-      updated: "Stand: 23. September 2026",
+      updated: "Stand: 24. September 2026",
       lede: "Welche Daten Appwerk verarbeitet, wofür, wie lange und wer sie noch sieht.",
       sections: [
         {
@@ -1275,6 +1275,7 @@ export const de = {
           p: [
             "Unser Server speichert für jede Anfrage IP-Adresse, Zeitpunkt, aufgerufene Adresse und Browserangabe in einem Protokoll. Das dient der Sicherheit und der Fehlersuche. Die Protokolle werden nach 14 Tagen gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse an einem sicheren Betrieb (Art. 6 Abs. 1 lit. f DSGVO).",
             "Server und Datenbank betreibt Hetzner Online GmbH (Deutschland) in einem Rechenzentrum in Finnland, also in der EU.",
+            "Jede Nacht wird eine Sicherung der Datenbank und der Projektdateien erstellt. Eine Kopie liegt bei Amazon Web Services im Rechenzentrum Frankfurt (Deutschland) und wird nach 90 Tagen gelöscht. Die Rechtsgrundlage ist unser berechtigtes Interesse, Daten nach einem Fehler wiederherstellen zu können (Art. 6 Abs. 1 lit. f DSGVO).",
           ],
         },
         {
@@ -1390,7 +1391,7 @@ export const de = {
         h: "Wo deine Daten liegen",
         p: [
           "Server und Datenbank betreibt Hetzner Online GmbH, ein Anbieter aus Deutschland, in seinem Rechenzentrum in Helsinki (Finnland). Die Daten bleiben damit in der EU und unterliegen der DSGVO. Die Verbindung zur Website ist immer verschlüsselt (HTTPS).",
-          "Jede Nacht wird eine Sicherung erstellt und zusätzlich außerhalb des Servers abgelegt. Der Server darf dort nur neue Sicherungen ablegen. Er kann alte weder lesen noch löschen. So bleibt eine Sicherung auch dann erhalten, wenn der Server selbst angegriffen wird.",
+          "Jede Nacht wird eine Sicherung erstellt und zusätzlich außerhalb des Servers abgelegt, bei Amazon Web Services in Frankfurt. Der Server darf dort nur neue Sicherungen ablegen. Er kann alte weder lesen noch löschen. So bleibt eine Sicherung auch dann erhalten, wenn der Server selbst angegriffen wird.",
         ],
       },
       {
@@ -1439,7 +1440,7 @@ export const de = {
     processorsHead: ["Anbieter", "Wofür", "Sitz"],
     processors: [
       ["Hetzner Online GmbH", "Server und Datenbank, Rechenzentrum in Finnland", "Deutschland"],
-      ["Amazon Web Services", "Sicherungskopie außerhalb des Servers", "Luxemburg"],
+      ["Amazon Web Services", "Sicherungskopie, Rechenzentrum Frankfurt", "Luxemburg"],
       ["World4You Internet Services GmbH", "E-Mails", "Österreich"],
       ["Stripe Payments Europe, Ltd.", "Zahlungen", "Irland"],
       ["Anthropic PBC", "Texte und Code (KI)", "USA"],
