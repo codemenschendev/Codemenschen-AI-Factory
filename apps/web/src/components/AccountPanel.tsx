@@ -10,6 +10,8 @@ import { eur, type Dict, type Locale } from "@/lib/i18n";
 interface ProjectRow {
   id: string;
   name: string;
+  kind?: "app" | "site";
+  site_url?: string | null;
   status: string;
   build_starts_at: string | null;
   created_at: string;
@@ -129,8 +131,14 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
       <div className="grid" style={{ marginTop: 16 }}>
         {me.projects.map((p) => (
           <div className="card" key={p.id}>
-            <span className="badge badge-type">{p.status}</span>
+            <span className="badge badge-type">{a.kinds[p.kind ?? "app"] ?? p.kind} · {p.status}</span>
             <h3>{p.name}</h3>
+            {p.site_url && (
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 14.5 }}>
+                <span className="muted">{a.liveAt}</span>
+                <a className="num" href={p.site_url} target="_blank" rel="noopener noreferrer" style={{ overflowWrap: "anywhere", textAlign: "right" }}>{p.site_url.replace(/^https?:\/\//, "")}</a>
+              </div>
+            )}
             <div className="row" style={{ display: "flex", justifyContent: "space-between", fontSize: 14.5 }}>
               <span className="muted">{a.total}</span>
               <strong className="num">{eur(p.order.total_one_time_eur, locale)}</strong>

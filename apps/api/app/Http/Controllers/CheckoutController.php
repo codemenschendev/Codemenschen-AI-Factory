@@ -51,6 +51,11 @@ class CheckoutController extends Controller
         );
 
         $packages = $data['packages'] ?? [];
+        if ($quote->kind === 'site') {
+            // A website is bought as it is; the launch marketing is the one package that fits.
+            $packages = array_intersect_key($packages, ['marketingLaunch' => 1]);
+            abort_if($quote->prototype === null, 410, 'The website preview is gone.');
+        }
         $total = Estimator::oneTimeTotal($quote->price_eur, $packages);
 
         $order = Order::create([
@@ -96,9 +101,11 @@ class CheckoutController extends Controller
     {
         $locale = $order->locale;
         $front = rtrim(config('services.frontend_url'), '/');
-        $name = $quote->listing_slug
-            ? ucfirst($quote->listing_slug).' — App development'
-            : 'Custom app development';
+        $name = match (true) {
+            $quote->kind === 'site' => 'Website: '.mb_substr((string) ($quote->idea ?: 'one page'), 0, 80),
+            (bool) $quote->listing_slug => ucfirst($quote->listing_slug).' — App development',
+            default => 'Custom app development',
+        };
 
         $lineItems = [[
             'quantity' => 1,
@@ -131,7 +138,7 @@ class CheckoutController extends Controller
             'client_reference_id' => $order->id,
             'locale' => $locale,
             'invoice_creation' => ['enabled' => true],
-            'success_url' => "$front/$locale/success?order={$order->id}",
+            'success_url' => "$front/$locale/success?order={$order->id}&kind={$quote->kind}",
             'cancel_url' => "$front/$locale/checkout?quote={$quote->id}",
         ]);
     }

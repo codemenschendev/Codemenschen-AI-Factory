@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Domain\Sites\SiteService;
 use App\Models\PipelineRun;
 use App\Models\Project;
 use App\Services\PipelineOrchestrator;
@@ -17,12 +18,18 @@ class PipelineTick extends Command
 
     protected $description = 'Start due projects and reap stalled pipeline runs';
 
-    public function handle(PipelineOrchestrator $orchestrator): int
+    public function handle(PipelineOrchestrator $orchestrator, SiteService $sites): int
     {
         Project::where('status', 'PAID')
             ->where('build_starts_at', '<=', now())
             ->whereDoesntHave('runs')
-            ->each(function (Project $p) use ($orchestrator) {
+            ->each(function (Project $p) use ($orchestrator, $sites) {
+                if ($p->kind === 'site') {
+                    $this->info("website {$p->id} goes live");
+                    $sites->goLive($p);
+
+                    return;
+                }
                 $this->info("starting deferred project {$p->id}");
                 $orchestrator->start($p);
             });

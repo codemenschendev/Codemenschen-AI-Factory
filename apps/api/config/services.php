@@ -45,6 +45,9 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
+    // Bought websites: where a customer's own domain has to point (an A record), for the portal.
+    'sites' => ['server_ip' => env('SITES_SERVER_IP', '65.108.206.249')],
+
     'admin_email' => env('ADMIN_EMAIL'),
 
     'worker' => [

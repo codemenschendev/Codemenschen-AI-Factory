@@ -127,6 +127,11 @@ export const REVISION_PRICE_EUR = 39;
 /** Appwerk Care: unlimited change rounds per app, monthly, cancel any time (mirror of Estimator::CARE_MONTHLY_EUR). */
 export const CARE_MONTHLY_EUR = 9;
 
+/** A website: the one-page site preview bought as it is (mirror of Estimator::SITE_*). */
+export const SITE_PRICE_EUR = 299;
+export const SITE_HOSTING_MONTHLY_EUR = 19;
+export const SITE_HOSTING_FREE_MONTHS = 12;
+
 /** Monthly hosting & maintenance for Type B apps. Bands pending Patrick's final call. */
 export const HOSTING_MONTHLY: Record<AppType, number> = {
   A: 0,

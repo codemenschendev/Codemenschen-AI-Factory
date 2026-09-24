@@ -5,11 +5,15 @@ import Link from "next/link";
 import { api, API_BASE, ApiError } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 import { ChangeChat } from "@/components/ChangeChat";
+import { SiteDetail, type SiteInfo } from "@/components/SiteDetail";
 import { useToken } from "@/lib/token";
 
 interface Detail {
   id: string;
   name: string;
+  /** app, or site: a bought website, shown by SiteDetail instead of the pipeline screens. */
+  kind?: "app" | "site";
+  site?: SiteInfo | null;
   status: string;
   failed_reason: string | null;
   criteria: { key: string; criterion: string; kind: string; status: string }[];
@@ -290,6 +294,13 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
       </div>
 
       {p.status === "FAILED" && <p className="note" style={{ marginTop: 16 }}>{d.project.failed}</p>}
+
+      {p.kind === "site" && p.site && token && (
+        <div style={{ marginTop: 24 }}>
+          <SiteDetail projectId={p.id} site={p.site} token={token} locale={locale} d={d} hostingMonthlyEur={p.site.hosting_monthly_eur} hostingFreeMonths={p.site.hosting_free_months} />
+        </div>
+      )}
+      {p.kind !== "site" && (<>
       {p.change_requests?.some((c) => c.status === "in_progress") && (
         <p className="note" style={{ marginTop: 16 }}>{d.project.changesInProgress}</p>
       )}
@@ -743,6 +754,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
           </div>
         </div>
       )}
+      </>)}
     </div>
   );
 }

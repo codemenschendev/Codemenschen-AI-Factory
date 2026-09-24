@@ -5,10 +5,13 @@ import { TagOnMount } from "@/components/TagOnMount";
 
 export default async function SuccessPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string }>;
+  searchParams: Promise<{ kind?: string }>;
 }) {
   const { locale: raw } = await params;
+  const { kind } = await searchParams;
   if (!isLocale(raw)) notFound();
   const locale = raw as Locale;
   const d = getDict(locale);
@@ -18,7 +21,7 @@ export default async function SuccessPage({
       <TagOnMount event="purchase" />
       <h1>{d.success.title}</h1>
       <p className="muted" style={{ fontSize: 17 }}>
-        {d.success.p}
+        {kind === "site" ? d.success.site : d.success.p}
       </p>
       <p>
         <Link className="btn btn-primary" href={`/${locale}/account`}>

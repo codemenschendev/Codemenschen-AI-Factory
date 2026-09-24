@@ -25,6 +25,8 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
   useEffect(() => {
     const existing = params.get("quote");
     const app = params.get("app");
+    // A website preview, bought as it is.
+    const site = params.get("site");
     // Every supported store-listing language is on by default (the customer unticks).
     const load = (q: QuoteResponse) => {
       setQuote(q);
@@ -34,6 +36,13 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
       try {
         if (existing) {
           load(await api<QuoteResponse>(`/quotes/${existing}`));
+        } else if (site) {
+          load(
+            await api<QuoteResponse>("/quotes", {
+              method: "POST",
+              body: JSON.stringify({ prototype_id: site, locale }),
+            }),
+          );
         } else if (app) {
           load(
             await api<QuoteResponse>("/quotes", {
@@ -73,10 +82,13 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
       Object.entries(packages)
         .filter(([, on]) => on)
         .reduce((s, [k]) => s + (quote.packages[k] ?? 0), 0);
-    return { oneTime, firstYear: oneTime + quote.hosting_monthly_eur * 12 };
+    // A website's first months of hosting are in the price.
+    const months = Math.max(0, 12 - (quote.hosting_free_months ?? 0));
+    return { oneTime, firstYear: oneTime + quote.hosting_monthly_eur * months };
   }, [quote, packages]);
 
   const c = d.checkout;
+  const isSite = quote?.kind === "site";
 
   if (failed)
     return (
@@ -119,6 +131,14 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
       <div>
         <section className="co-panel">
           <h2>{c.step1}</h2>
+          {isSite && (
+            <div className="field">
+              <span className="field-label">{c.site.includedTitle}</span>
+              <ul className="small" style={{ margin: "6px 0 0", paddingLeft: 20 }}>
+                {c.site.included.map((line) => <li key={line}>{line}</li>)}
+              </ul>
+            </div>
+          )}
           <div className="field">
             <span className="field-label">{c.packagesTitle}</span>
             <div className="choices">
@@ -189,7 +209,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
         </section>
 
         <section className="co-panel">
-          <h2>{c.step3}</h2>
+          <h2>{isSite ? c.site.step3 : c.step3}</h2>
           <div className="field">
             <label className="choice" style={{ alignItems: "flex-start" }}>
               <input
@@ -198,9 +218,9 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
                 onChange={(e) => setWaiver(e.target.checked)}
                 style={{ marginTop: 4 }}
               />
-              <span style={{ maxWidth: "56ch" }}>{c.waiverLabel}</span>
+              <span style={{ maxWidth: "56ch" }}>{isSite ? c.site.waiverLabel : c.waiverLabel}</span>
             </label>
-            <p className="small muted">{c.waiverOff}</p>
+            <p className="small muted">{isSite ? c.site.waiverOff : c.waiverOff}</p>
           </div>
         </section>
 
@@ -254,9 +274,10 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
       <aside className="est-panel">
         <h3 style={{ margin: 0 }}>{c.summary}</h3>
         <div className="row">
-          <span className="muted">{c.development}</span>
+          <span className="muted">{isSite ? c.site.development : c.development}</span>
           <strong>{eur(quote.price_eur, locale)}</strong>
         </div>
+        {isSite && quote.title && <p className="small muted" style={{ margin: "-6px 0 8px" }}>{quote.title}</p>}
         {Object.entries(packages)
           .filter(([, on]) => on)
           .map(([k]) => (
@@ -272,7 +293,15 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
             {eur(totals.oneTime, locale)}
           </strong>
         </div>
-        {quote.app_type === "B" && (
+        {isSite && (
+          <div className="row">
+            <span className="muted">{c.site.hosting}</span>
+            <span className="small" style={{ textAlign: "right" }}>
+              {c.site.hostingIncluded.replace("{months}", String(quote.hosting_free_months)).replace("{eur}", eur(quote.hosting_monthly_eur, locale))}
+            </span>
+          </div>
+        )}
+        {!isSite && quote.app_type === "B" && (
           <>
             <div className="row">
               <span className="muted">{c.hostingLine}</span>

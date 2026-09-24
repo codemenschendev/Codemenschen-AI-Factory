@@ -21,6 +21,7 @@ class Prototype extends Model
 
     public function isLive(): bool
     {
-        return $this->status === 'ready' && $this->expires_at->isFuture();
+        // A bought page has no expiry.
+        return $this->status === 'ready' && ($this->expires_at === null || $this->expires_at->isFuture());
     }
 }

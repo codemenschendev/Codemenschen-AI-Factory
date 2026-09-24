@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
 use App\Domain\Pricing\Estimator;
+use App\Domain\Sites\SiteService;
 use App\Models\ChangeMessage;
 use App\Models\Project;
 use App\Services\CareService;
@@ -34,6 +35,8 @@ class MeController extends Controller
         return response()->json([
             'id' => $project->id,
             'name' => $project->name,
+            'kind' => $project->kind,
+            'site' => $project->kind === 'site' ? self::site($project) : null,
             'status' => $project->status,
             'fix_attempts' => $project->fix_attempts,
             'revision_rounds' => $project->revision_rounds,
@@ -287,6 +290,34 @@ class MeController extends Controller
         return response()->download($path);
     }
 
+    /** A bought website: where it is, when it goes live, and the domain the customer asked for. */
+    private static function site(Project $project): array
+    {
+        return [
+            'url' => SiteService::url($project),
+            'live_at' => $project->prototype?->published_at?->toIso8601String(),
+            'live_starts_at' => $project->build_starts_at?->toIso8601String(),
+            'prototype_id' => $project->prototype?->id,
+            'domain' => $project->domain,
+            'domain_requested_at' => $project->domain_requested_at?->toIso8601String(),
+            'server_ip' => SiteService::serverIp(),
+            'hosting_monthly_eur' => Estimator::SITE_HOSTING_MONTHLY_EUR,
+            'hosting_free_months' => Estimator::SITE_HOSTING_FREE_MONTHS,
+        ];
+    }
+
+    /** The customer names their domain (or clears it); a person connects it. */
+    public function domain(Request $request, Project $project, SiteService $sites): JsonResponse
+    {
+        abort_unless($project->customer_id === $request->user()->id && $project->kind === 'site', 404);
+        $data = $request->validate(['domain' => 'nullable|string|max:300']);
+        $domain = SiteService::normalizeDomain((string) ($data['domain'] ?? ''));
+        abort_if($domain === false, 422, 'That is not a domain. Enter it like example.at.');
+        $sites->requestDomain($project, $domain);
+
+        return response()->json(self::site($project->fresh()));
+    }
+
     public function projects(Request $request): JsonResponse
     {
         $projects = $request->user()->projects()
@@ -296,6 +327,8 @@ class MeController extends Controller
             ->map(fn ($p) => [
                 'id' => $p->id,
                 'name' => $p->name,
+                'kind' => $p->kind,
+                'site_url' => $p->kind === 'site' ? SiteService::url($p) : null,
                 'status' => $p->status,
                 'stack' => $p->stack,
                 'build_starts_at' => $p->build_starts_at?->toIso8601String(),

@@ -41,10 +41,17 @@ export async function api<T>(
 
 export interface QuoteResponse {
   id: string;
+  /** app, or site: a website preview bought as it is. */
+  kind: "app" | "site";
+  prototype_id: string | null;
+  /** The page title, for a site. */
+  title: string | null;
   listing_slug: string | null;
   price_eur: number;
   app_type: "A" | "B";
   hosting_monthly_eur: number;
+  /** Months of hosting included in the one-time price (sites). */
+  hosting_free_months: number;
   breakdown: { weeksLo: number; weeksHi: number; [k: string]: unknown };
   packages: Record<string, number>;
   ad_budget_options: number[];

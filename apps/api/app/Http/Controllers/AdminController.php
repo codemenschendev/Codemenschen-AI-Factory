@@ -409,7 +409,7 @@ class AdminController extends Controller
             ->map(fn (Prototype $p) => [
                 'id' => $p->id,
                 'kind' => $p->kind,
-                'status' => $p->expires_at->isPast() && $p->status === 'ready' ? 'expired' : $p->status,
+                'status' => $p->expires_at !== null && $p->expires_at->isPast() && $p->status === 'ready' ? 'expired' : $p->status,
                 'stage' => $p->stage,
                 'title' => $p->title,
                 'prompt' => $p->prompt,
@@ -420,7 +420,7 @@ class AdminController extends Controller
                 'repairs' => (int) ($p->qa['repairs'] ?? 0),
                 'seconds' => isset($p->qa['timing']['total']) ? (int) round($p->qa['timing']['total']) : null,
                 'created_at' => $p->created_at->toIso8601String(),
-                'expires_at' => $p->expires_at->toIso8601String(),
+                'expires_at' => $p->expires_at?->toIso8601String(),
             ]);
 
         return response()->json(['prototypes' => $list]);

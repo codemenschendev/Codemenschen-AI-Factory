@@ -8,6 +8,7 @@ use App\Domain\Ai\Campaign;
 use App\Domain\Ai\PrototypeQuestions;
 use App\Domain\Ai\PrototypeWriter;
 use App\Domain\Analytics\Analytics;
+use App\Domain\Pricing\Estimator;
 use App\Jobs\BuildPrototype;
 use App\Jobs\RevisePrototype;
 use App\Models\Customer;
@@ -234,7 +235,7 @@ class PrototypeController extends Controller
     /** Status the share page polls while building, plus what it needs to render once ready. */
     public function show(Prototype $prototype): JsonResponse
     {
-        $expired = $prototype->expires_at->isPast();
+        $expired = $prototype->expires_at !== null && $prototype->expires_at->isPast();
 
         return response()->json([
             'id' => $prototype->id,
@@ -261,7 +262,11 @@ class PrototypeController extends Controller
             // Only what the share page has to print: the photographer and where the photo is from.
             'photo_credit' => $prototype->qa['photo_credit'] ?? null,
             'photo_credit_url' => $prototype->qa['photo_credit_url'] ?? null,
-            'expires_at' => $prototype->expires_at->toIso8601String(),
+            'expires_at' => $prototype->expires_at?->toIso8601String(),
+            // A website can be bought as it is: the price, and whether somebody already did.
+            'site_price_eur' => $prototype->kind === 'site' && $prototype->parent_id === null ? Estimator::SITE_PRICE_EUR : null,
+            'bought' => $prototype->project_id !== null,
+            'live_url' => $prototype->project_id !== null && $prototype->published_at !== null ? LandingController::url($prototype) : null,
             // A campaign is shown as its parts: the ad, the landing page, the e-mails.
             'parts' => $prototype->kind === 'campaign' ? Prototype::where('parent_id', $prototype->id)->get()
                 ->sortBy(fn (Prototype $p) => array_search($p->kind, Campaign::PARTS, true))->values()

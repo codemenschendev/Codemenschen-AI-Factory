@@ -6,7 +6,7 @@ import { API_BASE, api } from "@/lib/api";
 import { setToken, useToken } from "@/lib/token";
 import { trackOnce } from "@/lib/analytics";
 import { forget, rename } from "@/lib/history";
-import type { Dict, Locale } from "@/lib/i18n";
+import { eur, type Dict, type Locale } from "@/lib/i18n";
 
 interface Meta {
   kind?: string;
@@ -25,6 +25,10 @@ interface Meta {
   /** The one free change: how many are left, and whether the last one failed (and was given back). */
   revisions_left?: number;
   revision_failed?: boolean;
+  /** A website preview can be bought as it is: its price, and whether somebody did. */
+  site_price_eur?: number | null;
+  bought?: boolean;
+  live_url?: string | null;
   /** A campaign is its parts: the ad, the landing page and the e-mails, each its own prototype. */
   parts?: Part[] | null;
 }
@@ -274,12 +278,22 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
         }}
       >
         <p className="est-empty" style={{ margin: 0 }}>
-          {p.shareHint}
+          {meta.bought ? p.boughtSite : meta.site_price_eur ? p.buySiteHint : p.shareHint}
         </p>
-        <div style={{ display: "flex", gap: 12 }}>
-          <Link className="lang-toggle" href={`/${locale}/create?from=${id}`} onClick={() => trackOnce(`make-real-${id}`, "cta_click", { cta: "prototype_make_real", kind: meta.kind ?? null })}>
-            {p.makeReal[(meta.kind ?? "site") as keyof typeof p.makeReal] ?? p.makeReal.site}
-          </Link>
+        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          {meta.bought && meta.live_url && (
+            <a className="btn btn-primary" href={meta.live_url} target="_blank" rel="noopener noreferrer">{p.openLive}</a>
+          )}
+          {!meta.bought && meta.site_price_eur != null && (
+            <Link className="btn btn-primary" href={`/${locale}/checkout?site=${id}`} onClick={() => trackOnce(`buy-site-${id}`, "cta_click", { cta: "prototype_buy_site", kind: "site" })}>
+              {p.buySite.replace("{price}", eur(meta.site_price_eur, locale))}
+            </Link>
+          )}
+          {!meta.bought && (
+            <Link className="lang-toggle" href={`/${locale}/create?from=${id}`} onClick={() => trackOnce(`make-real-${id}`, "cta_click", { cta: "prototype_make_real", kind: meta.kind ?? null })}>
+              {p.makeReal[(meta.kind ?? "site") as keyof typeof p.makeReal] ?? p.makeReal.site}
+            </Link>
+          )}
           <Link className="lang-toggle" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${id}`, "cta_click", { cta: "prototype_another" })}>
             {p.another}
           </Link>
