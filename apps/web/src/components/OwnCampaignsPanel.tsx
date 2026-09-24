@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { api, ApiError } from "@/lib/api";
+import { api, API_BASE, ApiError } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
 import { TrafficPanel } from "./TrafficPanel";
 
+type Platform = "google" | "meta";
+
 interface Campaign {
   id: number;
+  platform: Platform;
   name: string;
   status: string;
   editable: boolean;
@@ -21,6 +24,7 @@ interface Campaign {
   ends_at: string | null;
   headlines: string[];
   descriptions: string[];
+  has_image: boolean;
   keywords: { approved: number; waiting: number; negatives: number };
   spent_eur: number;
   spent_today_eur: number;
@@ -53,10 +57,12 @@ interface Report {
   campaigns: Campaign[];
   limits: { killed: boolean; max_campaign_eur: number; max_daily_total_eur: number; running_daily_eur: number };
   google: boolean;
+  meta: boolean;
   countries: string[];
 }
 
 interface Form {
+  platform: Platform;
   name: string;
   language: "de" | "en";
   countries: string[];
@@ -71,10 +77,14 @@ interface Form {
   descriptions: string;
 }
 
-const HEADLINE_MAX = 30;
-const DESCRIPTION_MAX = 90;
+/** Each platform's own line limits: Google's search ad, and Meta's headline and text around the picture. */
+const LIMITS: Record<Platform, { headline: number; text: number }> = {
+  google: { headline: 30, text: 90 },
+  meta: { headline: 40, text: 500 },
+};
 
 const blank: Form = {
+  platform: "google",
   name: "",
   language: "de",
   countries: ["AT"],
@@ -90,6 +100,7 @@ const blank: Form = {
 };
 
 const toForm = (c: Campaign): Form => ({
+  platform: c.platform,
   name: c.name,
   language: c.language,
   countries: c.countries,
@@ -107,11 +118,13 @@ const toForm = (c: Campaign): Form => ({
 const lines = (text: string) => text.split("\n").map((l) => l.trim()).filter(Boolean);
 
 /**
- * Appwerk advertising itself: Google search campaigns on our own account, paid by us.
+ * Appwerk advertising itself, on our own accounts and paid by us: Google search campaigns, and
+ * Meta (Facebook and Instagram) campaigns since 2026-09-24.
  *
  * The order on the screen is the order of the work: write the campaign (Appwerk AI drafts the ad
- * text, a person edits it), choose its keywords, send it to Google paused, then start it. Every
- * step says what it still needs, so a campaign that cannot serve is never one click from spending.
+ * text, a person edits it), choose its keywords (Google) or upload its picture (Meta), send it
+ * paused, then start it. Every step says what it still needs, so a campaign that cannot serve is
+ * never one click from spending.
  */
 export function OwnCampaignsPanel({
   token,
@@ -131,6 +144,8 @@ export function OwnCampaignsPanel({
   const [form, setForm] = useState<Form>(blank);
   const [busy, setBusy] = useState<string | null>(null);
   const [note, setNote] = useState("");
+  // The Meta picture, fetched with the admin token (a plain <img src> carries none).
+  const [preview, setPreview] = useState<{ id: number; url: string } | null>(null);
 
   const money = useMemo(
     () => new Intl.NumberFormat(locale === "de" ? "de-AT" : "en-GB", { style: "currency", currency: "EUR" }),
@@ -193,6 +208,7 @@ export function OwnCampaignsPanel({
   }
 
   const body = () => ({
+    platform: form.platform,
     name: form.name,
     language: form.language,
     countries: form.countries,
@@ -251,8 +267,41 @@ export function OwnCampaignsPanel({
     run(`p${c.id}`, async () => {
       await api(`/admin/own-campaigns/${c.id}/publish`, { method: "POST", token });
       await load();
-      setNote(o.publishing);
+      setNote(c.platform === "meta" ? o.publishingMeta : o.publishing);
     });
+
+  const upload = (c: Campaign, file: File) =>
+    run(`i${c.id}`, async () => {
+      const data = new FormData();
+      data.append("image", file);
+      await api(`/admin/own-campaigns/${c.id}/image`, { method: "POST", token, body: data });
+      await load();
+      setPreview((p) => {
+        if (p) URL.revokeObjectURL(p.url);
+        return { id: c.id, url: URL.createObjectURL(file) };
+      });
+    });
+
+  // Load the stored picture when a Meta campaign that has one is opened.
+  const openId = typeof editing === "number" ? editing : null;
+  const openHasImage = report?.campaigns.find((c) => c.id === openId)?.has_image ?? false;
+  useEffect(() => {
+    if (openId === null || !openHasImage || preview?.id === openId) return;
+    let alive = true;
+    void fetch(`${API_BASE}/api/admin/own-campaigns/${openId}/image`, { headers: { authorization: `Bearer ${token}` } })
+      .then((r) => (r.ok ? r.blob() : null))
+      .then((b) => {
+        if (!alive || !b) return;
+        setPreview((p) => {
+          if (p) URL.revokeObjectURL(p.url);
+          return { id: openId, url: URL.createObjectURL(b) };
+        });
+      })
+      .catch(() => undefined);
+    return () => {
+      alive = false;
+    };
+  }, [openId, openHasImage, preview?.id, token]);
 
   const act = (c: Campaign, what: "activate" | "pause") => {
     if (
@@ -277,9 +326,15 @@ export function OwnCampaignsPanel({
   const running = report.campaigns.filter((c) => c.status === "active");
   const tone = (s: string) => (s === "active" ? "badge-live" : s === "failed" ? "badge-bad" : s === "paused" ? "badge-dim" : "badge-wait");
 
-  /** What a campaign still needs before it can go to Google, worded for the person who fixes it. */
+  /** What a campaign still needs before it can go to its platform, worded for the person who fixes it. */
   const missing = (c: Campaign) => {
     const out: string[] = [];
+    if (c.platform === "meta") {
+      if (c.headlines.length < 1) out.push(o.needHeadline);
+      if (c.descriptions.length < 1) out.push(o.needText);
+      if (!c.has_image) out.push(o.needImage);
+      return out;
+    }
     if (c.headlines.length < 3) out.push(o.needHeadlines.replace("{n}", String(c.headlines.length)));
     if (c.descriptions.length < 2) out.push(o.needDescriptions.replace("{n}", String(c.descriptions.length)));
     if (c.keywords.approved === 0) out.push(o.needKeywords);
@@ -301,9 +356,12 @@ export function OwnCampaignsPanel({
     </label>
   );
 
-  // Google refuses a line over its limit, so the form refuses it first, in the admin's language.
+  // The platform refuses a line over its limit, so the form refuses it first, in the admin's language.
+  const limit = LIMITS[form.platform];
+  const isMeta = form.platform === "meta";
+  const configured = (p: Platform) => (p === "meta" ? report.meta : report.google);
   const overLimit =
-    lines(form.headlines).some((l) => l.length > HEADLINE_MAX) || lines(form.descriptions).some((l) => l.length > DESCRIPTION_MAX);
+    lines(form.headlines).some((l) => l.length > limit.headline) || lines(form.descriptions).some((l) => l.length > limit.text);
   const headCount = lines(form.headlines).length;
   const descCount = lines(form.descriptions).length;
   const readOnly = current !== null && !current.editable;
@@ -315,6 +373,7 @@ export function OwnCampaignsPanel({
       <p className="muted small" style={{ marginTop: 0, maxWidth: 720 }}>{o.intro}</p>
 
       {!report.google && <p className="note">{o.googleMissing}</p>}
+      {!report.meta && <p className="note">{o.metaMissing}</p>}
       {report.limits.killed && <p className="note">{o.killed}</p>}
 
       <div className="ops-kpis">
@@ -367,7 +426,9 @@ export function OwnCampaignsPanel({
               <tr key={c.id} className="ops-row" aria-selected={editing === c.id}>
                 <td>
                   <span className="muted num">#{c.id}</span> {c.name}
-                  <div className="muted small">{c.countries.join(", ") || o.everywhere} · {c.language.toUpperCase()}</div>
+                  <div className="muted small">
+                    {c.platform === "meta" ? o.platformMeta : o.platformGoogle} · {c.countries.join(", ") || o.everywhere} · {c.language.toUpperCase()}
+                  </div>
                   {c.status === "failed" && c.error && (
                     <div className="small" style={{ color: "var(--danger)", whiteSpace: "normal" }}>{c.error}</div>
                   )}
@@ -398,10 +459,16 @@ export function OwnCampaignsPanel({
                   </div>
                 </td>
                 <td>
-                  <button className="btn btn-ghost btn-sm" onClick={() => onKeywords(c.id)}>
-                    {o.keywordsN.replace("{n}", String(c.keywords.approved))}
-                  </button>
-                  {c.keywords.waiting > 0 && <div className="small" style={{ color: "var(--warn-ink)" }}>{o.waitingN.replace("{n}", String(c.keywords.waiting))}</div>}
+                  {c.platform === "google" ? (
+                    <>
+                      <button className="btn btn-ghost btn-sm" onClick={() => onKeywords(c.id)}>
+                        {o.keywordsN.replace("{n}", String(c.keywords.approved))}
+                      </button>
+                      {c.keywords.waiting > 0 && <div className="small" style={{ color: "var(--warn-ink)" }}>{o.waitingN.replace("{n}", String(c.keywords.waiting))}</div>}
+                    </>
+                  ) : (
+                    <span className="muted">–</span>
+                  )}
                 </td>
                 <td style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                   {c.status === "active" && (
@@ -434,7 +501,7 @@ export function OwnCampaignsPanel({
               <div className="ops-kpis" style={{ margin: "0 0 6px" }}>
                 {(
                   [
-                    ["clicks", current.funnel.clicks, null],
+                    [current.platform === "meta" ? "clicksMeta" : "clicks", current.funnel.clicks, null],
                     ["visits", current.funnel.visits, current.funnel.cost_per_visit],
                     ["interest", current.funnel.interest, null],
                     ["quotes", current.funnel.quotes, current.funnel.cost_per_quote],
@@ -442,7 +509,7 @@ export function OwnCampaignsPanel({
                   ] as const
                 ).map(([step, n, cost]) => (
                   <div className="ops-kpi" key={step}>
-                    <span className="ops-kpi-label">{o.steps[step]}</span>
+                    <span className="ops-kpi-label">{step === "clicksMeta" ? o.clicksMeta : o.steps[step]}</span>
                     <strong className="num">{count.format(n)}</strong>
                     {cost !== null && <span className="ops-kpi-sub">{o.each.replace("{eur}", money.format(cost))}</span>}
                   </div>
@@ -454,8 +521,12 @@ export function OwnCampaignsPanel({
                 </div>
               </div>
               <p className="muted small" style={{ margin: 0 }}>{o.funnelHint}</p>
-              <h3 style={{ margin: "20px 0 10px" }}>{d.admin.traffic.title}</h3>
-              <TrafficPanel token={token} locale={locale} d={d} campaignId={current.id} />
+              {current.platform === "google" && (
+                <>
+                  <h3 style={{ margin: "20px 0 10px" }}>{d.admin.traffic.title}</h3>
+                  <TrafficPanel token={token} locale={locale} d={d} campaignId={current.id} />
+                </>
+              )}
             </div>
           )}
           {current && current.final_url && (
@@ -463,9 +534,22 @@ export function OwnCampaignsPanel({
               {o.finalUrl} <span className="num">{current.final_url}</span>
             </p>
           )}
-          {readOnly && <p className="muted small">{o.readOnly}</p>}
+          {readOnly && <p className="muted small">{isMeta ? o.readOnlyMeta : o.readOnly}</p>}
 
           <fieldset disabled={readOnly} style={{ border: 0, padding: 0, margin: "14px 0 0", display: "grid", gap: 14 }}>
+            <div role="radiogroup" aria-label={o.platform} style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+              <span className="small" style={{ color: "var(--ink-soft)" }}>{o.platform}</span>
+              <div style={{ display: "flex", gap: 16, flexWrap: "wrap", paddingTop: 4 }}>
+                {(["google", "meta"] as const).map((p) => (
+                  <label key={p} className="small" style={{ display: "flex", gap: 5, alignItems: "center" }}>
+                    <input type="radio" name="platform" checked={form.platform === p} disabled={editing !== "new"} onChange={() => set("platform", p)} />
+                    {p === "meta" ? o.platformMeta : o.platformGoogle}
+                  </label>
+                ))}
+              </div>
+              {editing !== "new" && <span className="small muted">{o.platformFixed}</span>}
+            </div>
+
             <div style={{ display: "grid", gap: 12, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))" }}>
               {field(o.name, <input value={form.name} maxLength={60} onChange={(e) => set("name", e.target.value)} placeholder={o.namePlaceholder} />)}
               {field(
@@ -523,21 +607,58 @@ export function OwnCampaignsPanel({
               <div>
                 {field(
                   o.headlines.replace("{n}", String(headCount)),
-                  <textarea rows={8} value={form.headlines} onChange={(e) => set("headlines", e.target.value)} />,
-                  o.headlinesHint,
+                  <textarea rows={isMeta ? 3 : 8} value={form.headlines} onChange={(e) => set("headlines", e.target.value)} />,
+                  isMeta ? o.headlinesHintMeta : o.headlinesHint,
                 )}
-                <div style={{ marginTop: 6 }}>{counter(form.headlines, HEADLINE_MAX)}</div>
+                <div style={{ marginTop: 6 }}>{counter(form.headlines, limit.headline)}</div>
               </div>
               <div>
                 {field(
-                  o.descriptions.replace("{n}", String(descCount)),
+                  (isMeta ? o.descriptionsMeta : o.descriptions).replace("{n}", String(descCount)),
                   <textarea rows={5} value={form.descriptions} onChange={(e) => set("descriptions", e.target.value)} />,
-                  o.descriptionsHint,
+                  isMeta ? o.descriptionsHintMeta : o.descriptionsHint,
                 )}
-                <div style={{ marginTop: 6 }}>{counter(form.descriptions, DESCRIPTION_MAX)}</div>
+                <div style={{ marginTop: 6 }}>{counter(form.descriptions, limit.text)}</div>
               </div>
             </div>
           </fieldset>
+
+          {isMeta && (
+            <div style={{ marginTop: 18 }}>
+              <h4 style={{ margin: "0 0 8px" }}>{o.image}</h4>
+              {current === null ? (
+                <p className="small muted" style={{ margin: 0 }}>{o.imageSaveFirst}</p>
+              ) : (
+                <div style={{ display: "flex", gap: 16, alignItems: "flex-start", flexWrap: "wrap" }}>
+                  {current.has_image && preview?.id === current.id ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={preview.url} alt="" width={160} height={160} style={{ objectFit: "cover", borderRadius: 8, border: "1px solid var(--line)" }} />
+                  ) : (
+                    <p className="small muted" style={{ margin: 0 }}>{current.has_image ? d.admin.loading : o.imageNone}</p>
+                  )}
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6, maxWidth: 360 }}>
+                    {current.editable && (
+                      <label className="btn btn-ghost btn-sm" style={{ alignSelf: "flex-start", cursor: "pointer" }}>
+                        {busy === `i${current.id}` ? o.imageUploading : current.has_image ? o.imageReplace : o.imageUpload}
+                        <input
+                          type="file"
+                          accept="image/jpeg,image/png"
+                          hidden
+                          disabled={busy === `i${current.id}`}
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            e.target.value = "";
+                            if (f) void upload(current, f);
+                          }}
+                        />
+                      </label>
+                    )}
+                    <span className="small muted">{o.imageHint}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {overLimit && !readOnly && <p className="small" style={{ color: "var(--danger)", marginTop: 14 }}>{o.tooLong}</p>}
           {note && <p className="note" style={{ marginTop: 14 }}>{note}</p>}
@@ -553,12 +674,12 @@ export function OwnCampaignsPanel({
                 <button
                   className="btn btn-ghost btn-sm"
                   onClick={() => void publish(current)}
-                  disabled={busy === `p${current.id}` || missing(current).length > 0 || !report.google || dirty}
-                  title={o.publishHint}
+                  disabled={busy === `p${current.id}` || missing(current).length > 0 || !configured(current.platform) || dirty}
+                  title={isMeta ? o.publishHintMeta : o.publishHint}
                 >
-                  {o.publish}
+                  {isMeta ? o.publishMeta : o.publish}
                 </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => onKeywords(current.id)}>{o.toKeywords}</button>
+                {!isMeta && <button className="btn btn-ghost btn-sm" onClick={() => onKeywords(current.id)}>{o.toKeywords}</button>}
                 {current.published_at === null && (
                   <button className="btn btn-ghost btn-sm" style={{ marginLeft: "auto", color: "var(--danger)" }} onClick={() => remove(current)} disabled={busy === `d${current.id}`}>
                     {o.remove}
@@ -572,7 +693,7 @@ export function OwnCampaignsPanel({
             <div className="small" style={{ marginTop: 12 }}>
               {dirty && <p style={{ color: "var(--warn-ink)", margin: "0 0 6px" }}>{o.unsaved}</p>}
               {missing(current).length === 0 ? (
-                <span style={{ color: "var(--ok)" }}>{o.ready}</span>
+                <span style={{ color: "var(--ok)" }}>{isMeta ? o.readyMeta : o.ready}</span>
               ) : (
                 <>
                   <span className="muted">{o.before}</span>
@@ -581,7 +702,7 @@ export function OwnCampaignsPanel({
                   </ul>
                 </>
               )}
-              <p className="muted" style={{ marginTop: 8 }}>{o.publishHint}</p>
+              <p className="muted" style={{ marginTop: 8 }}>{isMeta ? o.publishHintMeta : o.publishHint}</p>
             </div>
           )}
         </section>

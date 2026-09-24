@@ -15,39 +15,51 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
- * Appwerk advertising itself (2026-09-23): the Google search campaigns that run on our own
- * account and are paid by us, apart from every customer screen.
+ * Appwerk advertising itself (2026-09-23): the campaigns that run on our own accounts and are paid
+ * by us, apart from every customer screen. Google search since 2026-09-23, Meta (Facebook and
+ * Instagram) since 2026-09-24.
  *
- * A campaign is written here, its keywords are chosen on the keyword screen, and it goes to Google
- * paused. Starting it is the same button, behind the same spend guard, as every other campaign.
- * Once it is on Google its text is fixed here: a change would have to be a new ad on Google, and a
- * form that looks editable but changes nothing is worse than a form that is read-only.
+ * A campaign is written here and goes to its platform paused. A Google campaign also needs its
+ * keywords, chosen on the keyword screen; a Meta campaign needs its picture, uploaded here.
+ * Starting it is the same button, behind the same spend guard, as every other campaign.
+ * Once it is on the platform its text is fixed here: a change would have to be a new ad there, and
+ * a form that looks editable but changes nothing is worse than a form that is read-only.
  */
 class AdminOwnCampaignController extends Controller
 {
     /** Before publishing, and after a publish that failed. */
     private const EDITABLE = ['draft', 'unpublished', 'failed'];
 
+    private const PLATFORMS = ['google', 'meta'];
+
+    /** Meta's own limits: the headline under the picture, and the text above it. */
+    public const META_HEADLINE_MAX = 40;
+
+    public const META_TEXT_MAX = 500;
+
     public function index(SpendGuard $guard, PublisherRegistry $registry): JsonResponse
     {
-        $rows = MarketingCampaign::own()->where('platform', 'google')
+        $rows = MarketingCampaign::own()->whereIn('platform', self::PLATFORMS)
             ->with(['creatives', 'keywords'])->latest()->get();
 
         return response()->json([
             'campaigns' => $rows->map(fn (MarketingCampaign $c) => self::row($c))->values(),
             'limits' => $guard->limits(),
             'google' => $registry->for('google')->isConfigured(),
+            'meta' => $registry->for('meta')->isConfigured(),
             'countries' => array_keys(GoogleAdsPublisher::COUNTRIES),
         ]);
     }
 
     public function store(Request $request): JsonResponse
     {
-        $data = $this->validated($request);
-        $campaign = DB::transaction(function () use ($data) {
-            $campaign = MarketingCampaign::create(['platform' => 'google', 'status' => 'approved', 'platform_status' => 'draft'] + $this->columns($data));
+        $platform = $request->validate(['platform' => 'sometimes|in:'.implode(',', self::PLATFORMS)])['platform'] ?? 'google';
+        $data = $this->validated($request, $platform);
+        $campaign = DB::transaction(function () use ($data, $platform) {
+            $campaign = MarketingCampaign::create(['platform' => $platform, 'status' => 'approved', 'platform_status' => 'draft'] + $this->columns($data));
             $this->copy($campaign, $data);
 
             return $campaign;
@@ -59,8 +71,8 @@ class AdminOwnCampaignController extends Controller
     public function update(Request $request, MarketingCampaign $campaign): JsonResponse
     {
         $this->own($campaign);
-        abort_unless(in_array($campaign->platform_status, self::EDITABLE, true), 409, 'This campaign is on Google already. Its text can no longer change here.');
-        $data = $this->validated($request);
+        abort_unless(in_array($campaign->platform_status, self::EDITABLE, true), 409, 'This campaign is on its platform already. Its text can no longer change here.');
+        $data = $this->validated($request, $campaign->platform);
         DB::transaction(function () use ($campaign, $data) {
             $campaign->update($this->columns($data) + ['publish_error' => null]);
             $this->copy($campaign, $data);
@@ -73,11 +85,14 @@ class AdminOwnCampaignController extends Controller
     {
         $this->own($campaign);
         abort_unless($campaign->published_at === null && in_array($campaign->platform_status, self::EDITABLE, true), 409,
-            'A campaign that reached Google stays, so what it spent can still be read.');
+            'A campaign that reached its platform stays, so what it spent can still be read.');
         DB::transaction(function () use ($campaign) {
             $campaign->creatives()->delete();
             $campaign->delete();
         });
+        if ($campaign->creative_path !== null) {
+            @unlink($campaign->creative_path);
+        }
 
         return response()->json(['deleted' => true]);
     }
@@ -99,12 +114,48 @@ class AdminOwnCampaignController extends Controller
         }
     }
 
-    /** To Google, paused. Spends nothing; the start button is a separate decision. */
+    /**
+     * The picture of a Meta ad. Replaces the one before; the platform gets it only on publish.
+     * Square 1080 is what Meta shows best in the feed, so a smaller one is refused here, not there.
+     */
+    public function image(Request $request, MarketingCampaign $campaign): JsonResponse
+    {
+        $this->own($campaign);
+        abort_unless($campaign->platform === 'meta', 422, 'Only a Meta ad carries a picture.');
+        abort_unless(in_array($campaign->platform_status, self::EDITABLE, true), 409, 'This campaign is on Meta already. Its picture can no longer change here.');
+        $request->validate(['image' => 'required|file|mimes:jpeg,png|max:8192|dimensions:min_width=600,min_height=600']);
+
+        $file = $request->file('image');
+        $dir = rtrim((string) config('services.media.uploads_path'), '/').'/own-ads';
+        @mkdir($dir, 0775, true);
+        $ext = $file->getMimeType() === 'image/png' ? 'png' : 'jpg';
+        $file->move($dir, "{$campaign->id}.{$ext}");
+        $path = "$dir/{$campaign->id}.{$ext}";
+        if ($campaign->creative_path !== null && $campaign->creative_path !== $path) {
+            @unlink($campaign->creative_path);
+        }
+        $campaign->update(['creative_path' => $path, 'publish_error' => null]);
+
+        return response()->json(self::row($campaign->fresh(['creatives', 'keywords'])));
+    }
+
+    /** The picture back, for the form's preview. */
+    public function showImage(MarketingCampaign $campaign): BinaryFileResponse
+    {
+        $this->own($campaign);
+        $path = $campaign->creativePath();
+        abort_if($path === null, 404);
+
+        return response()->file($path, ['Cache-Control' => 'private, no-store']);
+    }
+
+    /** To its platform, paused. Spends nothing; the start button is a separate decision. */
     public function publish(MarketingCampaign $campaign, Preflight $preflight, PublisherRegistry $registry): JsonResponse
     {
         $this->own($campaign);
-        abort_unless(in_array($campaign->platform_status, self::EDITABLE, true), 409, 'This campaign is already on its way to Google or on it.');
-        abort_unless($registry->for('google')->isConfigured(), 422, 'Google Ads is not configured on the server.');
+        abort_unless(in_array($campaign->platform_status, self::EDITABLE, true), 409, 'This campaign is already on its way to its platform or on it.');
+        abort_unless($registry->for($campaign->platform)->isConfigured(), 422,
+            ($campaign->platform === 'meta' ? 'Meta' : 'Google').' Ads is not configured on the server.');
 
         if (($problems = $preflight->check($campaign->load('creatives'))) !== []) {
             return response()->json(['error' => implode(' ', $problems), 'problems' => $problems], 422);
@@ -117,13 +168,16 @@ class AdminOwnCampaignController extends Controller
 
     private function own(MarketingCampaign $campaign): void
     {
-        abort_unless($campaign->project_id === null && $campaign->prototype_id === null && $campaign->platform === 'google', 404);
+        abort_unless($campaign->project_id === null && $campaign->prototype_id === null && in_array($campaign->platform, self::PLATFORMS, true), 404);
     }
 
     /** @return array<string,mixed> */
-    private function validated(Request $request): array
+    private function validated(Request $request, string $platform): array
     {
         $max = app(SpendGuard::class)->limits()['max_campaign_eur'];
+        [$headlineMax, $textMax] = $platform === 'meta'
+            ? [self::META_HEADLINE_MAX, self::META_TEXT_MAX]
+            : [SearchAdWriter::HEADLINE_MAX, SearchAdWriter::DESCRIPTION_MAX];
 
         return $request->validate([
             'name' => 'required|string|max:60',
@@ -138,9 +192,9 @@ class AdminOwnCampaignController extends Controller
             'spend_cap_eur' => "required|integer|min:10|max:$max",
             'ends_at' => 'nullable|date|after:today',
             'headlines' => 'array|max:15',
-            'headlines.*' => 'string|max:'.SearchAdWriter::HEADLINE_MAX,
+            'headlines.*' => 'string|max:'.$headlineMax,
             'descriptions' => 'array|max:4',
-            'descriptions.*' => 'string|max:'.SearchAdWriter::DESCRIPTION_MAX,
+            'descriptions.*' => 'string|max:'.$textMax,
         ]);
     }
 
@@ -189,6 +243,7 @@ class AdminOwnCampaignController extends Controller
 
         return [
             'id' => $c->id,
+            'platform' => $c->platform,
             'name' => $s['name'] ?? 'Campaign #'.$c->id,
             'status' => $c->platform_status,
             'editable' => in_array($c->platform_status, self::EDITABLE, true),
@@ -203,6 +258,7 @@ class AdminOwnCampaignController extends Controller
             'ends_at' => $c->ends_at?->toDateString(),
             'headlines' => $c->creatives->where('kind', 'headline')->pluck('content')->values(),
             'descriptions' => $c->creatives->where('kind', 'ad_copy')->pluck('content')->values(),
+            'has_image' => $c->creativePath() !== null,
             'keywords' => [
                 'approved' => $keywords->where('negative', false)->whereIn('status', ['approved', 'applied'])->count(),
                 'waiting' => $keywords->where('status', 'proposed')->count(),

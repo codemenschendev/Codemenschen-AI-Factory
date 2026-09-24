@@ -156,13 +156,15 @@ Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admi
     // /marketing routes above, behind the spend guard.
     Route::get('/client-ads', [AdminClientAdsController::class, 'index']);
     Route::post('/ad-accounts/{adAccount}/refresh', [AdminClientAdsController::class, 'refreshAccount'])->middleware('throttle:30,10,adlink-admin');
-    // Appwerk advertising itself, on our own Google account (AdminOwnCampaignController).
+    // Appwerk advertising itself, on our own Google and Meta accounts (AdminOwnCampaignController).
     Route::get('/own-campaigns', [AdminOwnCampaignController::class, 'index']);
     Route::post('/own-campaigns', [AdminOwnCampaignController::class, 'store']);
     Route::post('/own-campaigns/write', [AdminOwnCampaignController::class, 'write'])->middleware('throttle:20,60,adcopy');
     Route::put('/own-campaigns/{campaign}', [AdminOwnCampaignController::class, 'update']);
     Route::delete('/own-campaigns/{campaign}', [AdminOwnCampaignController::class, 'destroy']);
     Route::post('/own-campaigns/{campaign}/publish', [AdminOwnCampaignController::class, 'publish']);
+    Route::post('/own-campaigns/{campaign}/image', [AdminOwnCampaignController::class, 'image'])->middleware('throttle:30,10,own-ad-image');
+    Route::get('/own-campaigns/{campaign}/image', [AdminOwnCampaignController::class, 'showImage']);
     Route::get('/conversions', [AdminConversionController::class, 'index']);
     Route::post('/conversions/retry', [AdminConversionController::class, 'retry'])->middleware('throttle:10,10,conversions');
     Route::get('/marketing/{campaign}/traffic', [AdminTrafficController::class, 'show'])->middleware('throttle:60,10,traffic');

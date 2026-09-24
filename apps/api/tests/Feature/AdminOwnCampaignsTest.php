@@ -13,6 +13,7 @@ use App\Models\Order;
 use App\Models\Project;
 use App\Models\Quote;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Tests\TestCase;
@@ -237,6 +238,90 @@ class AdminOwnCampaignsTest extends TestCase
             ->assertJsonPath('campaigns.0.funnel.revenue_eur', 900)
             ->assertJsonPath('campaigns.0.funnel.cost_per_visit', 20)
             ->assertJsonPath('campaigns.0.funnel.cost_per_order', 40);
+    }
+
+    private function meta(): void
+    {
+        config(['services.ads.meta' => [
+            'token' => 'tok', 'ad_account_id' => 'act_42', 'page_id' => '77', 'business_id' => '',
+            'api_version' => 'v26.0', 'dsa_beneficiary' => 'Codemenschen GmbH', 'dsa_payor' => 'Codemenschen GmbH',
+        ]]);
+        config(['services.media.uploads_path' => sys_get_temp_dir().'/own-ads-test-'.getmypid()]);
+    }
+
+    /** @return array<string,mixed> */
+    private function metaForm(array $over = []): array
+    {
+        return $this->form($over + [
+            'platform' => 'meta',
+            'headlines' => ['Deine Website, fertig in wenigen Minuten'],
+            'descriptions' => ['Beschreib deinen Betrieb in einem Satz. Appwerk AI zeigt dir sofort einen Entwurf, gratis.'],
+        ]);
+    }
+
+    public function test_a_meta_campaign_needs_its_picture_before_it_can_go_to_meta(): void
+    {
+        $this->meta();
+        Queue::fake();
+        $admin = $this->admin();
+        $res = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->metaForm())->assertCreated()
+            ->assertJsonPath('platform', 'meta')->assertJsonPath('has_image', false);
+        $id = $res->json('id');
+
+        // No keywords on Meta; the picture is what is missing.
+        $this->actingAs($admin, 'sanctum')->postJson("/api/admin/own-campaigns/$id/publish")->assertStatus(422)
+            ->assertJsonPath('problems', ['Meta: the ad needs a creative (image or video).']);
+
+        $this->actingAs($admin, 'sanctum')->withHeaders(['Accept' => 'application/json'])
+            ->post("/api/admin/own-campaigns/$id/image", ['image' => UploadedFile::fake()->image('tiny.jpg', 300, 300)])
+            ->assertStatus(422)->assertJsonValidationErrors('image');
+        $this->actingAs($admin, 'sanctum')->post("/api/admin/own-campaigns/$id/image", ['image' => UploadedFile::fake()->image('ad.jpg', 1080, 1080)])
+            ->assertOk()->assertJsonPath('has_image', true);
+        $this->actingAs($admin, 'sanctum')->get("/api/admin/own-campaigns/$id/image")->assertOk();
+
+        $this->actingAs($admin, 'sanctum')->postJson("/api/admin/own-campaigns/$id/publish")->assertStatus(202)->assertJsonPath('status', 'publishing');
+        Queue::assertPushed(PublishCampaign::class);
+        $this->actingAs($admin, 'sanctum')->getJson('/api/admin/own-campaigns')->assertJsonPath('meta', true)->assertJsonCount(1, 'campaigns');
+    }
+
+    public function test_a_meta_headline_may_run_to_forty_characters_and_no_further(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->metaForm(['headlines' => [str_repeat('a', 41)]]))
+            ->assertStatus(422)->assertJsonValidationErrors('headlines.0');
+        // What is too long for Google is fine on Meta, and the other way round.
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->metaForm(['headlines' => [str_repeat('a', 40)]]))->assertCreated();
+        $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->form(['headlines' => [str_repeat('a', 31)]]))
+            ->assertStatus(422);
+    }
+
+    public function test_meta_gets_the_picture_the_day_budget_the_countries_and_a_tagged_link(): void
+    {
+        $this->meta();
+        Http::fake(['graph.facebook.com/*' => Http::sequence()
+            ->push(['images' => ['ad.jpg' => ['hash' => 'h1']]])
+            ->push(['id' => 'c1'])
+            ->push(['id' => 's1'])
+            ->push(['id' => 'cr1'])
+            ->push(['id' => 'ad1'])]);
+        $admin = $this->admin();
+        $id = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->metaForm(['countries' => ['AT', 'DE']]))->json('id');
+        $this->actingAs($admin, 'sanctum')->post("/api/admin/own-campaigns/$id/image", ['image' => UploadedFile::fake()->image('ad.jpg', 1080, 1080)])->assertOk();
+
+        (new PublishCampaign($id))->handle(app(PublisherRegistry::class), app(Preflight::class));
+
+        $c = MarketingCampaign::find($id);
+        $this->assertSame('paused', $c->platform_status, (string) $c->publish_error);
+        $this->assertSame('c1', $c->platform_ref['campaign_id']);
+        Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/adsets')
+            && $r['daily_budget'] === 1000 && $r['status'] === 'PAUSED'
+            && json_decode($r['targeting'], true)['geo_locations']['countries'] === ['AT', 'DE']);
+        Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/adcreatives')
+            && json_decode($r['object_story_spec'], true)['page_id'] === '77'
+            && json_decode($r['object_story_spec'], true)['link_data']['link']
+                === "https://appwerk.codemenschen.at?utm_source=meta&utm_medium=paid_social&utm_campaign=appwerk-$id"
+            && json_decode($r['object_story_spec'], true)['link_data']['name'] === 'Deine Website, fertig in wenigen Minuten');
+        Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/campaigns') && str_starts_with($r['name'], "Appwerk #$id Appwerk Website AT"));
     }
 
     public function test_a_customer_cannot_reach_it(): void

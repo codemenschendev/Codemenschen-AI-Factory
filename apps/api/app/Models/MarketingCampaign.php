@@ -54,8 +54,8 @@ class MarketingCampaign extends Model
 
     /**
      * Where a click goes. Our own campaigns get UTM parameters added, so the analytics can tell
-     * one campaign's visitors from another's; Google's own gclid only says "from Google". A URL
-     * that already carries a utm_source is left as the admin wrote it.
+     * one campaign's visitors from another's; Google's gclid and Meta's fbclid only say where from.
+     * A URL that already carries a utm_source is left as the admin wrote it.
      */
     public function finalUrl(): string
     {
@@ -64,7 +64,8 @@ class MarketingCampaign extends Model
             return $url;
         }
         [$base, $fragment] = array_pad(explode('#', $url, 2), 2, null);
-        $query = http_build_query(['utm_source' => 'google', 'utm_medium' => 'cpc', 'utm_campaign' => $this->trackingTag()]);
+        [$source, $medium] = $this->platform === 'meta' ? ['meta', 'paid_social'] : ['google', 'cpc'];
+        $query = http_build_query(['utm_source' => $source, 'utm_medium' => $medium, 'utm_campaign' => $this->trackingTag()]);
 
         return $base.(str_contains($base, '?') ? '&' : '?').$query.($fragment !== null ? '#'.$fragment : '');
     }
