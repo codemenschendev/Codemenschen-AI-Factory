@@ -1373,6 +1373,96 @@ export const de = {
       ],
     },
   },
+  security: {
+    title: "Sicherheit und Datenschutz",
+    updated: "Stand: 24. September 2026",
+    lede: "Für Unternehmen in Österreich und Deutschland. Hier steht, wo deine Daten liegen, wer sie sieht und was ohne deine Freigabe nie passiert.",
+    promises: [
+      { h: "Server in der EU", p: "Datenbank, Code und Vorschauen liegen bei Hetzner, einem deutschen Anbieter, in einem Rechenzentrum in der EU." },
+      { h: "Deine Konten bleiben deine", p: "Anzeigen laufen auf deinem eigenen Google Ads oder Meta Konto. Wir speichern kein Passwort und keinen Zugangsschlüssel von dir." },
+      { h: "Kein Euro ohne Freigabe", p: "Keine Anzeige startet, bevor ein Mensch auf Start drückt. Budgetgrenzen gelten an drei Stellen." },
+      { h: "Keine Kartendaten bei uns", p: "Du bezahlst direkt bei Stripe. Wir erfahren nur, ob und wie viel bezahlt wurde." },
+      { h: "Messen nur mit Einwilligung", p: "Google und Meta laden erst, wenn Besucher zustimmen. Ablehnen ist so einfach wie Zustimmen." },
+      { h: "Der Code gehört dir", p: "Code, App und Store-Eintrag gehören dir. Wir behalten keinen Anteil an deinem Umsatz." },
+    ],
+    sections: [
+      {
+        h: "Wo deine Daten liegen",
+        p: [
+          "Server und Datenbank betreibt Hetzner Online GmbH, ein Anbieter aus Deutschland, in einem Rechenzentrum in der EU. Die Verbindung zur Website ist immer verschlüsselt (HTTPS).",
+          "Jede Nacht wird eine Sicherung erstellt und zusätzlich außerhalb des Servers abgelegt. Der Server darf dort nur neue Sicherungen ablegen. Er kann alte weder lesen noch löschen. So bleibt eine Sicherung auch dann erhalten, wenn der Server selbst angegriffen wird.",
+        ],
+      },
+      {
+        h: "Deine Werbekonten",
+        p: [
+          "Deine Anzeigen laufen auf deinem eigenen Konto. Du bezahlst Google oder Meta direkt, mit deiner Karte und deinem Limit. Wir strecken kein Werbebudget vor.",
+          "Für Google Ads bestätigst du in deinem Konto eine Verknüpfungsanfrage von uns. Bei Meta fügst du uns als Partner hinzu. Wir bekommen dabei weder dein Passwort noch einen Zugangsschlüssel. Du kannst die Verbindung jederzeit in deinem Konto selbst trennen.",
+        ],
+      },
+      {
+        h: "Schutz vor ungeplanten Werbekosten",
+        p: [
+          "Keine Kampagne startet von selbst. Ein Mensch prüft Texte, Budget und Zielgruppe und drückt auf Start.",
+          "Das Budget ist an drei Stellen begrenzt: direkt bei Google oder Meta, in unserem System vor jedem Start und durch eine Prüfung alle 15 Minuten. Liegt eine Kampagne über ihrem Budget oder über ihrem Enddatum, wird sie pausiert. Ein Not-Aus stoppt alle Anzeigen auf einmal.",
+        ],
+      },
+      {
+        h: "Anmeldung und Zahlung",
+        p: [
+          "Du meldest dich mit einem Link per E-Mail an. Es gibt kein Passwort, das gestohlen oder erraten werden kann.",
+          "Zahlungen laufen über Stripe (Irland). Kartendaten gibst du direkt bei Stripe ein. Wir sehen sie nie.",
+        ],
+      },
+      {
+        h: "KI und deine Inhalte",
+        p: [
+          "Texte und Code schreibt das KI-Modell Claude von Anthropic (USA). Bilder für Anzeigen entstehen bei OpenAI (USA), aus einer Beschreibung der App und ohne deine Kontaktdaten. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework oder die EU-Standardvertragsklauseln.",
+          "Die KI macht Vorschläge, du entscheidest. Alles, was öffentlich wird oder Geld kostet, gibst du frei. Eine automatische Prüfung stoppt Seiten mit Preisen, Kassenverträgen, Zertifikaten oder Auszeichnungen, die du nie genannt hast.",
+        ],
+      },
+      {
+        h: "Deine Besucher und Kunden",
+        p: [
+          "Auf unserer Website zählen wir Besuche ohne Cookies. Google Analytics, Google Ads und Meta laden nur nach einer Einwilligung, und diese lässt sich jederzeit widerrufen.",
+          "Anmeldungen auf deiner Landingpage laufen mit Double Opt-in. Die Einwilligung wird mit Zeitpunkt gespeichert, und jede E-Mail enthält einen Link, der die Adresse sofort löscht.",
+        ],
+      },
+      {
+        h: "Auftragsverarbeitung",
+        p: [
+          "Wenn wir für dich Daten deiner Kunden verarbeiten, zum Beispiel Anmeldungen auf deiner Landingpage, bist du der Verantwortliche und wir sind dein Auftragsverarbeiter. Dafür schließen wir mit dir einen Vertrag nach Art. 28 DSGVO (AVV). Schreib uns an office@codemenschen.at.",
+        ],
+      },
+    ],
+    processorsTitle: "Wer außer uns Daten verarbeitet",
+    processorsHead: ["Anbieter", "Wofür", "Sitz"],
+    processors: [
+      ["Hetzner Online GmbH", "Server und Datenbank", "Deutschland"],
+      ["Amazon Web Services", "Sicherungskopie außerhalb des Servers", "Luxemburg"],
+      ["World4You Internet Services GmbH", "E-Mails", "Österreich"],
+      ["Stripe Payments Europe, Ltd.", "Zahlungen", "Irland"],
+      ["Anthropic PBC", "Texte und Code (KI)", "USA"],
+      ["OpenAI", "Bilder für Anzeigen (KI)", "USA"],
+      ["650 Industries (Expo)", "Android-App bauen", "USA"],
+      ["Google Ireland Ltd.", "Analytics und Anzeigen, nur mit Einwilligung", "Irland"],
+      ["Meta Platforms Ireland Ltd.", "Anzeigen, nur mit Einwilligung", "Irland"],
+    ],
+    retentionTitle: "Wie lange wir Daten aufbewahren",
+    retentionHead: ["Daten", "Aufbewahrung"],
+    retention: [
+      ["Server-Protokolle", "14 Tage"],
+      ["Kostenlose Prototypen mit IP-Adresse", "7 Tage, außer du bestellst"],
+      ["Besuchsstatistik ohne Cookies", "13 Monate"],
+      ["Google Analytics", "14 Monate"],
+      ["Klick-ID aus einer Anzeige", "höchstens 90 Tage"],
+      ["Sicherungen", "90 Tage"],
+      ["Bestellungen und Rechnungen", "7 Jahre (§ 132 BAO)"],
+    ],
+    contactTitle: "Fragen oder eine Sicherheitslücke gefunden?",
+    contact: "Schreib an office@codemenschen.at. Wir antworten persönlich. Alle Details zur Verarbeitung stehen in der Datenschutzerklärung.",
+    privacyLink: "Zur Datenschutzerklärung",
+  },
   adConsent: {
     title: "Darf Appwerk messen?",
     text: "Wir möchten sehen, wie Besucher unsere Seite nutzen und welche Anzeigen wirken. Beides ist aus, bis du es erlaubst.",

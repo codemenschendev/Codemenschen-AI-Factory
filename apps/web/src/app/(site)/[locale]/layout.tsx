@@ -73,6 +73,7 @@ export default async function LocaleLayout({
             </div>
             <div className="footer-links">
               <Link href={`/${locale}/imprint`}>{dict.footer.imprint}</Link>
+              <Link href={`/${locale}/security`}>{dict.security.title}</Link>
               <Link href={`/${locale}/privacy`}>{dict.legal.privacy.title}</Link>
               <Link href={`/${locale}/terms`}>{dict.legal.terms.title}</Link>
               <Link href={`/${locale}/withdrawal`}>{dict.legal.withdrawal.title}</Link>

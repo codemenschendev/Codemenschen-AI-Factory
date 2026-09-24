@@ -1371,6 +1371,96 @@ export const en = {
       ],
     },
   },
+  security: {
+    title: "Security and privacy",
+    updated: "Last updated: 24 September 2026",
+    lede: "For businesses in Austria and Germany. Where your data lives, who sees it, and what never happens without your approval.",
+    promises: [
+      { h: "Servers in the EU", p: "Database, code and previews are hosted by Hetzner, a German provider, in a data centre in the EU." },
+      { h: "Your accounts stay yours", p: "Ads run on your own Google Ads or Meta account. We store no password and no access key of yours." },
+      { h: "No spend without approval", p: "No ad starts before a person presses start. Budget limits apply in three places." },
+      { h: "No card data with us", p: "You pay directly at Stripe. We only learn whether and how much was paid." },
+      { h: "Measurement only with consent", p: "Google and Meta load only after visitors agree. Declining is as easy as agreeing." },
+      { h: "The code is yours", p: "Code, app and store listing belong to you. We keep no share of your revenue." },
+    ],
+    sections: [
+      {
+        h: "Where your data lives",
+        p: [
+          "Server and database are run by Hetzner Online GmbH, a provider from Germany, in a data centre in the EU. The connection to the website is always encrypted (HTTPS).",
+          "A backup is made every night and also stored outside the server. The server may only add new backups there. It can neither read nor delete old ones, so a backup survives even if the server itself is attacked.",
+        ],
+      },
+      {
+        h: "Your ad accounts",
+        p: [
+          "Your ads run on your own account. You pay Google or Meta directly, with your card and your limit. We do not advance any ad budget.",
+          "For Google Ads you accept a link request from us in your account. For Meta you add us as a partner. We get neither your password nor an access key. You can remove the link in your own account at any time.",
+        ],
+      },
+      {
+        h: "Protection against unplanned ad costs",
+        p: [
+          "No campaign starts by itself. A person checks copy, budget and audience and presses start.",
+          "The budget is limited in three places: directly at Google or Meta, in our system before every start, and by a check every 15 minutes. A campaign over its budget or past its end date is paused. A kill switch stops all ads at once.",
+        ],
+      },
+      {
+        h: "Sign-in and payment",
+        p: [
+          "You sign in with a link sent by e-mail. There is no password that could be stolen or guessed.",
+          "Payments run through Stripe (Ireland). You enter card details directly at Stripe. We never see them.",
+        ],
+      },
+      {
+        h: "AI and your content",
+        p: [
+          "Text and code are written by the AI model Claude from Anthropic (USA). Images for ads are made by OpenAI (USA) from a description of the app, without your contact details. Transfers to the USA rely on the EU-US Data Privacy Framework or the EU standard contractual clauses.",
+          "The AI suggests, you decide. You approve everything that goes public or costs money. An automatic check stops pages that state prices, insurer contracts, certificates or awards you never named.",
+        ],
+      },
+      {
+        h: "Your visitors and customers",
+        p: [
+          "On our website we count visits without cookies. Google Analytics, Google Ads and Meta load only after consent, and consent can be withdrawn at any time.",
+          "Sign-ups on your landing page use double opt-in. The consent is stored with its time, and every e-mail has a link that deletes the address at once.",
+        ],
+      },
+      {
+        h: "Data processing agreement",
+        p: [
+          "When we process data of your customers for you, for example sign-ups on your landing page, you are the controller and we are your processor. For this we sign a data processing agreement under Art. 28 GDPR with you. Write to office@codemenschen.at.",
+        ],
+      },
+    ],
+    processorsTitle: "Who else processes data",
+    processorsHead: ["Provider", "Purpose", "Based in"],
+    processors: [
+      ["Hetzner Online GmbH", "Server and database", "Germany"],
+      ["Amazon Web Services", "Backup copy outside the server", "Luxembourg"],
+      ["World4You Internet Services GmbH", "E-mails", "Austria"],
+      ["Stripe Payments Europe, Ltd.", "Payments", "Ireland"],
+      ["Anthropic PBC", "Text and code (AI)", "USA"],
+      ["OpenAI", "Images for ads (AI)", "USA"],
+      ["650 Industries (Expo)", "Building the Android app", "USA"],
+      ["Google Ireland Ltd.", "Analytics and ads, only with consent", "Ireland"],
+      ["Meta Platforms Ireland Ltd.", "Ads, only with consent", "Ireland"],
+    ],
+    retentionTitle: "How long we keep data",
+    retentionHead: ["Data", "Kept for"],
+    retention: [
+      ["Server logs", "14 days"],
+      ["Free prototypes with IP address", "7 days, unless you order"],
+      ["Cookieless visit statistics", "13 months"],
+      ["Google Analytics", "14 months"],
+      ["Click id from an ad", "at most 90 days"],
+      ["Backups", "90 days"],
+      ["Orders and invoices", "7 years (§ 132 BAO)"],
+    ],
+    contactTitle: "Questions, or found a security issue?",
+    contact: "Write to office@codemenschen.at. A person answers. All details of the processing are in the privacy policy.",
+    privacyLink: "Read the privacy policy",
+  },
   adConsent: {
     title: "May Appwerk measure?",
     text: "We would like to see how visitors use our site and which ads work. Both are off until you allow them.",
