@@ -33,24 +33,25 @@
 .lp .btn-ico { width: 18px; height: 18px; }
 
 /* ---------- Hero ---------- */
-/* The owner's photo is the banner itself, edge to edge. A white wash over its left side (the
-   bright windows) carries the copy; the people stay clear on the right. */
-.lp .hero { position: relative; overflow: hidden; padding: 0; min-height: clamp(560px, 41vw, 760px); display: flex; align-items: center; }
-.lp .hero-grid { position: relative; z-index: 1; display: block; width: 100%; padding-top: 56px; padding-bottom: 64px; }
-.lp .hero-copy { max-width: 560px; }
+/* The owner's photo, whole and uncropped, framed inside the page width with round corners. A white
+   wash over its bright window side carries the copy; the people stay clear on the right. The frame is
+   the page width and a fixed height, so on a wide screen it never grows past the page. */
+.lp .hero { padding: 28px 0 24px; }
+.lp .hero-frame { position: relative; overflow: hidden; border-radius: 24px; height: clamp(480px, 42vw, 520px); display: flex; align-items: center; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.12); }
+.lp .hero-copy { position: relative; z-index: 2; max-width: 540px; padding: 40px 0 40px 48px; }
 .lp .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
 .lp .hero-photo { position: absolute; inset: 0; }
-.lp .hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 70% center; }
-.lp .hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #fff 0, rgba(255, 255, 255, 0.94) 28%, rgba(255, 255, 255, 0.6) 40%, rgba(255, 255, 255, 0) 52%), linear-gradient(0deg, #fff 0, rgba(255, 255, 255, 0) 14%); pointer-events: none; }
+.lp .hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
+.lp .hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0.97) 0, rgba(255, 255, 255, 0.9) 30%, rgba(255, 255, 255, 0.5) 44%, rgba(255, 255, 255, 0) 56%); pointer-events: none; }
 .lp .hero-photo .float { z-index: 1; }
 .lp .float { position: absolute; background: #fff; border-radius: 16px; box-shadow: 0 18px 44px rgba(15, 23, 42, 0.14); border: 1px solid var(--border); }
 .lp .float-label { font-size: 0.7rem; color: var(--ink-soft); margin-bottom: 6px; }
-.lp .stats { right: 3%; top: 9%; width: 300px; padding: 14px 16px; }
+.lp .stats { right: 2.5%; top: 6%; width: 290px; padding: 12px 16px; }
 .lp .stats-row { display: flex; gap: 18px; }
 .lp .stats-row small { display: block; font-size: 0.64rem; color: var(--ink-soft); }
 .lp .stats-row b { display: block; font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 .lp .stats-row em { font-style: normal; font-size: 0.64rem; font-weight: 700; color: var(--valid); }
-.lp .budget { right: 3%; bottom: 12%; width: 240px; padding: 14px 16px; }
+.lp .budget { right: 2.5%; bottom: 6%; width: 230px; padding: 12px 16px; }
 .lp .budget-head { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.88rem; }
 .lp .meter { height: 7px; border-radius: 99px; background: #e2e8f0; margin: 10px 0 8px; overflow: hidden; }
 .lp .meter span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #16a34a, #22c55e); }
@@ -130,8 +131,8 @@
 .lp .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 36px; margin-top: 2rem; }
 .lp .step { position: relative; background: none; border: 0; padding: 0; box-shadow: none; }
 .lp .step::before { content: none; }
-.lp .step + .step::after { content: "→"; position: absolute; left: -28px; top: 44px; color: #94a3b8; font-size: 1.1rem; }
-.lp .step-pic { position: relative; aspect-ratio: 16 / 9; border-radius: 14px; overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); }
+.lp .step + .step::after { content: "→"; position: absolute; left: -28px; top: 34px; color: #94a3b8; font-size: 1.1rem; }
+.lp .step-pic { position: relative; aspect-ratio: 12 / 5; border-radius: 14px; overflow: hidden; margin-bottom: 14px; box-shadow: var(--shadow); }
 .lp .step-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 .lp .step-num { position: absolute; left: 10px; top: 10px; width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: #fff; font-size: 0.85rem; font-weight: 800; box-shadow: 0 4px 12px rgba(29, 78, 216, 0.35); }
 .lp .step h3 { font-size: 1rem; margin-bottom: 4px; }
@@ -219,15 +220,17 @@
   .lp .own-idea { grid-template-columns: auto 1fr; }
   .lp .own-idea-input, .lp .own-idea .btn { grid-column: 1 / -1; }
 }
-@media (max-width: 900px) {
-  /* On a narrow screen the copy comes first, the photo under it with its cards. */
-  .lp .hero { display: block; min-height: 0; }
-  .lp .hero-grid { padding-top: 36px; padding-bottom: 24px; }
-  .lp .hero-photo { position: relative; inset: auto; aspect-ratio: 4 / 3; }
+@media (max-width: 1024px) {
+  /* On a narrow screen the copy comes first, the framed photo under it with its cards. */
+  .lp .hero-frame { display: block; height: auto; overflow: visible; box-shadow: none; border-radius: 0; }
+  .lp .hero-copy { padding: 16px 0 24px; max-width: none; }
+  .lp .hero-photo { position: relative; inset: auto; aspect-ratio: 4 / 3; border-radius: 18px; overflow: hidden; }
   .lp .hero-photo img { object-position: 78% center; }
-  .lp .hero-photo::after { background: linear-gradient(180deg, #fff 0, rgba(255, 255, 255, 0) 16%); }
-  .lp .stats { right: auto; left: 16px; top: 22px; width: auto; padding: 10px 12px; }
-  .lp .budget { right: 16px; bottom: 16px; width: 200px; padding: 10px 12px; }
+  .lp .hero-photo::after { content: none; }
+  .lp .stats { right: auto; left: 12px; top: 12px; width: auto; padding: 10px 12px; }
+  .lp .budget { right: 12px; bottom: 12px; width: 200px; padding: 10px 12px; }
+}
+@media (max-width: 900px) {
   .lp .price-grid { grid-template-columns: 1fr 1fr; }
   .lp .about-grid { grid-template-columns: 1fr; }
   .lp .final-band { flex-direction: column; align-items: flex-start; }

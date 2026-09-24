@@ -31,16 +31,20 @@ const ICONS: Record<string, string> = {
   fork: '<path d="M7 2.5v7a2.5 2.5 0 0 0 5 0v-7M9.5 2.5v19M17 2.5c-1.7 1.5-2.5 4-2.5 7v3h2.5v9"/>',
   box: '<path d="m12 2.5 8.5 4.5v10L12 21.5 3.5 17V7Z"/><path d="M3.5 7 12 11.5 20.5 7M12 11.5v10"/>',
   leaf: '<path d="M5 19c0-8 5-13 14-14 0 9-5 14-13 14"/><path d="M5 19c3-4 6-7 10-9"/>',
-  calendar: '<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/>',
-  spark: '<path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.9L12 18.5l-1.8-5.8L4.5 10.8 10.2 9Z"/><path d="M19 3.5v3M17.5 5h3M5 17.5v3M3.5 19h3"/>',
+  calendar:
+    '<rect x="3" y="4.5" width="18" height="16" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4M8 13h.01M12 13h.01M16 13h.01M8 17h.01M12 17h.01"/>',
+  spark:
+    '<path d="M12 3.5 13.8 9l5.7 1.8-5.7 1.9L12 18.5l-1.8-5.8L4.5 10.8 10.2 9Z"/><path d="M19 3.5v3M17.5 5h3M5 17.5v3M3.5 19h3"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
   pin: '<path d="M12 21.5s-7-6.3-7-11.5a7 7 0 0 1 14 0c0 5.2-7 11.5-7 11.5Z"/><circle cx="12" cy="10" r="2.5"/>',
   bulb: '<path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2V16h6v-.9c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5Z"/>',
   doc: '<path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8Z"/><path d="M14 2.5V8h5.5M8.5 15l2.5 2.5 4.5-5"/>',
-  rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2-.1-2.8A2.1 2.1 0 0 0 5 15Z"/><path d="m12 15-3-3a22 22 0 0 1 2-4A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
+  rocket:
+    '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2-.1-2.8A2.1 2.1 0 0 0 5 15Z"/><path d="m12 15-3-3a22 22 0 0 1 2-4A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
   store: '<path d="M4 7h16l-1 13H5Z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
-  server: '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01"/>',
+  server:
+    '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01"/>',
 };
 
 function Icon({ name, className }: { name: string; className?: string }) {
@@ -123,7 +127,7 @@ export default async function Home({
     { kind: "campaign" },
   ];
   const trustIcons = ["preview", "euro", "team", "shield"];
-  const stepPics = ["svc-site", "svc-app", "step-approve", "step-launch"];
+  const stepPics = ["step-describe", "step-preview", "step-approve", "step-launch"];
   const priceIcons = ["site", "app", "store", "user", "ads", "server"];
   const prices = [
     {
@@ -152,64 +156,66 @@ export default async function Home({
 
       {/* Hero: the promise on the left, a real Appwerk site with its ad and numbers on the right */}
       <section className="hero">
-        <div className="wrap hero-grid">
-          <div className="hero-copy">
-            <p className="pill reveal">{h.eyebrow}</p>
-            <h1 className="reveal">
-              {h.titleA}
-              <br />
-              <span className="grad">{h.titleB}</span>
-              <br />
-              {h.titleC}
-            </h1>
-            <p className="lede reveal">{h.lede}</p>
-            <div className="hero-ctas reveal">
-              <Link className="btn btn-primary" href={proto}>
-                {h.cta} <Icon name="arrow" className="btn-ico" />
-              </Link>
-              <a className="btn btn-ghost" href="#prices">
-                {h.cta2}
-              </a>
-            </div>
-          </div>
-
-        </div>
-        {/* The photo fills the whole banner; the copy sits on its bright window side. The two
-            cards are page text, so they read in the page's language. */}
-        <div className="hero-photo" aria-hidden="true">
-          {/* eslint-disable-next-line @next/next/no-img-element -- one fixed hero picture */}
-          <img
-            src="/home/hero-people.webp"
-            alt=""
-            width={1960}
-            height={802}
-            fetchPriority="high"
-          />
-          <div className="float stats">
-            <p className="float-label">{a.period}</p>
-            <div className="stats-row">
-              <div>
-                <small>{a.visits}</small>
-                <b>{n(2384)}</b>
-                <em>↑ 12%</em>
-              </div>
-              <div>
-                <small>{a.signups}</small>
-                <b>186</b>
-                <em>↑ 24%</em>
-              </div>
-              <div>
-                <small>{a.spend}</small>
-                <b>{eur(128, locale)}</b>
+        <div className="wrap">
+          <div className="hero-frame">
+            <div className="hero-copy">
+              <p className="pill reveal">{h.eyebrow}</p>
+              <h1 className="reveal">
+                {h.titleA}
+                <br />
+                <span className="grad">{h.titleB}</span>
+                <br />
+                {h.titleC}
+              </h1>
+              <p className="lede reveal">{h.lede}</p>
+              <div className="hero-ctas reveal">
+                <Link className="btn btn-primary" href={proto}>
+                  {h.cta} <Icon name="arrow" className="btn-ico" />
+                </Link>
+                <a className="btn btn-ghost" href="#prices">
+                  {h.cta2}
+                </a>
               </div>
             </div>
-          </div>
 
-          <BudgetMeter
-            className="float budget"
-            of={budgetOf}
-            stop={budgetStop}
-          />
+            {/* The whole photo, framed inside the page width; the copy sits on its bright window side. The two
+              cards are page text, so they read in the page's language. */}
+            <div className="hero-photo" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element -- one fixed hero picture */}
+              <img
+                src="/home/hero-people.webp"
+                alt=""
+                width={1960}
+                height={802}
+                fetchPriority="high"
+              />
+              <div className="float stats">
+                <p className="float-label">{a.period}</p>
+                <div className="stats-row">
+                  <div>
+                    <small>{a.visits}</small>
+                    <b>{n(2384)}</b>
+                    <em>↑ 12%</em>
+                  </div>
+                  <div>
+                    <small>{a.signups}</small>
+                    <b>186</b>
+                    <em>↑ 24%</em>
+                  </div>
+                  <div>
+                    <small>{a.spend}</small>
+                    <b>{eur(128, locale)}</b>
+                  </div>
+                </div>
+              </div>
+
+              <BudgetMeter
+                className="float budget"
+                of={budgetOf}
+                stop={budgetStop}
+              />
+            </div>
+          </div>
         </div>
       </section>
 
@@ -248,10 +254,20 @@ export default async function Home({
             {services.map((s) => {
               const it = h.services.items[s.kind];
               return (
-                <Link className="svc reveal" key={s.kind} href={`${proto}?kind=${s.kind}`}>
+                <Link
+                  className="svc reveal"
+                  key={s.kind}
+                  href={`${proto}?kind=${s.kind}`}
+                >
                   <div className="svc-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
-                    <img src={`/home/svc-${s.kind}.webp`} alt="" width={348} height={178} loading="lazy" />
+                    <img
+                      src={`/home/svc-${s.kind}.webp`}
+                      alt=""
+                      width={348}
+                      height={178}
+                      loading="lazy"
+                    />
                   </div>
                   <span className="svc-ico">
                     <Icon name={s.kind} />
@@ -268,9 +284,17 @@ export default async function Home({
                   </ul>
                   <div className="svc-foot">
                     <div>
-                      <small>{s.price ? (s.from ? h.services.from : h.services.fixed) : h.services.try}</small>
+                      <small>
+                        {s.price
+                          ? s.from
+                            ? h.services.from
+                            : h.services.fixed
+                          : h.services.try}
+                      </small>
                       <b className={s.price ? undefined : "svc-free"}>
-                        {s.price ? eur(s.price, locale) : h.services.afterPreview}
+                        {s.price
+                          ? eur(s.price, locale)
+                          : h.services.afterPreview}
                       </b>
                     </div>
                     <span className="svc-go">
@@ -291,8 +315,12 @@ export default async function Home({
                 <div className="flow-offer">
                   <p className="flow-label">{h.campaign.offerLabel}</p>
                   <p className="flow-input">{h.campaign.offerExample}</p>
-                  <Link className="btn btn-primary btn-sm" href={`${proto}?kind=campaign`}>
-                    {h.campaign.offerBtn} <Icon name="arrow" className="btn-ico" />
+                  <Link
+                    className="btn btn-primary btn-sm"
+                    href={`${proto}?kind=campaign`}
+                  >
+                    {h.campaign.offerBtn}{" "}
+                    <Icon name="arrow" className="btn-ico" />
                   </Link>
                 </div>
                 {/* One rendered picture: the ad on a phone, the page on a laptop, the e-mail on a
@@ -304,7 +332,13 @@ export default async function Home({
                     </p>
                   ))}
                   {/* eslint-disable-next-line @next/next/no-img-element -- one fixed picture */}
-                  <img src="/home/campaign-flow.webp" alt="" width={1656} height={680} loading="lazy" />
+                  <img
+                    src="/home/campaign-flow.webp"
+                    alt=""
+                    width={1656}
+                    height={680}
+                    loading="lazy"
+                  />
                 </div>
               </div>
             </div>
@@ -315,7 +349,12 @@ export default async function Home({
                 <p className="combo-p">{h.budget.p}</p>
               </div>
               <div className="budget-box">
-                <p className="budget-big">{fill(h.budget.spentOf, { spent: eur(38, locale), cap: eur(100, locale) })}</p>
+                <p className="budget-big">
+                  {fill(h.budget.spentOf, {
+                    spent: eur(38, locale),
+                    cap: eur(100, locale),
+                  })}
+                </p>
                 <div className="meter">
                   <span style={{ width: "38%" }} />
                 </div>
@@ -324,7 +363,11 @@ export default async function Home({
                 {h.budget.rows.map(([k, v], i) => (
                   <div key={k}>
                     <dt>{k}</dt>
-                    <dd className={i === h.budget.rows.length - 1 ? "on" : undefined}>
+                    <dd
+                      className={
+                        i === h.budget.rows.length - 1 ? "on" : undefined
+                      }
+                    >
                       {fill(v, { cap: eur(100, locale) })}
                     </dd>
                   </div>
@@ -344,7 +387,13 @@ export default async function Home({
               <li className="step reveal" key={st.h}>
                 <div className="step-pic">
                   {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
-                  <img src={`/home/${stepPics[i]}.webp`} alt="" width={420} height={230} loading="lazy" />
+                  <img
+                    src={`/home/${stepPics[i]}.webp`}
+                    alt=""
+                    width={420}
+                    height={230}
+                    loading="lazy"
+                  />
                   <span className="step-num">{i + 1}</span>
                 </div>
                 <h3>{st.h}</h3>
@@ -408,9 +457,13 @@ export default async function Home({
                       <b>{app.name}</b>
                     </p>
                     {taken ? (
-                      <p className="idea-price idea-price-taken">{d.ideas.built}</p>
+                      <p className="idea-price idea-price-taken">
+                        {d.ideas.built}
+                      </p>
                     ) : (
-                      <p className="idea-price">{app.price ? eur(app.price, locale) : d.detail.sample}</p>
+                      <p className="idea-price">
+                        {app.price ? eur(app.price, locale) : d.detail.sample}
+                      </p>
                     )}
                     <p className="idea-desc">{t(app.cardDesc, locale)}</p>
                     <ul className="idea-points">
@@ -429,7 +482,13 @@ export default async function Home({
                   </div>
                   <div className="idea-pic">
                     {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
-                    <img src={`/home/idea-${app.slug}.webp`} alt="" width={256} height={352} loading="lazy" />
+                    <img
+                      src={`/home/idea-${app.slug}.webp`}
+                      alt=""
+                      width={256}
+                      height={352}
+                      loading="lazy"
+                    />
                   </div>
                 </Tag>
               );
@@ -437,7 +496,11 @@ export default async function Home({
           </div>
 
           {/* The own-idea box: one sentence, then the wizard with it already filled in */}
-          <form className="own-idea reveal" action={`/${locale}/create`} method="get">
+          <form
+            className="own-idea reveal"
+            action={`/${locale}/create`}
+            method="get"
+          >
             <span className="own-idea-ico">
               <Icon name="spark" />
             </span>
@@ -445,7 +508,13 @@ export default async function Home({
               <b>{d.createBanner.title}</b>
               <small>{d.createBanner.p}</small>
             </div>
-            <input className="own-idea-input" type="text" name="idea" maxLength={800} placeholder={d.createBanner.ph} />
+            <input
+              className="own-idea-input"
+              type="text"
+              name="idea"
+              maxLength={800}
+              placeholder={d.createBanner.ph}
+            />
             <button className="btn btn-primary" type="submit">
               {d.createBanner.cta} <Icon name="arrow" className="btn-ico" />
             </button>
@@ -473,13 +542,24 @@ export default async function Home({
                 </div>
               ))}
             </div>
-            <a className="btn btn-ghost reveal" href="https://www.codemenschen.at" target="_blank" rel="noopener">
+            <a
+              className="btn btn-ghost reveal"
+              href="https://www.codemenschen.at"
+              target="_blank"
+              rel="noopener"
+            >
               {d.about.cta}
             </a>
           </div>
           <div className="about-pic reveal">
             {/* eslint-disable-next-line @next/next/no-img-element -- one fixed picture */}
-            <img src="/home/about-team.webp" alt="" width={431} height={229} loading="lazy" />
+            <img
+              src="/home/about-team.webp"
+              alt=""
+              width={431}
+              height={229}
+              loading="lazy"
+            />
           </div>
         </div>
       </section>
