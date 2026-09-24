@@ -251,13 +251,21 @@ export default async function Home({
                 <Link className="svc reveal" key={s.kind} href={`${proto}?kind=${s.kind}`}>
                   <div className="svc-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
-                    <img src={`/home/svc-${s.kind}.webp`} alt="" width={420} height={230} loading="lazy" />
+                    <img src={`/home/svc-${s.kind}.webp`} alt="" width={348} height={178} loading="lazy" />
                   </div>
                   <span className="svc-ico">
                     <Icon name={s.kind} />
                   </span>
                   <h3>{it.h}</h3>
                   <p>{it.p}</p>
+                  <ul className="svc-points">
+                    {it.points.map((pt) => (
+                      <li key={pt}>
+                        <Icon name="check" className="tick" />
+                        {pt}
+                      </li>
+                    ))}
+                  </ul>
                   <div className="svc-foot">
                     <div>
                       <small>{s.price ? (s.from ? h.services.from : h.services.fixed) : h.services.try}</small>

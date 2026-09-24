@@ -164,11 +164,11 @@ export const de = {
       all: "Kostenlos ausprobieren",
       try: "Kostenlos testen",
       items: {
-        site: { h: "Website und Landingpage", p: "Modern, schnell und fürs Handy gemacht." },
-        app: { h: "App (Web oder Handy)", p: "Für deine eigene Geschäftsidee." },
-        ads: { h: "Werbung auf Google und Meta", p: "Anzeigen, die neue Kunden bringen. Mit fester Budgetgrenze." },
-        email: { h: "Automatische E-Mails", p: "Willkommensmail, Bestätigung und Nachfass-Mails." },
-        campaign: { h: "Komplette Kampagne", p: "Anzeige, Landingpage und E-Mails aus einer Botschaft." },
+        site: { h: "Website und Landingpage", p: "Modern, schnell und fürs Handy gemacht.", points: ["Eigenes Design", "Fürs Handy gemacht", "Online, sobald du zahlst"] },
+        app: { h: "App (Web oder Handy)", p: "Für deine eigene Geschäftsidee.", points: ["Web oder Handy", "Deine eigenen Funktionen", "Store-Veröffentlichung optional"] },
+        ads: { h: "Werbung auf Google und Meta", p: "Anzeigen, die neue Kunden bringen. Mit fester Budgetgrenze.", points: ["Google und Meta", "Creatives und Einrichtung inklusive", "Feste Budgetgrenze"] },
+        email: { h: "Automatische E-Mails", p: "Willkommensmail, Bestätigung und Nachfass-Mails.", points: ["Für dich geschrieben", "Automatisch versendet", "Double-Opt-in eingebaut"] },
+        campaign: { h: "Komplette Kampagne", p: "Anzeige, Landingpage und E-Mails aus einer Botschaft.", points: ["Alles aus einer Idee", "Anzeige, Seite und E-Mail passen zusammen", "Nichts läuft, bevor du auf Start drückst"] },
       },
     },
     campaign: {
