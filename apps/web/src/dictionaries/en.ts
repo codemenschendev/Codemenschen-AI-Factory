@@ -1376,7 +1376,7 @@ export const en = {
     updated: "Last updated: 24 September 2026",
     lede: "For businesses in Austria and Germany. Where your data lives, who sees it, and what never happens without your approval.",
     promises: [
-      { h: "Servers in the EU", p: "Database, code and previews are hosted by Hetzner, a German provider, in a data centre in the EU." },
+      { h: "Servers in the EU", p: "Database, code and previews are hosted by Hetzner, a German provider, in its Helsinki data centre in Finland, inside the EU." },
       { h: "Your accounts stay yours", p: "Ads run on your own Google Ads or Meta account. We store no password and no access key of yours." },
       { h: "No spend without approval", p: "No ad starts before a person presses start. Budget limits apply in three places." },
       { h: "No card data with us", p: "You pay directly at Stripe. We only learn whether and how much was paid." },
@@ -1387,7 +1387,7 @@ export const en = {
       {
         h: "Where your data lives",
         p: [
-          "Server and database are run by Hetzner Online GmbH, a provider from Germany, in a data centre in the EU. The connection to the website is always encrypted (HTTPS).",
+          "Server and database are run by Hetzner Online GmbH, a provider from Germany, in its data centre in Helsinki (Finland). The data stays in the EU and under the GDPR. The connection to the website is always encrypted (HTTPS).",
           "A backup is made every night and also stored outside the server. The server may only add new backups there. It can neither read nor delete old ones, so a backup survives even if the server itself is attacked.",
         ],
       },
@@ -1436,7 +1436,7 @@ export const en = {
     processorsTitle: "Who else processes data",
     processorsHead: ["Provider", "Purpose", "Based in"],
     processors: [
-      ["Hetzner Online GmbH", "Server and database", "Germany"],
+      ["Hetzner Online GmbH", "Server and database, data centre in Finland", "Germany"],
       ["Amazon Web Services", "Backup copy outside the server", "Luxembourg"],
       ["World4You Internet Services GmbH", "E-mails", "Austria"],
       ["Stripe Payments Europe, Ltd.", "Payments", "Ireland"],
