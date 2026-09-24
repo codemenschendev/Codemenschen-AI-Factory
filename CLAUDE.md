@@ -27,11 +27,12 @@
 
 ## Deploy
 
-- Server checkout `/var/www/ai-factory` on `manager` (ssh port 7172), stack `infra/docker-compose.prod.yml`,
-  code baked into the images. Deploy: `git pull --ff-only origin main`, then in `infra/`
-  `docker compose -f docker-compose.prod.yml build --pull api horizon [web]` and
-  `up -d --remove-orphans api horizon scheduler [web]`, then `exec -T api php artisan migrate --force`
-  when a migration was added. Verify by grepping the new code inside the container, not by uptime.
+- Deploy only through the central runner: `~/.openclaw/workspace/ops/deploy.sh ai-factory` (registry row,
+  method `server`). It runs the dispatcher `server-deploy.sh ai-factory` on `manager`, which calls
+  `infra/deploy-server.sh`: git sync, compose build of every service, migrate, and it refuses while a pipeline run is active
+  (`--force` overrides). Never hand-run `docker compose build/up` on the server: that is a side door
+  (a hand-run compose caused a 502 on manager, 2026-09-24). Server checkout `/var/www/ai-factory`,
+  stack `infra/docker-compose.prod.yml`. Verify by grepping the new code inside the container, not by uptime.
 - After every commit and push/deploy, post it to Teams with `~/.openclaw/workspace/ops/teams-commit.sh`.
 - Mail goes out through the company's world4you SMTP (`smtp.world4you.com:587`, STARTTLS) as
   `developerweb@codemenschen.at`, DKIM-signed for codemenschen.at. Not Resend (its Tokyo IPs
