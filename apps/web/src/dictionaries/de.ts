@@ -32,7 +32,7 @@ export const de = {
   },
   how: {
     eyebrow: "So funktioniert's",
-    title: "So einfach funktioniert es",
+    title: "In vier einfachen Schritten von der Idee online.",
     cta: "Verfügbare App-Ideen ansehen →",
     steps: [
       { h: "Idee beschreiben", p: "Ein Satz reicht: Website, App, Werbung oder E-Mails." },
