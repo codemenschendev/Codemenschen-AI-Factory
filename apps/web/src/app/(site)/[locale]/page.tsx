@@ -8,11 +8,9 @@ import {
   SITE_PRICE_EUR,
 } from "@ai-factory/pricing";
 import { CATALOG } from "@/lib/catalog";
-import { APP_ART, CONCEPT_ART } from "@/lib/art";
-import { SCREENS } from "@/lib/screens";
+import { APP_ART } from "@/lib/art";
 import { eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 import { LandingMotion } from "@/components/LandingMotion";
-import { Logo } from "@/components/Logo";
 import "../../home.css";
 
 /** Inline SVG / mockup markup from our own modules, never user input. */
@@ -24,30 +22,6 @@ function Art({ html, className }: { html: string; className?: string }) {
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );
-}
-
-function PhoneFrame({ html, className }: { html: string; className?: string }) {
-  return (
-    <div
-      className={className ? `ph-frame ${className}` : "ph-frame"}
-      aria-hidden
-    >
-      <Art html={html} />
-    </div>
-  );
-}
-
-/** The card visual: the real app screen in a phone frame, illustration as fallback. */
-function CardVisual({ slug }: { slug: string }) {
-  const screen = SCREENS[slug]?.[0];
-  if (screen) {
-    return (
-      <div className="card-phone">
-        <PhoneFrame html={screen} />
-      </div>
-    );
-  }
-  return <Art className="card-art" html={APP_ART[slug] ?? ""} />;
 }
 
 /** Line icons, 24px grid, stroke follows currentColor. */
@@ -66,6 +40,8 @@ const ICONS: Record<string, string> = {
     '<path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="m4 7 8 6 8-6"/>',
+  pin: '<path d="M12 21.5s-7-6.3-7-11.5a7 7 0 0 1 14 0c0 5.2-7 11.5-7 11.5Z"/><circle cx="12" cy="10" r="2.5"/>',
   bulb: '<path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2V16h6v-.9c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5Z"/>',
   doc: '<path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8Z"/><path d="M14 2.5V8h5.5M8.5 15l2.5 2.5 4.5-5"/>',
   rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2-.1-2.8A2.1 2.1 0 0 0 5 15Z"/><path d="m12 15-3-3a22 22 0 0 1 2-4A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
@@ -89,6 +65,9 @@ function Icon({ name, className }: { name: string; className?: string }) {
     />
   );
 }
+
+/** Ideas that have a picture of a person holding the app; the rest keep their drawing. */
+const IDEA_PICS = new Set(["formpilot", "mealgrid", "countbee", "praxo", "rechni"]);
 
 const fill = (s: string, v: Record<string, string>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
@@ -144,7 +123,7 @@ export default async function Home({
     { kind: "campaign" },
   ];
   const trustIcons = ["preview", "euro", "team", "shield"];
-  const stepIcons = ["bulb", "preview", "doc", "rocket"];
+  const stepPics = ["svc-site", "svc-app", "step-approve", "step-launch"];
   const priceIcons = ["site", "app", "store", "user", "ads", "server"];
   const prices = [
     {
@@ -271,15 +250,8 @@ export default async function Home({
               return (
                 <Link className="svc reveal" key={s.kind} href={`${proto}?kind=${s.kind}`}>
                   <div className="svc-thumb">
-                    {s.kind === "app" ? (
-                      <div className="svc-phones">
-                        <PhoneFrame html={SCREENS.praxo[0]} />
-                        <PhoneFrame html={SCREENS.formpilot[0]} />
-                      </div>
-                    ) : (
-                      // eslint-disable-next-line @next/next/no-img-element -- screenshots of real Appwerk previews
-                      <img src={`/home/svc-${s.kind}.webp`} alt="" width={640} height={400} loading="lazy" />
-                    )}
+                    {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
+                    <img src={`/home/svc-${s.kind}.webp`} alt="" width={420} height={230} loading="lazy" />
                   </div>
                   <span className="svc-ico">
                     <Icon name={s.kind} />
@@ -408,14 +380,15 @@ export default async function Home({
           <p className="eyebrow reveal">{d.how.eyebrow}</p>
           <h2 className="reveal">{d.how.title}</h2>
           <ol className="steps">
-            {d.how.steps.map((s, i) => (
-              <li className="step reveal" key={s.h}>
-                <span className="step-ico">
-                  <Icon name={stepIcons[i]} />
+            {d.how.steps.map((st, i) => (
+              <li className="step reveal" key={st.h}>
+                <div className="step-pic">
+                  {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
+                  <img src={`/home/${stepPics[i]}.webp`} alt="" width={420} height={230} loading="lazy" />
                   <span className="step-num">{i + 1}</span>
-                </span>
-                <h3>{s.h}</h3>
-                <p>{s.p}</p>
+                </div>
+                <h3>{st.h}</h3>
+                <p>{st.p}</p>
               </li>
             ))}
           </ol>
@@ -450,96 +423,104 @@ export default async function Home({
 
       <section className="section section-tint" id="apps">
         <div className="wrap">
-          <p className="eyebrow reveal">{d.ideas.eyebrow}</p>
-          <h2 className="reveal">{d.ideas.title}</h2>
-          <p className="section-lede reveal">{d.ideas.lede}</p>
-          <div className="cards">
+          <div className="sec-head">
+            <div>
+              <p className="eyebrow reveal">{d.ideas.eyebrow}</p>
+              <h2 className="reveal">{d.ideas.title}</h2>
+              <p className="section-lede reveal">{d.ideas.lede}</p>
+            </div>
+          </div>
+          <div className="idea-rows">
             {CATALOG.map((app) => {
               const taken = app.status === "built";
-              return (
-                <article className={taken ? "card card-taken reveal" : "card reveal"} key={app.slug}>
-                  <span className={taken ? "badge badge-taken" : "badge badge-sample"}>
-                    {taken ? d.ideas.built : d.detail.sample}
-                  </span>
-                  <CardVisual slug={app.slug} />
-                  <h3>{app.name}</h3>
-                  <p className="card-cat">{t(app.cat, locale)}</p>
-                  <p className="card-desc">{t(app.cardDesc, locale)}</p>
-                  <dl className="card-data">
-                    <div>
-                      <dt>{d.ideas.from}</dt>
-                      <dd>{taken || !app.price ? "—" : eur(app.price, locale)}</dd>
-                    </div>
-                    <div>
-                      <dt>{d.ideas.delivery}</dt>
-                      <dd>
-                        {taken || !app.weeksLo ? "—" : `${app.weeksLo}–${app.weeksHi} ${d.detail.weeksUnit}`}
-                      </dd>
-                    </div>
-                    <div>
-                      <dt>{d.ideas.type}</dt>
-                      <dd>{app.appType === "A" ? d.detail.typeA : d.detail.typeB}</dd>
-                    </div>
-                  </dl>
-                  {taken ? (
-                    <span className="btn btn-ghost btn-block btn-disabled">{d.detail.ctaTaken}</span>
-                  ) : (
-                    <Link className="btn btn-primary btn-block" href={`/${locale}/apps/${app.slug}`}>
-                      {d.ideas.view}
-                    </Link>
+              const pic = IDEA_PICS.has(app.slug);
+              const inner = (
+                <>
+                  <div className="idea-pic">
+                    {pic ? (
+                      // eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures
+                      <img src={`/home/idea-${app.slug}.webp`} alt="" width={240} height={290} loading="lazy" />
+                    ) : (
+                      <Art html={APP_ART[app.slug] ?? ""} />
+                    )}
+                  </div>
+                  <div className="idea-text">
+                    <b>{app.name}</b>
+                    <span className="idea-price">{taken ? d.ideas.built : app.price ? eur(app.price, locale) : d.detail.sample}</span>
+                    <small>{t(app.cardDesc, locale)}</small>
+                  </div>
+                  {!taken && (
+                    <span className="svc-go">
+                      <Icon name="arrow" />
+                    </span>
                   )}
-                </article>
+                </>
+              );
+              return taken ? (
+                <div className="idea idea-taken reveal" key={app.slug}>
+                  {inner}
+                </div>
+              ) : (
+                <Link className="idea reveal" key={app.slug} href={`/${locale}/apps/${app.slug}`}>
+                  {inner}
+                </Link>
               );
             })}
-            <article className="card card-create reveal">
-              <Art className="card-art" html={CONCEPT_ART.build} />
-              <h3>{d.createBanner.title}</h3>
-              <p className="card-desc" style={{ marginTop: 8 }}>
-                {d.createBanner.p}
-              </p>
-              <Link className="btn btn-primary btn-block" href={`/${locale}/create`}>
-                {d.createBanner.cta}
-              </Link>
-            </article>
+            <Link className="idea idea-create reveal" href={`/${locale}/create`}>
+              <div className="idea-text">
+                <b>{d.createBanner.title}</b>
+                <small>{d.createBanner.p}</small>
+              </div>
+              <span className="svc-go">
+                <Icon name="arrow" />
+              </span>
+            </Link>
           </div>
           <p className="placeholder-note reveal">{d.ideas.note}</p>
         </div>
       </section>
 
       <section className="section" id="about">
-        <div className="wrap wrap-narrow center">
-          <p className="eyebrow reveal">{d.about.eyebrow}</p>
-          <h2 className="reveal">{d.about.title}</h2>
-          <p className="section-lede reveal about-p">{d.about.p}</p>
-          <a className="btn btn-ghost reveal" href="https://www.codemenschen.at" target="_blank" rel="noopener">
-            {d.about.cta}
-          </a>
+        <div className="wrap about-grid">
+          <div>
+            <p className="eyebrow reveal">{d.about.eyebrow}</p>
+            <h2 className="reveal">{d.about.title}</h2>
+            <p className="section-lede reveal">{d.about.p}</p>
+            <div className="about-chips">
+              {d.about.chips.map((c, i) => (
+                <div className="about-chip reveal" key={c.h}>
+                  <span className="trust-ico">
+                    <Icon name={["team", "mail", "pin"][i]} />
+                  </span>
+                  <div>
+                    <b>{c.h}</b>
+                    <small>{c.p}</small>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <a className="btn btn-ghost reveal" href="https://www.codemenschen.at" target="_blank" rel="noopener">
+              {d.about.cta}
+            </a>
+          </div>
+          <div className="about-pic reveal">
+            {/* eslint-disable-next-line @next/next/no-img-element -- one fixed picture */}
+            <img src="/home/about-team.webp" alt="" width={431} height={229} loading="lazy" />
+          </div>
         </div>
       </section>
 
-      {/* Closing bar: the one next step, and the three promises once more */}
+      {/* Closing band: the one next step */}
       <section className="section-final">
-        <div className="wrap">
-          <div className="final-bar reveal">
-            <span className="final-logo">
-              <Logo />
-            </span>
-            <div className="final-text">
-              <h2>{h.final.title}</h2>
-              <p>{h.final.lede}</p>
-            </div>
-            <Link className="btn btn-primary" href={proto}>
-              {h.cta} <Icon name="arrow" className="btn-ico" />
-            </Link>
-            <ul className="final-checks">
-              {h.final.checks.map((c) => (
-                <li key={c}>
-                  <Icon name="check" className="tick" />
-                  {c}
-                </li>
-              ))}
-            </ul>
+        <div className="wrap final-band reveal">
+          <div className="final-text">
+            <p className="eyebrow">{h.final.eyebrow}</p>
+            <h2>{h.final.title}</h2>
+            <p>{h.final.lede}</p>
           </div>
+          <Link className="btn btn-light" href={proto}>
+            {h.cta} <Icon name="arrow" className="btn-ico" />
+          </Link>
         </div>
       </section>
 
