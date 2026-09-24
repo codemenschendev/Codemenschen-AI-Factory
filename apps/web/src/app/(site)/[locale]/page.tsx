@@ -12,6 +12,7 @@ import { APP_ART, CONCEPT_ART } from "@/lib/art";
 import { SCREENS } from "@/lib/screens";
 import { eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 import { LandingMotion } from "@/components/LandingMotion";
+import { Logo } from "@/components/Logo";
 import "../../home.css";
 
 /** Inline SVG / mockup markup from our own modules, never user input. */
@@ -65,6 +66,12 @@ const ICONS: Record<string, string> = {
     '<path d="M12 2.5 4 5.5v6c0 5 3.4 8.6 8 10 4.6-1.4 8-5 8-10v-6Z"/><path d="m8.5 12 2.5 2.5 4.5-5"/>',
   check: '<path d="m5 12.5 4.5 4.5L19 7.5"/>',
   arrow: '<path d="M5 12h14M13 6l6 6-6 6"/>',
+  bulb: '<path d="M9 18h6M10 21.5h4M12 2.5a6.5 6.5 0 0 0-4 11.6c.6.5 1 1.2 1 2V16h6v-.9c0-.8.4-1.5 1-2A6.5 6.5 0 0 0 12 2.5Z"/>',
+  doc: '<path d="M14 2.5H6.5a2 2 0 0 0-2 2v15a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V8Z"/><path d="M14 2.5V8h5.5M8.5 15l2.5 2.5 4.5-5"/>',
+  rocket: '<path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2c.7-.8.7-2-.1-2.8A2.1 2.1 0 0 0 5 15Z"/><path d="m12 15-3-3a22 22 0 0 1 2-4A12.9 12.9 0 0 1 22 2c0 2.7-.8 7.5-6 11a22 22 0 0 1-4 2Z"/><path d="M9 12H4s.6-3 2-4c1.6-1.1 5 0 5 0M12 15v5s3-.6 4-2c1.1-1.6 0-5 0-5"/>',
+  store: '<path d="M4 7h16l-1 13H5Z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/>',
+  user: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+  server: '<rect x="3" y="3.5" width="18" height="7" rx="2"/><rect x="3" y="13.5" width="18" height="7" rx="2"/><path d="M7 7h.01M7 17h.01"/>',
 };
 
 function Icon({ name, className }: { name: string; className?: string }) {
@@ -99,7 +106,7 @@ function BudgetMeter({
   return (
     <div className={className} aria-hidden="true">
       <p className="budget-head">
-        <span className="meta-dot">∞</span> Meta Ads
+        <Icon name="ads" className="meta-ico" /> Meta Ads
       </p>
       <div className="meter">
         <span style={{ width: "38%" }} />
@@ -137,6 +144,8 @@ export default async function Home({
     { kind: "campaign" },
   ];
   const trustIcons = ["preview", "euro", "team", "shield"];
+  const stepIcons = ["bulb", "preview", "doc", "rocket"];
+  const priceIcons = ["site", "app", "store", "user", "ads", "server"];
   const prices = [
     {
       h: h.site.h,
@@ -246,18 +255,32 @@ export default async function Home({
 
       <section className="section" id="services">
         <div className="wrap">
-          <p className="eyebrow reveal">{h.services.eyebrow}</p>
-          <h2 className="reveal">{h.services.title}</h2>
-          <p className="section-lede reveal">{h.services.lede}</p>
+          <div className="sec-head">
+            <div>
+              <p className="eyebrow reveal">{h.services.eyebrow}</p>
+              <h2 className="reveal">{h.services.title}</h2>
+              <p className="section-lede reveal">{h.services.lede}</p>
+            </div>
+            <Link className="sec-link" href={proto}>
+              {h.services.all} <Icon name="arrow" className="btn-ico" />
+            </Link>
+          </div>
           <div className="svc-grid">
             {services.map((s) => {
               const it = h.services.items[s.kind];
               return (
-                <Link
-                  className="svc reveal"
-                  key={s.kind}
-                  href={`${proto}?kind=${s.kind}`}
-                >
+                <Link className="svc reveal" key={s.kind} href={`${proto}?kind=${s.kind}`}>
+                  <div className="svc-thumb">
+                    {s.kind === "app" ? (
+                      <div className="svc-phones">
+                        <PhoneFrame html={SCREENS.praxo[0]} />
+                        <PhoneFrame html={SCREENS.formpilot[0]} />
+                      </div>
+                    ) : (
+                      // eslint-disable-next-line @next/next/no-img-element -- screenshots of real Appwerk previews
+                      <img src={`/home/svc-${s.kind}.webp`} alt="" width={640} height={400} loading="lazy" />
+                    )}
+                  </div>
                   <span className="svc-ico">
                     <Icon name={s.kind} />
                   </span>
@@ -265,17 +288,9 @@ export default async function Home({
                   <p>{it.p}</p>
                   <div className="svc-foot">
                     <div>
-                      <small>
-                        {s.price
-                          ? s.from
-                            ? h.services.from
-                            : h.services.fixed
-                          : h.services.try}
-                      </small>
+                      <small>{s.price ? (s.from ? h.services.from : h.services.fixed) : h.services.try}</small>
                       <b className={s.price ? undefined : "svc-free"}>
-                        {s.price
-                          ? eur(s.price, locale)
-                          : h.services.afterPreview}
+                        {s.price ? eur(s.price, locale) : h.services.afterPreview}
                       </b>
                     </div>
                     <span className="svc-go">
@@ -286,78 +301,83 @@ export default async function Home({
               );
             })}
           </div>
-        </div>
-      </section>
 
-      {/* One message, three parts: the campaign prototype as it really comes out */}
-      <section className="section section-tint">
-        <div className="wrap camp-grid">
-          <div>
-            <p className="eyebrow reveal">{h.campaign.eyebrow}</p>
-            <h2 className="reveal">{h.campaign.title}</h2>
-            <p className="section-lede reveal">{h.campaign.p}</p>
-            <Link
-              className="btn btn-primary reveal"
-              href={`${proto}?kind=campaign`}
-            >
-              {h.services.try} <Icon name="arrow" className="btn-ico" />
-            </Link>
-          </div>
-          <div className="camp-flow reveal" aria-hidden="true">
-            <div className="camp-card">
-              <p className="camp-tag">1 · {h.campaign.parts[0]}</p>
-              {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
-              <img src="/home/bakery.webp" alt="" width={720} height={480} />
-              <p className="camp-line">{h.campaign.adLine}</p>
+          {/* One idea, three parts, next to the budget guard that keeps the ads safe */}
+          <div className="combo">
+            <div className="combo-card reveal">
+              <h2 className="combo-title">{h.campaign.title}</h2>
+              <p className="combo-p">{h.campaign.p}</p>
+              <div className="flow">
+                <div className="flow-offer">
+                  <p className="flow-label">{h.campaign.offerLabel}</p>
+                  <p className="flow-example">{h.campaign.offerExample}</p>
+                  <Link className="btn btn-primary btn-sm" href={`${proto}?kind=campaign`}>
+                    {h.campaign.offerBtn} <Icon name="arrow" className="btn-ico" />
+                  </Link>
+                </div>
+                <span className="flow-arrow" aria-hidden="true">
+                  <Icon name="arrow" />
+                </span>
+                <div className="flow-parts" aria-hidden="true">
+                  <div className="camp-card">
+                    <p className="camp-tag">1. {h.campaign.parts[0]}</p>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- decorative */}
+                    <img src="/home/bakery.webp" alt="" width={720} height={480} loading="lazy" />
+                    <p className="camp-line">{h.campaign.adLine}</p>
+                  </div>
+                  <div className="camp-card">
+                    <p className="camp-tag">2. {h.campaign.parts[1]}</p>
+                    <p className="camp-title">{h.campaign.pageTitle}</p>
+                    <span className="camp-field">{h.campaign.pageField}</span>
+                    <span className="camp-btn">{h.campaign.pageBtn}</span>
+                  </div>
+                  <div className="camp-card">
+                    <p className="camp-tag">3. {h.campaign.parts[2]}</p>
+                    <p className="camp-title">{h.campaign.mailHi}</p>
+                    <p className="camp-mail">{h.campaign.mailText}</p>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div className="camp-card">
-              <p className="camp-tag">2 · {h.campaign.parts[1]}</p>
-              <p className="camp-title">{h.campaign.pageTitle}</p>
-              <span className="camp-field">{h.campaign.pageField}</span>
-              <span className="camp-btn">{h.campaign.pageBtn}</span>
-            </div>
-            <div className="camp-card">
-              <p className="camp-tag">3 · {h.campaign.parts[2]}</p>
-              <p className="camp-title">{h.campaign.mailHi}</p>
-              <p className="camp-mail">{h.campaign.mailText}</p>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* The spend guard is real (SpendGuard + factory:ads-guard), so it gets its own block */}
-      <section className="section">
-        <div className="wrap budget-grid">
-          <BudgetMeter
-            className="budget-card reveal"
-            of={budgetOf}
-            stop={budgetStop}
-          />
-          <div>
-            <p className="eyebrow reveal">{h.budget.eyebrow}</p>
-            <h2 className="reveal">{h.budget.title}</h2>
-            <ul className="ticks">
-              {h.budget.points.map((p) => (
-                <li className="reveal" key={p}>
-                  <Icon name="check" className="tick" />
-                  {p}
-                </li>
-              ))}
-            </ul>
+            <div className="combo-card budget-card reveal">
+              <h2 className="combo-title">{h.budget.title}</h2>
+              <p className="combo-p">{h.budget.p}</p>
+              <div className="budget-box">
+                <p className="budget-big">{fill(h.budget.spentOf, { spent: eur(38, locale), cap: eur(100, locale) })}</p>
+                <div className="meter">
+                  <span style={{ width: "38%" }} />
+                </div>
+                <dl className="budget-rows">
+                  {h.budget.rows.map(([k, v], i) => (
+                    <div key={k}>
+                      <dt>{k}</dt>
+                      <dd className={i === h.budget.rows.length - 1 ? "on" : undefined}>
+                        {fill(v, { cap: eur(100, locale) })}
+                      </dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       <section className="section section-tint" id="how">
         <div className="wrap">
-          <p className="eyebrow reveal">{d.how.eyebrow}</p>
           <h2 className="reveal">{d.how.title}</h2>
           <ol className="steps">
             {d.how.steps.map((s, i) => (
               <li className="step reveal" key={s.h}>
                 <span className="step-num">{i + 1}</span>
-                <h3>{s.h}</h3>
-                <p>{s.p}</p>
+                <span className="step-ico">
+                  <Icon name={stepIcons[i]} />
+                </span>
+                <div>
+                  <h3>{s.h}</h3>
+                  <p>{s.p}</p>
+                </div>
               </li>
             ))}
           </ol>
@@ -366,14 +386,23 @@ export default async function Home({
 
       <section className="section" id="prices">
         <div className="wrap">
-          <p className="eyebrow reveal">{d.pricing.eyebrow}</p>
-          <h2 className="reveal">{d.pricing.title}</h2>
+          <div className="sec-head">
+            <div>
+              <h2 className="reveal">{h.prices.title}</h2>
+              <p className="section-lede reveal">{h.prices.lede}</p>
+            </div>
+          </div>
           <div className="price-grid">
-            {prices.map((it) => (
+            {prices.map((it, i) => (
               <div className="price-item reveal" key={it.h}>
-                <h3>{it.h}</h3>
-                <p className="price-fig">{it.fig}</p>
-                <p>{it.p}</p>
+                <span className="price-ico">
+                  <Icon name={priceIcons[i]} />
+                </span>
+                <div>
+                  <h3>{it.h}</h3>
+                  <p className="price-fig">{it.fig}</p>
+                  <p className="price-p">{it.p}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -390,15 +419,8 @@ export default async function Home({
             {CATALOG.map((app) => {
               const taken = app.status === "built";
               return (
-                <article
-                  className={taken ? "card card-taken reveal" : "card reveal"}
-                  key={app.slug}
-                >
-                  <span
-                    className={
-                      taken ? "badge badge-taken" : "badge badge-sample"
-                    }
-                  >
+                <article className={taken ? "card card-taken reveal" : "card reveal"} key={app.slug}>
+                  <span className={taken ? "badge badge-taken" : "badge badge-sample"}>
                     {taken ? d.ideas.built : d.detail.sample}
                   </span>
                   <CardVisual slug={app.slug} />
@@ -408,34 +430,23 @@ export default async function Home({
                   <dl className="card-data">
                     <div>
                       <dt>{d.ideas.from}</dt>
-                      <dd>
-                        {taken || !app.price ? "—" : eur(app.price, locale)}
-                      </dd>
+                      <dd>{taken || !app.price ? "—" : eur(app.price, locale)}</dd>
                     </div>
                     <div>
                       <dt>{d.ideas.delivery}</dt>
                       <dd>
-                        {taken || !app.weeksLo
-                          ? "—"
-                          : `${app.weeksLo}–${app.weeksHi} ${d.detail.weeksUnit}`}
+                        {taken || !app.weeksLo ? "—" : `${app.weeksLo}–${app.weeksHi} ${d.detail.weeksUnit}`}
                       </dd>
                     </div>
                     <div>
                       <dt>{d.ideas.type}</dt>
-                      <dd>
-                        {app.appType === "A" ? d.detail.typeA : d.detail.typeB}
-                      </dd>
+                      <dd>{app.appType === "A" ? d.detail.typeA : d.detail.typeB}</dd>
                     </div>
                   </dl>
                   {taken ? (
-                    <span className="btn btn-ghost btn-block btn-disabled">
-                      {d.detail.ctaTaken}
-                    </span>
+                    <span className="btn btn-ghost btn-block btn-disabled">{d.detail.ctaTaken}</span>
                   ) : (
-                    <Link
-                      className="btn btn-primary btn-block"
-                      href={`/${locale}/apps/${app.slug}`}
-                    >
+                    <Link className="btn btn-primary btn-block" href={`/${locale}/apps/${app.slug}`}>
                       {d.ideas.view}
                     </Link>
                   )}
@@ -448,10 +459,7 @@ export default async function Home({
               <p className="card-desc" style={{ marginTop: 8 }}>
                 {d.createBanner.p}
               </p>
-              <Link
-                className="btn btn-primary btn-block"
-                href={`/${locale}/create`}
-              >
+              <Link className="btn btn-primary btn-block" href={`/${locale}/create`}>
                 {d.createBanner.cta}
               </Link>
             </article>
@@ -465,25 +473,34 @@ export default async function Home({
           <p className="eyebrow reveal">{d.about.eyebrow}</p>
           <h2 className="reveal">{d.about.title}</h2>
           <p className="section-lede reveal about-p">{d.about.p}</p>
-          <a
-            className="btn btn-ghost reveal"
-            href="https://www.codemenschen.at"
-            target="_blank"
-            rel="noopener"
-          >
+          <a className="btn btn-ghost reveal" href="https://www.codemenschen.at" target="_blank" rel="noopener">
             {d.about.cta}
           </a>
         </div>
       </section>
 
+      {/* Closing bar: the one next step, and the three promises once more */}
       <section className="section-final">
         <div className="wrap">
-          <div className="final-card reveal">
-            <h2>{h.final.title}</h2>
-            <p>{h.final.lede}</p>
-            <Link className="btn btn-light" href={proto}>
+          <div className="final-bar reveal">
+            <span className="final-logo">
+              <Logo />
+            </span>
+            <div className="final-text">
+              <h2>{h.final.title}</h2>
+              <p>{h.final.lede}</p>
+            </div>
+            <Link className="btn btn-primary" href={proto}>
               {h.cta} <Icon name="arrow" className="btn-ico" />
             </Link>
+            <ul className="final-checks">
+              {h.final.checks.map((c) => (
+                <li key={c}>
+                  <Icon name="check" className="tick" />
+                  {c}
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>

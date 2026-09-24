@@ -7,7 +7,7 @@ export const en = {
     how: "How it works",
     pricing: "Pricing",
     faq: "FAQ",
-    cta: "Start for free",
+    cta: "Get a free preview",
     account: "My projects",
     login: "Sign in",
   },
@@ -32,7 +32,7 @@ export const en = {
   },
   how: {
     eyebrow: "How it works",
-    title: "Four simple steps.",
+    title: "It is this simple",
     cta: "See the app ideas →",
     steps: [
       { h: "Describe your idea", p: "One sentence is enough: website, app, ads or e-mails." },
@@ -154,6 +154,7 @@ export const en = {
       from: "From",
       fixed: "Fixed price",
       afterPreview: "Price after the preview",
+      all: "Try it for free",
       try: "Try it free",
       items: {
         site: { h: "Website and landing page", p: "Modern, fast and made for phones." },
@@ -164,10 +165,12 @@ export const en = {
       },
     },
     campaign: {
-      eyebrow: "Campaign in one go",
-      title: "One message, three matching parts.",
-      p: "You describe your offer once. Appwerk AI writes the ad, the landing page with a sign-up form and the e-mail that follows. Nothing goes live and no money is spent before you press start.",
-      parts: ["The ad", "The landing page", "The e-mail"],
+      title: "One idea. Three matching parts.",
+      p: "From your description Appwerk AI writes the ad, the landing page with a sign-up form and the e-mail after it. Nothing goes live and no money is spent before you press start.",
+      offerLabel: "Your offer",
+      offerExample: "For example: online booking for my hair salon in Graz",
+      offerBtn: "Build preview",
+      parts: ["Ad", "Landing page", "E-mail"],
       adLine: "Fresh bread, ready when you are.",
       pageTitle: "Pre-order in two minutes",
       pageField: "Your e-mail",
@@ -176,19 +179,24 @@ export const en = {
       mailText: "Your order is ready from 7 am. See you tomorrow.",
     },
     budget: {
-      eyebrow: "Budget under control",
-      title: "Your ad budget has a hard limit.",
-      points: [
-        "You set the budget before anything starts.",
-        "The ad platform gets a fixed spending cap.",
-        "Our guard checks every 15 minutes and stops a campaign at its limit.",
-        "The ad budget is billed separately and spent 1:1 on ads.",
+      title: "Your ad budget is safe.",
+      p: "A total limit, a check every 15 minutes and an automatic stop.",
+      spentOf: "{spent} of {cap} spent",
+      rows: [
+        ["Total limit", "{cap}"],
+        ["Check", "every 15 min"],
+        ["Automatic stop", "On"],
       ],
+    },
+    prices: {
+      title: "Our prices",
+      lede: "Clear and simple. You see the cost before you pay.",
     },
     site: { h: "Website", fig: "{price} fixed", p: "Your preview goes live as it is. Hosting is included for {months} months, then {monthly} a month." },
     final: {
       title: "Have an idea? See it for free first.",
       lede: "One sentence is enough. The preview is ready in a few minutes.",
+      checks: ["Free preview", "Fixed price before you pay", "Money back if we cannot deliver"],
     },
   },
   detail: {

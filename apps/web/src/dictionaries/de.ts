@@ -7,7 +7,7 @@ export const de = {
     how: "So funktioniert's",
     pricing: "Preise",
     faq: "FAQ",
-    cta: "Kostenlos starten",
+    cta: "Kostenlose Vorschau starten",
     account: "Meine Projekte",
     login: "Anmelden",
   },
@@ -32,7 +32,7 @@ export const de = {
   },
   how: {
     eyebrow: "So funktioniert's",
-    title: "Vier einfache Schritte.",
+    title: "So einfach funktioniert es",
     cta: "Verfügbare App-Ideen ansehen →",
     steps: [
       { h: "Idee beschreiben", p: "Ein Satz reicht: Website, App, Werbung oder E-Mails." },
@@ -154,6 +154,7 @@ export const de = {
       from: "Ab",
       fixed: "Festpreis",
       afterPreview: "Preis nach der Vorschau",
+      all: "Kostenlos ausprobieren",
       try: "Kostenlos testen",
       items: {
         site: { h: "Website und Landingpage", p: "Modern, schnell und fürs Handy gemacht." },
@@ -164,10 +165,12 @@ export const de = {
       },
     },
     campaign: {
-      eyebrow: "Kampagne in einem Zug",
-      title: "Eine Botschaft, drei passende Teile.",
-      p: "Du beschreibst dein Angebot einmal. Appwerk AI schreibt die Anzeige, die Landingpage mit Anmeldeformular und die E-Mail danach. Nichts geht online und kein Euro wird ausgegeben, bevor du auf Start drückst.",
-      parts: ["Die Anzeige", "Die Landingpage", "Die E-Mail"],
+      title: "Eine Idee. Drei passende Teile.",
+      p: "Aus deiner Beschreibung schreibt Appwerk AI die Anzeige, die Landingpage mit Anmeldeformular und die E-Mail danach. Nichts geht online und kein Euro wird ausgegeben, bevor du auf Start drückst.",
+      offerLabel: "Dein Angebot",
+      offerExample: "z. B. Online-Terminbuchung für meinen Friseursalon in Graz",
+      offerBtn: "Vorschau erstellen",
+      parts: ["Werbung", "Landingpage", "E-Mail"],
       adLine: "Frisches Brot, fertig wenn du kommst.",
       pageTitle: "In zwei Minuten vorbestellt",
       pageField: "Deine E-Mail",
@@ -176,19 +179,24 @@ export const de = {
       mailText: "Deine Bestellung liegt ab 7 Uhr bereit. Bis morgen.",
     },
     budget: {
-      eyebrow: "Budget im Griff",
-      title: "Dein Werbebudget hat eine feste Grenze.",
-      points: [
-        "Du legst das Budget fest, bevor etwas startet.",
-        "Die Werbeplattform bekommt ein festes Ausgabenlimit.",
-        "Unser Wächter prüft alle 15 Minuten und stoppt eine Kampagne an ihrem Limit.",
-        "Das Werbebudget wird getrennt abgerechnet und fließt 1:1 in Anzeigen.",
+      title: "Dein Werbebudget ist sicher.",
+      p: "Gesamtlimit, Prüfung alle 15 Minuten und automatischer Stopp.",
+      spentOf: "{spent} von {cap} ausgegeben",
+      rows: [
+        ["Gesamtlimit", "{cap}"],
+        ["Prüfung", "alle 15 Min."],
+        ["Automatischer Stopp", "Aktiv"],
       ],
+    },
+    prices: {
+      title: "Unsere Preise",
+      lede: "Klar und einfach. Du siehst die Kosten vor der Bezahlung.",
     },
     site: { h: "Website", fig: "{price} Festpreis", p: "Deine Vorschau geht so online, wie sie ist. Hosting ist {months} Monate inklusive, danach {monthly} im Monat." },
     final: {
       title: "Du hast eine Idee? Sieh sie dir zuerst kostenlos an.",
       lede: "Ein Satz reicht. Die Vorschau ist in wenigen Minuten fertig.",
+      checks: ["Kostenlose Vorschau", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
     },
   },
   detail: {
