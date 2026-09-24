@@ -47,19 +47,43 @@ class AdminSecurityTest extends TestCase
         $this->assertSame(32, strlen(Totp::secret()));
     }
 
-    public function test_the_console_stays_shut_until_two_factor_is_set_up(): void
+    public function test_without_two_factor_the_console_opens_and_once_on_it_asks(): void
     {
         $admin = $this->admin();
         $token = $admin->createToken('ops')->plainTextToken;
 
-        $this->getJson('/api/admin/overview', $this->bearer($token))->assertForbidden()->assertJson(['two_factor' => 'setup']);
-        $this->getJson('/api/admin/2fa', $this->bearer($token))->assertOk()->assertJson(['enabled' => false, 'passed' => false]);
+        // Off by default: the e-mail link alone signs in.
+        $this->getJson('/api/admin/overview', $this->bearer($token))->assertOk();
+        $this->getJson('/api/admin/2fa', $this->bearer($token))->assertOk()->assertJson(['enabled' => false, 'passed' => true]);
+
+        // A started but unconfirmed setup changes nothing.
+        $this->postJson('/api/admin/2fa/setup', [], $this->bearer($token))->assertOk();
+        $this->getJson('/api/admin/overview', $this->bearer($token))->assertOk();
 
         $this->enrol($admin, $token);
-
         $this->getJson('/api/admin/overview', $this->bearer($token))->assertOk();
-        $this->assertNull($admin->fresh()->toArray()['two_factor_secret'] ?? null, 'the secret never leaves in JSON');
         $this->assertNotSame($admin->fresh()->two_factor_secret, $admin->fresh()->getRawOriginal('two_factor_secret'), 'stored encrypted');
+        $this->assertArrayNotHasKey('two_factor_secret', $admin->fresh()->toArray());
+
+        $next = $admin->createToken('ops')->plainTextToken;
+        $this->getJson('/api/admin/overview', $this->bearer($next))->assertForbidden()->assertJson(['two_factor' => 'verify']);
+    }
+
+    public function test_switching_off_needs_a_current_code(): void
+    {
+        $admin = $this->admin();
+        $token = $admin->createToken('ops')->plainTextToken;
+        $secret = $this->enrol($admin, $token);
+
+        $this->postJson('/api/admin/2fa/disable', ['code' => '000000'], $this->bearer($token))->assertStatus(422);
+        $this->postJson('/api/admin/2fa/disable', ['code' => Totp::at($secret, intdiv(time(), 30) + 1)], $this->bearer($token))
+            ->assertOk()->assertJson(['enabled' => false]);
+
+        $this->assertNull($admin->fresh()->two_factor_enabled_at);
+        $this->assertNull($admin->fresh()->getRawOriginal('two_factor_secret'));
+        $fresh = $admin->createToken('ops')->plainTextToken;
+        $this->getJson('/api/admin/overview', $this->bearer($fresh))->assertOk();
+        $this->assertTrue(AuditLog::where('action', 'POST admin/2fa/disable')->where('status', 200)->exists());
     }
 
     public function test_a_new_sign_in_asks_for_a_fresh_code_and_refuses_a_used_one(): void

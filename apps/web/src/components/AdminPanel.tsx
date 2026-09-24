@@ -15,6 +15,7 @@ import { OwnCampaignsPanel } from "./OwnCampaignsPanel";
 import { ConversionsPanel } from "./ConversionsPanel";
 import { AuditPanel } from "./AuditPanel";
 import { TwoFactorGate } from "./TwoFactorGate";
+import { TwoFactorPanel } from "./TwoFactorPanel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 interface Overview {
@@ -146,7 +147,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references" | "audit";
+type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references" | "twoFactor" | "audit";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -165,7 +166,8 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // the previous account's "no access" along with it.
   const [deniedFor, setDeniedFor] = useState<string | null>(null);
   const denied = Boolean(token) && deniedFor === token;
-  // Where this token stands with the second factor. Nothing in /admin answers until it has passed.
+  // Where this token stands with the second factor. For an admin who switched it on, nothing in
+  // /admin answers until it has passed; for everyone else "passed" is true from the start.
   const [twoFactor, setTwoFactor] = useState<{ for: string; enabled: boolean; passed: boolean } | null>(null);
   const passed = Boolean(token) && twoFactor?.for === token && twoFactor?.passed === true;
   const [tab, setTab] = useState<Tab>("overview");
@@ -445,7 +447,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
     { label: a.groupAds, tabs: ["ownAds", "clientAds", "keywords", "conversions", "ads"] },
     { label: a.groupInsight, tabs: ["analytics"] },
     { label: a.groupContent, tabs: ["library", "references"] },
-    { label: a.groupSecurity, tabs: ["audit"] },
+    { label: a.groupSecurity, tabs: ["twoFactor", "audit"] },
   ];
 
   // The console's own frame. Before a token is known there is nothing to navigate to, so the
@@ -458,7 +460,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   if (!token || denied) return <AdminSignIn locale={locale} d={d} denied={denied} />;
   if (twoFactor?.for !== token) return bare(<p className="est-empty">{a.loading}</p>);
   if (!twoFactor.passed) {
-    return <TwoFactorGate token={token} d={d} enabled={twoFactor.enabled} onPassed={() => setTwoFactor({ ...twoFactor, passed: true })} />;
+    return <TwoFactorGate token={token} d={d} onPassed={() => setTwoFactor({ ...twoFactor, passed: true })} />;
   }
 
   /**
@@ -555,6 +557,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "references" && token && <ReferencePanel token={token} locale={locale} d={d} />}
       {tab === "keywords" && token && <KeywordsPanel token={token} d={d} openId={keywordsFor} />}
       {tab === "conversions" && token && <ConversionsPanel token={token} locale={locale} d={d} />}
+      {tab === "twoFactor" && token && <TwoFactorPanel token={token} d={d} />}
       {tab === "audit" && token && <AuditPanel token={token} locale={locale} d={d} />}
       {tab === "ownAds" && token && (
         <OwnCampaignsPanel

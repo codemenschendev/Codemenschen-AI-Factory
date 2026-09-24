@@ -725,7 +725,15 @@ export const de = {
     groupSecurity: "Sicherheit",
     twoFactor: {
       setupTitle: "Zweiten Faktor einrichten",
-      setupText: "Die Konsole braucht ab jetzt neben dem E-Mail-Link einen Code aus einer Authenticator-App, zum Beispiel Google Authenticator, Microsoft Authenticator oder 1Password. Scanne den QR-Code und gib den Code ein, den die App zeigt.",
+      setupText: "Scanne den QR-Code mit einer Authenticator-App, zum Beispiel Google Authenticator, Microsoft Authenticator oder 1Password, und gib den Code ein, den die App zeigt.",
+      intro: "Mit zweitem Faktor braucht die Anmeldung an der Konsole neben dem E-Mail-Link einen Code aus deiner Authenticator-App. So reicht ein Zugriff auf dein Postfach allein nicht mehr. Die Einstellung gilt nur für dein Konto.",
+      on: "Eingeschaltet",
+      off: "Ausgeschaltet",
+      recoveryLeft: "{n} Wiederherstellungscodes übrig",
+      start: "Zweiten Faktor einschalten",
+      disableTitle: "Zweiten Faktor ausschalten",
+      disableText: "Gib zur Bestätigung einen aktuellen Code aus der App oder einen Wiederherstellungscode ein.",
+      disable: "Ausschalten",
       qrAlt: "QR-Code für die Authenticator-App",
       manual: "Kein Scanner? Schlüssel von Hand eingeben:",
       enable: "Einschalten",
@@ -739,7 +747,7 @@ export const de = {
       lost: "Handy verloren? Gib einen deiner Wiederherstellungscodes ein. Sind alle weg, setzt ein Admin den zweiten Faktor auf dem Server zurück.",
       savedTitle: "Wiederherstellungscodes",
       savedText: "Speichere diese zehn Codes jetzt an einem sicheren Ort, zum Beispiel im Passwortmanager. Jeder Code funktioniert einmal, falls das Handy fehlt. Sie werden nie wieder angezeigt.",
-      savedDone: "Gespeichert, weiter zur Konsole",
+      savedDone: "Gespeichert",
     },
     audit: {
       intro: "Jede Änderung in der Konsole, jede Anmeldung eines Admins und jeder Stopp durch den Budgetschutz. Neueste zuerst, 12 Monate aufbewahrt. Geheimnisse wie Codes und Schlüssel werden nie mitgeschrieben.",
@@ -765,6 +773,7 @@ export const de = {
     signOut: "Abmelden",
     backToSite: "Zurück zur Website",
     tabs: {
+      twoFactor: "Zwei-Faktor",
       audit: "Audit-Log",
       conversions: "Conversions",
       ownAds: "Appwerk-Kampagnen",
@@ -1443,7 +1452,7 @@ export const de = {
         h: "Anmeldung und Zahlung",
         p: [
           "Du meldest dich mit einem Link per E-Mail an. Es gibt kein Passwort, das gestohlen oder erraten werden kann.",
-          "Unser Team braucht für die Verwaltung zusätzlich einen Code aus einer Authenticator-App. Jede Änderung dort wird mit Name und Zeitpunkt protokolliert.",
+          "Die Verwaltung lässt sich zusätzlich mit einem Code aus einer Authenticator-App absichern. Jede Änderung dort wird mit Name und Zeitpunkt protokolliert.",
           "Zahlungen laufen über Stripe (Irland). Kartendaten gibst du direkt bei Stripe ein. Wir sehen sie nie.",
         ],
       },
