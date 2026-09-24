@@ -115,6 +115,21 @@ class AdminKeywordController extends Controller
         return response()->json($this->state($campaign));
     }
 
+    /**
+     * Keeps every proposal on one side (keywords or negatives) in one go. Only proposals: a
+     * keyword someone already took out stays out.
+     */
+    public function keepAll(Request $request, MarketingCampaign $campaign): JsonResponse
+    {
+        $data = $request->validate(['negative' => 'required|boolean']);
+        $campaign->keywords()
+            ->where('status', 'proposed')
+            ->where('negative', $data['negative'])
+            ->update(['status' => 'approved']);
+
+        return response()->json($this->state($campaign));
+    }
+
     /** The one button that changes something on the platform. */
     public function apply(MarketingCampaign $campaign, Keywords $keywords, Notify $notify, Request $request): JsonResponse
     {
@@ -151,8 +166,16 @@ class AdminKeywordController extends Controller
                 'name' => $campaign->project?->name ?? $campaign->strategy['name'] ?? ('Campaign #'.$campaign->id),
                 'status' => $campaign->platform_status,
                 'on_google' => ($campaign->platform_ref['ad_group'] ?? null) !== null,
+                // The number Google Ads shows for the campaign, so it can be found there.
+                'google_id' => self::googleId($campaign->platform_ref['campaign_id'] ?? null),
             ],
             'keywords' => $rows->values(),
         ];
+    }
+
+    /** "customers/123/campaigns/456" -> "456". */
+    private static function googleId(?string $resource): ?string
+    {
+        return $resource !== null && preg_match('#/campaigns/(\d+)$#', $resource, $m) ? $m[1] : null;
     }
 }

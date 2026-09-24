@@ -27,7 +27,7 @@ interface Keyword {
 }
 
 interface State {
-  campaign: { id: number; name: string; status: string; on_google: boolean };
+  campaign: { id: number; name: string; status: string; on_google: boolean; google_id: string | null };
   keywords: Keyword[];
 }
 
@@ -132,6 +132,19 @@ export function KeywordsPanel({ token, d, openId }: { token: string; d: Dict; op
     setBusy(null);
   }
 
+  async function keepAll(id: number, negative: boolean) {
+    setBusy(negative ? "keepN" : "keepK");
+    const r = await call<State>(`/admin/marketing/${id}/keywords/keep-all`, {
+      method: "POST",
+      body: JSON.stringify({ negative }),
+    });
+    if (r) {
+      setOpen(r);
+      await refreshCounts();
+    }
+    setBusy(null);
+  }
+
   async function add(id: number) {
     if (draft.trim() === "") return;
     setBusy("add");
@@ -182,6 +195,7 @@ export function KeywordsPanel({ token, d, openId }: { token: string; d: Dict; op
               <td style={{ width: "45%" }}>
                 {w.text}
                 {w.source === "ai" && <span className="badge badge-dim" style={{ marginLeft: 6 }}>{k.byAi}</span>}
+                {w.error && <div className="small" style={{ color: "var(--danger)", marginTop: 2 }}>{w.error}</div>}
               </td>
               <td>
                 {!negative && (
@@ -220,6 +234,31 @@ export function KeywordsPanel({ token, d, openId }: { token: string; d: Dict; op
     );
   };
 
+  const rowsAll = open?.keywords ?? [];
+  const count = {
+    live: rowsAll.filter((w) => w.live && w.status !== "paused").length,
+    approved: rowsAll.filter((w) => w.status === "approved" && !w.live).length,
+    proposed: rowsAll.filter((w) => w.status === "proposed").length,
+    paused: rowsAll.filter((w) => w.status === "paused").length,
+    // Taken out here but still running on Google: the next apply withdraws them.
+    leaving: rowsAll.filter((w) => w.status === "paused" && w.live).length,
+  };
+
+  const head = (negative: boolean, title: string) => {
+    const waiting = rowsAll.filter((w) => w.negative === negative && w.status === "proposed").length;
+    const key = negative ? "keepN" : "keepK";
+    return (
+      <div className="kw-head">
+        <h4>{title}</h4>
+        {waiting > 0 && open && (
+          <button className="btn btn-ghost btn-sm" onClick={() => void keepAll(open.campaign.id, negative)} disabled={busy === key}>
+            {k.keepAll.replace("{n}", String(waiting))}
+          </button>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div>
       <p className="muted small" style={{ maxWidth: 680, marginTop: 0 }}>{k.intro}</p>
@@ -239,7 +278,7 @@ export function KeywordsPanel({ token, d, openId }: { token: string; d: Dict; op
           {campaigns.map((c) => (
             <tr key={c.id}>
               <td>{c.name}</td>
-              <td>{c.on_google ? k.yes : k.no}</td>
+              <td><span className={`badge ${c.on_google ? "badge-live" : "badge-wait"}`}>{c.on_google ? k.yes : k.no}</span></td>
               <td className="num">{c.keywords} / {c.negatives}</td>
               <td className="num">{c.waiting > 0 ? c.waiting : ""}</td>
               <td style={{ textAlign: "right" }}>
@@ -263,17 +302,48 @@ export function KeywordsPanel({ token, d, openId }: { token: string; d: Dict; op
               <button className="btn btn-ghost btn-sm" onClick={() => void suggest(open.campaign.id)} disabled={busy === "suggest"}>
                 {busy === "suggest" ? k.thinking : k.suggest}
               </button>
-              <button className="btn btn-primary btn-sm" onClick={() => void apply(open.campaign.id)} disabled={busy === "apply"}>
-                {busy === "apply" ? k.sending : k.apply}
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => void apply(open.campaign.id)}
+                disabled={busy === "apply" || !open.campaign.on_google || count.approved + count.leaving === 0}
+                title={open.campaign.on_google ? k.applyHint : k.publishFirst}
+              >
+                {busy === "apply" ? k.sending : open.campaign.on_google ? k.apply : k.publishFirst}
               </button>
             </div>
           </div>
-          <p className="muted small" style={{ marginTop: 4 }}>{k.applyHint}</p>
 
-          <h4 style={{ marginTop: 18, marginBottom: 4 }}>{k.positives}</h4>
+          {/* Where this list stands with Google, in words, before any row. */}
+          {open.campaign.on_google ? (
+            <div className="kw-state kw-on">
+              <b>{k.onGoogleH}</b>
+              {open.campaign.google_id && <span>{k.onGoogleId.replace("{id}", open.campaign.google_id)}</span>}
+              <span>{count.approved + count.leaving > 0 ? k.toSend.replace("{n}", String(count.approved + count.leaving)) : k.allSent}</span>
+            </div>
+          ) : (
+            <div className="kw-state kw-off">
+              <b>{k.notOnGoogleH}</b>
+              <span>{k.notOnGoogleP}</span>
+              <b style={{ marginTop: 6 }}>{k.stepsH}</b>
+              <ol>
+                {k.steps.map((st) => (
+                  <li key={st}>{st}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          <div className="kw-sum">
+            <span><b className="kw-n kw-n-live">{count.live}</b> {k.sumLive}</span>
+            <span><b className="kw-n">{count.approved}</b> {k.sumApproved}</span>
+            <span><b className="kw-n kw-n-wait">{count.proposed}</b> {k.sumWaiting}</span>
+            <span><b className="kw-n kw-n-dim">{count.paused}</b> {k.sumPaused}</span>
+          </div>
+
+          {head(false, k.positives)}
           {list(false)}
 
-          <h4 style={{ marginTop: 18, marginBottom: 4 }}>{k.negativesTitle}</h4>
+          {head(true, k.negativesTitle)}
           <p className="muted small">{k.negativesHint}</p>
           {list(true)}
 

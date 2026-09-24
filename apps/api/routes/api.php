@@ -180,6 +180,7 @@ Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admi
     Route::get('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'index']);
     Route::post('/marketing/{campaign}/keywords/suggest', [AdminKeywordController::class, 'suggest'])->middleware('throttle:20,60,keywords');
     Route::post('/marketing/{campaign}/keywords', [AdminKeywordController::class, 'store']);
+    Route::post('/marketing/{campaign}/keywords/keep-all', [AdminKeywordController::class, 'keepAll']);
     Route::post('/marketing/{campaign}/keywords/apply', [AdminKeywordController::class, 'apply']);
     Route::patch('/keywords/{keyword}', [AdminKeywordController::class, 'update']);
     Route::delete('/keywords/{keyword}', [AdminKeywordController::class, 'destroy']);
