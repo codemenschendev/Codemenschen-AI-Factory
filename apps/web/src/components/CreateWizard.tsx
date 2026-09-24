@@ -283,9 +283,9 @@ export function CreateWizard({
               <strong>{eur(est.price, locale)}</strong>
             </div>
             <div className="row">
-              <span className="muted">{w.estWeeks}</span>
+              <span className="muted">{w.estDelivery}</span>
               <strong>
-                {est.weeksLo}–{est.weeksHi} {d.detail.weeksUnit}
+                {est.daysLo}–{est.daysHi} {d.detail.daysUnit}
               </strong>
             </div>
             <hr />

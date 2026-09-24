@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CATALOG, getEntry } from "@/lib/catalog";
-import { HOSTING_MONTHLY } from "@ai-factory/pricing";
+import { DELIVERY_DAYS_HI, DELIVERY_DAYS_LO, HOSTING_MONTHLY } from "@ai-factory/pricing";
 import { LOCALES, eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 
 export function generateStaticParams() {
@@ -109,9 +109,9 @@ export default async function AppDetail({
             <strong>{eur(app.price!, locale)}</strong>
           </div>
           <div className="row">
-            <span className="muted">{d.detail.weeks}</span>
+            <span className="muted">{d.detail.delivery}</span>
             <strong>
-              {app.weeksLo}–{app.weeksHi} {d.detail.weeksUnit}
+              {DELIVERY_DAYS_LO}–{DELIVERY_DAYS_HI} {d.detail.daysUnit}
             </strong>
           </div>
           <hr />

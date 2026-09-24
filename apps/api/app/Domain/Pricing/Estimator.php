@@ -15,6 +15,11 @@ class Estimator
      * AI-builder subscriptions and every add-on is template work for the
      * agent, so an add-on costs a coffee, not a sprint. Base prices per platform live in estimate().
      */
+    /** Delivery time of every app, in working days, the same for every scope (Patrick, 2026-09-24). */
+    public const DELIVERY_DAYS_LO = 1;
+
+    public const DELIVERY_DAYS_HI = 2;
+
     public const FEATURES = [
         'auth' => ['cost' => 10, 'needsBackend' => true],
         'pay' => ['cost' => 15, 'needsBackend' => true],
@@ -81,7 +86,7 @@ class Estimator
      * @param  'consumer'|'b2b'|'both'  $audience
      * @param  'web'|'mobile'|'both'  $platform
      * @param  list<string>  $features
-     * @return array{devLo:int,devHi:int,marketingLo:int,marketingHi:int,price:int,weeksLo:int,weeksHi:int,appType:string,hostingMonthly:int}
+     * @return array{devLo:int,devHi:int,marketingLo:int,marketingHi:int,price:int,daysLo:int,daysHi:int,appType:string,hostingMonthly:int}
      */
     public static function estimate(string $audience, string $platform, array $features): array
     {
@@ -101,7 +106,6 @@ class Estimator
         $marketingLo = $audience === 'consumer' ? 200 : 300;
         $marketingHi = $audience === 'consumer' ? 500 : 800;
         $price = min(self::PRICE_MAX, max(self::PRICE_MIN, self::rnd($dev * 1.2, 50)));
-        $nf = count($features);
         $appType = self::appType($features);
 
         return [
@@ -110,8 +114,8 @@ class Estimator
             'marketingLo' => $marketingLo,
             'marketingHi' => $marketingHi,
             'price' => $price,
-            'weeksLo' => 3 + $nf,
-            'weeksHi' => 6 + $nf + ($platform === 'both' ? 2 : 0),
+            'daysLo' => self::DELIVERY_DAYS_LO,
+            'daysHi' => self::DELIVERY_DAYS_HI,
             'appType' => $appType,
             'hostingMonthly' => self::HOSTING_MONTHLY[$appType],
         ];
