@@ -1077,6 +1077,12 @@ export const en = {
       claude: "Claude writes the ads. Pictures come from the business's website, uploads, the library and Pexels. No render.",
       codex: "Codex gets the customer's words, the website summary and the uploaded pictures and designs the whole banner, text included.",
     },
+    writerTile: "Website, app and e-mail prototypes",
+    writers: { claude: "Claude writes", codex: "Codex writes" },
+    writerHints: {
+      claude: "Claude writes the page. Default.",
+      codex: "Codex writes the whole page with the same rules. If Codex fails or its quota is used up, Claude writes the page. Ad prototypes have their own switch.",
+    },
     layoutsTile: "Layout packs",
     layoutsOn: "On",
     layoutsOff: "Off",

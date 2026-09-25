@@ -40,6 +40,8 @@ interface Overview {
   payments: { mode: "sandbox" | "live"; sandbox_configured: boolean; live_missing: string[] };
   /** Who makes the ad prototype: Claude's page with Codex scenes, Claude alone, or Codex alone. */
   ads_mode: "hybrid" | "claude" | "codex";
+  /** Who writes the site, app and e-mail prototypes. */
+  prototype_writer: "claude" | "codex";
   /** The spend guard: the kill switch, its two limits, and what runs now. */
   ads_guard: { killed: boolean; max_campaign_eur: number; max_daily_total_eur: number; running_daily_eur: number; running: number };
   /** Layout packs for the free prototypes: on or off, per kind, with a control group. */
@@ -335,6 +337,11 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   async function saveAdsMode(mode: Overview["ads_mode"]) {
     const r = await call<{ ads_mode: Overview["ads_mode"] }>("/admin/ads-mode", { method: "POST", body: JSON.stringify({ mode }) });
     if (r) setOverview((o) => (o ? { ...o, ads_mode: r.ads_mode } : o));
+  }
+
+  async function saveWriter(writer: Overview["prototype_writer"]) {
+    const r = await call<{ prototype_writer: Overview["prototype_writer"] }>("/admin/prototype-writer", { method: "POST", body: JSON.stringify({ writer }) });
+    if (r) setOverview((o) => (o ? { ...o, prototype_writer: r.prototype_writer } : o));
   }
 
   async function setKill(on: boolean) {
@@ -863,6 +870,24 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   onClick={() => void saveAdsMode(m)}
                 >
                   {a.adsModes[m]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26 }}>
+            <span className="cat">{a.writerTile}</span>
+            <strong style={{ fontSize: 22 }}>{a.writers[overview.prototype_writer]}</strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.writerHints[overview.prototype_writer]}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {(["claude", "codex"] as const).map((w) => (
+                <button
+                  key={w}
+                  className={overview.prototype_writer === w ? "btn btn-primary btn-sm" : "btn btn-ghost btn-sm"}
+                  disabled={busy || overview.prototype_writer === w}
+                  onClick={() => void saveWriter(w)}
+                >
+                  {a.writers[w]}
                 </button>
               ))}
             </div>

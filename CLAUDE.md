@@ -20,6 +20,13 @@
   sets words, and only because the owner chose to test it; it never writes text for Claude's pages.
   `App\Domain\Ai\ChatBackend` refuses an OpenAI chat backend before a request is sent; keep every
   `x-openclaw-model` header going through it.
+- **Prototype writer switch** (2026-09-25): the admin panel's setting `prototype.writer` decides who
+  writes the site, app and e-mail prototypes: `claude` (default) or `codex`. With `codex`, the page
+  goes to the image agent's chat route (`infra/imagegen`, `POST /v1/chat/completions`, one read-only
+  `codex exec`) with the same messages, and its repair and change rounds go there too; audit and
+  photos stay as they are. If Codex fails (quota, timeout), Claude writes the page and the QA report
+  says `writer_fallback`. Like `ads.mode` = `codex`, this is text by OpenAI only because the owner
+  switched it on; everything else stays with Claude.
 - **Paid renders on the owner's OpenAI key** (2026-09-24): with a key entered in the admin panel
   (`OpenAiImageKey`, stored encrypted, never read back), a paying customer's ad pictures
   (`RenderProjectAd` -> `ImageService::generate`) go straight to the OpenAI Images API on it; no key,

@@ -271,6 +271,14 @@ class PrototypeWriter
         if (($backend = ChatBackend::pin()) !== null) {
             $request = $request->withHeaders(['x-openclaw-model' => $backend]);
         }
+        // Who writes the page (owner's switch, admin panel, 2026-09-25). Codex takes the same
+        // messages; the ad kind has its own switch above. The repair round goes to the same writer.
+        $gateway = $request;
+        $writer = $kind !== 'ads' && self::writer() === 'codex' && ($codex = self::codexWriter()) !== null ? 'codex' : 'claude';
+        if ($writer === 'codex') {
+            $request = $codex;
+        }
+        $writerNote = null;
 
         // A reference screenshot, if one is filed for this kind. It rides along as an image and the
         // instruction that goes with it is the important half: aim at the composition, take
@@ -401,7 +409,23 @@ class PrototypeWriter
                     throw new RuntimeException('The gateway gave no answer.');
                 }
             } else {
-                $res = $request->post('/v1/chat/completions', $body);
+                try {
+                    $res = $request->post('/v1/chat/completions', $body);
+                } catch (\Illuminate\Http\Client\ConnectionException $e) {
+                    if ($writer !== 'codex') {
+                        throw $e;
+                    }
+                    $res = null;
+                }
+                // Codex out of quota, timed out or down: Claude writes the page, so the visitor
+                // still gets one. The report says it happened.
+                if ($writer === 'codex' && ($res === null || ! $res->successful())) {
+                    $writerNote = 'codex failed ('.($res === null ? 'no connection' : 'http '.$res->status()).'), Claude wrote the page';
+                    Log::info('prototype: '.$writerNote, ['kind' => $kind]);
+                    $writer = 'claude';
+                    $request = $gateway;
+                    $res = $request->post('/v1/chat/completions', $body);
+                }
             }
 
             if (! $res->successful()) {
@@ -568,6 +592,10 @@ class PrototypeWriter
 
         $timing['total'] = round(array_sum($timing), 1);
         $qa['timing'] = $timing;
+        $qa['writer'] = $writer;
+        if ($writerNote !== null) {
+            $qa['writer_fallback'] = $writerNote;
+        }
         // Which skeleton this page followed, or that it followed none. Without this line the
         // comparison the switch exists for cannot be made after the fact.
         $qa['layout'] = $layout === null ? null : ['slug' => $layout['slug'], 'source' => $layout['source']];
@@ -809,7 +837,7 @@ class PrototypeWriter
         if (($qa['mode'] ?? null) === 'codex') {
             $page = $this->reviseCodex($html, $qa, $prompt, $change);
         } else {
-            $page = $this->reviseClaude($html, $kind, $change);
+            $page = $this->reviseClaude($html, $kind, $change, ($qa['writer'] ?? null) === 'codex' ? self::codexWriter() : null);
             if ($photo !== null) {
                 // A slot the change added still holds its brief: it gets a picture like any other.
                 $page = $photo->apply($page, ['fill' => false])['html'];
@@ -820,7 +848,7 @@ class PrototypeWriter
         return ['title' => $this->titleOf($page), 'html' => $page, 'qa' => $qa];
     }
 
-    private function reviseClaude(string $html, string $kind, string $change): string
+    private function reviseClaude(string $html, string $kind, string $change, ?PendingRequest $writer = null): string
     {
         $pictures = [];
         $lean = preg_replace_callback('~src="(data:[^"]+)"~', function (array $m) use (&$pictures): string {
@@ -834,6 +862,8 @@ class PrototypeWriter
         if (($backend = ChatBackend::pin()) !== null) {
             $request = $request->withHeaders(['x-openclaw-model' => $backend]);
         }
+        // A page Codex wrote is changed by Codex.
+        $request = $writer ?? $request;
         $res = $request->post('/v1/chat/completions', [
             'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
             'messages' => [
@@ -933,6 +963,35 @@ class PrototypeWriter
         }
 
         return ['square' => '1080x1080'];
+    }
+
+    /** Who writes the site, app and e-mail prototypes (owner's switch, 2026-09-25). */
+    public const WRITERS = ['claude', 'codex'];
+
+    public static function writer(): string
+    {
+        try {
+            $writer = Setting::read('prototype.writer', 'claude');
+        } catch (\Illuminate\Database\QueryException) {
+            return 'claude';
+        }
+
+        return in_array($writer, self::WRITERS, true) ? $writer : 'claude';
+    }
+
+    /**
+     * The Codex agent as a writer: the image agent's chat route (infra/imagegen), which answers in
+     * the gateway's shape. Null when the agent is not configured, and the page goes to Claude.
+     */
+    public static function codexWriter(): ?PendingRequest
+    {
+        $url = rtrim((string) config('services.ai_image.codex_url'), '/');
+        $token = (string) config('services.ai_image.codex_token');
+        if ($url === '' || $token === '') {
+            return null;
+        }
+
+        return Http::baseUrl($url)->withToken($token)->acceptJson()->timeout(630)->connectTimeout(10);
     }
 
     public const ADS_MODES = ['hybrid', 'claude', 'codex'];
