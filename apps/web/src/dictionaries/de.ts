@@ -1312,6 +1312,7 @@ export const de = {
     },
     another: "Noch einen bauen",
     limit: "Tageslimit erreicht. Morgen wieder oder schreib uns.",
+    used: "Du hast deinen kostenlosen Prototyp schon erstellt. Du findest ihn unter „Meine Projekte“. Für einen weiteren schreib uns einfach.",
     signIn: {
       ads: "Für Anzeigen brauchen wir deine E-Mail. Wir schicken dir einen Link, danach geht es gleich weiter.",
       again: "Dein erster Prototyp war kostenlos ohne Anmeldung. Für weitere brauchen wir deine E-Mail. Wir schicken dir einen Link.",

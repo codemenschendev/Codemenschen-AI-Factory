@@ -1310,6 +1310,7 @@ export const en = {
     },
     another: "Build another",
     limit: "Daily limit reached. Come back tomorrow or get in touch.",
+    used: "You have already made your free prototype. You find it under \"My projects\". For another one, just write to us.",
     signIn: {
       ads: "For ads we need your e-mail. We send you a link, then you carry on right away.",
       again: "Your first prototype was free without signing in. For more we need your e-mail. We send you a link.",
