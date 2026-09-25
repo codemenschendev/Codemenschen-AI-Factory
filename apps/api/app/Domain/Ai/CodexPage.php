@@ -101,7 +101,7 @@ class CodexPage
         if ($bytes === null) {
             throw new RuntimeException('The image agent drew no prototype.');
         }
-        $bytes = self::jpeg($bytes);
+        // PNG as Codex drew it: the small words of a design stay sharp, and a few MB is fine here.
         $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
 
         return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -109,22 +109,5 @@ class CodexPage
             .'body{margin:0;background:#eef0f4}main{padding:24px 16px;display:flex;justify-content:center}'
             .'.mockup{display:block;width:100%;max-width:'.explode('x', $size)[0].'px;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.16)}'
             .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'" alt=""></main></body></html>';
-    }
-
-    /**
-     * A picture as a JPEG, a third of the PNG's size. ImageMagick, because the production image has
-     * no GD; the bytes as they are when it is missing or fails.
-     */
-    public static function jpeg(string $bytes): string
-    {
-        $bin = collect(['/usr/bin/magick', '/usr/bin/convert', '/opt/homebrew/bin/magick'])->first(fn (string $p) => is_executable($p));
-        if ($bin === null) {
-            return $bytes;
-        }
-        $proc = new \Symfony\Component\Process\Process([$bin, '-', '-quality', '88', 'jpeg:-'], null, null, $bytes, 60);
-        $proc->run();
-        $out = $proc->getOutput();
-
-        return $proc->isSuccessful() && strlen($out) > 200 ? $out : $bytes;
     }
 }
