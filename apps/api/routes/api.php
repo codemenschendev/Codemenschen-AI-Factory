@@ -143,6 +143,7 @@ Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admi
     Route::post('/payments/mode', [AdminController::class, 'paymentsMode']);
     Route::post('/layouts', [AdminController::class, 'layoutsSettings']);
     Route::post('/ads-mode', [AdminController::class, 'adsMode']);
+    Route::post('/prototype-writer', [AdminController::class, 'prototypeWriter']);
     // The validation test and the spend guard (ValidationController, SpendGuard).
     Route::get('/prototypes/{prototype}/validation', [ValidationController::class, 'show']);
     Route::post('/prototypes/{prototype}/validation', [ValidationController::class, 'store']);

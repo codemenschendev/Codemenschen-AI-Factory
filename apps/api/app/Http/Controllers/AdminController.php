@@ -73,6 +73,7 @@ class AdminController extends Controller
             'layouts' => app(Layouts::class)->status(),
             // Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone.
             'ads_mode' => PrototypeWriter::adsMode(),
+            'prototype_writer' => PrototypeWriter::writer(),
             // The spend guard: kill switch, limits, and what runs now.
             'ads_guard' => app(SpendGuard::class)->limits() + ['running' => MarketingCampaign::where('platform_status', 'active')->count()],
             'revenue' => [
@@ -270,6 +271,17 @@ class AdminController extends Controller
         $notify->system("prototype ads mode set to {$mode} by {$by}");
 
         return response()->json(['ads_mode' => $mode]);
+    }
+
+    /** Who writes the site, app and e-mail prototypes: Claude (default) or Codex. */
+    public function prototypeWriter(Request $request, Notify $notify): JsonResponse
+    {
+        $writer = $request->validate(['writer' => 'required|in:'.implode(',', PrototypeWriter::WRITERS)])['writer'];
+        $by = (string) $request->user()->email;
+        Setting::write('prototype.writer', $writer, $by);
+        $notify->system("prototype writer set to {$writer} by {$by}");
+
+        return response()->json(['prototype_writer' => $writer]);
     }
 
     public function layoutsSettings(Request $request, Layouts $layouts, Notify $notify): JsonResponse

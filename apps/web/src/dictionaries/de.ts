@@ -1077,6 +1077,12 @@ export const de = {
       claude: "Claude schreibt die Anzeigen. Bilder kommen von der Website, aus Uploads, der Bibliothek und Pexels. Kein Rendering.",
       codex: "Codex bekommt den Text des Kunden, die Zusammenfassung der Website und die hochgeladenen Bilder und gestaltet das ganze Banner samt Text.",
     },
+    writerTile: "Website-, App- und E-Mail-Prototypen",
+    writers: { claude: "Claude schreibt", codex: "Codex schreibt" },
+    writerHints: {
+      claude: "Claude schreibt die Seite. Standard.",
+      codex: "Codex schreibt die ganze Seite mit denselben Vorgaben. Fällt Codex aus oder ist das Kontingent leer, schreibt Claude die Seite. Werbe-Prototypen haben ihren eigenen Schalter.",
+    },
     layoutsTile: "Layout-Vorlagen",
     layoutsOn: "An",
     layoutsOff: "Aus",
