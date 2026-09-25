@@ -8,6 +8,7 @@ import { AGENT_MODE, runStage } from "./stages.ts";
 import { GATEWAY_MODE, RELAY_MODE, gatewayComplete } from "./gateway.ts";
 import { REFINE_AVAILABLE, refineIdea } from "./refine.ts";
 import { changeChat } from "./changechat.ts";
+import { mockupSite } from "./mockupsite.ts";
 import type { StageJob, StageResult } from "./types.ts";
 
 const PORT = Number(process.env.PORT ?? 8300);
@@ -70,13 +71,35 @@ createServer((req, res) => {
   };
 
   if (req.method === "GET" && req.url === "/healthz") return reply(200, { ok: true });
-  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine" && req.url !== "/change-chat" && req.url !== "/vision-check")) return reply(404, { error: "not found" });
+  if (req.method !== "POST" || (req.url !== "/run" && req.url !== "/refine" && req.url !== "/change-chat" && req.url !== "/vision-check" && req.url !== "/mockup-site")) return reply(404, { error: "not found" });
   if (!TOKEN || req.headers.authorization !== `Bearer ${TOKEN}`) {
     return reply(403, { error: "forbidden" });
   }
 
   let raw = "";
   req.on("data", (c) => (raw += c));
+
+  if (req.url === "/mockup-site") {
+    // A bought design picture built into the page by the code agent (mockupsite.ts). Synchronous:
+    // the API's queue job waits for it, up to twenty minutes.
+    req.on("end", () => {
+      if (!RELAY_MODE) return reply(503, { error: "relay unavailable" });
+      let input: { id?: unknown; system?: unknown; image?: unknown };
+      try {
+        input = JSON.parse(raw);
+      } catch {
+        return reply(422, { error: "invalid payload" });
+      }
+      const id = String(input.id ?? "");
+      const image = String(input.image ?? "");
+      const system = String(input.system ?? "");
+      if (!id || !system || !/^[A-Za-z0-9+/=]+$/.test(image) || image.length > 20_000_000) return reply(422, { error: "invalid input" });
+      mockupSite(id, system, image)
+        .then((r) => reply(200, r))
+        .catch((e) => reply(502, { error: e instanceof Error ? e.message : String(e) }));
+    });
+    return;
+  }
 
   if (req.url === "/vision-check") {
     // Daily health check: can the model on the chat path see a picture? The gateway drops images

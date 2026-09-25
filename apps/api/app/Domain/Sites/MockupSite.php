@@ -2,7 +2,6 @@
 
 namespace App\Domain\Sites;
 
-use App\Domain\Ai\ChatBackend;
 use App\Domain\Ai\ImageService;
 use App\Domain\Ai\Prompts;
 use App\Domain\Qa\PageAudit;
@@ -37,7 +36,7 @@ class MockupSite
             throw new RuntimeException('The bought prototype holds no design picture.');
         }
         $t0 = microtime(true);
-        $html = $this->page($m[1]);
+        $html = $this->page($m[1], (string) ($prototype->id ?? 'test'));
         $written = round(microtime(true) - $t0, 1);
         [$html, $shots, $failed] = $this->photos($html);
 
@@ -54,31 +53,24 @@ class MockupSite
         return ['html' => $html, 'qa' => $qa];
     }
 
-    /** Claude builds the page from the design picture. */
-    private function page(string $picture): string
+    /**
+     * Claude builds the page from the design picture. Through the worker and the code agent, not
+     * the chat gateway: the tool-less chat agent is handed a picture as a file it cannot open.
+     */
+    private function page(string $picture, string $id): string
     {
-        $request = Http::baseUrl(rtrim((string) config('services.ai_image.base_url'), '/'))
-            ->withToken((string) config('services.ai_image.token'))->acceptJson()->timeout(630)->connectTimeout(10);
-        if (($backend = ChatBackend::pin()) !== null) {
-            $request = $request->withHeaders(['x-openclaw-model' => $backend]);
-        }
-        $res = $request->post('/v1/chat/completions', [
-            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
-            'messages' => [
-                ['role' => 'system', 'content' => Prompts::get('prototype/from-mockup')."\n\n".Prompts::get('prototype/laws')],
-                ['role' => 'user', 'content' => [
-                    ['type' => 'text', 'text' => 'The approved design:'],
-                    ['type' => 'image_url', 'image_url' => ['url' => $picture]],
-                ]],
-            ],
-            'max_completion_tokens' => 16000,
-        ]);
+        $res = Http::withToken((string) config('services.worker.token'))->acceptJson()->timeout(1300)->connectTimeout(10)
+            ->post(rtrim((string) config('services.worker.url'), '/').'/mockup-site', [
+                'id' => $id,
+                'system' => Prompts::get('prototype/from-mockup')."\n\n".Prompts::get('prototype/laws'),
+                'image' => preg_replace('~^data:image/[^;]+;base64,~', '', $picture),
+            ]);
         if (! $res->successful()) {
-            throw new RuntimeException('The gateway answered '.$res->status().' to the page.');
+            throw new RuntimeException('The worker answered '.$res->status().' to the page: '.mb_substr((string) $res->json('error'), 0, 200));
         }
-        $reply = (string) $res->json('choices.0.message.content');
+        $reply = (string) $res->json('html');
         if (preg_match('~(<!doctype html.*</html>|<html\b.*</html>)~is', $reply, $page) !== 1) {
-            throw new RuntimeException('The page came back without HTML: "'.mb_substr(trim($reply), 0, 120).'"');
+            throw new RuntimeException('The page came back without HTML.');
         }
 
         return trim($page[1]);

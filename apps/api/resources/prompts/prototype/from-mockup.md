@@ -23,4 +23,4 @@ logo's typeface and colour, with a simple SVG mark where it has one.
 Where the design uses a dash between two parts of a sentence, write a comma, a colon or a full stop
 instead.
 
-Reply with the HTML file only, from <!doctype html> to </html>, as the text of your reply.
+The page is one complete HTML file, from <!doctype html> to </html>.
