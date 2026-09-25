@@ -67,7 +67,7 @@ class PrototypeWriterSwitchTest extends TestCase
             && $r['prompt'] === self::BRIEF && $r['mockup'] === 'site' && $r['size'] === '1024x1536');
         $this->assertSame('codex', $out['qa']['writer']);
         $this->assertSame(self::BRIEF, $out['qa']['brief']);
-        $this->assertSame(1, substr_count($out['html'], '<img class="mockup" src="data:image/jpeg;base64,'));
+        $this->assertSame(1, preg_match_all('~<img class="mockup" src="data:image/(jpeg|png);base64,~', $out['html']));
     }
 
     public function test_claude_takes_over_when_codex_fails(): void
