@@ -31,8 +31,10 @@
   `writer_fallback`. Like `ads.mode` = `codex`, the words in the picture are OpenAI's only because
   the owner switched it on.
 - **A bought design picture becomes the website** (2026-09-25): when a Codex mockup prototype is
-  paid for, `SiteService::claim` queues `BuildSiteFromMockup`: Claude builds the page from the
-  picture (`prompts/prototype/from-mockup.md`, the picture sent as an image), Codex renders each
+  paid for, `SiteService::claim` queues `BuildSiteFromMockup`: the code agent `appwerk-code` builds
+  the page from the picture (`prompts/prototype/from-mockup.md`; worker `POST /mockup-site` writes the
+  picture beside the repos and calls the host relay, because the tool-less chat agent cannot open a
+  picture), Codex renders each
   photograph of it without words, and they are laid in as JPEGs (`App\Domain\Sites\MockupSite`).
   The picture itself never goes live: `goLive` waits until the page is built. The paid mail says so.
 - **Paid renders on the owner's OpenAI key** (2026-09-24): with a key entered in the admin panel

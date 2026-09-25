@@ -44,10 +44,10 @@ class MockupSiteTest extends TestCase
 
     private function fake(): void
     {
-        config(['services.ai_image.base_url' => 'http://sidecar.test', 'services.ai_image.token' => 't',
+        config(['services.worker.url' => 'http://worker.test', 'services.worker.token' => 'w',
             'services.ai_image.codex_url' => 'http://imagegen.test', 'services.ai_image.codex_token' => 'c']);
         Http::fake([
-            'sidecar.test/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => self::PAGE]]]]),
+            'worker.test/mockup-site' => Http::response(['html' => self::PAGE]),
             'imagegen.test/v1/images' => Http::response(['base64' => base64_encode($this->png()), 'mime' => 'image/png']),
         ]);
     }
@@ -68,9 +68,9 @@ class MockupSiteTest extends TestCase
 
         $out = app(MockupSite::class)->build($this->mockup());
 
-        Http::assertSent(fn ($r) => str_contains($r->url(), 'sidecar.test')
-            && $r['messages'][1]['content'][1]['type'] === 'image_url'
-            && str_starts_with($r['messages'][1]['content'][1]['image_url']['url'], 'data:image/png;base64,'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'worker.test/mockup-site')
+            && base64_decode($r['image'], true) !== false && str_contains($r['system'], 'approved and')
+            && ! str_starts_with($r['image'], 'data:'));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test/v1/images')
             && str_contains($r['prompt'], 'couple steering a motorboat') && $r['size'] === '1536x1024' && ! isset($r['mockup']));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test/v1/images') && $r['size'] === '1024x1024');
