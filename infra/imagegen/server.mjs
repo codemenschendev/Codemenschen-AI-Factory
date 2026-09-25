@@ -2,7 +2,6 @@
  * Appwerk image agent.
  *
  * POST /v1/images  {prompt, size: "1080x1920", refs: [{mime, data(base64)}]}  -> {base64, mime}
- * POST /v1/chat/completions  {messages}  -> {choices: [{message: {content}}]}
  * GET  /health     -> {ok, logged_in, mode}
  *
  * Each request runs one read-only `codex exec`: the reference pictures are attached with -i,
@@ -11,10 +10,9 @@
  * else and runs no command. Two jobs at a time: the subscription's image quota is per account.
  * Bearer IMAGEGEN_TOKEN; the service is only on the compose network.
  *
- * The chat route is the owner's writer switch (admin panel, setting prototype.writer, 2026-09-25):
- * with it on "codex", a prototype page is written by Codex instead of Claude. It takes the same
- * messages the gateway gets, runs one read-only `codex exec`, and answers with Codex's last
- * message in the gateway's shape, so the pipeline around it (audit, repair, photos) stays as it is.
+ * With `mockup` ('site', 'app' or 'email') the picture is a whole prototype: the owner's writer
+ * switch (admin panel, setting prototype.writer = codex, 2026-09-25) shows the customer one design
+ * picture drawn by Codex from their sentence, the way ChatGPT answers when asked directly.
  */
 import { createServer } from 'node:http';
 import { spawn } from 'node:child_process';
@@ -85,6 +83,23 @@ const creative = (prompt, size, refCount) => [
     prompt,
 ].filter((l) => l !== '').join('\n');
 
+// A whole prototype as one picture. The customer's sentence goes as it is; the only words added
+// say what to draw. With a reference attached, it is the current design and only the change is drawn.
+const mockup = (prompt, size, refCount, kind) => [
+    'Generate exactly ONE image with your image generation tool, then reply "done".',
+    'Do not run commands and do not write files: the image tool output is all that is needed.',
+    '',
+    `Format: ${shape(size)}.`,
+    kind === 'app'
+        ? 'Design a prototype of this app: its main screens, side by side, as a designer presents them.'
+        : kind === 'email'
+            ? 'Design a prototype of this e-mail, as a designer presents it.'
+            : 'Design a prototype of this website: the homepage, as a designer presents it.',
+    refCount > 0 ? 'The attached picture is the current design. Keep it as it is and change only what the request asks.' : '',
+    '',
+    prompt,
+].filter((l) => l !== '').join('\n');
+
 const instruction = (prompt, size, refCount) => [
     'Generate exactly ONE image with your image generation tool, then reply "done".',
     'Do not run commands and do not write files: the image tool output is all that is needed.',
@@ -98,66 +113,6 @@ const instruction = (prompt, size, refCount) => [
     'The scene:',
     prompt,
 ].filter((l) => l !== '').join('\n');
-
-/** One conversation as one prompt: the system text first, then every turn under its speaker. */
-const transcript = (messages) => {
-    const text = (content) => typeof content === 'string' ? content
-        : (Array.isArray(content) ? content.filter((p) => p?.type === 'text').map((p) => p.text).join('\n\n') : '');
-    const system = messages.filter((m) => m.role === 'system').map((m) => text(m.content)).join('\n\n');
-    const turns = messages.filter((m) => m.role !== 'system');
-    return [
-        'You write one file and deliver it as the TEXT of your final reply.',
-        'Do not run commands, do not write files, do not generate images. Your final message is the deliverable, exactly as the instructions below ask for it.',
-        '',
-        '# Instructions',
-        system,
-        '',
-        ...turns.flatMap((m) => [m.role === 'assistant' ? '# Your earlier reply' : '# Request', text(m.content), '']),
-    ].join('\n');
-};
-
-/** The pictures of a conversation (data URLs), for -i. At most four, like a render. */
-const pictures = (messages) => messages.flatMap((m) => Array.isArray(m.content) ? m.content : [])
-    .filter((p) => p?.type === 'image_url' && /^data:image\//.test(p.image_url?.url ?? ''))
-    .slice(0, 4)
-    .map((p) => {
-        const [, mime, data] = /^data:([^;]+);base64,(.*)$/s.exec(p.image_url.url) ?? [];
-        return { mime, data };
-    })
-    .filter((r) => r.data);
-
-const WRITE_TIMEOUT_MS = Number(process.env.IMAGEGEN_WRITE_TIMEOUT_MS ?? 600000);
-
-const write = async (body) => {
-    const dir = await mkdtemp(join(tmpdir(), 'page-'));
-    try {
-        const messages = Array.isArray(body.messages) ? body.messages : [];
-        const refs = [];
-        for (const [i, ref] of pictures(messages).entries()) {
-            const ext = /png/.test(ref.mime ?? '') ? 'png' : /webp/.test(ref.mime ?? '') ? 'webp' : 'jpg';
-            const file = join(dir, `ref${i + 1}.${ext}`);
-            await writeFile(file, Buffer.from(ref.data, 'base64'));
-            refs.push(file);
-        }
-        const out = join(dir, 'reply.txt');
-        const args = ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', '-C', dir, '--output-last-message', out];
-        if (process.env.CODEX_WRITER_MODEL) args.push('-m', process.env.CODEX_WRITER_MODEL);
-        if (refs.length) args.push('-i', refs.join(','));
-        args.push('-');
-        const res = await run(args, transcript(messages), WRITE_TIMEOUT_MS, dir);
-        let reply = '';
-        try { reply = await readFile(out, 'utf8'); } catch { reply = ''; }
-        if (!reply.trim()) {
-            const tail = (res.err || res.out).slice(-600);
-            throw Object.assign(new Error(`codex wrote no reply (exit ${res.code}): ${tail}`), {
-                status: /usage limit|rate limit|quota/i.test(tail) ? 429 : 502,
-            });
-        }
-        return reply;
-    } finally {
-        await rm(dir, { recursive: true, force: true });
-    }
-};
 
 /** Every image file under generated_images with its modification time. */
 const images = async () => {
@@ -192,22 +147,6 @@ const queued = async (job) => {
     }
 };
 
-// Pages wait in their own line: a page takes minutes, and an ad render queued behind two of
-// them would miss its own timeout.
-const WRITE_LIMIT = Math.max(1, Number(process.env.IMAGEGEN_WRITE_CONCURRENCY ?? 2));
-let writing = 0;
-const writers = [];
-const queuedWrite = async (job) => {
-    if (writing >= WRITE_LIMIT) await new Promise((resolve) => writers.push(resolve));
-    writing++;
-    try {
-        return await job();
-    } finally {
-        writing--;
-        writers.shift()?.();
-    }
-};
-
 const claimed = new Set();
 
 const render = async (body) => {
@@ -225,7 +164,7 @@ const render = async (body) => {
         const args = ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', '-C', dir];
         if (refs.length) args.push('-i', refs.join(','));
         args.push('-');
-        const res = await run(args, (body.creative === true ? creative : instruction)(String(body.prompt ?? ''), body.size, refs.length), TIMEOUT_MS, dir);
+        const res = await run(args, (typeof body.mockup === 'string' ? mockup : body.creative === true ? creative : instruction)(String(body.prompt ?? ''), body.size, refs.length, body.mockup), TIMEOUT_MS, dir);
         // Two renders can finish while both run; each takes a picture no other job has claimed.
         // Codex files a run's pictures under generated_images/<session id>/, and prints that id.
         const session = /session id:\s*([0-9a-f-]{36})/i.exec(res.out + res.err)?.[1];
@@ -269,7 +208,7 @@ createServer(async (req, res) => {
         if (TOKEN === '' || (req.headers.authorization ?? '') !== `Bearer ${TOKEN}`) {
             return send(res, 401, { error: 'unauthorized' });
         }
-        if (req.method !== 'POST' || (req.url !== '/v1/images' && req.url !== '/v1/chat/completions')) {
+        if (req.method !== 'POST' || req.url !== '/v1/images') {
             return send(res, 404, { error: 'not found' });
         }
         let raw = '';
@@ -278,13 +217,6 @@ createServer(async (req, res) => {
             if (raw.length > MAX_BODY) return send(res, 413, { error: 'body too large' });
         }
         const body = JSON.parse(raw || '{}');
-        if (req.url === '/v1/chat/completions') {
-            if (!Array.isArray(body.messages) || body.messages.length === 0) return send(res, 422, { error: 'messages missing' });
-            const started = Date.now();
-            const content = await queuedWrite(() => write(body));
-            console.log(`[imagegen] wrote ${content.length} chars in ${Math.round((Date.now() - started) / 1000)}s`);
-            return send(res, 200, { choices: [{ message: { role: 'assistant', content } }] });
-        }
         if (!String(body.prompt ?? '').trim()) return send(res, 422, { error: 'prompt missing' });
         const started = Date.now();
         const bytes = await queued(() => render(body));

@@ -92,12 +92,14 @@ class ImageService
      *
      * @param  array{prompt:string,size:string,refs:list<string>}  $job
      */
-    public function codexOn(\Illuminate\Http\Client\Pool $pool, array $job, string $key = 'codex'): mixed
+    public function codexOn(\Illuminate\Http\Client\Pool $pool, array $job, string $key = 'codex', ?int $timeout = null): mixed
     {
         return $pool->as($key)->baseUrl(rtrim((string) config('services.ai_image.codex_url'), '/'))
             ->withToken((string) config('services.ai_image.codex_token'))->acceptJson()
-            ->timeout((int) config('services.ai_image.codex_timeout', 420))->connectTimeout(10)
-            ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs']) + (($job['creative'] ?? false) ? ['creative' => true] : []));
+            ->timeout($timeout ?? (int) config('services.ai_image.codex_timeout', 420))->connectTimeout(10)
+            ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs'])
+                + (($job['creative'] ?? false) ? ['creative' => true] : [])
+                + (isset($job['mockup']) ? ['mockup' => $job['mockup']] : []));
     }
 
     /** The picture in a pooled answer, or null for anything that is not one. */

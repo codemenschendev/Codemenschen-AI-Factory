@@ -1,8 +1,8 @@
 # Appwerk image agent: OpenAI's Codex CLI signed in with the ChatGPT (Codex) subscription, wrapped
-# as a small HTTP service. It renders pictures, and, when the owner switches the prototype writer to
-# Codex in the admin panel, it writes prototype pages too (POST /v1/chat/completions). Codex runs
-# read-only and needs no shell: pictures come from Codex's own output folder, pages from its last
-# message.
+# as a small HTTP service. It renders pictures and nothing else: ad scenes briefed by Claude, and,
+# when the owner switches the prototype writer to Codex, a whole prototype drawn as one picture from
+# the customer's sentence. Codex runs read-only and needs no shell: the service picks the picture up
+# from Codex's own output folder.
 FROM node:22-slim
 
 ARG CODEX_VERSION=0.154.0

@@ -1078,10 +1078,10 @@ export const en = {
       codex: "Codex gets the customer's words, the website summary and the uploaded pictures and designs the whole banner, text included.",
     },
     writerTile: "Website, app and e-mail prototypes",
-    writers: { claude: "Claude writes", codex: "Codex writes" },
+    writers: { claude: "Claude writes", codex: "Codex draws" },
     writerHints: {
       claude: "Claude writes the page. Default.",
-      codex: "Codex writes the whole page with the same rules. If Codex fails or its quota is used up, Claude writes the page. Ad prototypes have their own switch.",
+      codex: "Claude turns the customer's sentence and website into a design brief, Codex draws the whole prototype from it as one picture. If Codex fails, Claude writes the page. Ad prototypes have their own switch.",
     },
     layoutsTile: "Layout packs",
     layoutsOn: "On",
