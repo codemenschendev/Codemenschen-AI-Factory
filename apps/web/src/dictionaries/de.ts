@@ -150,7 +150,7 @@ export const de = {
       budgetStop: "Stoppt automatisch bei {cap}.",
     },
     trust: [
-      { h: "Erst die kostenlose Vorschau", p: "Sieh deine Website, App oder Kampagne, bevor du zahlst." },
+      { h: "1 kostenloser Prototyp pro Konto", p: "Sieh deine Website, App oder Kampagne, bevor du zahlst." },
       { h: "Festpreis, bevor du zahlst", p: "Umfang und Preis stehen vorher fest." },
       { h: "AI baut, unser Team prüft", p: "Ein Mensch prüft jedes bezahlte Projekt." },
       { h: "Geld zurück, wenn wir den Umfang nicht liefern", p: "Du bekommst den Entwicklungspreis zurück." },
@@ -208,7 +208,7 @@ export const de = {
       eyebrow: "Jetzt starten",
       title: "Du hast eine Idee? Sieh sie dir zuerst kostenlos an.",
       lede: "Ein Satz reicht. Die Vorschau ist in wenigen Minuten fertig.",
-      checks: ["Kostenlose Vorschau", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
+      checks: ["1 kostenloser Prototyp pro Konto", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
     },
   },
   appDev: {
@@ -224,7 +224,7 @@ export const de = {
     stackLabel: "Dein Projekt",
     stack: ["App programmiert", "Landingpage online", "Werbung läuft"],
     trust: [
-      { h: "Kostenlose Vorschau", p: "Du siehst deine App, bevor du zahlst." },
+      { h: "1 kostenloser Prototyp pro Konto", p: "Du siehst deine App, bevor du zahlst." },
       { h: "Festpreis", p: "Umfang und Preis stehen vor dem Checkout fest." },
       { h: "Die App gehört dir", p: "Code, Repository und Store-Eintrag gehen an dich." },
       { h: "Team in Wien", p: "Echte Menschen, per E-Mail und Telefon erreichbar." },
@@ -1273,7 +1273,7 @@ export const de = {
   proto: {
     navLink: "Prototyp testen",
     title: "Prototyp in einer Minute",
-    lead: "Beschreib deine Idee in einem Satz. Wir bauen dir sofort eine klickbare Vorschau, kostenlos.",
+    lead: "Beschreib deine Idee in einem Satz. Wir bauen dir sofort eine klickbare Vorschau.",
     label: "Was möchtest du bauen?",
     hint: "Zum Beispiel: eine Landingpage für ein Friseurstudio mit Online-Terminbuchung und Preisliste.",
     kindLabel: "Was sollen wir dir zeigen?",
@@ -1315,7 +1315,7 @@ export const de = {
     used: "Du hast deinen kostenlosen Prototyp schon erstellt. Du findest ihn unter „Meine Projekte“. Für einen weiteren schreib uns einfach.",
     signIn: {
       ads: "Für Anzeigen brauchen wir deine E-Mail. Wir schicken dir einen Link, danach geht es gleich weiter.",
-      again: "Dein erster Prototyp war kostenlos ohne Anmeldung. Für weitere brauchen wir deine E-Mail. Wir schicken dir einen Link.",
+      again: "1 kostenloser Prototyp pro Konto. Gib deine E-Mail an, wir schicken dir einen Link.",
       email: "Deine E-Mail",
       send: "Link senden",
       sent: "Link ist unterwegs. Öffne ihn auf diesem Gerät, dann ist dein Text wieder hier.",
@@ -1365,9 +1365,9 @@ export const de = {
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
     page: {
-      pill: "Kostenlos · ohne Kreditkarte",
+      pill: "1 kostenloser Prototyp pro Konto · ohne Kreditkarte",
       asideTitle: "So geht es weiter",
-      free: "Kostenlos und unverbindlich. Du zahlst erst, wenn du ein Projekt startest.",
+      free: "1 kostenloser Prototyp pro Konto, unverbindlich. Du zahlst erst, wenn du ein Projekt startest.",
       drop: "Bilder hierher ziehen oder auswählen",
     },
     stages: {
@@ -1592,7 +1592,7 @@ export const de = {
         {
           h: "5. Kostenloser Prototyp",
           p: [
-            "Deine Beschreibung schicken wir an ein KI-Modell, das daraus den Prototyp schreibt (siehe Punkt 8). Die IP-Adresse speichern wir zum Prototyp, damit niemand mehr als 5 Prototypen am Tag erzeugt. Prototyp, Beschreibung und IP-Adresse werden nach 7 Tagen gelöscht, außer du bestellst daraus eine App.",
+            "Deine Beschreibung schicken wir an ein KI-Modell, das daraus den Prototyp schreibt (siehe Punkt 8). Pro Konto ist ein Prototyp kostenlos; dafür speichern wir deine E-Mail-Adresse zum Prototyp. Die IP-Adresse speichern wir ebenfalls, damit niemand mehr als 5 Prototypen am Tag erzeugt. Prototyp, Beschreibung und IP-Adresse werden nach 7 Tagen gelöscht, außer du bestellst daraus eine App.",
             "Fotos im Prototyp suchen wir mit wenigen Stichworten bei Pexels. Pexels erhält dabei keine Daten von dir.",
           ],
         },

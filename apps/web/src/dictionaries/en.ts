@@ -150,7 +150,7 @@ export const en = {
       budgetStop: "Stops automatically at {cap}.",
     },
     trust: [
-      { h: "Free preview first", p: "See your website, app or campaign before you pay." },
+      { h: "1 free prototype per account", p: "See your website, app or campaign before you pay." },
       { h: "Fixed price, shown before you pay", p: "Scope and price are clear up front." },
       { h: "AI builds, our team reviews", p: "A person checks every paid project." },
       { h: "Money back if we cannot deliver the scope", p: "You get the development price back." },
@@ -208,7 +208,7 @@ export const en = {
       eyebrow: "Get started",
       title: "Have an idea? See it for free first.",
       lede: "One sentence is enough. The preview is ready in a few minutes.",
-      checks: ["Free preview", "Fixed price before you pay", "Money back if we cannot deliver"],
+      checks: ["1 free prototype per account", "Fixed price before you pay", "Money back if we cannot deliver"],
     },
   },
   appDev: {
@@ -224,7 +224,7 @@ export const en = {
     stackLabel: "Your project",
     stack: ["App coded", "Landing page live", "Ads running"],
     trust: [
-      { h: "Free preview", p: "You see your app before you pay." },
+      { h: "1 free prototype per account", p: "You see your app before you pay." },
       { h: "Fixed price", p: "Scope and price are set before checkout." },
       { h: "You own the app", p: "Code, repository and store listing go to you." },
       { h: "Team in Vienna", p: "Real people, reachable by e-mail and phone." },
@@ -1271,7 +1271,7 @@ export const en = {
   proto: {
     navLink: "Try a prototype",
     title: "A prototype in one minute",
-    lead: "Describe your idea in one sentence. We build you a clickable preview right away, free.",
+    lead: "Describe your idea in one sentence. We build you a clickable preview right away.",
     label: "What do you want to build?",
     hint: "For example: a landing page for a hair salon with online booking and a price list.",
     kindLabel: "What should we show you?",
@@ -1313,7 +1313,7 @@ export const en = {
     used: "You have already made your free prototype. You find it under \"My projects\". For another one, just write to us.",
     signIn: {
       ads: "For ads we need your e-mail. We send you a link, then you carry on right away.",
-      again: "Your first prototype was free without signing in. For more we need your e-mail. We send you a link.",
+      again: "1 free prototype per account. Give your e-mail and we send you a link.",
       email: "Your e-mail",
       send: "Send link",
       sent: "The link is on its way. Open it on this device and your text will be back here.",
@@ -1363,9 +1363,9 @@ export const en = {
     oneDayLeft: "1 day left",
     forget: "Remove",
     page: {
-      pill: "Free · no credit card",
+      pill: "1 free prototype per account · no credit card",
       asideTitle: "What happens next",
-      free: "Free, no strings attached. You only pay when you start a project.",
+      free: "1 free prototype per account, no strings attached. You only pay when you start a project.",
       drop: "Drag pictures here or choose them",
     },
     stages: {
@@ -1590,7 +1590,7 @@ export const en = {
         {
           h: "5. Free prototype",
           p: [
-            "Your description is sent to an AI model that writes the prototype (see section 8). We store the IP address with the prototype so that nobody creates more than 5 prototypes a day. Prototype, description and IP address are deleted after 7 days, unless you order an app from it.",
+            "Your description is sent to an AI model that writes the prototype (see section 8). One prototype per account is free; for that we store your e-mail address with the prototype. We also store the IP address so that nobody creates more than 5 prototypes a day. Prototype, description and IP address are deleted after 7 days, unless you order an app from it.",
             "Photos in the prototype are searched at Pexels with a few keywords. Pexels receives no data about you.",
           ],
         },
