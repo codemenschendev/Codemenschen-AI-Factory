@@ -14,8 +14,11 @@ data-shape is wide, tall or square, whichever is nearest to the photo in the des
 describes the photo as it is in the design: the people, the place, the light, the mood. Leave the
 element empty and style it: its size, its shape, its corners; the <img> that arrives inside it
 needs display block, width and height 100% and object-fit cover. Where the design sets words over
-a photograph, place the words over the slot with positioning, with a dark overlay if the words
-need it to be read. At most six slots.
+a photograph, place the words over the slot with positioning, in the colour the design shows
+them (almost always white), and lay a dark gradient between the photo and the words, strongest
+behind the words. The photo arrives later and may be bright anywhere: words over a photo are
+never dark, whatever colour the page's other headings have, and a rule like h1 { color: navy }
+must not reach them. At most six slots.
 
 Icons, rating stars and drawn marks are inline SVG. The business's logo is rebuilt as text in the
 logo's typeface and colour, with a simple SVG mark where it has one.
