@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Domain\Pricing\Estimator;
+use App\Domain\Sites\MockupSite;
 use App\Domain\Sites\SiteService;
 use App\Http\Controllers\LandingController;
 use App\Mail\CustomerNotice;
@@ -102,6 +103,8 @@ class CustomerMail
         $start = $project->build_starts_at;
         $now = $start === null || ! $start->isFuture();
         $url = SiteService::url($project) ?? ($project->prototype !== null ? LandingController::url($project->prototype) : '');
+        // A design picture is built into the page first (BuildSiteFromMockup), which takes minutes.
+        $building = $project->prototype !== null && MockupSite::isMockup($project->prototype);
         $months = Estimator::SITE_HOSTING_FREE_MONTHS;
         $hosting = Estimator::SITE_HOSTING_MONTHLY_EUR;
 
@@ -112,7 +115,7 @@ class CustomerMail
             '',
             "Website: {$project->name}",
             "Betrag: {$order->total_one_time_eur} Euro",
-            $now ? "Deine Website ist online: {$url}" : 'Online ab: '.$start->format('d.m.Y').", nach Ablauf der 14-tägigen Widerrufsfrist. Adresse: {$url}",
+            $now ? ($building ? "Wir bauen deine Website jetzt aus dem Entwurf. In der nächsten Stunde ist sie online: {$url}" : "Deine Website ist online: {$url}") : 'Online ab: '.$start->format('d.m.Y').", nach Ablauf der 14-tägigen Widerrufsfrist. Adresse: {$url}",
             '',
             'Dein Dashboard (Link 24 Stunden gültig):',
             $link,
@@ -132,7 +135,7 @@ class CustomerMail
             '',
             "Website: {$project->name}",
             "Amount: {$order->total_one_time_eur} euro",
-            $now ? "Your website is live: {$url}" : 'Live from: '.$start->format('d.m.Y').", after the 14-day withdrawal period. Address: {$url}",
+            $now ? ($building ? "We are building your website from the design now. It will be live within the hour: {$url}" : "Your website is live: {$url}") : 'Live from: '.$start->format('d.m.Y').", after the 14-day withdrawal period. Address: {$url}",
             '',
             'Your dashboard (link valid for 24 hours):',
             $link,

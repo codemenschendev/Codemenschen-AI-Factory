@@ -3,6 +3,7 @@
 namespace App\Domain\Sites;
 
 use App\Http\Controllers\LandingController;
+use App\Jobs\BuildSiteFromMockup;
 use App\Models\Order;
 use App\Models\Project;
 use App\Models\Prototype;
@@ -14,6 +15,8 @@ use App\Services\Notify;
  *
  * Nothing is built again. The page the customer saw and liked is the page that goes live; the
  * free change of the preview stays theirs, and further changes are done by us on request.
+ * The one exception is a preview that is a design picture (the Codex switch): it is built into
+ * the page after payment (BuildSiteFromMockup) and goes live once that is done.
  */
 class SiteService
 {
@@ -26,6 +29,10 @@ class SiteService
             // Bought pages never expire; the daily cleanup only drops pages without a project.
             'expires_at' => null,
         ]);
+        if (MockupSite::isMockup($prototype)) {
+            // After the payment's transaction, so the job finds the project it belongs to.
+            BuildSiteFromMockup::dispatch($prototype->id)->afterCommit();
+        }
     }
 
     /** Switches the page on. Called at payment, or by pipeline:tick once the withdrawal period is over. */
@@ -36,6 +43,10 @@ class SiteService
             $project->update(['status' => 'FAILED', 'failed_reason' => 'The bought preview is gone.']);
             app(Notify::class)->note($project, 'website could not go live: the preview is gone');
 
+            return;
+        }
+        // A design picture is not a website yet: it goes live when BuildSiteFromMockup is done.
+        if (MockupSite::isMockup($prototype)) {
             return;
         }
         $prototype->update(['published_at' => $prototype->published_at ?? now()]);

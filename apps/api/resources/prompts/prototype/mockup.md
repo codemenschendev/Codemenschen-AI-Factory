@@ -20,4 +20,7 @@ price that is not given, it shows a neutral label such as "Termine auf Anfrage".
 When the business's own logo or pictures are attached to the drawing, the brief says to use
 them as they are.
 
+Every word in the design is a plain sentence or a short label: never a dash between two parts of a
+sentence, write a comma, a colon or a full stop instead.
+
 Keep it under 450 words.

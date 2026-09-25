@@ -30,6 +30,11 @@
   the picture back with the change. If Codex fails, Claude writes the page and the QA report says
   `writer_fallback`. Like `ads.mode` = `codex`, the words in the picture are OpenAI's only because
   the owner switched it on.
+- **A bought design picture becomes the website** (2026-09-25): when a Codex mockup prototype is
+  paid for, `SiteService::claim` queues `BuildSiteFromMockup`: Claude builds the page from the
+  picture (`prompts/prototype/from-mockup.md`, the picture sent as an image), Codex renders each
+  photograph of it without words, and they are laid in as JPEGs (`App\Domain\Sites\MockupSite`).
+  The picture itself never goes live: `goLive` waits until the page is built. The paid mail says so.
 - **Paid renders on the owner's OpenAI key** (2026-09-24): with a key entered in the admin panel
   (`OpenAiImageKey`, stored encrypted, never read back), a paying customer's ad pictures
   (`RenderProjectAd` -> `ImageService::generate`) go straight to the OpenAI Images API on it; no key,
