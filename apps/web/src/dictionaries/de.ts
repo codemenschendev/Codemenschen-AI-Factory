@@ -1078,10 +1078,10 @@ export const de = {
       codex: "Codex bekommt den Text des Kunden, die Zusammenfassung der Website und die hochgeladenen Bilder und gestaltet das ganze Banner samt Text.",
     },
     writerTile: "Website-, App- und E-Mail-Prototypen",
-    writers: { claude: "Claude schreibt", codex: "Codex schreibt" },
+    writers: { claude: "Claude schreibt", codex: "Codex zeichnet" },
     writerHints: {
       claude: "Claude schreibt die Seite. Standard.",
-      codex: "Codex schreibt die ganze Seite mit denselben Vorgaben. Fällt Codex aus oder ist das Kontingent leer, schreibt Claude die Seite. Werbe-Prototypen haben ihren eigenen Schalter.",
+      codex: "Claude schreibt aus dem Satz des Kunden und seiner Website ein Design-Briefing, Codex zeichnet daraus den ganzen Prototyp als ein Bild. Fällt Codex aus, schreibt Claude die Seite. Werbe-Prototypen haben ihren eigenen Schalter.",
     },
     layoutsTile: "Layout-Vorlagen",
     layoutsOn: "An",

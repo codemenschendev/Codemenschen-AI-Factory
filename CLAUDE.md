@@ -21,12 +21,15 @@
   `App\Domain\Ai\ChatBackend` refuses an OpenAI chat backend before a request is sent; keep every
   `x-openclaw-model` header going through it.
 - **Prototype writer switch** (2026-09-25): the admin panel's setting `prototype.writer` decides who
-  writes the site, app and e-mail prototypes: `claude` (default) or `codex`. With `codex`, the page
-  goes to the image agent's chat route (`infra/imagegen`, `POST /v1/chat/completions`, one read-only
-  `codex exec`) with the same messages, and its repair and change rounds go there too; audit and
-  photos stay as they are. If Codex fails (quota, timeout), Claude writes the page and the QA report
-  says `writer_fallback`. Like `ads.mode` = `codex`, this is text by OpenAI only because the owner
-  switched it on; everything else stays with Claude.
+  makes the site, app and e-mail prototypes: `claude` (default, an HTML page) or `codex`. With
+  `codex` the prototype is ONE picture, the way ChatGPT answers "redesign this site as a mockup":
+  Claude writes a design brief from the customer's sentence and their website
+  (`prompts/prototype/mockup.md`), Codex draws the whole prototype from it on the image agent
+  (`mockup` mode of `/v1/images`) with the business's logo and pictures attached, and the page only
+  frames the picture (`App\Domain\Ai\CodexPage`). No house rules, no audit. A change request sends
+  the picture back with the change. If Codex fails, Claude writes the page and the QA report says
+  `writer_fallback`. Like `ads.mode` = `codex`, the words in the picture are OpenAI's only because
+  the owner switched it on.
 - **Paid renders on the owner's OpenAI key** (2026-09-24): with a key entered in the admin panel
   (`OpenAiImageKey`, stored encrypted, never read back), a paying customer's ad pictures
   (`RenderProjectAd` -> `ImageService::generate`) go straight to the OpenAI Images API on it; no key,
