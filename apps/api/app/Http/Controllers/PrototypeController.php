@@ -37,6 +37,33 @@ class PrototypeController extends Controller
     private const LIVE_DAYS = 7;
 
     /**
+     * Free prototypes per account (owner's decision 2026-09-25): one. A build that failed does not
+     * count, and neither do a campaign's parts or the free change. Admins are not counted.
+     */
+    public const FREE_PER_ACCOUNT = 1;
+
+    /**
+     * How many free prototypes this address has used or is waiting for, other than $except. With
+     * $started, only the ones already building or built: when a link is opened, the other requests
+     * still waiting for theirs do not stop it.
+     */
+    public static function freeUsed(string $email, ?string $except = null, bool $started = false): int
+    {
+        $email = strtolower(trim($email));
+        $customer = Customer::where('email', $email)->first();
+        if ($customer?->isAdmin() || ($started && $customer === null)) {
+            return 0;
+        }
+
+        return Prototype::whereNull('parent_id')->where('status', '!=', 'failed')
+            ->when($except !== null, fn ($q) => $q->where('id', '!=', $except))
+            ->when($started, fn ($q) => $q->where('status', '!=', 'waiting'))
+            ->where(fn ($q) => $q->when(! $started, fn ($q) => $q->orWhere('qa->pending_email', $email))
+                ->when($customer !== null, fn ($q) => $q->orWhere('customer_id', $customer->id)))
+            ->count();
+    }
+
+    /**
      * How much a visitor may write. The first ceiling was 1200 characters and it was hit by
      * exactly the people the study stage was built for: a bakery owner pasting the whole
      * story of the shop. A long brief makes a better prototype, not a slower one; 4000
@@ -98,6 +125,12 @@ class PrototypeController extends Controller
             if ($today >= self::PER_IP_PER_DAY) {
                 return response()->json(['error' => 'Daily limit of free prototypes reached for this address. Come back tomorrow or get in touch.'], 429);
             }
+        }
+
+        // One free prototype per account: checked before a mail goes out, and again when the link
+        // is opened, for two requests sent before either was confirmed.
+        if (self::freeUsed($user?->email ?? (string) $data['email']) >= self::FREE_PER_ACCOUNT) {
+            return response()->json(['error' => 'You have used your free prototype.', 'code' => 'used'], 403);
         }
 
         // The answers travel with the sentence: the builder reads them as part of the brief, and
@@ -184,7 +217,9 @@ class PrototypeController extends Controller
             : ($email !== null ? Customer::firstOrCreate(['email' => $email], ['locale' => $locale]) : null);
         abort_if($customer === null, 410, 'This prototype can no longer be started.');
 
-        if ($prototype->status === 'waiting') {
+        if ($prototype->status === 'waiting' && self::freeUsed($customer->email, $prototype->id, started: true) >= self::FREE_PER_ACCOUNT) {
+            $prototype->update(['status' => 'failed', 'customer_id' => $customer->id, 'error' => 'free prototype already used']);
+        } elseif ($prototype->status === 'waiting') {
             $qa = $prototype->qa ?? [];
             unset($qa['pending_email']);
             $prototype->update(['status' => 'queued', 'customer_id' => $customer->id, 'qa' => $qa ?: null,
