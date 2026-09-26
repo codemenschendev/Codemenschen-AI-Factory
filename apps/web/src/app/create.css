@@ -1,0 +1,64 @@
+/* The app wizard (/[locale]/create), in the look of /prototype: head band, the questions in one
+   white card, the live estimate beside it. The wizard's classes (.choice, .est-panel, ...) are
+   shared with checkout and the project page, so everything here is scoped under `.cw`. */
+
+.cw { padding-bottom: 80px; }
+.cw .wrap { max-width: 1200px; }
+.cw-band { padding: 44px 0 96px; }
+.cw-body { margin-top: -64px; }
+.cw .pp-lead { font-size: 1.1rem; color: var(--ink-soft); max-width: 34em; margin: 0 auto; }
+.cw .wizard-cols { grid-template-columns: minmax(0, 1fr) 360px; gap: 28px; }
+
+/* ---------- Questions card ---------- */
+.cw-card { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 30px 32px 8px; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.1); min-width: 0; }
+.cw .field { margin-bottom: 30px; }
+.cw .field > .pp-label { display: flex; margin-bottom: 12px; }
+.cw .idea-tools { gap: 8px; margin-top: 12px; }
+.cw .idea-tools > .small { font-size: 0.84rem; }
+.cw .pp-chip { font-size: 0.84rem; padding: 7px 12px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw .field > p.small { font-size: 0.84rem; }
+
+.cw-refine { display: inline-flex; align-items: center; gap: 8px; background: var(--accent-soft); color: var(--accent-hover); border: 1px solid #dbe3ff; }
+.cw-refine:hover:not(:disabled) { background: #e0e7ff; }
+.cw .idea-tools .cw-refine { padding: 10px 16px; font-size: 0.92rem; }
+.cw-refine:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.cw .note { border-radius: 12px; margin-top: 12px; }
+.cw-suggest { margin-top: 16px; gap: 12px; background: var(--tint); border: 1px solid #dbe3ff; border-radius: 16px; padding: 20px; }
+.cw-suggest .choice { padding: 7px 13px; font-size: 0.88rem; }
+.cw-suggest .btn-ghost { background: #fff; border: 1px solid var(--border); }
+
+/* Choice tiles: the native control stays (keyboard, screen readers), tinted in the accent. */
+.cw .choices { gap: 10px; }
+.cw .choice { gap: 10px; padding: 12px 16px; border-radius: 12px; border-color: #d5dae4; font-size: 0.95rem; font-weight: 500; transition: border-color 0.15s ease, background 0.15s ease; }
+.cw .choice:hover { border-color: #c7d2fe; }
+.cw .choice input { accent-color: var(--accent); width: 16px; height: 16px; margin: 0; }
+.cw .choice:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); color: var(--accent-hover); }
+.cw .choice:has(input:focus-visible) { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cw .cw-features { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.cw-features .choice .cost { margin-left: auto; font-size: 0.82rem; }
+.cw .lang-toggle.hint { cursor: pointer; }
+
+/* ---------- Estimate ---------- */
+.cw .est-panel { top: 92px; border-radius: 20px; padding: 24px; gap: 10px; box-shadow: var(--shadow); }
+.cw .est-panel h3 { font-size: 1.1rem; margin: 0 0 4px; }
+.cw .est-panel .est-empty { font-size: 0.9rem; line-height: 1.55; margin: 0; }
+.cw-price { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; background: var(--tint); border-radius: 12px; padding: 14px 16px; }
+.cw-price span { font-size: 0.88rem; color: var(--ink-soft); }
+.cw-price strong { font-family: var(--font-display); font-size: 1.7rem; font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.cw .est-panel .row { font-size: 0.9rem; }
+.cw-note { font-size: 0.82rem; color: var(--ink-soft); line-height: 1.5; margin: 0; }
+.cw .est-panel .btn-block { display: flex; justify-content: center; margin-top: 6px; padding: 14px 20px; }
+.cw .est-panel .btn[aria-disabled="true"] { background: var(--accent); color: #fff; opacity: 0.4; }
+
+@media (max-width: 860px) {
+  .cw .wizard-cols { grid-template-columns: minmax(0, 1fr); }
+  .cw .est-panel { position: static; }
+}
+@media (max-width: 640px) {
+  .cw-band { padding: 28px 0 72px; }
+  .cw-body { margin-top: -52px; }
+  .cw-card { padding: 22px 18px 4px; border-radius: 18px; }
+  .cw .cw-features { grid-template-columns: minmax(0, 1fr); }
+  .cw .choice { flex: 1 1 auto; }
+}

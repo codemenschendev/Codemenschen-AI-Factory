@@ -14,6 +14,7 @@ import { trackOnce } from "@/lib/analytics";
 import { api, ApiError } from "@/lib/api";
 import { featureHints } from "@/lib/featureHints";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 interface Refinement {
   off_topic: boolean;
@@ -121,11 +122,12 @@ export function CreateWizard({
 
   return (
     <div className="wizard-cols">
-      <div>
+      <div className="cw-card">
         <div className="field">
-          <label htmlFor="idea">{w.idea}</label>
+          <label htmlFor="idea" className="pp-label"><span className="pp-step">1</span>{w.idea}</label>
           <textarea
             id="idea"
+            className="pp-textarea"
             value={idea}
             placeholder={w.ideaPh}
             onChange={(e) => setIdea(e.target.value)}
@@ -133,7 +135,7 @@ export function CreateWizard({
           <div className="idea-tools">
             <span className="small muted">{w.ideaExamplesLabel}</span>
             {w.ideaExamples.map((ex) => (
-              <button type="button" className="lang-toggle" key={ex} onClick={() => setIdea(ex)}>
+              <button type="button" className="pp-chip" key={ex} onClick={() => setIdea(ex)}>
                 {ex.length > 46 ? `${ex.slice(0, 44)}…` : ex}
               </button>
             ))}
@@ -142,7 +144,8 @@ export function CreateWizard({
             <p className="small muted" style={{ margin: "8px 0 0" }}>{w.ideaHint}</p>
           )}
           <div className="idea-tools" style={{ marginTop: 10 }}>
-            <button type="button" className="btn btn-ghost" disabled={!canRefine} onClick={() => refine(false)}>
+            <button type="button" className="btn cw-refine" disabled={!canRefine} onClick={() => refine(false)}>
+              <Icon name="spark" className="pp-btn-ico" />
               {refining ? w.refining : w.refine}
             </button>
             <span className="small muted">{w.refineNote}</span>
@@ -150,7 +153,7 @@ export function CreateWizard({
           {refineError && <p className="note" style={{ marginTop: 10 }}>{refineError}</p>}
 
           {refinement && (
-            <div className="card" style={{ marginTop: 14, gap: 12 }}>
+            <div className="card cw-suggest">
               {refinement.off_topic ? (
                 <p className="small muted" style={{ margin: 0 }}>{w.refineOffTopic}</p>
               ) : (
@@ -206,7 +209,7 @@ export function CreateWizard({
         </div>
 
         <div className="field">
-          <span className="field-label">{w.audience}</span>
+          <span className="field-label pp-label"><span className="pp-step">2</span>{w.audience}</span>
           <div className="choices" role="radiogroup" aria-label={w.audience}>
             {(Object.keys(w.audOpts) as Audience[]).map((v) => (
               <label className="choice" key={v}>
@@ -223,7 +226,7 @@ export function CreateWizard({
         </div>
 
         <div className="field">
-          <span className="field-label">{w.platform}</span>
+          <span className="field-label pp-label"><span className="pp-step">3</span>{w.platform}</span>
           <div className="choices" role="radiogroup" aria-label={w.platform}>
             {(Object.keys(w.platOpts) as Platform[]).map((v) => (
               <label className="choice" key={v}>
@@ -240,7 +243,7 @@ export function CreateWizard({
         </div>
 
         <div className="field">
-          <span className="field-label">{w.features}</span>
+          <span className="field-label pp-label"><span className="pp-step">4</span>{w.features}</span>
           {hints.length > 0 && (
             <div className="idea-tools" style={{ margin: "0 0 10px" }}>
               <span className="small muted">{w.hintsLabel}</span>
@@ -249,12 +252,12 @@ export function CreateWizard({
                   + {w.featureLabels[f]} · {eur(FEATURES[f].cost, locale)}
                 </button>
               ))}
-              <button type="button" className="small muted" style={{ background: "none", border: 0, cursor: "pointer" }} onClick={() => setDismissedHints((d) => [...d, ...hints])}>
+              <button type="button" className="pp-link" onClick={() => setDismissedHints((d) => [...d, ...hints])}>
                 {w.hintsDismiss}
               </button>
             </div>
           )}
-          <div className="choices">
+          <div className="choices cw-features">
             {FEATURE_KEYS.map((f) => (
               <label className="choice" key={f}>
                 <input
@@ -271,15 +274,15 @@ export function CreateWizard({
       </div>
 
       <aside className="est-panel">
-        <h3 style={{ margin: 0 }}>{w.estTitle}</h3>
+        <h3>{w.estTitle}</h3>
         {!est ? (
           <p className="est-empty">
             {w.estMissing} <strong>{missing.join(" · ")}</strong>
           </p>
         ) : (
           <>
-            <div className="row">
-              <span className="muted">{w.estPrice}</span>
+            <div className="cw-price">
+              <span>{w.estPrice}</span>
               <strong>{eur(est.price, locale)}</strong>
             </div>
             <div className="row">
@@ -304,9 +307,7 @@ export function CreateWizard({
               </strong>
             </div>
             <hr />
-            <p className="small muted" style={{ margin: 0 }}>
-              {w.estNote}
-            </p>
+            <p className="cw-note">{w.estNote}</p>
             {ready ? (
               <Link
                 className="btn btn-primary btn-block"
