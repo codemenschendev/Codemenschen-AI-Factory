@@ -348,3 +348,9 @@ footer.site .logo-by { color: #94a3b8; }
 .consent-save:hover { text-decoration: underline; }
 .consent-reopen { background: none; border: 0; padding: 0; color: #b8becd; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
 .consent-reopen:hover { color: var(--paper); }
+
+/* ---------- Touch screens: small text links get a finger-sized hit area ---------- */
+@media (pointer: coarse) {
+  .lp .sec-link, .ad .ad-back, .acc-page .acc-who a, .acc-page .acc-who .pp-link, .pp .pp-history .pp-link { padding-top: 8px; padding-bottom: 8px; }
+  .pj .lang-toggle, .pj .phone-actions .lang-toggle { padding: 8px 14px; }
+}

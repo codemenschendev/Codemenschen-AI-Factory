@@ -176,7 +176,7 @@
 .lp .own-idea { display: grid; grid-template-columns: auto 1fr minmax(240px, 1.1fr) auto; align-items: center; gap: 18px; margin-top: 18px; padding: 16px 18px; background: #fff; border: 1px dashed #c7d2fe; border-radius: 16px; }
 .lp .own-idea-ico { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: #fff; border: 1px solid var(--border); color: var(--accent); }
 .lp .own-idea-text b { display: block; font-family: var(--font-display); font-size: 1.05rem; }
-.lp .own-idea-text small { font-size: 0.84rem; color: var(--ink-soft); line-height: 1.4; }
+.lp .own-idea-text small { display: block; font-size: 0.84rem; color: var(--ink-soft); line-height: 1.45; }
 .lp .own-idea-input { width: 100%; padding: 12px 14px; font-family: var(--font-body); font-size: 0.9rem; border: 1px solid var(--border); border-radius: 10px; background: var(--tint); color: var(--ink); }
 .lp .own-idea-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; background: #fff; }
 .lp .own-idea .btn { white-space: nowrap; }
@@ -188,7 +188,7 @@
 .lp .about-chips { display: grid; gap: 12px; margin-bottom: 1.8rem; }
 .lp .about-chip { display: flex; gap: 12px; align-items: center; }
 .lp .about-chip b { display: block; font-size: 0.95rem; }
-.lp .about-chip small { font-size: 0.84rem; color: var(--ink-soft); }
+.lp .about-chip small { display: block; font-size: 0.84rem; color: var(--ink-soft); line-height: 1.45; }
 .lp .about-pic { border-radius: 24px; overflow: hidden; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.16); aspect-ratio: 16 / 10; }
 .lp .about-pic img { display: block; width: 100%; height: 100%; object-fit: cover; }
 
