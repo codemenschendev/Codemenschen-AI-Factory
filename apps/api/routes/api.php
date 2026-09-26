@@ -69,6 +69,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/prototypes/{prototype}/signups', [LandingController::class, 'signups']);
     Route::get('/prototypes/{prototype}/report', [LandingController::class, 'report']);
     Route::get('/me/projects', [MeController::class, 'projects']);
+    Route::get('/me/prototypes', [MeController::class, 'prototypes']);
     Route::get('/me/projects/{project}', [MeController::class, 'project']);
     Route::post('/me/projects/{project}/approve-review', [MeController::class, 'approveReview']);
     Route::post('/me/projects/{project}/change-requests', [MeController::class, 'requestChanges']);

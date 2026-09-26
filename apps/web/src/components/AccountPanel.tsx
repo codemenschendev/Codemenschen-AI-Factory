@@ -6,6 +6,7 @@ import Link from "next/link";
 import { api } from "@/lib/api";
 import { AdAccountsPanel } from "@/components/AdAccountsPanel";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 interface ProjectRow {
   id: string;
@@ -19,6 +20,25 @@ interface ProjectRow {
   events: { type: string; at: string }[];
 }
 
+interface ProtoRow {
+  id: string;
+  kind: "site" | "app" | "ads" | "email" | "campaign";
+  status: string;
+  title: string | null;
+  prompt: string;
+  bought: boolean;
+  expires_at: string | null;
+  created_at: string;
+}
+
+/** Whole days until the server drops it; null for a bought one, which stays. */
+function daysLeft(expires: string | null): number | null {
+  if (!expires) return null;
+  const left = Date.parse(expires) - Date.now();
+
+  return left <= 0 ? 0 : Math.ceil(left / 86400_000);
+}
+
 export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // undefined = not looked at localStorage yet (server render + first paint):
   // render a quiet placeholder then, never the sign-in form — otherwise every
@@ -27,6 +47,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [me, setMe] = useState<{ email: string; admin?: boolean; projects: ProjectRow[] } | null>(null);
+  const [protos, setProtos] = useState<ProtoRow[] | null>(null);
 
   // Pick up the token handed over by the signed verify redirect (#token=…).
   useEffect(() => {
@@ -52,6 +73,10 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
     api<{ email: string; admin: boolean; projects: ProjectRow[] }>("/me/projects", { token })
       .then(setMe)
       .catch(() => setToken(null));
+    // Its own request: a failing list of prototypes must not sign the customer out.
+    api<{ prototypes: ProtoRow[] }>("/me/prototypes", { token })
+      .then((r) => setProtos(r.prototypes))
+      .catch(() => setProtos([]));
   }, [token]);
 
   const a = d.account;
@@ -127,6 +152,46 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
           </>
         )}
       </p>
+      <section className="pp-history" style={{ marginTop: 24, marginBottom: 40 }}>
+        <h2>{a.protos}</h2>
+        {protos !== null && protos.length === 0 && <p className="pp-note">{a.protosEmpty}</p>}
+        {protos !== null && protos.length > 0 && (
+          <ul>
+            {protos.map((p) => {
+              const left = daysLeft(p.expires_at);
+              const label = p.title ?? (p.prompt.split(/\n/, 1)[0].trim() || d.proto.kinds[p.kind]);
+              const open = p.status !== "expired" && p.status !== "failed";
+
+              return (
+                <li key={p.id}>
+                  <span className="pp-history-ico">
+                    <Icon name={p.kind} />
+                  </span>
+                  <div className="pp-history-text">
+                    {open ? <Link href={`/${locale}/p/${p.id}`}>{label}</Link> : <a aria-disabled="true">{label}</a>}
+                    <p>
+                      {d.proto.kinds[p.kind]}
+                      {" · "}
+                      {new Date(p.created_at).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB")}
+                      {" · "}
+                      {p.bought ? a.protoBought : a.protoState[p.status] ?? p.status}
+                      {!p.bought && p.status === "ready" && left !== null && (
+                        <>
+                          {" · "}
+                          {left === 1 ? d.proto.oneDayLeft : d.proto.daysLeft.replace("{n}", String(left))}
+                        </>
+                      )}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+        <p style={{ marginTop: 14 }}>
+          <Link href={`/${locale}/prototype`}>{a.protoNew}</Link>
+        </p>
+      </section>
       {me.projects.length === 0 && <p className="est-empty">{a.empty}</p>}
       <div className="grid" style={{ marginTop: 16 }}>
         {me.projects.map((p) => (
