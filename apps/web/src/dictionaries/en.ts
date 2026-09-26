@@ -290,7 +290,7 @@ export const en = {
     ideaHint: "Tip: who uses the app, what does it do, and which three things can a user do in it?",
     hintsLabel: "From your description:",
     hintsDismiss: "hide",
-    refine: "✨ Sharpen my idea",
+    refine: "Sharpen my idea",
     refining: "Sharpening…",
     refineNote: "AI suggestion. You decide what to keep. Up to 3 rounds per idea.",
     refineTitle: "Suggestion",

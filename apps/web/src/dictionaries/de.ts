@@ -290,7 +290,7 @@ export const de = {
     ideaHint: "Tipp: Wer nutzt die App, was macht sie, und welche drei Dinge kann man darin tun?",
     hintsLabel: "Aus deiner Beschreibung:",
     hintsDismiss: "ausblenden",
-    refine: "✨ Idee schärfen",
+    refine: "Idee schärfen",
     refining: "Wird geschärft …",
     refineNote: "KI-Vorschlag. Du entscheidest, was übernommen wird. Bis zu 3 Runden pro Idee.",
     refineTitle: "Vorschlag",

@@ -1,6 +1,8 @@
 import { notFound } from "next/navigation";
 import { CreateWizard } from "@/components/CreateWizard";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import "../../../prototype.css";
+import "../../../create.css";
 
 /**
  * Carries a free prototype into the paid wizard.
@@ -44,12 +46,16 @@ export default async function CreatePage({
   const initialIdea = sp.idea ? sp.idea.slice(0, 800) : await ideaFrom(sp.from);
 
   return (
-    <main className="wrap" style={{ padding: "40px 24px 72px" }}>
-      <h1>{d.wizard.title}</h1>
-      <p className="muted" style={{ fontSize: 17, marginBottom: 32 }}>
-        {d.wizard.lede}
-      </p>
-      <CreateWizard locale={locale} d={d} initialIdea={initialIdea} />
+    <main className="cw">
+      <div className="pp-band cw-band">
+        <div className="wrap pp-head">
+          <h1>{d.wizard.title}</h1>
+          <p className="pp-lead">{d.wizard.lede}</p>
+        </div>
+      </div>
+      <div className="wrap cw-body">
+        <CreateWizard locale={locale} d={d} initialIdea={initialIdea} />
+      </div>
     </main>
   );
 }
