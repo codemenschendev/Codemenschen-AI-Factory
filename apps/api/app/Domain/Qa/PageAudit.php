@@ -22,9 +22,14 @@ class PageAudit
 
     public function __construct(private readonly string $script, private readonly ?string $node = null) {}
 
+    /**
+     * Node, the script and the browser driver it requires. Without playwright-core beside the
+     * script (`npm --prefix tools ci`, as the image and CI do) the script dies on its first line.
+     */
     public function available(): bool
     {
-        return is_file($this->script) && $this->binary() !== null;
+        return is_file($this->script) && $this->binary() !== null
+            && is_file(dirname($this->script).'/node_modules/playwright-core/package.json');
     }
 
     /**

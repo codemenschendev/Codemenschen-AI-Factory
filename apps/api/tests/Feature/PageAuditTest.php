@@ -8,9 +8,9 @@ use Tests\TestCase;
 /**
  * The auditor itself, driving a real browser over a real page.
  *
- * Skipped where node or chromium is not installed, which is every developer machine that has not
- * asked for them and no CI box we run. That is deliberate: the checks are only meaningful against
- * a browser, and a mocked browser would test the mock.
+ * Skipped where node or playwright-core is missing: run `npm --prefix tools ci --omit=dev` once to
+ * get them. CI installs both and runs these for real. That is deliberate: the checks are only
+ * meaningful against a browser, and a mocked browser would test the mock.
  */
 class PageAuditTest extends TestCase
 {
@@ -18,7 +18,7 @@ class PageAuditTest extends TestCase
     {
         $a = app(PageAudit::class);
         if (! $a->available()) {
-            $this->markTestSkipped('no node or no qa-page.cjs on this machine');
+            $this->markTestSkipped('no node, qa-page.cjs or playwright-core on this machine (npm --prefix tools ci)');
         }
 
         return $a;

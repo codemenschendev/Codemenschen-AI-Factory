@@ -30,7 +30,7 @@ jobs:
       - run: cp .env.example .env && php artisan key:generate
         working-directory: apps/api
       # PageAuditTest drives a real browser through tools/qa-page.cjs. Without playwright-core
-      # and a headless shell the auditor answers "skipped" and eleven tests fail on it.
+      # the tests skip, and without a headless shell eleven of them fail.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
