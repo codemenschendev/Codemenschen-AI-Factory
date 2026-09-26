@@ -58,37 +58,31 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
   };
 
   const option = (key: keyof Consent, title: string, text: string) => (
-    <label style={{ display: "flex", gap: 10, alignItems: "flex-start", margin: "0 0 10px", fontSize: "0.9rem", cursor: "pointer" }}>
-      <input type="checkbox" checked={pick[key]} onChange={(e) => setPick({ ...pick, [key]: e.target.checked })} style={{ marginTop: 3 }} />
+    <label className="consent-opt">
       <span>
-        <strong style={{ display: "block" }}>{title}</strong>
-        <span style={{ color: "var(--ink-soft)" }}>{text}</span>
+        <strong>{title}</strong>
+        <span>{text}</span>
       </span>
+      <input type="checkbox" role="switch" className="consent-switch" checked={pick[key]} onChange={(e) => setPick({ ...pick, [key]: e.target.checked })} />
     </label>
   );
 
   return (
-    <div
-      role="dialog"
-      aria-label={c.title}
-      style={{
-        position: "fixed", left: 16, right: 16, bottom: 16, zIndex: 60, maxWidth: 540, margin: "0 auto",
-        maxHeight: "calc(100vh - 32px)", overflowY: "auto",
-        background: "var(--surface)", color: "var(--ink)", border: "1px solid var(--border)",
-        borderRadius: "var(--radius)", boxShadow: "0 12px 40px rgba(11,14,20,0.18)", padding: "18px 20px",
-      }}
-    >
-      <strong style={{ display: "block", marginBottom: 6 }}>{c.title}</strong>
-      <p style={{ margin: "0 0 12px", fontSize: "0.92rem", color: "var(--ink-soft)" }}>
+    <div role="dialog" aria-label={c.title} className="consent">
+      <strong className="consent-title">{c.title}</strong>
+      <p className="consent-text">
         {c.text}{" "}
-        <Link href={`/${locale}/privacy`} style={{ color: "inherit" }}>{c.more}</Link>
+        <Link href={`/${locale}/privacy`}>{c.more}</Link>
       </p>
-      {gtmId && option("stats", c.statsTitle, c.statsText)}
-      {option("ads", c.adsTitle, c.adsText)}
-      <div style={{ display: "flex", gap: 10, flexWrap: "wrap", marginTop: 4 }}>
-        <button className="btn btn-ghost btn-sm" onClick={() => save({ stats: Boolean(gtmId), ads: true })}>{c.allowAll}</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => save(pick)}>{c.saveChoice}</button>
-        <button className="btn btn-ghost btn-sm" onClick={() => save({ stats: false, ads: false })}>{c.declineAll}</button>
+      <div className="consent-opts">
+        {gtmId && option("stats", c.statsTitle, c.statsText)}
+        {option("ads", c.adsTitle, c.adsText)}
+      </div>
+      {/* Allow and decline look the same on purpose: consent may not be nudged (EDPB 03/2022). */}
+      <div className="consent-actions">
+        <button className="consent-btn" onClick={() => save({ stats: Boolean(gtmId), ads: true })}>{c.allowAll}</button>
+        <button className="consent-btn" onClick={() => save({ stats: false, ads: false })}>{c.declineAll}</button>
+        <button className="consent-save" onClick={() => save(pick)}>{c.saveChoice}</button>
       </div>
     </div>
   );
@@ -100,7 +94,7 @@ export function AdConsentLink({ label }: { label: string }) {
     <button
       type="button"
       onClick={reopen}
-      style={{ background: "none", border: 0, padding: 0, color: "#b8becd", fontSize: "0.88rem", cursor: "pointer", fontFamily: "inherit" }}
+      className="consent-reopen"
     >
       {label}
     </button>
