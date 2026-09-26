@@ -80,3 +80,7 @@
   .sh-revise { padding: 18px; }
   .sh-revise .pp-submit, .sh-inline .pp-submit { width: 100%; }
 }
+
+/* The thank-you page after payment uses the same card, in green. */
+.sh-status-ok .sh-status-ico { background: #dcfce7; color: var(--valid); }
+.sh-status h1 { font-size: clamp(1.6rem, 3vw, 2.1rem); letter-spacing: -0.035em; margin: 0; }
