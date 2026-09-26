@@ -183,7 +183,7 @@ class PrototypeWriter
                 $lap('brief+render');
                 $timing['total'] = round(array_sum($timing), 1);
 
-                return ['title' => 'Prototyp', 'html' => $out['html'], 'qa' => [
+                return ['title' => CodexPage::title($prompt, $site), 'html' => $out['html'], 'qa' => [
                     'ok' => null, 'findings' => [], 'writer' => 'codex', 'mockup' => true, 'brief' => $out['brief'],
                     'refs' => count($looks), 'timing' => $timing,
                     'product' => isset($site['url']) ? ['url' => $site['url'], 'brief' => $product] : null,
