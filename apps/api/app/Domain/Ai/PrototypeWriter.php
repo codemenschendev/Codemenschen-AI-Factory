@@ -1031,9 +1031,19 @@ class PrototypeWriter
         // request asks for; the paid project renders the other formats. Codex draws 3:2, 1:1 or
         // 2:3 and is told the exact size; the picture is cropped to it here.
         $formats = self::adFormat($prompt);
+        // Claude writes the art director's brief and Codex draws from it (owner's decision
+        // 2026-09-26), as for the site mockups. Without a brief Codex gets the raw words as before.
+        $written = null;
+        try {
+            $written = CodexPage::adBrief($prompt, $product, $site, (string) reset($formats), self::languageRule($site));
+            $lap('brief');
+        } catch (\Throwable $e) {
+            Log::info('prototype: no ad brief, Codex draws from the request', ['error' => mb_substr($e->getMessage(), 0, 160)]);
+        }
         $jobs = [];
         foreach ($formats as $name => $size) {
-            $jobs[$name] = ['prompt' => $brief, 'size' => $size, 'refs' => $refs, 'creative' => true];
+            $jobs[$name] = ['prompt' => $written !== null ? $written."\n\n".self::languageRule($site) : $brief,
+                'size' => $size, 'refs' => $refs, 'creative' => true];
         }
 
         $images = app(ImageService::class);
@@ -1067,7 +1077,7 @@ class PrototypeWriter
         $timing['total'] = round(array_sum($timing), 1);
 
         return ['title' => html_entity_decode($name, ENT_QUOTES).': Ads', 'html' => $html, 'qa' => [
-            'ok' => null, 'findings' => [], 'mode' => 'codex', 'formats' => array_keys($shown),
+            'ok' => null, 'findings' => [], 'mode' => 'codex', 'formats' => array_keys($shown), 'brief' => $written,
             'refs' => count($refs), 'timing' => $timing,
             'product' => isset($site['url']) ? ['url' => $site['url'], 'brief' => $product] : null,
         ]];
