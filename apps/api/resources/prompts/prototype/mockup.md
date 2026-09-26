@@ -14,6 +14,14 @@ The brief says, in this order:
      and the real content it shows: names, items, steps, what each photo shows.
   4. Presentation: {presentation}
 
+Facts are quoted, never improved. Every fact in the design, a time, a duration, a place, what is
+included, a number, is taken word for word from the customer's request or the website text below.
+"Prüfung am nächsten Tag" stays "Prüfung am nächsten Tag": never "morgen früh", "am nächsten
+Morgen" or any other wording that says more than the source. A fact the sources do not state is
+left out. Each fact appears once in the design; the supporting line and the benefit points never
+repeat the same fact in other words. The headline may be a short slogan, but a fact inside it is
+still quoted.
+
 Facts: only what the customer's request and the website text below say. No invented prices,
 dates, ratings, awards, customer numbers or partner logos. Where the design wants a date or a
 price that is not given, it shows a neutral label such as "Termine auf Anfrage".
