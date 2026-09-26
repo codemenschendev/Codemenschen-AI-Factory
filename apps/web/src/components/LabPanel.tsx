@@ -6,6 +6,7 @@ import Link from "next/link";
 import { API_BASE, api } from "@/lib/api";
 import { CampaignsPanel } from "@/components/CampaignsPanel";
 import type { Dict, Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 interface AdFormat {
   key: string;
@@ -188,25 +189,23 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
           : l.rendering;
 
   return (
-    <div>
-      <p className="est-empty">{l.intro}</p>
-
-      <form onSubmit={submit} style={{ margin: "24px 0 32px", display: "grid", gap: 12 }}>
-        <h2 style={{ margin: 0, fontSize: "1.1rem" }}>{l.createTitle}</h2>
-        <label>
-          {l.promptLabel}
+    <div className="lb">
+      <form onSubmit={submit} className="lb-card lb-form">
+        <h2>{l.createTitle}</h2>
+        <label className="lb-field">
+          <span>{l.promptLabel}</span>
           <textarea
+            className="pp-textarea"
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
             rows={3}
             placeholder={l.promptHint}
-            style={{ width: "100%", marginTop: 6 }}
           />
         </label>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-          <label>
-            {l.project}{" "}
-            <select value={projectId} onChange={(e) => setProjectId(e.target.value)}>
+        <div className="lb-grid">
+          <label className="lb-field">
+            <span>{l.project}</span>
+            <select className="lb-select" value={projectId} onChange={(e) => setProjectId(e.target.value)}>
               {projects.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name.slice(0, 40)}
@@ -214,16 +213,17 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               ))}
             </select>
           </label>
-          <label>
-            {l.kind}{" "}
-            <select value={kind} onChange={(e) => setKind(e.target.value as "video" | "image")}>
+          <label className="lb-field">
+            <span>{l.kind}</span>
+            <select className="lb-select" value={kind} onChange={(e) => setKind(e.target.value as "video" | "image")}>
               <option value="video">{l.kindVideo}</option>
               <option value="image">{l.kindImage}</option>
             </select>
           </label>
-          <label>
-            {l.background}{" "}
+          <label className="lb-field">
+            <span>{l.background}</span>
             <select
+              className="lb-select"
               value={background}
               onChange={(e) => setBackground(e.target.value as "auto" | "site" | "photo")}
             >
@@ -232,9 +232,9 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               <option value="photo">{l.bgPhoto}</option>
             </select>
           </label>
-          <label>
-            {l.goal}{" "}
-            <select value={goal} onChange={(e) => setGoal(e.target.value)}>
+          <label className="lb-field">
+            <span>{l.goal}</span>
+            <select className="lb-select" value={goal} onChange={(e) => setGoal(e.target.value)}>
               <option value="">{l.goalAuto}</option>
               {goals.map((g) => (
                 <option key={g} value={g}>
@@ -243,9 +243,9 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               ))}
             </select>
           </label>
-          <label>
-            {l.angle}{" "}
-            <select value={angle} onChange={(e) => setAngle(e.target.value)}>
+          <label className="lb-field">
+            <span>{l.angle}</span>
+            <select className="lb-select" value={angle} onChange={(e) => setAngle(e.target.value)}>
               <option value="">{l.angleAuto}</option>
               {angles.map((a) => (
                 <option key={a} value={a}>
@@ -254,9 +254,9 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               ))}
             </select>
           </label>
-          <label>
-            {l.format}{" "}
-            <select value={format} onChange={(e) => setFormat(e.target.value)}>
+          <label className="lb-field">
+            <span>{l.format}</span>
+            <select className="lb-select" value={format} onChange={(e) => setFormat(e.target.value)}>
               {(formats[kind] ?? []).map((f) => (
                 <option key={f.key} value={f.key}>
                   {l.formats[f.key as keyof typeof l.formats] ?? f.label} ({f.size})
@@ -264,10 +264,10 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
               ))}
             </select>
           </label>
-          <button type="submit" disabled={sending || !projectId || prompt.trim().length < 10}>
-            {l.create}
-          </button>
         </div>
+        <button type="submit" className="btn btn-primary pp-submit lb-submit" disabled={sending || !projectId || prompt.trim().length < 10}>
+          {l.create}
+        </button>
       </form>
 
       {playing &&
@@ -278,7 +278,7 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
             key={playing.id}
             src={playing.url}
             alt=""
-            style={{ width: "100%", maxWidth: 360, borderRadius: 12, marginBottom: 24 }}
+            className="lb-media"
           />
         ) : (
           <video
@@ -286,39 +286,31 @@ export function LabPanel({ locale, d }: { locale: Locale; d: Dict }) {
             src={playing.url}
             controls
             autoPlay
-            style={{ width: "100%", maxWidth: 360, borderRadius: 12, marginBottom: 24 }}
+            className="lb-media"
           />
         ))}
-      {error && <p className="est-empty">{error}</p>}
+      {error && <p className="pp-error">{error}</p>}
 
       {!ads ? (
-        <p className="est-empty">{l.loading}</p>
+        <p className="lb-empty">{l.loading}</p>
       ) : ads.length === 0 ? (
-        <p className="est-empty">{l.empty}</p>
+        <p className="lb-empty">{l.empty}</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        <ul className="lb-list">
           {ads.map((v) => (
-            <li
-              key={v.id}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                gap: 16,
-                padding: "12px 0",
-                borderTop: "1px solid rgba(255,255,255,.12)",
-              }}
-            >
-              <span>
-                {v.name}
-                <br />
+            <li key={v.id}>
+              <span className="lb-list-ico">
+                <Icon name={v.kind === "image" ? "image" : "preview"} />
+              </span>
+              <span className="lb-list-text">
+                <b>{v.name}</b>
                 <small>
                   {v.kind === "image" ? l.kindImage : l.kindVideo} · {v.project.name.slice(0, 30)} ·{" "}
                   {label(v)}
                 </small>
               </span>
               {v.status === "ready" && (
-                <button type="button" onClick={() => play(v)}>
+                <button type="button" className="btn lb-ghost" onClick={() => play(v)}>
                   {v.kind === "image" ? l.open : l.play}
                 </button>
               )}

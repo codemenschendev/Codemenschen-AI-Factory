@@ -1,0 +1,63 @@
+/* The ads lab (/[locale]/lab): head band, the generator form and the campaigns in white cards,
+   the rendered ads as a list. Scoped under `.lbp` (page) and `.lb` (panel). */
+
+.lbp { padding-bottom: 80px; }
+.lbp .wrap { max-width: 1200px; }
+.lbp-band { padding: 40px 0 84px; }
+.lbp-band h1 { font-size: clamp(2rem, 3.6vw, 2.8rem); letter-spacing: -0.04em; margin: 0 0 10px; }
+.lbp .lbp-lede { font-size: 1.05rem; color: var(--ink-soft); margin: 0; }
+.lbp-body { margin-top: -52px; }
+.lbp .est-empty { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 18px 22px; box-shadow: var(--shadow); }
+
+.lb p { margin: 0; }
+.lb-card { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 26px 28px; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.08); }
+.lb-card h2 { font-size: 1.2rem; margin: 0; }
+
+/* Generator form */
+.lb-form { display: grid; gap: 18px; margin-bottom: 24px; }
+.lb-field { display: grid; gap: 6px; font-size: 0.86rem; font-weight: 600; color: var(--ink); min-width: 0; }
+.lb-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.lb-select { width: 100%; font: 500 0.92rem var(--font-body); color: var(--ink); background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m2 4 4 4 4-4'/%3E%3C/svg%3E") no-repeat right 12px center; border: 1px solid #d5dae4; border-radius: 10px; padding: 10px 34px 10px 12px; appearance: none; -webkit-appearance: none; cursor: pointer; }
+.lb-select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.12); }
+.lb-submit { justify-self: start; }
+
+.lb-media { display: block; width: 100%; max-width: 360px; border-radius: 16px; margin: 0 0 24px; box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15); }
+.lb .lb-empty { color: var(--ink-soft); font-size: 0.92rem; padding: 8px 0; }
+
+/* Rendered ads */
+.lb-list { list-style: none; margin: 0 0 32px; padding: 0; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; }
+.lb-list li { display: flex; align-items: center; gap: 14px; background: #fff; border: 1px solid var(--border); border-radius: 14px; padding: 12px 14px; box-shadow: var(--shadow); }
+.lb-list-ico { flex: none; width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.lb-list-ico .ico { width: 20px; height: 20px; }
+.lb-list-text { flex: 1; min-width: 0; }
+.lb-list-text b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lb-list-text small { display: block; font-size: 0.8rem; color: var(--ink-soft); margin-top: 2px; }
+.lb .btn { display: inline-flex; align-items: center; gap: 8px; }
+.lb-ghost { flex: none; padding: 8px 16px; font-size: 0.88rem; background: #fff; color: var(--ink); border-color: var(--border); }
+.lb-ghost:hover:not(:disabled) { border-color: #c7d2fe; color: var(--accent-hover); }
+.lb .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* Campaigns */
+.lb-camps { display: grid; gap: 12px; }
+.lb .lb-note { font-size: 0.9rem; color: var(--ink-soft); }
+.lb-platforms { display: flex; flex-wrap: wrap; gap: 8px; }
+.lb-platforms span { font-size: 0.8rem; font-weight: 600; padding: 4px 11px; border-radius: 99px; background: var(--tint); color: var(--ink-soft); }
+.lb-platforms span.is-on { background: #dcfce7; color: var(--valid); }
+.lb-camp-list { list-style: none; margin: 0; padding: 0; }
+.lb-camp-list > li { padding: 14px 0; border-top: 1px solid var(--border); display: grid; gap: 8px; }
+.lb-camp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+.lb-camp-head small { font-size: 0.82rem; color: var(--ink-soft); }
+.lb-problems { margin: 0; padding: 10px 14px 10px 30px; font-size: 0.84rem; color: var(--warn-ink); background: var(--warn-bg); border-radius: 10px; }
+.lb-camp-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.lb-camp-actions .btn { padding: 8px 16px; font-size: 0.88rem; }
+
+@media (max-width: 900px) {
+  .lb-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .lbp-band { padding: 28px 0 72px; }
+  .lb-card { padding: 20px 18px; border-radius: 18px; }
+  .lb-grid { grid-template-columns: minmax(0, 1fr); }
+  .lb-submit { width: 100%; }
+}
+.lb .pp-submit:disabled { background: var(--accent); color: #fff; opacity: 0.4; box-shadow: none; }

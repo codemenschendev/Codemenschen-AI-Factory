@@ -74,26 +74,26 @@ export function CampaignsPanel({ d, token }: { d: Dict; token: string }) {
     })[s];
 
   return (
-    <section style={{ marginTop: 48 }}>
-      <h2 style={{ fontSize: "1.2rem" }}>{a.campaignsTitle}</h2>
-      <p className="est-empty">{a.campaignsIntro}</p>
-      <p className="est-empty" style={{ fontSize: ".85rem" }}>
+    <section className="lb-card lb-camps">
+      <h2>{a.campaignsTitle}</h2>
+      <p className="lb-note">{a.campaignsIntro}</p>
+      <p className="lb-platforms">
         {(["meta", "google"] as const).map((p) => (
-          <span key={p} style={{ marginRight: 16 }}>
+          <span key={p} className={platforms[p] ? "is-on" : undefined}>
             {p}: {platforms[p] ? "✓" : a.platformOff}
           </span>
         ))}
       </p>
 
       {campaigns.length === 0 ? (
-        <p className="est-empty">{a.noCampaigns}</p>
+        <p className="lb-empty">{a.noCampaigns}</p>
       ) : (
-        <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
+        <ul className="lb-camp-list">
           {campaigns.map((c) => {
             const ready = platforms[c.platform] && c.problems.length === 0;
             return (
-              <li key={c.id} style={{ padding: "14px 0", borderTop: "1px solid rgba(255,255,255,.12)" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", gap: 16, alignItems: "baseline" }}>
+              <li key={c.id}>
+                <div className="lb-camp-head">
                   <strong>
                     {c.platform} · {c.project.name.slice(0, 28)}
                   </strong>
@@ -102,29 +102,29 @@ export function CampaignsPanel({ d, token }: { d: Dict; token: string }) {
                   </small>
                 </div>
 
-                {c.error && <p className="est-empty" style={{ color: "#f87171" }}>{c.error}</p>}
+                {c.error && <p className="pp-error">{c.error}</p>}
 
                 {c.problems.length > 0 && (
-                  <ul style={{ fontSize: ".82rem", color: "#fbbf24", margin: "6px 0", paddingLeft: 18 }}>
+                  <ul className="lb-problems">
                     {c.problems.slice(0, 4).map((p, i) => (
                       <li key={i}>{p}</li>
                     ))}
                   </ul>
                 )}
 
-                <div style={{ display: "flex", gap: 10, marginTop: 8, flexWrap: "wrap" }}>
+                <div className="lb-camp-actions">
                   {["unpublished", "failed"].includes(c.platform_status) && (
-                    <button type="button" disabled={!ready || busy === c.id} onClick={() => act(c, "publish")}>
+                    <button type="button" className="btn lb-ghost" disabled={!ready || busy === c.id} onClick={() => act(c, "publish")}>
                       {a.publish}
                     </button>
                   )}
                   {c.platform_status === "paused" && (
-                    <button type="button" disabled={busy === c.id} onClick={() => act(c, "activate")}>
+                    <button type="button" className="btn btn-primary" disabled={busy === c.id} onClick={() => act(c, "activate")}>
                       {a.activate}
                     </button>
                   )}
                   {c.platform_status === "active" && (
-                    <button type="button" disabled={busy === c.id} onClick={() => act(c, "pause")}>
+                    <button type="button" className="btn lb-ghost" disabled={busy === c.id} onClick={() => act(c, "pause")}>
                       {a.pauseAd}
                     </button>
                   )}

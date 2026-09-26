@@ -286,8 +286,10 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
         </Link>
       </p>
       <div className="detail-head">
-        <h1 style={{ marginBottom: 0 }}>{p.name}</h1>
-        <span className="badge badge-type">{p.status}</span>
+        <h1>{p.name}</h1>
+        <span className={`acc-pill${["READY", "PUBLISHED", "live"].includes(p.status) ? " is-ok" : p.status === "FAILED" ? " is-warn" : ""}`}>
+          {d.account.projectState[p.status] ?? d.account.projectState.BUILDING}
+        </span>
         {p.order && (
           <span className="muted small num">{d.account.total}: {eur(p.order.total_one_time_eur, locale)}</span>
         )}
