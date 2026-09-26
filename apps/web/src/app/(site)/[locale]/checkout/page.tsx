@@ -2,6 +2,9 @@ import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { CheckoutForm } from "@/components/CheckoutForm";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import "../../../prototype.css";
+import "../../../create.css";
+import "../../../share.css";
 
 export default async function CheckoutPage({
   params,
@@ -14,11 +17,17 @@ export default async function CheckoutPage({
   const d = getDict(locale);
 
   return (
-    <main className="wrap" style={{ padding: "40px 24px 72px" }}>
-      <h1>{d.checkout.title}</h1>
-      <Suspense fallback={<p className="est-empty">{d.checkout.working}</p>}>
-        <CheckoutForm locale={locale} d={d} />
-      </Suspense>
+    <main className="cw co">
+      <div className="pp-band cw-band co-band">
+        <div className="wrap">
+          <h1>{d.checkout.title}</h1>
+        </div>
+      </div>
+      <div className="wrap cw-body">
+        <Suspense fallback={<p className="co-wait">{d.checkout.working}</p>}>
+          <CheckoutForm locale={locale} d={d} />
+        </Suspense>
+      </div>
     </main>
   );
 }

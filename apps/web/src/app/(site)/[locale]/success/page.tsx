@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { TagOnMount } from "@/components/TagOnMount";
+import { Icon } from "@/components/LineIcon";
+import "../../../prototype.css";
+import "../../../share.css";
 
 export default async function SuccessPage({
   params,
@@ -17,17 +20,22 @@ export default async function SuccessPage({
   const d = getDict(locale);
 
   return (
-    <main className="wrap-narrow" style={{ padding: "56px 24px 72px" }}>
+    <main className="sh">
       <TagOnMount event="purchase" />
-      <h1>{d.success.title}</h1>
-      <p className="muted" style={{ fontSize: 17 }}>
-        {kind === "site" ? d.success.site : d.success.p}
-      </p>
-      <p>
-        <Link className="btn btn-primary" href={`/${locale}/account`}>
-          {d.success.cta}
-        </Link>
-      </p>
+      <div className="pp-band sh-band" />
+      <div className="wrap sh-body">
+        <div className="sh-status sh-status-ok">
+          <span className="sh-status-ico">
+            <Icon name="check" />
+          </span>
+          <h1>{d.success.title}</h1>
+          <p>{kind === "site" ? d.success.site : d.success.p}</p>
+          <Link className="btn btn-primary" href={`/${locale}/account`}>
+            {d.success.cta}
+            <Icon name="arrow" className="pp-btn-ico" />
+          </Link>
+        </div>
+      </div>
     </main>
   );
 }

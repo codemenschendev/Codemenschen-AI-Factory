@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { api, ApiError, type QuoteResponse } from "@/lib/api";
+import { Icon } from "./LineIcon";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 
 type Packages = Record<string, boolean>;
@@ -92,11 +93,15 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
 
   if (failed)
     return (
-      <p className="note">
-        {c.missingQuote} <Link href={`/${locale}/create`}>{d.nav.create}</Link>
-      </p>
+      <div className="sh-status">
+        <span className="sh-status-ico">
+          <Icon name="doc" />
+        </span>
+        <h2>{c.missingQuote}</h2>
+        <Link className="btn btn-primary" href={`/${locale}/create`}>{d.nav.create}</Link>
+      </div>
     );
-  if (!quote || !totals) return <p className="est-empty">{c.working}</p>;
+  if (!quote || !totals) return <p className="co-wait">{c.working}</p>;
 
   const pay = async () => {
     setBusy(true);
@@ -134,8 +139,13 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
           {isSite && (
             <div className="field">
               <span className="field-label">{c.site.includedTitle}</span>
-              <ul className="small" style={{ margin: "6px 0 0", paddingLeft: 20 }}>
-                {c.site.included.map((line) => <li key={line}>{line}</li>)}
+              <ul className="co-included">
+                {c.site.included.map((line) => (
+                  <li key={line}>
+                    <Icon name="check" className="pp-tick" />
+                    {line}
+                  </li>
+                ))}
               </ul>
             </div>
           )}
@@ -233,15 +243,8 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              style={{
-                width: "100%",
-                padding: "12px",
-                fontSize: 15,
-                border: "1px solid var(--border)",
-                borderRadius: "var(--radius)",
-                background: "var(--surface)",
-                fontFamily: "var(--font-body)",
-              }}
+              className="pp-input"
+              autoComplete="email"
             />
           </div>
 
@@ -272,7 +275,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
       </div>
 
       <aside className="est-panel">
-        <h3 style={{ margin: 0 }}>{c.summary}</h3>
+        <h3>{c.summary}</h3>
         <div className="row">
           <span className="muted">{isSite ? c.site.development : c.development}</span>
           <strong>{eur(quote.price_eur, locale)}</strong>
@@ -289,7 +292,7 @@ export function CheckoutForm({ locale, d }: { locale: Locale; d: Dict }) {
         <hr />
         <div className="row">
           <span className="muted">{c.totalToday}</span>
-          <strong style={{ fontSize: 18 }}>
+          <strong className="co-total">
             {eur(totals.oneTime, locale)}
           </strong>
         </div>
