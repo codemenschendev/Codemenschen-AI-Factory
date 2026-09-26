@@ -89,6 +89,32 @@ class CodexPage
             $user."\n\n".$languageRule);
     }
 
+    /**
+     * What the account list calls a prototype drawn as a picture, which has no <title> of its own:
+     * the website's name, else its address, else the customer's first sentence. "Prototyp" nine
+     * times over told the customer nothing (2026-09-26).
+     */
+    public static function title(string $prompt, ?array $site): string
+    {
+        $name = trim((string) ($site['name'] ?? ''));
+        if ($name !== '') {
+            // "Küstenpatent Kroatien | Boat Skipper B ..." keeps its first part.
+            $name = trim((string) preg_split('~\s+[|\x{2013}\x{2014}-]\s+~u', $name, 2)[0]);
+        }
+        if ($name === '' && isset($site['url'])) {
+            $name = preg_replace('~^www\.~', '', (string) parse_url((string) $site['url'], PHP_URL_HOST)) ?? '';
+        }
+        if ($name === '') {
+            $name = trim((string) preg_split('~(?<=[.!?])\s|\n~u', trim($prompt), 2)[0]);
+            $name = rtrim($name, '.!? ');
+        }
+        if ($name === '') {
+            return 'Prototyp';
+        }
+
+        return mb_strlen($name) > 70 ? rtrim(mb_substr($name, 0, 67)).'…' : $name;
+    }
+
     /** One answer from Claude on the tool-less chat agent. */
     private static function ask(string $system, string $user): string
     {

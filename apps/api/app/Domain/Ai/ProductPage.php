@@ -89,7 +89,7 @@ class ProductPage
         return $page ?: null;
     }
 
-    /** @return array{url:string,text:string,lang?:?string}|false false so a failed read is cached too, briefly enough */
+    /** @return array{url:string,text:string,lang?:?string,name?:?string}|false false so a failed read is cached too, briefly enough */
     private function fetch(string $domain): array|false
     {
         $url = "https://{$domain}/";
@@ -119,7 +119,10 @@ class ProductPage
                 // The language the business speaks to its customers in, from <html lang>.
                 $lang = preg_match('~<html[^>]*\slang="([a-zA-Z]{2,3})~i', $html, $l) === 1 ? strtolower($l[1]) : null;
 
-                return ['url' => $url, 'text' => $text, 'images' => $this->bigEnough($images, $domain), 'logo' => $logo, 'lang' => $lang];
+                // The site's own name, for the title of a prototype drawn as a picture (CodexPage).
+                $name = preg_match('~<title[^>]*>(.*?)</title>~is', $html, $t) === 1 ? trim(html_entity_decode(strip_tags($t[1]), ENT_QUOTES | ENT_HTML5)) : null;
+
+                return ['url' => $url, 'text' => $text, 'images' => $this->bigEnough($images, $domain), 'logo' => $logo, 'lang' => $lang, 'name' => $name ?: null];
             }
         } catch (\Throwable $e) {
             Log::info('product page: not read', ['domain' => $domain, 'error' => mb_substr($e->getMessage(), 0, 160)]);
