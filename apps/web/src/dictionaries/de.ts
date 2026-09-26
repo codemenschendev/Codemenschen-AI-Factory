@@ -9,6 +9,7 @@ export const de = {
     pricing: "Preise",
     faq: "FAQ",
     cta: "Kostenlose Vorschau starten",
+    ctaShort: "Gratis Vorschau",
     account: "Meine Projekte",
     login: "Anmelden",
   },

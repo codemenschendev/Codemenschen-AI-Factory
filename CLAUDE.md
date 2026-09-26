@@ -55,10 +55,8 @@
   (`--force` overrides). Never hand-run `docker compose build/up` on the server: that is a side door
   (a hand-run compose caused a 502 on manager, 2026-09-24). Server checkout `/var/www/ai-factory`,
   stack `infra/docker-compose.prod.yml`. Verify by grepping the new code inside the container, not by uptime.
-- After every commit and push/deploy, the report goes to Teams through the session "Bộ chỉ huy"
-  (2026-09-26): send it the `~/.openclaw/workspace/ops/teams-commit.sh <repo> <hash> deployed` lines with
-  SendMessage and let it post. Never run `teams-commit.sh` or `teams-send.sh` from this session: all
-  sends share one headless Chrome (CDP 9333), and two sessions at once crash it.
+- After every commit and push/deploy, post it to Teams yourself with `~/.openclaw/workspace/ops/teams-commit.sh`.
+  If it fails with a CDP or login-looking error, run `~/.openclaw/workspace/ops/teams-chrome.sh ensure` and retry.
 - Mail goes out through the company's world4you SMTP (`smtp.world4you.com:587`, STARTTLS) as
   `developerweb@codemenschen.at`, DKIM-signed for codemenschen.at. Not Resend (its Tokyo IPs
   landed the sign-in mail in spam, 2026-09-07) and not the host's sendmail (generic rDNS, no DKIM).

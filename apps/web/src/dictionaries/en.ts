@@ -9,6 +9,7 @@ export const en = {
     pricing: "Pricing",
     faq: "FAQ",
     cta: "Get a free preview",
+    ctaShort: "Free preview",
     account: "My projects",
     login: "Sign in",
   },
