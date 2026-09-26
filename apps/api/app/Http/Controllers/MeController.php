@@ -7,6 +7,7 @@ use App\Domain\Pricing\Estimator;
 use App\Domain\Sites\Imprint;
 use App\Domain\Sites\SiteService;
 use App\Models\ChangeMessage;
+use App\Models\Prototype;
 use App\Models\Project;
 use App\Services\CareService;
 use App\Services\ChangeChat;
@@ -371,5 +372,31 @@ class MeController extends Controller
             'admin' => $request->user()->isAdmin(),
             'projects' => $projects,
         ]);
+    }
+
+    /**
+     * The signed-in customer's own prototypes, newest first. Since one free prototype per account
+     * (2026-09-25) every prototype is filed under its customer, so the list follows the account to
+     * any browser instead of living only in the localStorage of the one that made it. The parts of
+     * a campaign are not listed on their own: the campaign's page shows them.
+     */
+    public function prototypes(Request $request): JsonResponse
+    {
+        $rows = Prototype::where('customer_id', $request->user()->id)
+            ->whereNull('parent_id')->where('status', '!=', 'waiting')
+            ->latest()->limit(50)
+            ->get(['id', 'kind', 'status', 'title', 'prompt', 'expires_at', 'project_id', 'created_at'])
+            ->map(fn (Prototype $p) => [
+                'id' => $p->id,
+                'kind' => $p->kind,
+                'status' => $p->expires_at !== null && $p->expires_at->isPast() ? 'expired' : $p->status,
+                'title' => $p->title,
+                'prompt' => mb_substr((string) $p->prompt, 0, 160),
+                'bought' => $p->project_id !== null,
+                'expires_at' => $p->expires_at?->toIso8601String(),
+                'created_at' => $p->created_at->toIso8601String(),
+            ]);
+
+        return response()->json(['prototypes' => $rows]);
     }
 }
