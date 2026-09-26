@@ -57,6 +57,41 @@ class CodexPage
                 'page' => mb_substr((string) $site['text'], 0, 2500),
             ]);
         }
+        return self::ask(Prompts::get('prototype/mockup', [
+            'what' => $what, 'sections' => $sections, 'presentation' => $presentation,
+            'language' => $site !== null ? 'the language of the website' : 'the language of the request',
+        ]), $user);
+    }
+
+    /**
+     * Claude's brief for an ad creative (owner's decision 2026-09-26): the ads of the Codex mode are
+     * drawn from it instead of from the customer's raw sentence. The LANGUAGE rule travels along,
+     * so the brief puts the ad's words in the language the ad speaks.
+     */
+    public static function adBrief(string $prompt, ?string $product, ?array $site, string $size, string $languageRule): string
+    {
+        [$w, $h] = array_map('intval', explode('x', $size));
+        $format = match (true) {
+            $w === $h => "square, {$size} px, for the Instagram and Facebook feed",
+            $w > $h => "wide, {$size} px, a link or display banner",
+            default => "tall, {$size} px, an Instagram or Facebook story",
+        };
+        $user = "The customer's request:\n".trim($prompt);
+        if ($site !== null) {
+            $user .= "\n\n".Prompts::get('prototype/product', [
+                'url' => $site['url'],
+                'brief' => $product ?? '(no brief could be written; read the website text below yourself)',
+                'page' => mb_substr((string) $site['text'], 0, 2500),
+            ]);
+        }
+
+        return self::ask(Prompts::get('prototype/ad-brief', ['format' => $format, 'language' => 'the language the LANGUAGE line names']),
+            $user."\n\n".$languageRule);
+    }
+
+    /** One answer from Claude on the tool-less chat agent. */
+    private static function ask(string $system, string $user): string
+    {
         $request = Http::baseUrl(rtrim((string) config('services.ai_image.base_url'), '/'))
             ->withToken((string) config('services.ai_image.token'))->acceptJson()->timeout(300)->connectTimeout(10);
         if (($backend = ChatBackend::pin()) !== null) {
@@ -64,13 +99,7 @@ class CodexPage
         }
         $res = $request->post('/v1/chat/completions', [
             'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
-            'messages' => [
-                ['role' => 'system', 'content' => Prompts::get('prototype/mockup', [
-                    'what' => $what, 'sections' => $sections, 'presentation' => $presentation,
-                    'language' => $site !== null ? 'the language of the website' : 'the language of the request',
-                ])],
-                ['role' => 'user', 'content' => $user],
-            ],
+            'messages' => [['role' => 'system', 'content' => $system], ['role' => 'user', 'content' => $user]],
             'max_completion_tokens' => 1500,
         ]);
         $brief = trim((string) $res->json('choices.0.message.content'));

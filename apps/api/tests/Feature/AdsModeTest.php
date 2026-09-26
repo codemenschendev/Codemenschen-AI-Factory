@@ -17,6 +17,8 @@ class AdsModeTest extends TestCase
     private const PAGE = '<!doctype html><html lang="de"><head><title>Anzeigen</title><style>.x{}</style></head><body><main class="ads">'
         .'<article class="ad ad-story"><div class="photo-wide" data-q="bread oven">Brot im Ofen</div></article></main></body></html>';
 
+    private const BRIEF = 'A warm Christmas feed ad for a bakery in Graz. Headline "Frisch zu Weihnachten".';
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,21 +30,26 @@ class AdsModeTest extends TestCase
             'services.ai_image.backend' => 'codex', 'services.ai_image.prototype_renders' => 2,
             'services.ai_image.codex_url' => 'http://imagegen.test', 'services.ai_image.codex_token' => 'c']);
         Http::fake([
-            '*/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => self::PAGE]]]]),
+            // The art director's brief for a Codex ad; anything else is Claude's page.
+            '*/v1/chat/completions' => fn ($r) => Http::response(['choices' => [['message' => ['content' => str_contains((string) json_encode($r['messages']), 'draw ONE finished ad') ? self::BRIEF : self::PAGE]]]]),
             'imagegen.test/v1/images' => Http::response(['base64' => base64_encode($png), 'mime' => 'image/png']),
         ]);
     }
 
-    public function test_codex_alone_gets_the_customers_words_and_designs_the_whole_creative(): void
+    public function test_codex_alone_draws_the_whole_creative_from_claudes_brief(): void
     {
         Setting::write('ads.mode', 'codex');
 
         $out = app(PrototypeWriter::class)->build('Weihnachtsanzeigen für eine Bäckerei in Graz', 'ads');
 
-        Http::assertNotSent(fn ($r) => str_contains($r->url(), 'chat/completions'));
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'chat/completions')
+            && str_contains($r['messages'][0]['content'], 'art director') && str_contains($r['messages'][0]['content'], '1080x1080')
+            && str_contains($r['messages'][1]['content'], 'Weihnachtsanzeigen für eine Bäckerei in Graz')
+            && str_contains($r['messages'][1]['content'], 'LANGUAGE:'));
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test') && $r['creative'] === true
-            && $r['size'] === '1080x1080' && str_starts_with($r['prompt'], 'Weihnachtsanzeigen für eine Bäckerei in Graz'));
-        Http::assertSentCount(1);
+            && $r['size'] === '1080x1080' && str_starts_with($r['prompt'], self::BRIEF) && str_contains($r['prompt'], 'LANGUAGE:'));
+        Http::assertSentCount(2);
+        $this->assertSame(self::BRIEF, $out['qa']['brief']);
         $this->assertSame('codex', $out['qa']['mode']);
         $this->assertSame(1, substr_count($out['html'], 'src="data:image/'));
         $this->assertArrayHasKey('render', $out['qa']['timing']);
