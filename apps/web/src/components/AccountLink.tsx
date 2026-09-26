@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { Locale } from "@/lib/i18n";
 import { useToken } from "@/lib/token";
+import { Icon } from "./LineIcon";
 
 /**
  * Nav entry to the customer portal: "My projects" once a portal token exists on this device, "Sign in" before.
@@ -11,9 +12,12 @@ import { useToken } from "@/lib/token";
  */
 export function AccountLink({ locale, labels }: { locale: Locale; labels: { account: string; login: string } }) {
   const signedIn = !!useToken();
+  const label = signedIn ? labels.account : labels.login;
+  // On a small phone the words do not fit next to the logo: the person icon stands in for them.
   return (
-    <Link href={`/${locale}/account`} className="lang-toggle nav-account">
-      {signedIn ? labels.account : labels.login}
+    <Link href={`/${locale}/account`} className="lang-toggle nav-account" aria-label={label}>
+      <Icon name="user" className="ico nav-account-ico" />
+      <span className="nav-account-label">{label}</span>
     </Link>
   );
 }
