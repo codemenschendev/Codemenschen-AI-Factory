@@ -7,6 +7,7 @@ import { setToken, useToken } from "@/lib/token";
 import { trackOnce } from "@/lib/analytics";
 import { forget, rename } from "@/lib/history";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 interface Meta {
   kind?: string;
@@ -100,6 +101,38 @@ function progress(steps: readonly Step[], stage: StepKey | null, inStage: number
 
 const clock = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
+/** One card for every state that is not the finished prototype: waiting, building, failed, expired. */
+function StatusCard({ icon, title, tone, children }: { icon: string; title: string; tone?: "bad"; children?: React.ReactNode }) {
+  return (
+    <div className={`sh-status${tone ? " sh-status-bad" : ""}`} aria-live="polite">
+      <span className="sh-status-ico">
+        <Icon name={icon} />
+      </span>
+      <h2>{title}</h2>
+      {children}
+    </div>
+  );
+}
+
+/** The build steps as a list: done, the one it is on (with what it does), still to come. */
+function StepList({ rows }: { rows: { key: string; label: string; state: "done" | "now" | "todo" | "failed"; note?: string | null }[] }) {
+  return (
+    <ol className="sh-steps">
+      {rows.map((r) => (
+        <li key={r.key} data-state={r.state}>
+          <span className="sh-dot" aria-hidden="true">
+            {r.state === "done" ? "✓" : r.state === "failed" ? "✕" : ""}
+          </span>
+          <span>
+            {r.label}
+            {r.note && <small>{r.note}</small>}
+          </span>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
 export function PrototypeView({ id, locale, d, embedded = false }: { id: string; locale: Locale; d: Dict; embedded?: boolean }) {
   const p = d.proto;
   const [meta, setMeta] = useState<Meta | null>(null);
@@ -156,14 +189,13 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
     return () => clearInterval(t);
   }, [building]);
 
-  if (!meta) return <p className="est-empty">{p.building}</p>;
+  if (!meta) return <StatusCard icon="clock" title={p.building} />;
 
   if (meta.status === "waiting") {
     return (
-      <div aria-live="polite" style={{ maxWidth: 560 }}>
-        <p className="est-empty" style={{ marginBottom: 6 }}>{p.email.waitingTitle}</p>
-        <p className="small muted" style={{ margin: 0 }}>{p.email.waiting}</p>
-      </div>
+      <StatusCard icon="mail" title={p.email.waitingTitle}>
+        <p>{p.email.waiting}</p>
+      </StatusCard>
     );
   }
 
@@ -175,10 +207,9 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
     const since = Math.max(0, Math.floor((now - (stageSince?.at ?? now)) / 1000));
 
     return (
-      <div aria-live="polite" style={{ maxWidth: 560 }}>
-        <p className="est-empty" style={{ marginBottom: 6 }}>{p.revise.working}</p>
-        <p className="small muted" style={{ margin: 0 }}>{p.revise.elapsed.replace("{t}", clock(since))}</p>
-      </div>
+      <StatusCard icon="spark" title={p.revise.working}>
+        <p>{p.revise.elapsed.replace("{t}", clock(since))}</p>
+      </StatusCard>
     );
   }
 
@@ -199,88 +230,47 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
     const at = key ? steps.findIndex((s) => s.key === key) : -1;
 
     return (
-      <div aria-live="polite" style={{ maxWidth: 560 }}>
-        <p className="est-empty" style={{ marginBottom: 6 }}>{p.building}</p>
-        <div
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct}
-          style={{ height: 8, borderRadius: 999, background: "var(--border)", overflow: "hidden" }}
-        >
-          <div
-            style={{
-              width: `${pct}%`,
-              height: "100%",
-              background: "var(--accent, #2f4bd6)",
-              transition: "width 1s linear",
-            }}
-          />
+      <StatusCard icon="spark" title={p.building}>
+        <div className="sh-bar" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+          <span style={{ width: `${pct}%` }} />
         </div>
-        <p className="small muted" style={{ margin: "6px 0 14px" }}>
+        <p className="sh-meta">
           {pct}% · {(codex ? p.codexElapsed : p.elapsed).replace("{t}", clock(elapsed))}
         </p>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
-          {steps.map((s, i) => {
+        <StepList
+          rows={steps.map((s, i) => {
             const state = at < 0 ? "todo" : i < at ? "done" : i === at ? "now" : "todo";
-
-            return (
-              <li
-                key={s.key}
-                style={{
-                  display: "flex",
-                  gap: 10,
-                  alignItems: "baseline",
-                  opacity: state === "todo" ? 0.45 : 1,
-                  fontWeight: state === "now" ? 600 : 400,
-                }}
-              >
-                <span style={{ width: 18, textAlign: "center" }} aria-hidden="true">
-                  {state === "done" ? "✓" : state === "now" ? "●" : "○"}
-                </span>
-                <span>
-                  {names[s.key as keyof typeof names]}
-                  {state === "now" && stage && (
-                    <span className="small muted" style={{ display: "block", fontWeight: 400 }}>{stage}</span>
-                  )}
-                </span>
-              </li>
-            );
+            return { key: s.key, label: names[s.key as keyof typeof names], state, note: state === "now" ? stage : null };
           })}
-        </ol>
-      </div>
+        />
+      </StatusCard>
     );
   }
-  if (meta.status === "expired") return <p className="est-empty">{p.expired}</p>;
+  if (meta.status === "expired") {
+    return (
+      <StatusCard icon="clock" title={p.expired}>
+        <Link className="btn btn-primary" href={`/${locale}/prototype`}>{p.another}</Link>
+      </StatusCard>
+    );
+  }
   if (meta.status === "failed") {
     return (
-      <div>
-        <p className="est-empty">
-          {meta.error?.startsWith("site-unreadable: ")
-            ? p.siteUnreadable.replace("{domain}", meta.error.slice("site-unreadable: ".length))
-            : p.failed}
-        </p>
-        <Link href={`/${locale}/prototype`}>{p.another}</Link>
-      </div>
+      <StatusCard icon="bulb" title={p.failed} tone="bad">
+        {meta.error?.startsWith("site-unreadable: ") && (
+          <p>{p.siteUnreadable.replace("{domain}", meta.error.slice("site-unreadable: ".length))}</p>
+        )}
+        <Link className="btn btn-primary" href={`/${locale}/prototype`}>{p.another}</Link>
+      </StatusCard>
     );
   }
 
   return (
     <div>
-      {!embedded && <div
-        style={{
-          display: "flex",
-          gap: 12,
-          flexWrap: "wrap",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: 16,
-        }}
-      >
-        <p className="est-empty" style={{ margin: 0 }}>
+      {!embedded && <div className="sh-toolbar">
+        <p>
           {meta.bought ? p.boughtSite : meta.site_price_eur ? p.buySiteHint : p.shareHint}
         </p>
-        <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+        <div className="sh-actions">
           {meta.bought && meta.live_url && (
             <a className="btn btn-primary" href={meta.live_url} target="_blank" rel="noopener noreferrer">{p.openLive}</a>
           )}
@@ -290,11 +280,11 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
             </Link>
           )}
           {!meta.bought && (
-            <Link className="lang-toggle" href={`/${locale}/create?from=${id}`} onClick={() => trackOnce(`make-real-${id}`, "cta_click", { cta: "prototype_make_real", kind: meta.kind ?? null })}>
+            <Link className="btn sh-ghost" href={`/${locale}/create?from=${id}`} onClick={() => trackOnce(`make-real-${id}`, "cta_click", { cta: "prototype_make_real", kind: meta.kind ?? null })}>
               {p.makeReal[(meta.kind ?? "site") as keyof typeof p.makeReal] ?? p.makeReal.site}
             </Link>
           )}
-          <Link className="lang-toggle" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${id}`, "cta_click", { cta: "prototype_another" })}>
+          <Link className="btn sh-ghost" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${id}`, "cta_click", { cta: "prototype_another" })}>
             {p.another}
           </Link>
         </div>
@@ -313,7 +303,7 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
             </div>
             {/* Under the phone, not inside it: a credit belongs to the page, not to the mockup. */}
             {meta.photo_credit && (
-              <p className="small muted" style={{ textAlign: "center", marginTop: 12 }}>
+              <p className="sh-credit sh-credit-center">
                 Foto: {meta.photo_credit}
                 {meta.photo_credit_url && (
                   <>
@@ -329,16 +319,17 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
         </div>
       ) : (
         <div>
-          <iframe
-            title={meta.title ?? "Prototype"}
-            src={`${API_BASE}/api/prototypes/${id}/raw`}
-            sandbox="allow-scripts allow-popups"
-            style={{ width: "100%", height: "80vh", border: "1px solid rgba(0,0,0,.12)", borderRadius: 12 }}
-          />
+          <div className="sh-frame">
+            <iframe
+              title={meta.title ?? "Prototype"}
+              src={`${API_BASE}/api/prototypes/${id}/raw`}
+              sandbox="allow-scripts allow-popups"
+            />
+          </div>
           {/* A website and the ads carry photographs too, and Pexels asks for the credit wherever
               their picture is shown. It went missing here when only the app had pictures. */}
           {meta.photo_credit && (
-            <p className="small muted" style={{ marginTop: 10 }}>
+            <p className="sh-credit">
               Foto: {meta.photo_credit}
               {meta.photo_credit_url && (
                 <>
@@ -387,23 +378,10 @@ function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: 
     ];
 
     return (
-      <div aria-live="polite" style={{ maxWidth: 560 }}>
-        <p className="est-empty" style={{ marginBottom: 6 }}>{c.building}</p>
-        <p className="small muted" style={{ margin: "0 0 14px" }}>{c.elapsed.replace("{t}", clock(elapsed))}</p>
-        <ol style={{ listStyle: "none", margin: 0, padding: 0, display: "grid", gap: 6 }}>
-          {rows.map((r) => (
-            <li key={r.key} style={{ display: "flex", gap: 10, alignItems: "baseline", opacity: r.state === "todo" ? 0.45 : 1, fontWeight: r.state === "now" ? 600 : 400 }}>
-              <span style={{ width: 18, textAlign: "center" }} aria-hidden="true">
-                {r.state === "done" ? "✓" : r.state === "now" ? "●" : r.state === "failed" ? "✕" : "○"}
-              </span>
-              <span>
-                {r.label}
-                {r.note && <span className="small muted" style={{ display: "block", fontWeight: 400 }}>{r.note}</span>}
-              </span>
-            </li>
-          ))}
-        </ol>
-      </div>
+      <StatusCard icon="campaign" title={c.building}>
+        <p className="sh-meta">{c.elapsed.replace("{t}", clock(elapsed))}</p>
+        <StepList rows={rows} />
+      </StatusCard>
     );
   }
 
@@ -411,27 +389,26 @@ function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: 
 
   return (
     <div>
-      <div style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
-        <p className="est-empty" style={{ margin: 0 }}>{c.hint}</p>
-        <div style={{ display: "flex", gap: 12 }}>
-          <Link className="lang-toggle" href={`/${locale}/create?from=${meta.id}`} onClick={() => trackOnce(`make-real-${meta.id}`, "cta_click", { cta: "prototype_make_real", kind: "campaign" })}>
+      <div className="sh-toolbar">
+        <p>{c.hint}</p>
+        <div className="sh-actions">
+          <Link className="btn btn-primary" href={`/${locale}/create?from=${meta.id}`} onClick={() => trackOnce(`make-real-${meta.id}`, "cta_click", { cta: "prototype_make_real", kind: "campaign" })}>
             {p.makeReal.campaign}
           </Link>
-          <Link className="lang-toggle" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${meta.id}`, "cta_click", { cta: "prototype_another" })}>
+          <Link className="btn sh-ghost" href={`/${locale}/prototype`} onClick={() => trackOnce(`another-${meta.id}`, "cta_click", { cta: "prototype_another" })}>
             {p.another}
           </Link>
         </div>
       </div>
-      <div role="tablist" style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 16 }}>
+      <div role="tablist" className="sh-tabs">
         {parts.map((x, i) => (
           <button
             key={x.id}
             type="button"
             role="tab"
-            className="tab"
+            className="sh-tab"
             aria-selected={active?.id === x.id}
             onClick={() => setTab(x.id)}
-            style={{ borderColor: active?.id === x.id ? "currentColor" : undefined, fontWeight: active?.id === x.id ? 600 : undefined }}
           >
             {i + 1}. {c.parts[x.kind]}
             {x.status === "failed" ? " ✕" : ""}
@@ -439,7 +416,7 @@ function CampaignView({ meta, locale, d, now, building }: { meta: Meta; locale: 
         ))}
       </div>
       {active && (active.status === "failed"
-        ? <p className="est-empty">{c.partFailed}</p>
+        ? <StatusCard icon="bulb" title={c.partFailed} tone="bad" />
         : <PrototypeView key={active.id} id={active.id} locale={locale} d={d} embedded />)}
       {parts.some((x) => x.kind === "site" && x.status === "ready") && (
         <LandingPanel part={parts.find((x) => x.kind === "site")!} d={d} locale={locale} />
@@ -816,7 +793,7 @@ function RevisePanel({ id, locale, d, meta, onSent }: { id: string; locale: Loca
   const [error, setError] = useState<string | null>(null);
 
   if ((meta.revisions_left ?? 1) < 1) {
-    return <p className="small muted" style={{ marginTop: 16 }}>{r.used}</p>;
+    return <p className="sh-note">{r.used}</p>;
   }
 
   async function sendLink() {
@@ -846,10 +823,15 @@ function RevisePanel({ id, locale, d, meta, onSent }: { id: string; locale: Loca
   }
 
   return (
-    <div className="card" style={{ marginTop: 20, display: "grid", gap: 10, maxWidth: 640 }}>
-      <strong>{r.title}</strong>
-      <p className="small muted" style={{ margin: 0 }}>{r.hint}</p>
-      {meta.revision_failed && <p className="est-empty" style={{ margin: 0 }}>{r.failed}</p>}
+    <div className="sh-revise">
+      <div className="sh-revise-head">
+        <span className="sh-revise-ico"><Icon name="spark" /></span>
+        <div>
+          <h2>{r.title}</h2>
+          <p>{r.hint}</p>
+        </div>
+      </div>
+      {meta.revision_failed && <p className="pp-error">{r.failed}</p>}
       {token ? (
         <>
           <textarea
@@ -858,33 +840,34 @@ function RevisePanel({ id, locale, d, meta, onSent }: { id: string; locale: Loca
             rows={3}
             placeholder={r.placeholder}
             aria-label={r.title}
-            style={{ width: "100%", fontSize: "1rem", padding: 10 }}
+            className="pp-textarea sh-revise-text"
           />
-          <button type="button" onClick={send} disabled={busy || change.trim().length < 5} style={{ justifySelf: "start" }}>
+          <button type="button" className="btn btn-primary pp-submit" onClick={send} disabled={busy || change.trim().length < 5}>
             {r.send}
+            <Icon name="arrow" className="pp-btn-ico" />
           </button>
         </>
       ) : sent ? (
-        <p style={{ margin: 0 }}>{r.linkSent}</p>
+        <p className="sh-sent">{r.linkSent}</p>
       ) : (
         <>
-          <p style={{ margin: 0 }}>{r.signIn}</p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+          <p>{r.signIn}</p>
+          <div className="sh-inline">
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={d.proto.signIn.email}
               aria-label={d.proto.signIn.email}
-              style={{ flex: "1 1 220px", padding: 10, fontSize: "1rem" }}
+              className="pp-input"
             />
-            <button type="button" onClick={sendLink} disabled={!/.+@.+\..+/.test(email)}>
+            <button type="button" className="btn btn-primary pp-submit" onClick={sendLink} disabled={!/.+@.+\..+/.test(email)}>
               {d.proto.signIn.send}
             </button>
           </div>
         </>
       )}
-      {error && <p className="est-empty" style={{ margin: 0 }}>{error}</p>}
+      {error && <p className="pp-error">{error}</p>}
     </div>
   );
 }
