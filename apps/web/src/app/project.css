@@ -1,0 +1,55 @@
+/* A customer's project (/[locale]/account/[id]) in the look of the account page: a tinted head,
+   pill tabs, the panels as white cards with a shadow, the change chat with the prototype form's
+   inputs. ProjectDetail and ChangeChat use shared classes, so everything is scoped under `.pj`. */
+
+.pj { background: linear-gradient(180deg, var(--accent-soft) 0, rgba(238, 242, 255, 0) 320px); padding: 36px 0 80px; min-height: 70vh; }
+.pj .wrap { max-width: 1200px; }
+
+/* Head */
+.pj .detail-head { align-items: center; gap: 12px 14px; margin-top: 6px; }
+.pj .detail-head h1 { font-size: clamp(2rem, 3.6vw, 2.8rem); letter-spacing: -0.04em; margin: 0; }
+.pj .detail-head .acc-pill { font-size: 0.8rem; padding: 5px 12px; }
+.pj > .wrap > div > p:first-child a { font-size: 0.88rem; font-weight: 600; color: var(--ink-soft); }
+.pj > .wrap > div > p:first-child a:hover { color: var(--accent); }
+
+/* Pill tabs instead of an underline */
+.pj .tabs { border-bottom: 0; gap: 6px; margin: 24px 0 22px; padding: 4px; background: #fff; border: 1px solid var(--border); border-radius: 99px; width: fit-content; max-width: 100%; box-shadow: var(--shadow); }
+.pj .tab { border: 0; margin: 0; border-radius: 99px; padding: 8px 18px; font-size: 0.9rem; }
+.pj .tab[aria-selected="true"] { background: var(--accent); color: #fff; border: 0; }
+.pj .tab:focus-visible { outline-offset: 2px; }
+
+/* Panels */
+.pj .card { border-radius: 18px; padding: 22px 24px; box-shadow: var(--shadow); gap: 10px; }
+.pj .card h3 { font-size: 1.1rem; margin: 0 0 4px; }
+.pj .detail-stack { gap: 16px; max-width: none; }
+.pj .detail-layout { gap: 28px; }
+.pj .note { border-radius: 12px; max-width: none; }
+.pj .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.pj .btn-ghost { background: #fff; border: 1px solid var(--border); color: var(--ink); }
+.pj .btn-ghost:hover { border-color: #c7d2fe; color: var(--accent-hover); }
+.pj .btn-block { width: 100%; }
+.pj .btn:disabled, .pj .btn[aria-disabled="true"] { opacity: 0.45; cursor: not-allowed; }
+.pj .lang-toggle { cursor: pointer; }
+.pj .tbl-wrap { border-radius: 14px; }
+.pj .choice { border-radius: 12px; }
+.pj .choice input { accent-color: var(--accent); }
+.pj .choice:has(input:checked) { background: var(--accent-soft); }
+
+/* Change chat */
+.pj .chat-compose textarea { border-color: #d5dae4; border-radius: 12px; padding: 12px 14px; font-size: 0.95rem; background: #fff; }
+.pj .chat-compose textarea:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.12); }
+.pj .chat-attach { border-radius: 12px; background: #fff; color: var(--accent); }
+.pj .chat-attach:hover { border-color: #c7d2fe; }
+.chat-attach-ico { width: 20px; height: 20px; }
+.pj .chat-bubble { border-radius: 16px; }
+.pj .chat-option { border-radius: 99px; }
+
+/* Phone preview */
+.pj .phone-actions .lang-toggle { background: #fff; }
+
+@media (max-width: 640px) {
+  .pj { padding-top: 24px; }
+  .pj .tabs { width: 100%; }
+  .pj .tab { flex: 1; padding: 8px 10px; }
+  .pj .card { padding: 18px; }
+}

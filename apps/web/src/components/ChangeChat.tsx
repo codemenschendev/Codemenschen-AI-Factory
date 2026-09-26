@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { api, ApiError, API_BASE } from "@/lib/api";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
+import { Icon } from "./LineIcon";
 
 /** One line of the thread, as GET /me/projects/{id}/messages returns it. */
 export interface ChatMessage {
@@ -358,7 +359,7 @@ export function ChangeChat({
         />
         <div className="chat-compose-side">
           <label className="chat-attach" title={t.attach}>
-            <span aria-hidden>📎</span>
+            <Icon name="image" className="chat-attach-ico" />
             <span className="sr-only">{t.attach}</span>
             <input
               type="file"

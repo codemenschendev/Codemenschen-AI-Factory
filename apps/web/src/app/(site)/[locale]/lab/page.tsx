@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LabPanel } from "@/components/LabPanel";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import "../../../prototype.css";
+import "../../../lab.css";
 
 // Reachable by URL, deliberately absent from the nav, and kept out of search results until
 // it goes public.
@@ -18,9 +20,16 @@ export default async function LabPage({
   const d = getDict(locale);
 
   return (
-    <main className="wrap" style={{ padding: "40px 24px 72px" }}>
-      <h1>{d.lab.title}</h1>
-      <LabPanel locale={locale} d={d} />
+    <main className="lbp">
+      <div className="pp-band lbp-band">
+        <div className="wrap">
+          <h1>{d.lab.title}</h1>
+          <p className="lbp-lede">{d.lab.intro}</p>
+        </div>
+      </div>
+      <div className="wrap lbp-body">
+        <LabPanel locale={locale} d={d} />
+      </div>
     </main>
   );
 }
