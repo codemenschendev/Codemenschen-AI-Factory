@@ -3,6 +3,10 @@ import { notFound } from "next/navigation";
 import { CATALOG, getEntry } from "@/lib/catalog";
 import { DELIVERY_DAYS_HI, DELIVERY_DAYS_LO, HOSTING_MONTHLY } from "@ai-factory/pricing";
 import { LOCALES, eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
+import { IDEA_ICONS } from "@/components/AppIdeas";
+import { Icon } from "@/components/LineIcon";
+import "../../../../prototype.css";
+import "../../../../detail.css";
 
 export function generateStaticParams() {
   return LOCALES.flatMap((locale) =>
@@ -29,108 +33,106 @@ export default async function AppDetail({
   const hosting = HOSTING_MONTHLY[app.appType ?? "B"];
 
   return (
-    <main className="wrap" style={{ padding: "40px 24px 72px" }}>
-      <p>
-        <Link href={`/${locale}#apps`} className="muted small" style={{ textDecoration: "none" }}>
-          {d.detail.back}
-        </Link>
-      </p>
-
-      <div className="detail-head">
-        <span className="detail-icon" aria-hidden>
-          {app.icon}
-        </span>
-        <h1 style={{ marginBottom: 0 }}>{app.name}</h1>
-        <span className="badge">{t(app.cat, locale)}</span>
-        <span className="badge badge-sample">{d.detail.sample}</span>
+    <main className="ad">
+      <div className="pp-band ad-band">
+        <div className="wrap">
+          <Link href={`/${locale}#apps`} className="ad-back">
+            {d.detail.back}
+          </Link>
+          <div className="ad-head">
+            <span className="ad-ico" aria-hidden>
+              <Icon name={IDEA_ICONS[app.slug] ?? "app"} />
+            </span>
+            <div>
+              <h1>{app.name}</h1>
+              <p className="ad-badges">
+                <span className="ad-badge">{t(app.cat, locale)}</span>
+                <span className="ad-badge ad-badge-sample">{d.detail.sample}</span>
+              </p>
+            </div>
+          </div>
+          {app.lede && <p className="ad-lede">{t(app.lede, locale)}</p>}
+        </div>
       </div>
 
-      <div className="detail-cols" style={{ marginTop: 24 }}>
-        <div>
-          {app.lede && <p style={{ fontSize: 17 }}>{t(app.lede, locale)}</p>}
-
+      <div className="wrap ad-cols">
+        <div className="ad-main">
           {app.why && (
-            <>
-              <h2 style={{ marginTop: 36 }}>{d.detail.why}</h2>
-              <div className="grid">
-                {app.why.map((w) => (
-                  <div className="card" key={w.h.en}>
+            <section className="ad-sec">
+              <h2>{d.detail.why}</h2>
+              <div className="ad-why">
+                {app.why.map((w, i) => (
+                  <div className="ad-card" key={w.h.en}>
+                    <span className="ad-num">{i + 1}</span>
                     <h3>{t(w.h, locale)}</h3>
-                    <p className="muted" style={{ fontSize: 14.5 }}>
-                      {t(w.p, locale)}
-                    </p>
+                    <p>{t(w.p, locale)}</p>
                   </div>
                 ))}
               </div>
-            </>
+            </section>
           )}
 
-          {/* Guarded — the appwerk prototype crashed on entries without market
+          {/* Guarded: the appwerk prototype crashed on entries without market
               data (rechni bug); here the section simply doesn't render. */}
           {app.market && app.market.length > 0 && (
-            <>
-              <h2 style={{ marginTop: 36 }}>{d.detail.market}</h2>
-              <div className="tbl-wrap">
-                <table>
-                  <tbody>
-                    {app.market.map((row) => (
-                      <tr key={row[0].en}>
-                        <td>{t(row[0], locale)}</td>
-                        <td className="muted">{t(row[1], locale)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
+            <section className="ad-sec">
+              <h2>{d.detail.market}</h2>
+              <dl className="ad-market">
+                {app.market.map((row) => (
+                  <div key={row[0].en}>
+                    <dt>{t(row[0], locale)}</dt>
+                    <dd>{t(row[1], locale)}</dd>
+                  </div>
+                ))}
+              </dl>
+            </section>
           )}
 
           {app.aud && (
-            <>
-              <h2 style={{ marginTop: 36 }}>{d.detail.aud}</h2>
-              <ul className="aud-list">
+            <section className="ad-sec">
+              <h2>{d.detail.aud}</h2>
+              <ul className="ad-aud">
                 {app.aud.map((a) => (
                   <li key={a.en}>
-                    <span aria-hidden>{a.i}</span> {locale === "de" ? a.de : a.en}
+                    <Icon name="check" className="pp-tick" />
+                    {locale === "de" ? a.de : a.en}
                   </li>
                 ))}
               </ul>
-            </>
+            </section>
           )}
 
-          <p className="note" style={{ marginTop: 28 }}>
-            {d.detail.estimateNote}
-          </p>
+          <p className="ad-note">{d.detail.estimateNote}</p>
         </div>
 
-        <aside className="pricebox">
-          <div className="row">
-            <span className="muted">{d.detail.price}</span>
-            <strong>{eur(app.price!, locale)}</strong>
+        <aside className="ad-price">
+          {/* eslint-disable-next-line @next/next/no-img-element -- the home page's fixed idea pictures */}
+          <img src={`/home/idea-${app.slug}.webp`} alt="" width={360} height={200} />
+          <div className="ad-price-body">
+            <div className="ad-price-fig">
+              <span>{d.detail.price}</span>
+              <strong>{eur(app.price!, locale)}</strong>
+            </div>
+            <div className="ad-row">
+              <span>{d.detail.delivery}</span>
+              <strong>
+                {DELIVERY_DAYS_LO}–{DELIVERY_DAYS_HI} {d.detail.daysUnit}
+              </strong>
+            </div>
+            <div className="ad-row">
+              <span>{d.detail.hosting}</span>
+              <strong>
+                {app.appType === "A" ? d.detail.hostingA : `${eur(hosting, locale)}/${locale === "de" ? "Monat" : "month"}`}
+              </strong>
+            </div>
+            <div className="ad-row">
+              <span className="badge badge-type">{typeLabel}</span>
+            </div>
+            <Link className="btn btn-primary ad-cta" href={`/${locale}/checkout?app=${app.slug}`}>
+              {d.detail.cta}
+              <Icon name="arrow" className="pp-btn-ico" />
+            </Link>
           </div>
-          <div className="row">
-            <span className="muted">{d.detail.delivery}</span>
-            <strong>
-              {DELIVERY_DAYS_LO}–{DELIVERY_DAYS_HI} {d.detail.daysUnit}
-            </strong>
-          </div>
-          <hr />
-          <div className="row">
-            <span className="badge badge-type">{typeLabel}</span>
-          </div>
-          <div className="row">
-            <span className="muted">{d.detail.hosting}</span>
-            <strong>
-              {app.appType === "A" ? d.detail.hostingA : `${eur(hosting, locale)}/${locale === "de" ? "Monat" : "month"}`}
-            </strong>
-          </div>
-          <hr />
-          <Link
-            className="btn btn-primary btn-block"
-            href={`/${locale}/checkout?app=${app.slug}`}
-          >
-            {d.detail.cta}
-          </Link>
         </aside>
       </div>
     </main>

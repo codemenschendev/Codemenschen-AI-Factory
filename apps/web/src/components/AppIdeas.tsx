@@ -4,7 +4,7 @@ import { eur, t, type Dict, type Locale } from "@/lib/i18n";
 import { Icon } from "@/components/LineIcon";
 
 /** One icon per app idea, matching what the app does. */
-const IDEA_ICONS: Record<string, string> = {
+export const IDEA_ICONS: Record<string, string> = {
   formpilot: "doc",
   mealgrid: "fork",
   countbee: "box",
