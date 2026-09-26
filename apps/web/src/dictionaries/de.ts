@@ -460,7 +460,7 @@ export const de = {
       "Updates für neue iOS- und Android-Versionen",
       "Monatlich kündbar, keine Mindestlaufzeit",
     ],
-    careStart: "Care starten für {price}/Monat →",
+    careStart: "Care starten für {price}/Monat\u00a0→",
     careActiveHint: "aktiv, Änderungen sind unbegrenzt inklusive.",
     careEndsOn: "Care endet am {date}.",
     careCancel: "Care kündigen",
