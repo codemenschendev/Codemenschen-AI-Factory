@@ -7,11 +7,25 @@ use App\Domain\Security\Totp;
 use App\Models\AuditLog;
 use App\Models\Customer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class AdminSecurityTest extends TestCase
 {
     use RefreshDatabase;
+
+    /** The TOTP step the frozen clock sits in (2026-09-21), and a moment 15 seconds into it. */
+    private const STEP = 59_666_667;
+
+    private const NOW = self::STEP * 30 + 15;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Codes are built from this frozen clock and the server checks against it, so a run can never
+        // straddle a 30 second step boundary and see a used code turn into a fresh one.
+        $this->travelTo(Carbon::createFromTimestamp(self::NOW));
+    }
 
     private function admin(): Customer
     {
@@ -30,7 +44,7 @@ class AdminSecurityTest extends TestCase
     private function enrol(Customer $admin, string $token): string
     {
         $secret = $this->postJson('/api/admin/2fa/setup', [], $this->bearer($token))->assertOk()->json('secret');
-        $this->postJson('/api/admin/2fa/enable', ['code' => Totp::at($secret, intdiv(time(), 30))], $this->bearer($token))
+        $this->postJson('/api/admin/2fa/enable', ['code' => Totp::at($secret, self::STEP)], $this->bearer($token))
             ->assertOk()->assertJsonCount(10, 'recovery_codes');
 
         return $secret;
@@ -76,7 +90,7 @@ class AdminSecurityTest extends TestCase
         $secret = $this->enrol($admin, $token);
 
         $this->postJson('/api/admin/2fa/disable', ['code' => '000000'], $this->bearer($token))->assertStatus(422);
-        $this->postJson('/api/admin/2fa/disable', ['code' => Totp::at($secret, intdiv(time(), 30) + 1)], $this->bearer($token))
+        $this->postJson('/api/admin/2fa/disable', ['code' => Totp::at($secret, self::STEP + 1)], $this->bearer($token))
             ->assertOk()->assertJson(['enabled' => false]);
 
         $this->assertNull($admin->fresh()->two_factor_enabled_at);
@@ -91,13 +105,12 @@ class AdminSecurityTest extends TestCase
         $admin = $this->admin();
         $secret = $this->enrol($admin, $admin->createToken('ops')->plainTextToken);
         $next = $admin->createToken('ops')->plainTextToken;
-        $now = intdiv(time(), 30);
 
         $this->getJson('/api/admin/overview', $this->bearer($next))->assertForbidden()->assertJson(['two_factor' => 'verify']);
         $this->postJson('/api/admin/2fa/verify', ['code' => '000000'], $this->bearer($next))->assertStatus(422);
         // The code that switched 2FA on was used; the same step must not open a second session.
-        $this->postJson('/api/admin/2fa/verify', ['code' => Totp::at($secret, $now)], $this->bearer($next))->assertStatus(422);
-        $this->postJson('/api/admin/2fa/verify', ['code' => Totp::at($secret, $now + 1)], $this->bearer($next))->assertOk();
+        $this->postJson('/api/admin/2fa/verify', ['code' => Totp::at($secret, self::STEP)], $this->bearer($next))->assertStatus(422);
+        $this->postJson('/api/admin/2fa/verify', ['code' => Totp::at($secret, self::STEP + 1)], $this->bearer($next))->assertOk();
 
         $this->getJson('/api/admin/overview', $this->bearer($next))->assertOk();
     }
@@ -107,7 +120,7 @@ class AdminSecurityTest extends TestCase
         $admin = $this->admin();
         $token = $admin->createToken('ops')->plainTextToken;
         $secret = $this->postJson('/api/admin/2fa/setup', [], $this->bearer($token))->json('secret');
-        $codes = $this->postJson('/api/admin/2fa/enable', ['code' => Totp::at($secret, intdiv(time(), 30))], $this->bearer($token))->json('recovery_codes');
+        $codes = $this->postJson('/api/admin/2fa/enable', ['code' => Totp::at($secret, self::STEP)], $this->bearer($token))->json('recovery_codes');
 
         $first = $admin->createToken('ops')->plainTextToken;
         $this->postJson('/api/admin/2fa/verify', ['code' => strtoupper($codes[0])], $this->bearer($first))

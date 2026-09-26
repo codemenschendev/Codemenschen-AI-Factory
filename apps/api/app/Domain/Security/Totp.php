@@ -53,6 +53,7 @@ class Totp
      * The time step the code belongs to, or null. One step either side is accepted, because a
      * phone's clock drifts and a code typed in its last second arrives in the next step. A step
      * at or before $after has been used already and is refused, so an overheard code is worthless.
+     * The clock is Laravel's, so a test that freezes time freezes the code window with it.
      */
     public static function verify(string $secret, string $code, ?int $after = null, ?int $now = null): ?int
     {
@@ -60,7 +61,7 @@ class Totp
         if (! preg_match('/^\d{'.self::DIGITS.'}$/', $code)) {
             return null;
         }
-        $current = intdiv($now ?? time(), self::STEP);
+        $current = intdiv($now ?? now()->getTimestamp(), self::STEP);
         foreach ([$current, $current - 1, $current + 1] as $step) {
             if (($after === null || $step > $after) && hash_equals(self::at($secret, $step), $code)) {
                 return $step;
