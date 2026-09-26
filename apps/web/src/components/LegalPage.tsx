@@ -1,5 +1,7 @@
 import Link from "next/link";
 import type { Dict, Locale } from "@/lib/i18n";
+import "../app/prototype.css";
+import "../app/legal.css";
 
 /** The legal pages, each at /{locale}/{doc}. */
 export const LEGAL_DOCS = ["terms", "withdrawal", "privacy", "imprint"] as const;
@@ -26,31 +28,35 @@ export function LegalPage({
   const page = l[doc];
 
   return (
-    <main className="wrap wrap-narrow legal-doc" style={{ padding: "40px 24px 72px" }}>
-      <h1>{page.title}</h1>
-      <p className="lede">{page.lede}</p>
-      {doc !== "imprint" && <p className="note">{l.draft}</p>}
+    <main className="legal-doc lg">
+      <div className="pp-band lg-band">
+        <div className="wrap wrap-narrow">
+          <h1>{page.title}</h1>
+          <p className="lg-lede">{page.lede}</p>
+        </div>
+      </div>
 
-      {page.sections.map((s) => (
-        <section key={s.h}>
-          <h2>{s.h}</h2>
-          {s.p.map((text) => (
-            <p key={text} style={{ maxWidth: "68ch" }}>
-              {text}
-            </p>
+      <div className="wrap wrap-narrow lg-body">
+        {doc !== "imprint" && <p className="note lg-draft">{l.draft}</p>}
+
+        <div className="lg-card">
+          {page.sections.map((s) => (
+            <section key={s.h}>
+              <h2>{s.h}</h2>
+              {s.p.map((text) => (
+                <p key={text}>{text}</p>
+              ))}
+            </section>
           ))}
-        </section>
-      ))}
+        </div>
 
-      <p className="small muted" style={{ marginTop: 36 }}>
-        {"updated" in page ? page.updated : l.updated}
-        {LEGAL_DOCS.filter((other) => other !== doc).map((other) => (
-          <span key={other}>
-            {" · "}
-            <Link href={`/${locale}/${other}`}>{l[other].title}</Link>
-          </span>
-        ))}
-      </p>
+        <p className="lg-updated">{"updated" in page ? page.updated : l.updated}</p>
+        <nav className="lg-more">
+          {LEGAL_DOCS.filter((other) => other !== doc).map((other) => (
+            <Link key={other} href={`/${locale}/${other}`}>{l[other].title}</Link>
+          ))}
+        </nav>
+      </div>
     </main>
   );
 }

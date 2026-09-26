@@ -1,0 +1,40 @@
+/* Legal pages and the security page, in the look of the home page: head band, the text in one
+   white card, links to the other documents as pills. Scoped under `.lg`. */
+
+.lg { padding-bottom: 80px; }
+.lg .wrap { max-width: 1200px; }
+.lg .wrap-narrow { max-width: 820px; }
+.lg-band { padding: 40px 0 84px; }
+.lg-band h1 { font-size: clamp(2rem, 3.6vw, 2.8rem); letter-spacing: -0.04em; margin: 0 0 12px; }
+.lg .lg-lede { font-size: 1.1rem; color: var(--ink-soft); line-height: 1.6; max-width: 40em; margin: 0; }
+.lg-body { margin-top: -48px; position: relative; }
+
+.lg .lg-draft { max-width: none; margin: 0 0 16px; border-radius: 14px; font-size: 0.88rem; line-height: 1.55; }
+.lg-card { background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 8px 36px 32px; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.08); }
+.lg .lg-card section, .lg .lg-body > section { padding: 0; margin-top: 28px; }
+.lg section h2 { font-size: 1.2rem; letter-spacing: -0.02em; margin: 0 0 8px; }
+.lg section p { max-width: 68ch; margin: 0 0 10px; line-height: 1.7; }
+.lg .lg-updated { margin: 24px 0 12px; font-size: 0.84rem; color: var(--ink-soft); }
+.lg-more { display: flex; flex-wrap: wrap; gap: 8px; }
+.lg-more a { padding: 7px 14px; border: 1px solid var(--border); border-radius: 99px; background: #fff; font-size: 0.86rem; font-weight: 600; color: var(--ink); text-decoration: none; }
+.lg-more a:hover { border-color: #c7d2fe; color: var(--accent-hover); }
+
+/* Security page: the promises as cards over the band, then the text. */
+.lg-promises { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: -48px; position: relative; }
+.lg-promise { background: #fff; border: 1px solid var(--border); border-radius: 16px; padding: 20px; box-shadow: var(--shadow); }
+.lg-promise h3 { font-size: 1rem; line-height: 1.3; margin: 12px 0 6px; }
+.lg-promise p { font-size: 0.88rem; color: var(--ink-soft); line-height: 1.55; margin: 0; }
+.lg-promise-ico { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: #dcfce7; color: var(--valid); }
+.lg-promise-ico .ico { width: 20px; height: 20px; }
+.lg .lg-promises + .lg-body { margin-top: 24px; background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 8px 36px 32px; box-shadow: var(--shadow); }
+.lg .lg-table { margin-top: 12px; border-radius: 14px; }
+
+@media (max-width: 900px) {
+  .lg-promises { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 640px) {
+  .lg-promises { grid-template-columns: minmax(0, 1fr); }
+  .lg .lg-promises + .lg-body { padding: 4px 20px 24px; margin-left: 16px; margin-right: 16px; }
+  .lg-band { padding: 28px 0 72px; }
+  .lg-card { padding: 4px 20px 24px; border-radius: 18px; }
+}
