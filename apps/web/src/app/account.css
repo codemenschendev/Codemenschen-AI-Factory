@@ -1,0 +1,83 @@
+/* The customer's account: sign-in card, then projects, prototypes and ad accounts. */
+.acc-page { background: var(--tint); min-height: 70vh; padding: 48px 0 80px; }
+
+/* ---------- Sign in ---------- */
+.acc-signin { max-width: 440px; margin: 24px auto 0; background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 36px 32px; box-shadow: var(--shadow); text-align: center; }
+.acc-signin h1 { font-size: 1.9rem; margin: 16px 0 8px; }
+.acc-signin-ico { display: inline-grid; place-items: center; width: 56px; height: 56px; border-radius: 16px; background: var(--accent-soft); color: var(--accent); }
+.acc-signin-ico .ico { width: 26px; height: 26px; }
+.acc-lead { color: var(--ink-soft); font-size: 0.95rem; line-height: 1.55; margin: 0 0 22px; }
+.acc-form { display: grid; gap: 8px; text-align: left; }
+.acc-form label { font-size: 0.85rem; font-weight: 600; }
+.acc-form input { padding: 13px 14px; font: 16px var(--font-body); border: 1px solid var(--border); border-radius: var(--radius); background: #fff; margin-bottom: 8px; }
+.acc-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: transparent; }
+.acc-sent { display: flex; gap: 10px; align-items: flex-start; text-align: left; background: #ecfdf3; color: #166534; border-radius: 12px; padding: 14px 16px; font-size: 0.92rem; line-height: 1.5; margin: 0; }
+.acc-sent .ico { flex: none; width: 20px; height: 20px; margin-top: 1px; }
+
+/* ---------- Head ---------- */
+.acc-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; flex-wrap: wrap; margin-bottom: 36px; }
+.acc-head h1 { font-size: clamp(30px, 4vw, 42px); margin: 0 0 8px; }
+.acc-who { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 16px; color: var(--ink-soft); font-size: 0.92rem; margin: 0; }
+.acc-who a { font-weight: 600; color: var(--accent); text-decoration: none; }
+.acc-who .pp-link { padding: 0; font-size: 0.92rem; color: var(--ink-soft); }
+.acc-who .pp-link:hover { color: var(--ink); }
+
+/* ---------- Sections ---------- */
+.acc-sec { margin-top: 40px; padding: 0; }
+.acc-sec h2 { display: flex; align-items: center; gap: 10px; font-size: 1.35rem; margin: 0 0 16px; }
+.acc-count { font: 600 0.8rem var(--font-body); color: var(--ink-soft); background: #fff; border: 1px solid var(--border); border-radius: 99px; padding: 2px 10px; letter-spacing: 0; }
+.acc-empty { background: #fff; border: 1px dashed #cbd2e1; border-radius: 16px; padding: 22px 24px; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px 24px; }
+.acc-empty p { margin: 0; color: var(--ink-soft); font-size: 0.95rem; max-width: 560px; }
+.acc-empty a { font-weight: 600; color: var(--accent); text-decoration: none; white-space: nowrap; }
+
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+.acc-grid-protos { grid-template-columns: repeat(auto-fill, minmax(360px, 1fr)); gap: 12px; }
+.acc-card { background: #fff; border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow); color: var(--ink); text-decoration: none; transition: border-color 0.15s ease, transform 0.15s ease, box-shadow 0.15s ease; }
+a.acc-card:hover { border-color: #c7d2fe; transform: translateY(-2px); box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 14px 32px rgba(15, 23, 42, 0.09); }
+a.acc-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.acc-ico { flex: none; width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; background: var(--accent-soft); color: var(--accent); }
+.acc-ico .ico { width: 20px; height: 20px; }
+
+.acc-pill { flex: none; font-size: 0.75rem; font-weight: 600; border-radius: 99px; padding: 4px 10px; background: var(--accent-soft); color: var(--accent-hover); white-space: nowrap; }
+.acc-pill.is-ok { background: #ecfdf3; color: var(--valid); }
+.acc-pill.is-warn { background: var(--warn-bg); color: var(--warn-ink); }
+.acc-pill.is-off { background: #f1f5f9; color: #64748b; }
+
+/* Project card */
+.acc-project { padding: 20px; display: flex; flex-direction: column; gap: 14px; }
+.acc-card-top { display: flex; justify-content: space-between; align-items: center; }
+.acc-project h3 { font-size: 1.15rem; margin: 0; }
+.acc-facts { margin: 0; display: grid; gap: 8px; }
+.acc-facts div { display: flex; justify-content: space-between; gap: 12px; font-size: 0.9rem; }
+.acc-facts dt { color: var(--ink-soft); }
+.acc-facts dd { margin: 0; font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+.acc-open { margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border); display: flex; align-items: center; gap: 6px; font-weight: 600; font-size: 0.92rem; color: var(--accent); }
+.acc-open .ico { width: 16px; height: 16px; transition: transform 0.15s ease; }
+a.acc-card:hover .acc-open .ico { transform: translateX(3px); }
+
+/* Prototype row card */
+.acc-proto { display: flex; align-items: center; gap: 14px; padding: 14px 16px; }
+.acc-proto-text { flex: 1 1 0; min-width: 0; display: grid; gap: 3px; }
+.acc-proto-text strong { font-weight: 600; font-size: 0.97rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.acc-proto-text span { font-size: 0.82rem; color: var(--ink-soft); }
+.acc-proto.is-gone { box-shadow: none; background: #fafbfd; }
+.acc-proto.is-gone .acc-ico { background: #f1f5f9; color: #94a3b8; }
+.acc-proto.is-gone strong { color: var(--ink-soft); }
+
+/* Ad accounts: the panel keeps its own markup, set apart as the last, quieter section. */
+.acc-ads { margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border); }
+.acc-ads > section { margin-top: 0 !important; padding: 0; }
+.acc-ads .grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); gap: 16px; }
+.acc-ads .btn { white-space: nowrap; padding: 10px 16px; }
+.acc-ads input { min-width: 0; }
+.acc-ads h2 { font-size: 1.35rem; }
+.acc-ads .card { border-radius: 16px; box-shadow: var(--shadow); }
+
+@media (max-width: 640px) {
+  .acc-page { padding: 28px 0 56px; }
+  .acc-signin { padding: 28px 20px; }
+  .acc-head { align-items: stretch; flex-direction: column; }
+  .acc-head .btn { text-align: center; }
+  .acc-grid, .acc-grid-protos { grid-template-columns: minmax(0, 1fr); }
+  .acc-proto { gap: 12px; padding: 12px 14px; }
+}

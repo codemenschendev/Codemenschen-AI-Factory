@@ -80,6 +80,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   }, [token]);
 
   const a = d.account;
+  const dateFmt = (iso: string) => new Date(iso).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB");
 
   if (token === undefined) {
     return <p className="est-empty">…</p>;
@@ -87,39 +88,43 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
 
   if (!token) {
     return (
-      <div style={{ maxWidth: 480 }}>
-        <p className="muted">{a.emailPrompt}</p>
-        <form
-          onSubmit={async (e) => {
-            e.preventDefault();
-            await api("/auth/magic-link", {
-              method: "POST",
-              body: JSON.stringify({ email, locale }),
-            });
-            setSent(true);
-          }}
-          style={{ display: "flex", gap: 10 }}
-        >
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            style={{
-              flex: 1,
-              padding: "12px",
-              fontSize: 15,
-              border: "1px solid var(--border)",
-              borderRadius: "var(--radius)",
-              background: "var(--surface)",
-              fontFamily: "var(--font-body)",
+      <div className="acc-signin">
+        <span className="acc-signin-ico">
+          <Icon name="mail" />
+        </span>
+        <h1>{a.signInTitle}</h1>
+        <p className="acc-lead">{a.signInLead}</p>
+        {sent ? (
+          <p className="acc-sent">
+            <Icon name="check" />
+            <span>{a.sent}</span>
+          </p>
+        ) : (
+          <form
+            className="acc-form"
+            onSubmit={async (e) => {
+              e.preventDefault();
+              await api("/auth/magic-link", {
+                method: "POST",
+                body: JSON.stringify({ email, locale }),
+              });
+              setSent(true);
             }}
-          />
-          <button className="btn btn-primary" type="submit">
-            {a.send}
-          </button>
-        </form>
-        {sent && <p className="note" style={{ marginTop: 14 }}>{a.sent}</p>}
+          >
+            <label htmlFor="acc-email">{a.emailLabel}</label>
+            <input
+              id="acc-email"
+              type="email"
+              required
+              autoComplete="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+            <button className="btn btn-primary btn-block" type="submit">
+              {a.send}
+            </button>
+          </form>
+        )}
       </div>
     );
   }
@@ -131,112 +136,150 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   }
 
   return (
-    <div>
-      <p className="muted small">
-        {me.email} ·{" "}
-        <button
-          className="lang-toggle"
-          onClick={() => {
-            setToken(null);
-            setMe(null);
-          }}
-        >
-          {a.logout}
-        </button>
-        {/* The operator's own entrance. Shown to an admin only, and the page behind it asks the
-            server again: this link hides nothing, it just saves typing the URL. */}
-        {me.admin && (
-          <>
-            {" · "}
-            <Link href={`/${locale}/admin`}>{d.admin.title}</Link>
-          </>
+    <div className="acc">
+      <header className="acc-head">
+        <div>
+          <h1>{a.hello}</h1>
+          <p className="acc-who">
+            <span>{me.email}</span>
+            {/* The operator's own entrance. Shown to an admin only, and the page behind it asks the
+                server again: this link hides nothing, it just saves typing the URL. */}
+            {me.admin && <Link href={`/${locale}/admin`}>{d.admin.title}</Link>}
+            <button
+              type="button"
+              className="pp-link"
+              onClick={() => {
+                setToken(null);
+                setMe(null);
+              }}
+            >
+              {a.logout}
+            </button>
+          </p>
+        </div>
+        <Link className="btn btn-primary" href={`/${locale}/prototype`}>
+          {a.protoNew}
+        </Link>
+      </header>
+
+      <section className="acc-sec">
+        <h2>
+          {a.projects}
+          {me.projects.length > 0 && <span className="acc-count">{me.projects.length}</span>}
+        </h2>
+        {me.projects.length === 0 ? (
+          <div className="acc-empty">
+            <p>{a.projectsEmpty}</p>
+            <Link href={`/${locale}#prices`}>{a.seePrices}</Link>
+          </div>
+        ) : (
+          <div className="acc-grid">
+            {me.projects.map((p) => {
+              const live = p.status === "PUBLISHED" || p.status === "live" || p.status === "READY";
+
+              return (
+                <Link className="acc-card acc-project" key={p.id} href={`/${locale}/account/${p.id}`}>
+                  <div className="acc-card-top">
+                    <span className="acc-ico">
+                      <Icon name={p.kind ?? "app"} />
+                    </span>
+                    <span className={`acc-pill${live ? " is-ok" : p.status === "FAILED" ? " is-warn" : ""}`}>
+                      {a.projectState[p.status] ?? a.projectState.BUILDING}
+                    </span>
+                  </div>
+                  <h3>{p.name}</h3>
+                  <dl className="acc-facts">
+                    {p.site_url && (
+                      <div>
+                        <dt>{a.liveAt}</dt>
+                        <dd className="num">{p.site_url.replace(/^https?:\/\//, "")}</dd>
+                      </div>
+                    )}
+                    <div>
+                      <dt>{a.total}</dt>
+                      <dd className="num">{eur(p.order.total_one_time_eur, locale)}</dd>
+                    </div>
+                    {p.order.hosting_monthly_eur > 0 && (
+                      <div>
+                        <dt>{a.hosting}</dt>
+                        <dd className="num">
+                          {eur(p.order.hosting_monthly_eur, locale)}/{monthUnit}
+                        </dd>
+                      </div>
+                    )}
+                    {p.build_starts_at && (
+                      <div>
+                        <dt>{a.buildStarts}</dt>
+                        <dd>{dateFmt(p.build_starts_at)}</dd>
+                      </div>
+                    )}
+                  </dl>
+                  <span className="acc-open">
+                    {a.open}
+                    <Icon name="arrow" />
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
         )}
-      </p>
-      <section className="pp-history" style={{ marginTop: 24, marginBottom: 40 }}>
-        <h2>{a.protos}</h2>
-        {protos !== null && protos.length === 0 && <p className="pp-note">{a.protosEmpty}</p>}
+      </section>
+
+      <section className="acc-sec">
+        <h2>
+          {a.protos}
+          {protos !== null && protos.length > 0 && <span className="acc-count">{protos.length}</span>}
+        </h2>
+        {protos !== null && protos.length === 0 && (
+          <div className="acc-empty">
+            <p>{a.protosEmpty}</p>
+            <Link href={`/${locale}/prototype`}>{a.protoNew}</Link>
+          </div>
+        )}
         {protos !== null && protos.length > 0 && (
-          <ul>
+          <div className="acc-grid acc-grid-protos">
             {protos.map((p) => {
               const left = daysLeft(p.expires_at);
               const label = p.title ?? (p.prompt.split(/\n/, 1)[0].trim() || d.proto.kinds[p.kind]);
               const open = p.status !== "expired" && p.status !== "failed";
-
-              return (
-                <li key={p.id}>
-                  <span className="pp-history-ico">
+              const state = p.bought ? a.protoBought : a.protoState[p.status] ?? p.status;
+              const inner = (
+                <>
+                  <span className="acc-ico">
                     <Icon name={p.kind} />
                   </span>
-                  <div className="pp-history-text">
-                    {open ? <Link href={`/${locale}/p/${p.id}`}>{label}</Link> : <a aria-disabled="true">{label}</a>}
-                    <p>
-                      {d.proto.kinds[p.kind]}
-                      {" · "}
-                      {new Date(p.created_at).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB")}
-                      {" · "}
-                      {p.bought ? a.protoBought : a.protoState[p.status] ?? p.status}
+                  <div className="acc-proto-text">
+                    <strong>{label}</strong>
+                    <span>
+                      {d.proto.kinds[p.kind]} · {dateFmt(p.created_at)}
                       {!p.bought && p.status === "ready" && left !== null && (
-                        <>
-                          {" · "}
-                          {left === 1 ? d.proto.oneDayLeft : d.proto.daysLeft.replace("{n}", String(left))}
-                        </>
+                        <> · {left === 1 ? d.proto.oneDayLeft : d.proto.daysLeft.replace("{n}", String(left))}</>
                       )}
-                    </p>
+                    </span>
                   </div>
-                </li>
+                  <span className={`acc-pill${p.status === "ready" || p.bought ? " is-ok" : !open ? " is-off" : ""}`}>{state}</span>
+                </>
+              );
+
+              return open ? (
+                <Link className="acc-card acc-proto" key={p.id} href={`/${locale}/p/${p.id}`}>
+                  {inner}
+                </Link>
+              ) : (
+                <div className="acc-card acc-proto is-gone" key={p.id}>
+                  {inner}
+                </div>
               );
             })}
-          </ul>
-        )}
-        <p style={{ marginTop: 14 }}>
-          <Link href={`/${locale}/prototype`}>{a.protoNew}</Link>
-        </p>
-      </section>
-      {me.projects.length === 0 && <p className="est-empty">{a.empty}</p>}
-      <div className="grid" style={{ marginTop: 16 }}>
-        {me.projects.map((p) => (
-          <div className="card" key={p.id}>
-            <span className="badge badge-type">{a.kinds[p.kind ?? "app"] ?? p.kind} · {p.status}</span>
-            <h3>{p.name}</h3>
-            {p.site_url && (
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, fontSize: 14.5 }}>
-                <span className="muted">{a.liveAt}</span>
-                <a className="num" href={p.site_url} target="_blank" rel="noopener noreferrer" style={{ overflowWrap: "anywhere", textAlign: "right" }}>{p.site_url.replace(/^https?:\/\//, "")}</a>
-              </div>
-            )}
-            <div className="row" style={{ display: "flex", justifyContent: "space-between", fontSize: 14.5 }}>
-              <span className="muted">{a.total}</span>
-              <strong className="num">{eur(p.order.total_one_time_eur, locale)}</strong>
-            </div>
-            {p.order.hosting_monthly_eur > 0 && (
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14.5 }}>
-                <span className="muted">{a.hosting}</span>
-                <strong className="num">
-                  {eur(p.order.hosting_monthly_eur, locale)}/{monthUnit}
-                </strong>
-              </div>
-            )}
-            {p.build_starts_at && (
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 14.5 }}>
-                <span className="muted">{a.buildStarts}</span>
-                <strong>
-                  {new Date(p.build_starts_at).toLocaleDateString(
-                    locale === "de" ? "de-AT" : "en-IE",
-                  )}
-                </strong>
-              </div>
-            )}
-            <div className="card-foot">
-              <Link className="btn btn-ghost" href={`/${locale}/account/${p.id}`}>
-                {d.project.open}
-              </Link>
-            </div>
           </div>
-        ))}
-      </div>
+        )}
+      </section>
+
       {/* The customer's own ad accounts. Their settings, not ours: the connection is theirs to
           make and theirs to cut, so the steps live next to the field. */}
-      <AdAccountsPanel d={d} token={token} />
+      <div className="acc-sec acc-ads">
+        <AdAccountsPanel d={d} token={token} />
+      </div>
     </div>
   );
 }
