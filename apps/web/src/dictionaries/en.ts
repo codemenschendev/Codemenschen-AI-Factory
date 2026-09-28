@@ -110,7 +110,7 @@ export const en = {
       chips: [
         { h: "Experienced team", p: "Apps and web for small businesses" },
         { h: "Personal support", p: "By e-mail and phone, in German and English" },
-        { h: "Austrian company", p: "Codemenschen GmbH, Vienna" },
+        { h: "Austrian company", p: "Codemenschen GmbH, Gössendorf" },
       ],
   },
   faq: {
@@ -1793,7 +1793,7 @@ export const en = {
   },
   footer: {
     legal: "Terms, withdrawal information and privacy are online as a plain-language draft, with counsel review under way.",
-    by: "Operated by Codemenschen GmbH, Vienna, Austria.",
+    by: "Operated by Codemenschen GmbH, Gössendorf, Austria.",
     imprint: "Imprint (Impressum)",
   },
 };
