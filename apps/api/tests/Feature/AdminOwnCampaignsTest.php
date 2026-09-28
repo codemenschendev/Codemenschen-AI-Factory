@@ -324,6 +324,38 @@ class AdminOwnCampaignsTest extends TestCase
         Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/campaigns') && str_starts_with($r['name'], "Appwerk #$id Appwerk Website AT"));
     }
 
+    public function test_a_meta_refusal_says_why_and_leaves_nothing_half_built(): void
+    {
+        $this->meta();
+        Http::fake(function ($r) {
+            $url = $r->url();
+
+            return match (true) {
+                $r->method() === 'DELETE' => Http::response(['success' => true]),
+                str_ends_with($url, 'act_42/adimages') => Http::response(['images' => ['ad.jpg' => ['hash' => 'h1']]]),
+                str_ends_with($url, 'act_42/campaigns') => Http::response(['id' => 'c1']),
+                str_ends_with($url, 'act_42/adsets') => Http::response(['id' => 's1']),
+                str_ends_with($url, 'act_42/adcreatives') => Http::response(['id' => 'cr1']),
+                // The last step is refused, the way Meta refuses an account without a card.
+                default => Http::response(['error' => ['message' => 'Invalid parameter', 'code' => 100, 'error_subcode' => 1359188,
+                    'error_user_title' => 'Keine Zahlungsmethode', 'error_user_msg' => 'Füge im Abrechnungscenter eine gültige Zahlungsmethode hinzu.']], 400),
+            };
+        });
+        $admin = $this->admin();
+        $id = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->metaForm())->json('id');
+        $this->actingAs($admin, 'sanctum')->post("/api/admin/own-campaigns/$id/image", ['image' => UploadedFile::fake()->image('ad.jpg', 1080, 1080)])->assertOk();
+
+        (new PublishCampaign($id))->handle(app(PublisherRegistry::class), app(Preflight::class));
+
+        $c = MarketingCampaign::find($id);
+        $this->assertSame('failed', $c->platform_status);
+        $this->assertSame('Meta API: Keine Zahlungsmethode: Füge im Abrechnungscenter eine gültige Zahlungsmethode hinzu.', $c->publish_error);
+        // What the failed run made is gone again, newest first, so a retry builds no duplicates.
+        $deleted = collect(Http::recorded())->map(fn ($pair) => $pair[0])->filter(fn ($r) => $r->method() === 'DELETE')
+            ->map(fn ($r) => explode('?', basename($r->url()))[0])->values()->all();
+        $this->assertSame(['cr1', 's1', 'c1'], $deleted);
+    }
+
     public function test_a_customer_cannot_reach_it(): void
     {
         $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
