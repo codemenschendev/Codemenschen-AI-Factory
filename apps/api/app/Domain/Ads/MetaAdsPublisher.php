@@ -6,6 +6,7 @@ use App\Models\MarketingCampaign;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use RuntimeException;
+use Throwable;
 
 /**
  * Publishes to a Meta (Facebook/Instagram) ad account owned by Codemenschen.
@@ -84,7 +85,27 @@ class MetaAdsPublisher implements Publisher
             throw new RuntimeException('Meta: no creative file to publish.');
         }
 
+        // Everything this run creates is noted in $ref as it goes. If a later step fails (no
+        // payment method, a page the token cannot post for), the objects already made are removed
+        // again, so a retry starts clean with the campaign as it is edited now and Meta holds no
+        // half-built duplicates.
         $ref = [];
+        try {
+            $this->create($campaign, $act, $path, $target, $ref);
+        } catch (Throwable $e) {
+            $this->undo($ref);
+            throw $e;
+        }
+
+        return $ref;
+    }
+
+    /**
+     * @param  array<string,string>  $target
+     * @param  array<string,mixed>  $ref  filled step by step
+     */
+    private function create(MarketingCampaign $campaign, string $act, string $path, array $target, array &$ref): void
+    {
 
         // 1. the creative file. Image => image_hash, video => video_id.
         if ($campaign->creativeKind() === 'video') {
@@ -172,7 +193,19 @@ class MetaAdsPublisher implements Publisher
         ]);
         $ref['ad_id'] = $adObj['id'] ?? null;
 
-        return $ref;
+    }
+
+    /** Deletes what a failed run made, newest first. Best effort: a failed delete is left to the ad account. */
+    private function undo(array $ref): void
+    {
+        foreach (['ad_id', 'creative_id', 'adset_id', 'campaign_id'] as $key) {
+            if (! empty($ref[$key])) {
+                try {
+                    $this->base()->delete((string) $ref[$key], ['access_token' => $this->cfg('token')]);
+                } catch (Throwable) {
+                }
+            }
+        }
     }
 
     public function activate(MarketingCampaign $campaign): void
@@ -210,7 +243,7 @@ class MetaAdsPublisher implements Publisher
     {
         $res = $this->base()->get("{$id}/insights", ['fields' => 'spend,impressions,inline_link_clicks', 'date_preset' => $preset, 'access_token' => $this->cfg('token')]);
         if (! $res->successful()) {
-            throw new RuntimeException('Meta API: '.($res->json('error.message') ?? mb_substr((string) $res->body(), 0, 300)));
+            throw new RuntimeException(self::error($res->json() ?? [], (string) $res->body()));
         }
 
         return $res->json() ?? [];
@@ -290,10 +323,10 @@ class MetaAdsPublisher implements Publisher
     /** @return array<string,mixed> */
     private function get(string $path, string $fields): array
     {
-        $res = $this->base()->get($path, ['fields' => $fields, 'access_token' => $this->cfg('token')]);
+        $res = $this->base()->get($path, ['fields' => $fields, 'access_token' => $this->cfg('token'), 'locale' => 'de_DE']);
         $body = $res->json() ?? [];
         if (! $res->successful()) {
-            throw new RuntimeException('Meta API: '.($body['error']['message'] ?? mb_substr((string) $res->body(), 0, 300)));
+            throw new RuntimeException(self::error($body, (string) $res->body()));
         }
 
         return $body;
@@ -306,6 +339,8 @@ class MetaAdsPublisher implements Publisher
     private function post(string $path, array $params, bool $multipart = false): array
     {
         $params['access_token'] = $this->cfg('token');
+        // Meta words its errors in the token owner's language; the admin panel reads German.
+        $params['locale'] = 'de_DE';
         $req = $this->base();
 
         if ($multipart) {
@@ -321,10 +356,25 @@ class MetaAdsPublisher implements Publisher
 
         $body = $res->json() ?? [];
         if (! $res->successful()) {
-            $msg = $body['error']['message'] ?? mb_substr((string) $res->body(), 0, 300);
-            throw new RuntimeException('Meta API: '.$msg);
+            throw new RuntimeException(self::error($body, (string) $res->body()));
         }
 
         return $body;
+    }
+
+    /**
+     * What Meta says went wrong, in the words it shows a person. The bare "message" is often only
+     * "Invalid parameter"; the reason (no payment method, an app still in development) is in
+     * error_user_title and error_user_msg.
+     *
+     * @param  array<string,mixed>  $body
+     */
+    private static function error(array $body, string $raw): string
+    {
+        $e = (array) ($body['error'] ?? []);
+        $human = trim(implode(': ', array_filter([$e['error_user_title'] ?? null, $e['error_user_msg'] ?? null])));
+        $text = $human !== '' ? $human : (string) ($e['message'] ?? mb_substr($raw, 0, 300));
+
+        return 'Meta API: '.$text;
     }
 }
