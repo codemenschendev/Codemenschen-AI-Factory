@@ -1578,7 +1578,7 @@ export const de = {
         {
           h: "1. Verantwortlich",
           p: [
-            "Codemenschen GmbH, Anton Hubmann Platz 1/6, 8077 Gössendorf, Österreich. Firmenbuchnummer FN 543274 h.",
+            "Codemenschen GmbH, Anton-Hubmann-Platz 1/6, 8077 Gössendorf, Österreich. Firmenbuchnummer FN 543274 h.",
             "Fragen zum Datenschutz und Anfragen zu deinen Rechten: office@codemenschen.at.",
           ],
         },
@@ -1659,15 +1659,17 @@ export const de = {
     },
     imprint: {
       title: "Impressum",
-      updated: "Stand: 15. September 2026",
+      updated: "Stand: 28. September 2026",
       lede: "Angaben nach § 5 ECG und § 25 Mediengesetz.",
       sections: [
         {
           h: "Anbieter",
           p: [
             "Codemenschen GmbH",
-            "Anton Hubmann Platz 1/6, 8077 Gössendorf, Österreich",
+            "Anton-Hubmann-Platz 1/6, 8077 Gössendorf, Österreich",
+            "Geschäftsführer: Ing. Patrick Fuchshofer, MBA",
             "Firmenbuchnummer: FN 543274 h",
+            "Telefon: +43 650 4861845",
             "E-Mail: office@codemenschen.at",
           ],
         },

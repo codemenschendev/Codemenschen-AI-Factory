@@ -1576,7 +1576,7 @@ export const en = {
         {
           h: "1. Controller",
           p: [
-            "Codemenschen GmbH, Anton Hubmann Platz 1/6, 8077 Gössendorf, Austria. Company register number FN 543274 h.",
+            "Codemenschen GmbH, Anton-Hubmann-Platz 1/6, 8077 Gössendorf, Austria. Company register number FN 543274 h.",
             "Questions about privacy and requests about your rights: office@codemenschen.at.",
           ],
         },
@@ -1657,15 +1657,17 @@ export const en = {
     },
     imprint: {
       title: "Imprint",
-      updated: "Last updated: 15 September 2026",
+      updated: "Last updated: 28 September 2026",
       lede: "Information under § 5 ECG and § 25 Austrian Media Act.",
       sections: [
         {
           h: "Provider",
           p: [
             "Codemenschen GmbH",
-            "Anton Hubmann Platz 1/6, 8077 Gössendorf, Austria",
+            "Anton-Hubmann-Platz 1/6, 8077 Gössendorf, Austria",
+            "Managing director: Ing. Patrick Fuchshofer, MBA",
             "Company register number: FN 543274 h",
+            "Phone: +43 650 4861845",
             "E-mail: office@codemenschen.at",
           ],
         },
