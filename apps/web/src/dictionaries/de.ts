@@ -110,7 +110,7 @@ export const de = {
       chips: [
         { h: "Erfahrenes Team", p: "Apps und Web für kleine Unternehmen" },
         { h: "Persönliche Betreuung", p: "Per E-Mail und Telefon, auf Deutsch und Englisch" },
-        { h: "Österreichisches Unternehmen", p: "Codemenschen GmbH, Wien" },
+        { h: "Österreichisches Unternehmen", p: "Codemenschen GmbH, Gössendorf" },
       ],
   },
   faq: {
@@ -1795,7 +1795,7 @@ export const de = {
   },
   footer: {
     legal: "Bedingungen, Widerrufsbelehrung und Datenschutz stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft.",
-    by: "Betrieben von der Codemenschen GmbH, Wien, Österreich.",
+    by: "Betrieben von der Codemenschen GmbH, Gössendorf, Österreich.",
     imprint: "Impressum",
   },
 };
