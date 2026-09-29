@@ -5,12 +5,12 @@ namespace App\Http\Controllers;
 use App\Domain\Analytics\Analytics;
 use App\Domain\Security\Audit;
 use App\Models\Customer;
+use App\Support\MailLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 
 class AuthController extends Controller
 {
@@ -37,7 +37,7 @@ class AuthController extends Controller
             // types their address into the console's form gets the ordinary link, which says
             // nothing about a console existing and lands on their own account page.
             $console = ($data['to'] ?? null) === 'admin' && $customer->is_admin;
-            $url = URL::temporarySignedRoute('auth.verify', now()->addMinutes(30), [
+            $url = MailLink::signed('auth.verify', now()->addMinutes(30), [
                 'customer' => $customer->id,
                 'locale' => $data['locale'] ?? $customer->locale,
             ] + ($console ? ['to' => 'admin'] : []));
@@ -59,7 +59,7 @@ class AuthController extends Controller
 
         if ($customer === null && ($data['join'] ?? false)) {
             $email = strtolower($data['email']);
-            $url = URL::temporarySignedRoute('auth.join', now()->addMinutes(30), [
+            $url = MailLink::signed('auth.join', now()->addMinutes(30), [
                 'email' => $email,
                 'locale' => $data['locale'] ?? 'de',
             ]);
