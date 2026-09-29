@@ -1,5 +1,14 @@
 # Rename: Appwerk -> Werkprobe
 
+## Progress
+
+- 2026-09-29: brand texts, logo ("W" mark), favicon, mails, 2FA issuer, ad names, templates renamed and
+  deployed (PR #160); codemenschen.at promo texts renamed (9227cef). Hosts still appwerk.codemenschen.at,
+  domain not bought yet. Frame CSP already allows werkprobe.at.
+- Known name clash, accepted by the owner 2026-09-29: codemenschen.at also lists the free plugin
+  "Codemenschen Werk Probe" (card 27009 in the wp-giftcard.com catalogue, zip on werk.codemenschen.at).
+  Plan to rename the plugin later (for example "Codemenschen Werk Connector").
+
 Decided 2026-09-29. Reason: "appwerke" is a registered mark of codewerke GmbH (EU 019095051,
 DE 3020240048665, classes 9/35/38/42) and appwerk GmbH Hamburg owns appwerk.de/.com.
 "Werkprobe": no TMview hit (2026-09-29), werkprobe.at and werkprobe.com free, werkprobe.de taken
@@ -35,7 +44,7 @@ Tick a box only after checking it live, not after the commit.
 - [ ] Apache vhosts next to `infra/apache/*.appwerk.codemenschen.at.conf`, TLS via certbot for all names
 - [ ] Admin htpasswd path reused (`/etc/apache2/.htpasswd-appwerk-admin`, name stays)
 - [ ] Server `.env`: `APP_URL`, frontend URL, `SANCTUM_STATEFUL_DOMAINS`, `SESSION_DOMAIN`, CORS origins, `MAIL_FROM_NAME=Werkprobe`
-- [ ] `PrototypeController::raw` CSP `frame-ancestors`: add `https://werkprobe.at` (else every prototype frame is blank on the new host)
+- [x] `PrototypeController::raw` CSP `frame-ancestors`: add `https://werkprobe.at` (else every prototype frame is blank on the new host)
 - [ ] Other hard-coded hosts: `git grep -n "appwerk.codemenschen.at"` in api, web, workers, infra, templates
 - [ ] `LandingController::url()` and every mail link build the new host
 - [ ] Stripe: success/cancel URLs, webhook endpoint (add new, keep old until switch), public business name and statement descriptor "WERKPROBE"
@@ -44,20 +53,20 @@ Tick a box only after checking it live, not after the commit.
 
 ## Phase 2: brand in the code (one PR per app)
 
-- [ ] `apps/web/src/dictionaries/de.ts` + `en.ts`: every "Appwerk" (name, meta titles, FAQ, legal pages)
+- [x] `apps/web/src/dictionaries/de.ts` + `en.ts`: every "Appwerk" (name, meta titles, FAQ, legal pages)
 - [ ] `apps/web/src/components/Logo.tsx`, favicon, `icon.svg`, `apple-icon.png`, OG images, `manifest`
 - [ ] `apps/web` layouts: `<title>`, metadata, JSON-LD, canonical and hreflang on the new host, sitemap, robots
-- [ ] Admin UI texts (`AdminPanel`, `AdminSignIn`, `TwoFactorGate`, panels)
-- [ ] API mail subjects and bodies (`AuthController`, `PrototypeController`, `CustomerMail`, all mail views)
-- [ ] `Totp` issuer "Werkprobe" (existing authenticator entries keep the old label, harmless)
-- [ ] `LandingController` default title, consent text "e-mails from ..."
-- [ ] Prompts in `apps/api/resources/prompts/` that name the product to the customer (`change/assistant.md` etc.)
-- [ ] `MetaAdsPublisher` campaign name prefix "Appwerk #" -> "Werkprobe #"
-- [ ] User agents `AppwerkBot/1.0`, `AppwerkAdBot/1.0` -> `WerkprobeBot/1.0` (sites we read see this)
+- [x] Admin UI texts (`AdminPanel`, `AdminSignIn`, `TwoFactorGate`, panels)
+- [x] API mail subjects and bodies (`AuthController`, `PrototypeController`, `CustomerMail`, all mail views)
+- [x] `Totp` issuer "Werkprobe" (existing authenticator entries keep the old label, harmless)
+- [x] `LandingController` default title, consent text "e-mails from ..."
+- [x] Prompts in `apps/api/resources/prompts/` that name the product to the customer (`change/assistant.md` etc.)
+- [x] `MetaAdsPublisher` campaign name prefix "Appwerk #" -> "Werkprobe #"
+- [x] User agents `AppwerkBot/1.0`, `AppwerkAdBot/1.0` -> `WerkprobeBot/1.0` (sites we read see this)
 - [ ] Legal pages: imprint, privacy (product name, domains, processors), terms, withdrawal, date
 - [ ] Old static pages `appwerk/site/*`: delete if nothing serves them, else rename
 - [ ] Gate before merge: `git grep -n -i appwerk -- apps/web/src apps/api/app/Http apps/api/resources` shows only internal names
-- [ ] Tests updated, CI green, deploy, check in the container
+- [x] Tests updated, CI green, deploy, check in the container
 
 ## Phase 3: switch day
 
@@ -83,10 +92,11 @@ Tick a box only after checking it live, not after the commit.
 Repo `/Volumes/CodemenschenSSD/Workspace/codemenschen.at`, deploy target `codemenschen-at`.
 
 - [ ] `client/src/components/AppwerkPromo.tsx` -> `WerkprobePromo.tsx`, origin `https://werkprobe.at`, GA `promotion_id` / `promotion_name`
-- [ ] `client/src/contexts/LanguageContext.tsx`: the 34 `appwerk.*` / `header.appwerk` keys (DE + EN text)
+- [x] `client/src/contexts/LanguageContext.tsx`: the 34 `appwerk.*` / `header.appwerk` keys (DE + EN text)
 - [ ] `Header.tsx` (desktop + mobile), `Footer.tsx`, `WhatWeDo.tsx`, `Contact.tsx`
-- [ ] Images `client/public/images/appwerk/*`: check for the old name or logo in the pictures, move to `images/werkprobe/`
+- [x] Images `client/public/images/appwerk/*`: checked 2026-09-29, no name or logo in the pictures (folder name stays until the component is renamed)
 - [ ] Plugin pages (`PluginDetail.tsx`) and plugin texts in the site database: search for "Appwerk" (owner runs the DB search, the classifier blocks production reads for me)
+- [ ] Later: rename the plugin "Codemenschen Werk Probe" (catalogue card, static fallback in `client/src/data/plugins.ts`, zip name) so it is not mistaken for the product
 - [ ] Optional: a Werkprobe box on the plugin pages ("Website oder App zum Plugin? Gratis Vorschau")
 - [ ] SEO: sitemap, internal links, structured data mention the new name
 
