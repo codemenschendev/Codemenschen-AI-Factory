@@ -8,9 +8,11 @@ FROM php:8.5-cli-alpine
 # nodejs: tools/qa-page.cjs drives the chromium above through playwright-core and reports what
 # is wrong with a generated page. playwright-core, not playwright, so no second browser is
 # downloaded and there is one to keep patched instead of two.
-RUN apk add --no-cache postgresql-dev icu-dev linux-headers \
+# gd: CodexPage cuts a drawn app picture into its screens (pixels to tighten Claude's boxes).
+RUN apk add --no-cache postgresql-dev icu-dev linux-headers libpng-dev libjpeg-turbo-dev \
       ffmpeg imagemagick python3 font-dejavu chromium nodejs npm \
-  && docker-php-ext-install pdo_pgsql intl pcntl bcmath
+  && docker-php-ext-configure gd --with-jpeg \
+  && docker-php-ext-install pdo_pgsql intl pcntl bcmath gd
 
 # PHP's own 2 MB upload ceiling turned away a phone photo, and the prototype form takes up to
 # four pictures of the business (PrototypeController::MAX_UPLOADS, 8 MB each).
