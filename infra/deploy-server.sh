@@ -39,6 +39,14 @@ if [[ $FORCE -eq 0 ]]; then
     echo "!! $inflight pipeline run(s) queued/running — a rebuild would kill them. Wait, or pass --force." >&2
     exit 2
   fi
+  # A prototype build or change runs on the same workers, for up to ten minutes, with one try:
+  # a rebuild killed a customer's Codex render mid-way and it failed (2026-09-29). One stuck
+  # for more than 30 minutes is dead anyway and does not block a deploy.
+  building=$($DC exec -T api php artisan tinker --execute 'echo App\Models\Prototype::whereIn("status", ["queued","building"])->where("updated_at", ">", now()->subMinutes(30))->count();' 2>/dev/null | tail -1 | tr -dc '0-9' || echo 0)
+  if [[ "${building:-0}" != "0" ]]; then
+    echo "!! $building prototype(s) building — a rebuild would kill them. Wait a few minutes, or pass --force." >&2
+    exit 2
+  fi
 fi
 
 echo "==> Building + starting ${SERVICES[*]:-all services} ..."
