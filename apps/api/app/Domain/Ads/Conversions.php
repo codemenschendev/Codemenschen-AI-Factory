@@ -146,7 +146,7 @@ class Conversions
             'event_time' => $row->happened_at->getTimestamp(),
             'event_id' => $row->event_id,
             'action_source' => 'website',
-            'event_source_url' => $row->source_url ?: 'https://appwerk.codemenschen.at',
+            'event_source_url' => $row->source_url ?: 'https://appmitki.com',
             'user_data' => array_filter([
                 // Meta's click cookie format, built from the fbclid the visitor arrived with.
                 'fbc' => 'fb.1.'.($row->clicked_at ?? $row->happened_at)->getTimestampMs().'.'.$row->click_id,

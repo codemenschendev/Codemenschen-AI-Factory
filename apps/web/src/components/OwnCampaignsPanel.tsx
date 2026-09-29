@@ -88,7 +88,7 @@ const blank: Form = {
   name: "",
   language: "de",
   countries: ["AT"],
-  landing_url: "https://appwerk.codemenschen.at",
+  landing_url: "https://appmitki.com",
   message: "",
   audience: "",
   offer: "",
