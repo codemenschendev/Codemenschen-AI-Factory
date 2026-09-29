@@ -21,7 +21,9 @@ export const revalidate = 60;
 
 /** With apps only on offer, the home page is the app landing page, and says so to search engines. */
 export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
-  return appsOnly(await offeredKinds()) ? appMetadata(props) : {};
+  if (!appsOnly(await offeredKinds())) return {};
+  // The app page's words, but this address: its hreflang links point at /app, not at the home page.
+  return { ...(await appMetadata(props)), alternates: { languages: { de: "/de", en: "/en" } } };
 }
 
 const fill = (s: string, v: Record<string, string>) =>
