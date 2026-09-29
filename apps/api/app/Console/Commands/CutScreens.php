@@ -12,14 +12,16 @@ use Illuminate\Console\Command;
  */
 class CutScreens extends Command
 {
-    protected $signature = 'factory:cut-screens {id? : one prototype; without it every drawn app that is not cut yet}';
+    protected $signature = 'factory:cut-screens {id? : one prototype; without it every drawn app that is not cut yet} {--again : cut one that was cut before}';
 
     protected $description = 'Show the screens of drawn app prototypes one by one';
 
     public function handle(CodexPage $pages): int
     {
-        $query = Prototype::where('kind', 'app')->where('status', 'ready')->where('html', 'like', '%<img class="mockup"%')
-            ->where('html', 'not like', '%data-screens=%');
+        $query = Prototype::where('kind', 'app')->where('status', 'ready')->where('html', 'like', '%<img class="mockup"%');
+        if (! $this->option('again')) {
+            $query->where('html', 'not like', '%data-screens=%');
+        }
         if ($this->argument('id') !== null) {
             $query->whereKey($this->argument('id'));
         }
