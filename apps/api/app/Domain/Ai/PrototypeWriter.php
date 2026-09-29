@@ -842,10 +842,11 @@ class PrototypeWriter
         if (($qa['mode'] ?? null) === 'codex') {
             $page = $this->reviseCodex($html, $qa, $prompt, $change);
         } else {
-            $page = ($qa['writer'] ?? null) === 'codex' && CodexPage::ready()
-                ? app(CodexPage::class)->revise($html, $kind, $change)
-                : $this->reviseClaude($html, $kind, $change);
-            if ($photo !== null) {
+            $drawn = ($qa['writer'] ?? null) === 'codex' && CodexPage::ready();
+            $page = $drawn ? app(CodexPage::class)->revise($html, $kind, $change) : $this->reviseClaude($html, $kind, $change);
+            // A drawn prototype is one picture and has no slots. Its megabytes of base64 also
+            // exhaust the slot patterns' backtracking, and the page came back empty (2026-09-29).
+            if ($photo !== null && ! $drawn) {
                 // A slot the change added still holds its brief: it gets a picture like any other.
                 $page = $photo->apply($page, ['fill' => false])['html'];
             }
