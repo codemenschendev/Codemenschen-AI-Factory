@@ -59,7 +59,7 @@ class MarketingCampaign extends Model
      */
     public function finalUrl(): string
     {
-        $url = (string) ($this->strategy['landing_url'] ?? 'https://appwerk.codemenschen.at');
+        $url = (string) ($this->strategy['landing_url'] ?? 'https://appmitki.com');
         if ($this->project_id !== null || $this->prototype_id !== null || str_contains($url, 'utm_source=')) {
             return $url;
         }
