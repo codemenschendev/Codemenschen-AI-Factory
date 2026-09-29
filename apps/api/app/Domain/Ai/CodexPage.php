@@ -312,6 +312,11 @@ class CodexPage
         $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
         $boxes = $kind === 'app' ? $this->screens($bytes) : [];
         $split = $boxes === [] ? '' : ' data-screens="'.htmlspecialchars((string) json_encode($boxes), ENT_QUOTES).'"';
+        // The cut screens stand on the drawing's own background, so no lighter tile shows around them.
+        $page = '#eef0f4';
+        if ($boxes !== [] && ($img = @imagecreatefromstring($bytes)) !== false) {
+            $page = vsprintf('#%02x%02x%02x', self::background($img, imagesx($img), imagesy($img)));
+        }
         // The screens are cut from the one picture in the browser, so its bytes are in the page once.
         $script = $boxes === [] ? '' : '<div class="screens"></div><script>(function(){var m=document.querySelector(".mockup"),b=JSON.parse(m.getAttribute("data-screens")||"[]");'
             .'function go(){var box=document.querySelector(".screens");b.forEach(function(r){var c=document.createElement("canvas");c.width=r[2];c.height=r[3];'
@@ -320,10 +325,10 @@ class CodexPage
 
         return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             .'<title>Prototyp</title><style>'
-            .'body{margin:0;background:#eef0f4}main{padding:24px 16px;display:flex;justify-content:center}'
+            .'body{margin:0;background:'.$page.'}main{padding:24px 16px;display:flex;justify-content:center}'
             .'.mockup{display:block;width:100%;max-width:'.explode('x', $size)[0].'px;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.16)}'
             .'body.split .mockup{display:none}.screens{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:28px 16px}'
-            .'.screens img{display:block;width:min(360px,86vw);height:auto;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.14)}'
+            .'.screens img{display:block;width:min(360px,86vw);height:auto}'
             .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'"'.$split.' alt=""></main>'.$script.'</body></html>';
     }
 
