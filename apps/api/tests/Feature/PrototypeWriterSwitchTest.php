@@ -113,6 +113,47 @@ class PrototypeWriterSwitchTest extends TestCase
         $this->assertStringContainsString($big, $out['html']);
     }
 
+    public function test_an_app_drawing_is_cut_into_its_screens(): void
+    {
+        // Four dark phones on a light background, at places the test knows to the pixel.
+        $im = imagecreatetruecolor(1536, 1024);
+        imagefill($im, 0, 0, imagecolorallocate($im, 238, 240, 244));
+        $phones = [[60, 120, 300, 700], [420, 120, 300, 700], [780, 120, 300, 700], [1140, 120, 300, 700]];
+        foreach ($phones as [$x, $y, $w, $h]) {
+            imagefilledrectangle($im, $x, $y, $x + $w - 1, $y + $h - 1, imagecolorallocate($im, 20, 20, 30));
+        }
+        ob_start();
+        imagepng($im);
+        $png = (string) ob_get_clean();
+        // Claude's boxes are a little off, as a model's are; the pixels put them right.
+        $claude = json_encode([['x' => 0.03, 'y' => 0.10, 'w' => 0.21, 'h' => 0.70], ['x' => 0.27, 'y' => 0.11, 'w' => 0.20, 'h' => 0.68],
+            ['x' => 0.50, 'y' => 0.12, 'w' => 0.20, 'h' => 0.66], ['x' => 0.74, 'y' => 0.10, 'w' => 0.20, 'h' => 0.70]]);
+        Http::fake([
+            'sidecar.test/v1/chat/completions' => fn ($r) => Http::response(['choices' => [['message' => ['content' => str_contains((string) json_encode($r['messages']), 'image_url') ? $claude : self::BRIEF]]]]),
+            'imagegen.test/v1/images' => Http::response(['base64' => base64_encode($png), 'mime' => 'image/png']),
+        ]);
+        Setting::write('prototype.writer', 'codex');
+
+        $out = app(PrototypeWriter::class)->build('Eine App für Taxifahrten in Graz', 'app');
+
+        $this->assertSame(1, preg_match('~data-screens="([^"]+)"~', $out['html'], $m));
+        $this->assertSame($phones, json_decode(html_entity_decode($m[1]), true));
+        // The picture itself stays where a change request and the site build look for it.
+        $this->assertSame(1, preg_match('~<img class="mockup" src="data:image/png;base64,~', $out['html']));
+        $this->assertStringContainsString('<div class="screens"></div>', $out['html']);
+    }
+
+    public function test_a_site_drawing_is_not_cut(): void
+    {
+        $this->fake();
+        Setting::write('prototype.writer', 'codex');
+
+        $site = app(PrototypeWriter::class)->build('Website für eine Bäckerei in Graz', 'site');
+
+        $this->assertStringNotContainsString('data-screens', $site['html']);
+        Http::assertNotSent(fn ($r) => str_contains((string) json_encode($r->data()), 'image_url'));
+    }
+
     public function test_unknown_writer_is_claude_and_only_an_admin_switches(): void
     {
         Setting::write('prototype.writer', 'gpt');
