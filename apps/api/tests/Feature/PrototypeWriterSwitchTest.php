@@ -143,6 +143,26 @@ class PrototypeWriterSwitchTest extends TestCase
         $this->assertStringContainsString('<div class="screens"></div>', $out['html']);
     }
 
+    public function test_phones_close_together_are_cut_in_the_gap_even_when_claude_overlaps_them(): void
+    {
+        // A real drawing (a taxi app, 2026-09-29): phones 16 px apart. Claude's boxes reach into
+        // the neighbours; the cut still has to go through the gap.
+        $im = imagecreatetruecolor(1536, 1024);
+        imagefill($im, 0, 0, imagecolorallocate($im, 246, 246, 246));
+        $phones = [[12, 90, 366, 820], [394, 90, 366, 820], [776, 90, 366, 820], [1158, 90, 366, 820]];
+        foreach ($phones as [$x, $y, $w, $h]) {
+            imagefilledrectangle($im, $x, $y, $x + $w - 1, $y + $h - 1, imagecolorallocate($im, 30, 30, 36));
+        }
+        ob_start();
+        imagepng($im);
+        $png = (string) ob_get_clean();
+        $claude = json_encode([['x' => 0.0, 'y' => 0.08, 'w' => 0.27, 'h' => 0.81], ['x' => 0.24, 'y' => 0.08, 'w' => 0.28, 'h' => 0.81],
+            ['x' => 0.49, 'y' => 0.08, 'w' => 0.28, 'h' => 0.81], ['x' => 0.74, 'y' => 0.08, 'w' => 0.26, 'h' => 0.81]]);
+        Http::fake(['sidecar.test/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => $claude]]]])]);
+
+        $this->assertSame($phones, app(\App\Domain\Ai\CodexPage::class)->screens($png));
+    }
+
     public function test_a_site_drawing_is_not_cut(): void
     {
         $this->fake();

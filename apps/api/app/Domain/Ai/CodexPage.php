@@ -184,18 +184,39 @@ class CodexPage
             if (! is_array($r) || ! isset($r['x'], $r['y'], $r['w'], $r['h'])) {
                 return [];
             }
-            // A little room around Claude's box, then trimmed back to where the screen starts.
-            $pad = 0.02;
-            $x0 = max(0, (int) floor(($r['x'] - $pad) * $w));
-            $y0 = max(0, (int) floor(($r['y'] - $pad) * $h));
-            $x1 = min($w, (int) ceil(($r['x'] + $r['w'] + $pad) * $w));
-            $y1 = min($h, (int) ceil(($r['y'] + $r['h'] + $pad) * $h));
+            $boxes[] = [(int) round($r['x'] * $w), (int) round($r['y'] * $h), (int) round(($r['x'] + $r['w']) * $w), (int) round(($r['y'] + $r['h']) * $h)];
+        }
+        // Rows first (by the middle of each box), then left to right within a row.
+        usort($boxes, fn ($a, $b) => [(int) (($a[1] + $a[3]) / 2 / ($h / 3)), $a[0]] <=> [(int) (($b[1] + $b[3]) / 2 / ($h / 3)), $b[0]]);
+        // Phones drawn side by side stand a few pixels apart, with shadows. Claude's edges are
+        // rough, so a padded box reached into the next phone (2026-09-29). Between two neighbours
+        // the cut goes through the emptiest column near where they meet, and each box is only
+        // tightened inside that.
+        $padX = (int) round($w * 0.03);
+        $padY = (int) round($h * 0.04);
+        $limits = [];
+        foreach ($boxes as $i => [$x0, $y0, $x1, $y1]) {
+            $limits[$i] = [max(0, $x0 - $padX), max(0, $y0 - $padY), min($w, $x1 + $padX), min($h, $y1 + $padY)];
+        }
+        for ($i = 0; $i < count($boxes) - 1; $i++) {
+            [$a, $b] = [$boxes[$i], $boxes[$i + 1]];
+            if (abs(($a[1] + $a[3]) - ($b[1] + $b[3])) / 2 > $h / 4) {
+                continue;
+            }
+            $from = max(0, min($a[2], $b[0]) - $padX);
+            $to = min($w - 1, max($a[2], $b[0]) + $padX);
+            $cut = self::emptiest($img, $bg, $from, $to, max($a[1], $b[1]), min($a[3], $b[3]));
+            $limits[$i][2] = min($limits[$i][2], $cut);
+            $limits[$i + 1][0] = max($limits[$i + 1][0], $cut + 1);
+        }
+        $out = [];
+        foreach ($limits as [$x0, $y0, $x1, $y1]) {
             $box = self::tighten($img, $bg, $x0, $y0, $x1, $y1);
             if ($box !== null && $box[2] >= $w * 0.08 && $box[3] >= $h * 0.3) {
-                $boxes[] = $box;
+                $out[] = $box;
             }
         }
-        usort($boxes, fn ($a, $b) => [$a[1] > $b[1] + $h / 3, $a[0]] <=> [$b[1] > $a[1] + $h / 3, $b[0]]);
+        $boxes = $out;
 
         return count($boxes) >= 2 ? $boxes : [];
     }
@@ -212,6 +233,24 @@ class CodexPage
         }
 
         return array_map(fn ($v) => (int) round($v / 4), $sum);
+    }
+
+    /** The column between two screens with the fewest pixels that are not the background. */
+    private static function emptiest(\GdImage $img, array $bg, int $from, int $to, int $y0, int $y1): int
+    {
+        [$best, $least] = [intdiv($from + $to, 2), PHP_INT_MAX];
+        for ($x = $from; $x <= $to; $x++) {
+            $n = 0;
+            for ($y = $y0; $y < $y1; $y += 3) {
+                $c = imagecolorat($img, $x, $y);
+                $n += abs((($c >> 16) & 255) - $bg[0]) + abs((($c >> 8) & 255) - $bg[1]) + abs(($c & 255) - $bg[2]) > 36 ? 1 : 0;
+            }
+            if ($n < $least) {
+                [$best, $least] = [$x, $n];
+            }
+        }
+
+        return $best;
     }
 
     /** The box shrunk until each edge touches something that is not the background. */
