@@ -12,7 +12,17 @@ import { AppIdeas } from "@/components/AppIdeas";
 import { BudgetMeter } from "@/components/BudgetMeter";
 import { LandingMotion } from "@/components/LandingMotion";
 import { Icon } from "@/components/LineIcon";
+import { appsOnly, offeredKinds } from "@/lib/offer";
+import AppLanding, { generateMetadata as appMetadata } from "./app/page";
 import "../../home.css";
+
+// The offer switch is read from the API; a page older than a minute is built again.
+export const revalidate = 60;
+
+/** With apps only on offer, the home page is the app landing page, and says so to search engines. */
+export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
+  return appsOnly(await offeredKinds()) ? appMetadata(props) : {};
+}
 
 const fill = (s: string, v: Record<string, string>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
@@ -24,6 +34,9 @@ export default async function Home({
 }) {
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
+  // Apps only (owner's switch, 2026-09-29): the other offers stay built, hidden until switched on.
+  const offer = await offeredKinds();
+  if (appsOnly(offer)) return AppLanding({ params });
   const locale = raw as Locale;
   const d = getDict(locale);
   const h = d.home;
@@ -32,29 +45,30 @@ export default async function Home({
     x.toLocaleString(locale === "de" ? "de-AT" : "en-IE");
 
   // A price only where one exists in the pricing package; the rest says "after the preview".
-  const services: {
+  type Service = {
     kind: keyof typeof h.services.items;
     price?: number;
     from?: boolean;
-  }[] = [
+  };
+  const services = ([
     { kind: "site", price: SITE_PRICE_EUR },
     { kind: "app", price: PRICE_MIN, from: true },
     { kind: "ads", price: PACKAGE_PRICES.marketingLaunch, from: true },
     { kind: "email" },
     { kind: "campaign" },
-  ];
+  ] as Service[]).filter((s) => offer.includes(s.kind));
   const trustIcons = ["preview", "euro", "team", "shield"];
   const stepPics = ["step-describe", "step-preview", "step-approve", "step-launch"];
   const priceIcons = ["site", "app", "store", "user", "ads", "server"];
   const prices = [
-    {
+    ...(offer.includes("site") ? [{
       h: h.site.h,
       fig: fill(h.site.fig, { price: eur(SITE_PRICE_EUR, locale) }),
       p: fill(h.site.p, {
         months: String(SITE_HOSTING_FREE_MONTHS),
         monthly: eur(SITE_HOSTING_MONTHLY_EUR, locale),
       }),
-    },
+    }] : []),
     ...d.pricing.items,
   ];
   const budgetOf = fill(a.budgetOf, {
@@ -224,7 +238,9 @@ export default async function Home({
           </div>
 
           {/* One idea, three parts, next to the budget guard that keeps the ads safe */}
+          {(offer.includes("campaign") || offer.includes("ads")) && (
           <div className="combo">
+            {offer.includes("campaign") && (
             <div className="combo-card reveal">
               <h2 className="combo-title">{h.campaign.title}</h2>
               <p className="combo-p">{h.campaign.p}</p>
@@ -259,7 +275,9 @@ export default async function Home({
                 </div>
               </div>
             </div>
+            )}
 
+            {offer.includes("ads") && (
             <div className="combo-card budget-card reveal">
               <div className="budget-text">
                 <h2 className="combo-title">{h.budget.title}</h2>
@@ -291,7 +309,9 @@ export default async function Home({
                 ))}
               </dl>
             </div>
+            )}
           </div>
+          )}
         </div>
       </section>
 

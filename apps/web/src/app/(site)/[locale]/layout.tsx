@@ -9,12 +9,16 @@ import { MobileNav } from "@/components/MobileNav";
 import { NavLinks } from "@/components/NavLinks";
 import { PageViews } from "@/components/PageViews";
 import { AdConsentBanner, AdConsentLink } from "@/components/AdConsent";
+import { appsOnly, offeredKinds } from "@/lib/offer";
 import "../../globals.css";
 
 export const metadata: Metadata = {
   title: "Werkprobe · Website, app and ads from one hand",
   description: "Describe your idea and get a free preview in minutes. Website, app, ads and e-mails at a fixed price.",
 };
+
+// The offer switch decides the links; a page older than a minute is built again.
+export const revalidate = 60;
 
 export function generateStaticParams() {
   return LOCALES.map((locale) => ({ locale }));
@@ -32,11 +36,13 @@ export default async function LocaleLayout({
   const dict = getDict(locale as Locale);
   // The same links in the bar and, on a phone, behind the menu button. The prototype page is the
   // start button's, not a fifth link: two ways to the same page only made the bar longer.
+  // With apps only, the home page is the app page: its link would lead to the same page twice.
+  const apps = appsOnly(await offeredKinds());
   const navLinks = [
     { href: `/${locale}#services`, label: dict.nav.services },
     { href: `/${locale}#how`, label: dict.nav.how },
     { href: `/${locale}#prices`, label: dict.nav.pricing },
-    { href: `/${locale}/app`, label: dict.nav.appDev },
+    ...(apps ? [] : [{ href: `/${locale}/app`, label: dict.nav.appDev }]),
   ];
   const cta = { href: `/${locale}/prototype`, label: dict.nav.cta };
 

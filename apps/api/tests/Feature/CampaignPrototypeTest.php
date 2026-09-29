@@ -16,6 +16,12 @@ class CampaignPrototypeTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->offerEveryKind();
+    }
+
     private function campaign(array $attrs = []): Prototype
     {
         return Prototype::create($attrs + ['status' => 'queued', 'kind' => 'campaign', 'prompt' => 'Eine Bäckerei in Graz mit Brot-Abo',

@@ -59,11 +59,14 @@ export function PrototypeForm({
   locale,
   d,
   initialKind = "site",
+  kinds = KINDS,
 }: {
   locale: Locale;
   d: Dict;
   /** From `?kind=`: a service card on the home page opens the form on its own kind. */
   initialKind?: ProtoKind;
+  /** What the storefront offers right now (owner's switch); one kind needs no choice. */
+  kinds?: ProtoKind[];
 }) {
   const p = d.proto;
   const router = useRouter();
@@ -95,11 +98,11 @@ export function PrototypeForm({
       if (draft && typeof draft.prompt === "string") {
         // eslint-disable-next-line react-hooks/set-state-in-effect -- localStorage exists only in the browser, after hydration
         setPrompt(draft.prompt);
-        if (KINDS.includes(draft.kind)) setKind(draft.kind);
+        if (kinds.includes(draft.kind)) setKind(draft.kind);
         localStorage.removeItem(DRAFT);
       }
     } catch {}
-  }, []);
+  }, [kinds]);
 
   function addFiles(list: FileList | null) {
     if (!list) return;
@@ -115,6 +118,7 @@ export function PrototypeForm({
     const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
     const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string } | null }).body : null;
     setError(status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
+      : body?.code === "kind_off" ? p.kindOff
       : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
     setStep("write");
     setBusy(false);
@@ -234,8 +238,8 @@ export function PrototypeForm({
           writing, and a visitor who picks "app" describes screens rather than a company. */}
       <fieldset className="pp-field">
         <legend className="pp-label"><span className="pp-step">1</span>{p.kindLabel}</legend>
-        <div className="pp-kinds">
-          {KINDS.map((k) => (
+        {kinds.length > 1 && <div className="pp-kinds">
+          {kinds.map((k) => (
             <button
               key={k}
               type="button"
@@ -247,7 +251,7 @@ export function PrototypeForm({
               {p.kinds[k]}
             </button>
           ))}
-        </div>
+        </div>}
         <div className="pp-kind-hint">
           {/* eslint-disable-next-line @next/next/no-img-element -- the home page's fixed service pictures */}
           <img src={`/home/svc-${kind}.webp`} alt="" width={348} height={178} />

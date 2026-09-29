@@ -87,9 +87,22 @@ class PrototypeController extends Controller
             'kind' => 'nullable|in:'.implode(',', PrototypeWriter::KINDS),
             'locale' => 'nullable|in:de,en',
         ]);
-        $kind = $data['kind'] ?? 'site';
+        $kind = $data['kind'] ?? PrototypeWriter::offered()[0];
+        if (($off = self::notOffered($request, $kind)) !== null) {
+            return $off;
+        }
 
         return response()->json(['questions' => $questions->ask($data['prompt'], $kind, $data['locale'] ?? 'de')]);
+    }
+
+    /** A kind the storefront does not offer right now; an admin may still build it to test. */
+    private static function notOffered(Request $request, string $kind): ?JsonResponse
+    {
+        if (in_array($kind, PrototypeWriter::offered(), true) || ($request->user('sanctum')?->isAdmin() ?? false)) {
+            return null;
+        }
+
+        return response()->json(['error' => 'This kind of prototype is not offered at the moment.', 'code' => 'kind_off'], 422);
     }
 
     public function store(Request $request): JsonResponse
@@ -108,7 +121,10 @@ class PrototypeController extends Controller
             'locale' => 'nullable|in:de,en',
         ]);
         $ip = (string) $request->ip();
-        $kind = $data['kind'] ?? 'site';
+        $kind = $data['kind'] ?? PrototypeWriter::offered()[0];
+        if (($off = self::notOffered($request, $kind)) !== null) {
+            return $off;
+        }
         $user = $request->user('sanctum');
         if ($user === null && empty($data['email'])) {
             return response()->json(['error' => 'Give your e-mail: the build starts when you open the link we send.',
@@ -299,7 +315,8 @@ class PrototypeController extends Controller
             'photo_credit_url' => $prototype->qa['photo_credit_url'] ?? null,
             'expires_at' => $prototype->expires_at?->toIso8601String(),
             // A website can be bought as it is: the price, and whether somebody already did.
-            'site_price_eur' => $prototype->kind === 'site' && $prototype->parent_id === null ? Estimator::SITE_PRICE_EUR : null,
+            'site_price_eur' => $prototype->kind === 'site' && $prototype->parent_id === null && in_array('site', PrototypeWriter::offered(), true)
+                ? Estimator::SITE_PRICE_EUR : null,
             'bought' => $prototype->project_id !== null,
             'live_url' => $prototype->project_id !== null && $prototype->published_at !== null ? LandingController::url($prototype) : null,
             // A campaign is shown as its parts: the ad, the landing page, the e-mails.
