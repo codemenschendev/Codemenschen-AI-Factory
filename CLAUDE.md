@@ -2,7 +2,7 @@
 
 ## Models: who does what
 
-- **Text, code, prototypes, ad copy: Claude only**, through OpenClaw. `openclaw/appwerk` is Sonnet 5
+- **Text, code, prototypes, ad copy: Claude only**, through OpenClaw. `openclaw/appwerk` is Sonnet 5.5 (since 2026-09-29)
   on the tool-less `claude-cli-chat` backend (5k tokens of context per call; `openclaw/main`, the full agent
   runtime, was 50k and wandered into tool calls). Never point generation back at `openclaw/main`. Code stages (coding, fix, revise) go through the host relay to
   `appwerk-code` (tools, trimmed workspace), one session per run. `AI_CHAT_BACKEND_MODEL` stays empty in production; only the owner changes it.
