@@ -14,7 +14,7 @@ export const en = {
     login: "Sign in",
   },
   hero: {
-    eyebrow: "App development · Made in Vienna",
+    eyebrow: "App development · Made in Gössendorf",
     titleA: "Your app.",
     titleB: "You own it.",
     lede: "Pick a ready-made app idea or describe your own. You see a fixed price up front, pay online, and our AI factory builds, tests and delivers the finished app, with the code and all rights included.",
@@ -104,8 +104,8 @@ export const en = {
   },
   about: {
     eyebrow: "Who builds this",
-    title: "A real company in Vienna, not a landing page.",
-    p: "Built and operated by codemenschen.at, a software company in Vienna. Look us up, read the Impressum, and you know exactly who is accountable.",
+    title: "A real company in Gössendorf near Graz, not a landing page.",
+    p: "Built and operated by codemenschen.at, a software company in Gössendorf near Graz. Look us up, read the Impressum, and you know exactly who is accountable.",
     cta: "Visit codemenschen.at ↗",
       chips: [
         { h: "Experienced team", p: "Apps and web for small businesses" },
@@ -214,7 +214,7 @@ export const en = {
   },
   appDev: {
     metaTitle: "Have your app built at a fixed price · Werkprobe",
-    metaDesc: "We code your app, build its landing page and advertise it on Google and Meta. Free preview, fixed price, team in Vienna.",
+    metaDesc: "We code your app, build its landing page and advertise it on Google and Meta. Free preview, fixed price, team in Gössendorf near Graz.",
     eyebrow: "App development from one hand",
     titleA: "Your app.",
     titleB: "Coded and promoted.",
@@ -228,7 +228,7 @@ export const en = {
       { h: "1 free prototype per account", p: "You see your app before you pay." },
       { h: "Fixed price", p: "Scope and price are set before checkout." },
       { h: "You own the app", p: "Code, repository and store listing go to you." },
-      { h: "Team in Vienna", p: "Real people, reachable by e-mail and phone." },
+      { h: "Team in Gössendorf", p: "Real people, reachable by e-mail and phone." },
     ],
     one: {
       eyebrow: "From one hand",
