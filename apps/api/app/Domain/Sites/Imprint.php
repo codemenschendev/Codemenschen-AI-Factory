@@ -74,7 +74,7 @@ class Imprint
             ? 'Angaben nach § 5 ECG und § 25 Mediengesetz (Österreich) sowie § 5 DDG (Deutschland).'
             : 'Information under § 5 ECG and § 25 Media Act (Austria) and § 5 DDG (Germany).';
         $back = $de ? 'Zurück zur Startseite' : 'Back to the home page';
-        $made = $de ? 'Website erstellt mit Appwerk (Codemenschen GmbH).' : 'Website made with Appwerk (Codemenschen GmbH).';
+        $made = $de ? 'Website erstellt mit Werkprobe (Codemenschen GmbH).' : 'Website made with Werkprobe (Codemenschen GmbH).';
 
         return '<!doctype html><html lang="'.$lang.'"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
             .'<title>'.e($title.' · '.$v('name')).'</title>'

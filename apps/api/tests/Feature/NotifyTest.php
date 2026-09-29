@@ -46,7 +46,7 @@ class NotifyTest extends TestCase
         $this->assertCount(1, $files);
         $this->assertSame([], glob($this->dir.'/.*.json'), 'no half-written file left behind');
         $alert = json_decode(file_get_contents($files[0]), true);
-        $this->assertStringStartsWith('Appwerk: Prototype '.substr($proto->id, 0, 8), $alert['message']);
+        $this->assertStringStartsWith('Werkprobe: Prototype '.substr($proto->id, 0, 8), $alert['message']);
         $this->assertStringContainsString('answered twice without HTML', $alert['message']);
     }
 

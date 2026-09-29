@@ -12,7 +12,7 @@ import { AdConsentBanner, AdConsentLink } from "@/components/AdConsent";
 import "../../globals.css";
 
 export const metadata: Metadata = {
-  title: "Appwerk · Website, app and ads from one hand",
+  title: "Werkprobe · Website, app and ads from one hand",
   description: "Describe your idea and get a free preview in minutes. Website, app, ads and e-mails at a fixed price.",
 };
 
@@ -47,7 +47,7 @@ export default async function LocaleLayout({
         {/* Sticky header, ported from the appwerk prototype (site/index.html:14-30) */}
         <header className="nav" id="top">
           <div className="wrap nav-inner">
-            <Link href={`/${locale}`} className="nav-logo" aria-label="Appwerk">
+            <Link href={`/${locale}`} className="nav-logo" aria-label="Werkprobe">
               <Logo by={dict.nav.by} />
             </Link>
             <NavLinks links={navLinks} />

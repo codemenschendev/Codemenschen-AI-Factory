@@ -47,12 +47,12 @@ class AuthController extends Controller
                 $de = ($data['locale'] ?? 'de') === 'de';
                 Mail::raw(
                     match (true) {
-                        $console && $de => "Dein Anmelde-Link für die Appwerk Konsole (30 Minuten gültig):\n\n$url",
-                        $console => "Your sign-in link for the Appwerk console (valid 30 minutes):\n\n$url",
+                        $console && $de => "Dein Anmelde-Link für die Werkprobe Konsole (30 Minuten gültig):\n\n$url",
+                        $console => "Your sign-in link for the Werkprobe console (valid 30 minutes):\n\n$url",
                         $de => "Dein Anmelde-Link (30 Minuten gültig):\n\n$url",
                         default => "Your sign-in link (valid 30 minutes):\n\n$url",
                     },
-                    fn ($m) => $m->to($customer->email)->subject($console ? 'Appwerk ops sign-in' : 'Appwerk sign-in'),
+                    fn ($m) => $m->to($customer->email)->subject($console ? 'Werkprobe ops sign-in' : 'Werkprobe sign-in'),
                 );
             }
         }
@@ -68,9 +68,9 @@ class AuthController extends Controller
             } else {
                 Mail::raw(
                     ($data['locale'] ?? 'de') === 'de'
-                        ? "Dein Anmelde-Link für Appwerk (30 Minuten gültig):\n\n$url\n\nDanach geht es mit deinem Prototyp weiter."
-                        : "Your Appwerk sign-in link (valid 30 minutes):\n\n$url\n\nAfter that, your prototype carries on.",
-                    fn ($m) => $m->to($email)->subject('Appwerk sign-in'),
+                        ? "Dein Anmelde-Link für Werkprobe (30 Minuten gültig):\n\n$url\n\nDanach geht es mit deinem Prototyp weiter."
+                        : "Your Werkprobe sign-in link (valid 30 minutes):\n\n$url\n\nAfter that, your prototype carries on.",
+                    fn ($m) => $m->to($email)->subject('Werkprobe sign-in'),
                 );
             }
         }

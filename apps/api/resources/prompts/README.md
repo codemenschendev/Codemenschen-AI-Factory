@@ -1,4 +1,4 @@
-# Appwerk AI prompts
+# Werkprobe AI prompts
 
 The instructions the AI gets when it works for a customer. Edit the wording here; the code decides
 which file is used when.

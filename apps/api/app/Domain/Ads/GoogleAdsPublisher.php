@@ -21,7 +21,7 @@ use RuntimeException;
  * Two ways to sign in. Preferred: a service account (GOOGLE_ADS_SERVICE_ACCOUNT_JSON, a key file
  * mounted read-only), added as a user in the Google Ads account; it never expires. Fallback: an
  * OAuth refresh token of a person, which dies after 7 days while the consent screen is in
- * Testing, and publishing it needs a privacy policy link Appwerk did not have (2026-09-15).
+ * Testing, and publishing it needs a privacy policy link Werkprobe did not have (2026-09-15).
  *
  * A Search campaign is built paused: campaign_budget -> campaign (PAUSED) -> ad_group ->
  * responsive_search_ad. Budgets are in micros (EUR * 1_000_000); the customer's monthly budget
@@ -261,7 +261,7 @@ class GoogleAdsPublisher implements Publisher
     /** Google's geo target ids for the countries a campaign may name. */
     public const COUNTRIES = ['AT' => 2040, 'DE' => 2276, 'CH' => 2756];
 
-    /** Google's language ids for the languages Appwerk writes in. */
+    /** Google's language ids for the languages Werkprobe writes in. */
     private const LANGUAGES = ['de' => 1001, 'en' => 1000];
 
     public function publish(MarketingCampaign $campaign): array
@@ -286,14 +286,14 @@ class GoogleAdsPublisher implements Publisher
         $ops = [
             ['campaignBudgetOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/campaignBudgets/-1",
-                'name' => 'Appwerk budget #'.$campaign->id.'-'.now()->timestamp,
+                'name' => 'Werkprobe budget #'.$campaign->id.'-'.now()->timestamp,
                 'amountMicros' => (string) $dailyMicros,
                 'deliveryMethod' => 'STANDARD',
                 'explicitlyShared' => false,
             ]]],
             ['campaignOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/campaigns/-2",
-                'name' => trim(($campaign->strategy['name'] ?? 'Appwerk').' #'.$campaign->id).'-'.now()->timestamp,
+                'name' => trim(($campaign->strategy['name'] ?? 'Werkprobe').' #'.$campaign->id).'-'.now()->timestamp,
                 'status' => 'PAUSED',
                 'advertisingChannelType' => 'SEARCH',
                 'campaignBudget' => "customers/{$cid}/campaignBudgets/-1",
@@ -307,7 +307,7 @@ class GoogleAdsPublisher implements Publisher
             ]]],
             ['adGroupOperation' => ['create' => [
                 'resourceName' => "customers/{$cid}/adGroups/-3",
-                'name' => 'Appwerk #'.$campaign->id.' group',
+                'name' => 'Werkprobe #'.$campaign->id.' group',
                 'campaign' => "customers/{$cid}/campaigns/-2",
                 'status' => 'ENABLED',   // the campaign being PAUSED is what stops spend
                 'type' => 'SEARCH_STANDARD',
@@ -379,7 +379,7 @@ class GoogleAdsPublisher implements Publisher
             ]);
         }
 
-        // Our own campaigns count and bid on Appwerk's results only. The account is shared with
+        // Our own campaigns count and bid on Werkprobe's results only. The account is shared with
         // other products, whose purchases would otherwise be this campaign's conversions too. A
         // failure here leaves a working, paused campaign on the account goals, and says so.
         $campaignResource = $results[1]['campaignResult']['resourceName'] ?? null;

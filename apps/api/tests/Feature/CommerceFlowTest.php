@@ -207,7 +207,7 @@ class CommerceFlowTest extends TestCase
 
         Mail::assertSent(CustomerNotice::class, function (CustomerNotice $m) {
             return $m->hasTo('patrick@example.com')
-                && str_starts_with($m->subjectLine, 'Deine Bestellung bei Appwerk')
+                && str_starts_with($m->subjectLine, 'Deine Bestellung bei Werkprobe')
                 && str_contains($m->body, 'Hallo Patrick,')
                 && str_contains($m->body, '/api/auth/verify/')
                 && str_contains($m->body, 'Baustart: sofort')
@@ -239,7 +239,7 @@ class CommerceFlowTest extends TestCase
             return true;
         });
         $this->assertSame(4, count($subjects), 'paid, review, ready, failed; nothing for specification');
-        $this->assertStringStartsWith('Your Appwerk order', $subjects[0]);
+        $this->assertStringStartsWith('Your Werkprobe order', $subjects[0]);
         $this->assertStringStartsWith('Your preview is ready', $subjects[1]);
         $this->assertStringStartsWith('Approval received', $subjects[2]);
         $this->assertStringStartsWith('We saw a problem', $subjects[3]);
