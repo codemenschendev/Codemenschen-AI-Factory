@@ -102,7 +102,7 @@ class LandingController extends Controller
             "connect-src 'self'",
             "base-uri 'none'",
             "form-action 'none'",
-            "frame-ancestors 'self' https://appwerk.codemenschen.at https://werkprobe.at https://www.werkprobe.at",
+            "frame-ancestors 'self' https://appwerk.codemenschen.at https://appmitki.com https://www.appmitki.com",
         ]);
 
         // A campaign's test page is kept out of search; a bought website wants to be found.

@@ -343,7 +343,7 @@ class PrototypeController extends Controller
             "base-uri 'none'",
             "form-action 'none'",
             // Only our own share page may frame it; nobody can embed it elsewhere.
-            "frame-ancestors 'self' https://appwerk.codemenschen.at https://werkprobe.at https://www.werkprobe.at",
+            "frame-ancestors 'self' https://appwerk.codemenschen.at https://appmitki.com https://www.appmitki.com",
         ]);
 
         return response((string) $prototype->html, 200, [
