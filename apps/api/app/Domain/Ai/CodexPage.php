@@ -146,6 +146,147 @@ class CodexPage
         return $this->render(trim($change), $kind, [(string) base64_decode($m[1])]);
     }
 
+    /**
+     * An app drawing is its screens side by side in one wide picture, and framed as one picture
+     * each screen came out a quarter of the width, too small to read (2026-09-29). Claude looks at
+     * the picture and says where each screen is; the boxes are then pulled tight to the pixels and
+     * the page shows every screen as its own picture. The picture itself stays in the page as it
+     * was drawn: a change request and the site built after a purchase both start from it.
+     *
+     * @return list<array{0:int,1:int,2:int,3:int}> x, y, width, height in pixels, left to right
+     */
+    public function screens(string $bytes): array
+    {
+        $img = @imagecreatefromstring($bytes);
+        if ($img === false) {
+            return [];
+        }
+        [$w, $h] = [imagesx($img), imagesy($img)];
+        // A smaller copy for Claude: the boxes come back as fractions, so the size does not matter
+        // to the answer, only to the upload.
+        $small = imagescale($img, min(1200, $w));
+        ob_start();
+        imagejpeg($small, null, 82);
+        $jpeg = (string) ob_get_clean();
+        try {
+            $answer = self::look(Prompts::get('prototype/mockup-screens'), 'data:image/jpeg;base64,'.base64_encode($jpeg));
+        } catch (\Throwable) {
+            return [];
+        }
+        $rows = json_decode(preg_match('~\[.*\]~s', $answer, $m) === 1 ? $m[0] : 'null', true);
+        if (! is_array($rows) || count($rows) < 2 || count($rows) > 8) {
+            return [];
+        }
+        $bg = self::background($img, $w, $h);
+        $boxes = [];
+        foreach ($rows as $r) {
+            if (! is_array($r) || ! isset($r['x'], $r['y'], $r['w'], $r['h'])) {
+                return [];
+            }
+            // A little room around Claude's box, then trimmed back to where the screen starts.
+            $pad = 0.02;
+            $x0 = max(0, (int) floor(($r['x'] - $pad) * $w));
+            $y0 = max(0, (int) floor(($r['y'] - $pad) * $h));
+            $x1 = min($w, (int) ceil(($r['x'] + $r['w'] + $pad) * $w));
+            $y1 = min($h, (int) ceil(($r['y'] + $r['h'] + $pad) * $h));
+            $box = self::tighten($img, $bg, $x0, $y0, $x1, $y1);
+            if ($box !== null && $box[2] >= $w * 0.08 && $box[3] >= $h * 0.3) {
+                $boxes[] = $box;
+            }
+        }
+        usort($boxes, fn ($a, $b) => [$a[1] > $b[1] + $h / 3, $a[0]] <=> [$b[1] > $a[1] + $h / 3, $b[0]]);
+
+        return count($boxes) >= 2 ? $boxes : [];
+    }
+
+    /** The colour the screens stand on: the corners of the picture, averaged. */
+    private static function background(\GdImage $img, int $w, int $h): array
+    {
+        $sum = [0, 0, 0];
+        foreach ([[2, 2], [$w - 3, 2], [2, $h - 3], [$w - 3, $h - 3]] as [$x, $y]) {
+            $c = imagecolorat($img, $x, $y);
+            $sum[0] += ($c >> 16) & 255;
+            $sum[1] += ($c >> 8) & 255;
+            $sum[2] += $c & 255;
+        }
+
+        return array_map(fn ($v) => (int) round($v / 4), $sum);
+    }
+
+    /** The box shrunk until each edge touches something that is not the background. */
+    private static function tighten(\GdImage $img, array $bg, int $x0, int $y0, int $x1, int $y1): ?array
+    {
+        $plain = function (int $fixed, int $from, int $to, bool $row) use ($img, $bg): bool {
+            for ($i = $from; $i < $to; $i += 2) {
+                $c = $row ? imagecolorat($img, $i, $fixed) : imagecolorat($img, $fixed, $i);
+                if (abs((($c >> 16) & 255) - $bg[0]) + abs((($c >> 8) & 255) - $bg[1]) + abs(($c & 255) - $bg[2]) > 36) {
+                    return false;
+                }
+            }
+
+            return true;
+        };
+        while ($y0 < $y1 - 1 && $plain($y0, $x0, $x1, true)) {
+            $y0++;
+        }
+        while ($y1 - 1 > $y0 && $plain($y1 - 1, $x0, $x1, true)) {
+            $y1--;
+        }
+        while ($x0 < $x1 - 1 && $plain($x0, $y0, $y1, false)) {
+            $x0++;
+        }
+        while ($x1 - 1 > $x0 && $plain($x1 - 1, $y0, $y1, false)) {
+            $x1--;
+        }
+
+        return $x1 - $x0 > 10 && $y1 - $y0 > 10 ? [$x0, $y0, $x1 - $x0, $y1 - $y0] : null;
+    }
+
+    /** One question about one picture, to Claude on the chat agent (it reads pictures). */
+    private static function look(string $question, string $dataUrl): string
+    {
+        $request = Http::baseUrl(rtrim((string) config('services.ai_image.base_url'), '/'))
+            ->withToken((string) config('services.ai_image.token'))->acceptJson()->timeout(180)->connectTimeout(10);
+        if (($backend = ChatBackend::pin()) !== null) {
+            $request = $request->withHeaders(['x-openclaw-model' => $backend]);
+        }
+        $res = $request->post('/v1/chat/completions', [
+            'model' => config('services.ai_image.chat_model', 'openclaw/appwerk'),
+            'messages' => [['role' => 'user', 'content' => [
+                ['type' => 'text', 'text' => $question],
+                ['type' => 'image_url', 'image_url' => ['url' => $dataUrl]],
+            ]]],
+            'max_completion_tokens' => 600,
+        ]);
+        if (! $res->successful()) {
+            throw new RuntimeException('no answer about the screens (gateway http '.$res->status().')');
+        }
+
+        return (string) $res->json('choices.0.message.content');
+    }
+
+    /** The page around a drawn prototype; an app's screens are shown one by one when known. */
+    public function page(string $bytes, string $kind): string
+    {
+        $size = self::SIZES[$kind] ?? self::SIZES['site'];
+        $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
+        $boxes = $kind === 'app' ? $this->screens($bytes) : [];
+        $split = $boxes === [] ? '' : ' data-screens="'.htmlspecialchars((string) json_encode($boxes), ENT_QUOTES).'"';
+        // The screens are cut from the one picture in the browser, so its bytes are in the page once.
+        $script = $boxes === [] ? '' : '<div class="screens"></div><script>(function(){var m=document.querySelector(".mockup"),b=JSON.parse(m.getAttribute("data-screens")||"[]");'
+            .'function go(){var box=document.querySelector(".screens");b.forEach(function(r){var c=document.createElement("canvas");c.width=r[2];c.height=r[3];'
+            .'c.getContext("2d").drawImage(m,r[0],r[1],r[2],r[3],0,0,r[2],r[3]);var i=new Image();i.alt="";i.src=c.toDataURL("image/png");box.appendChild(i);});'
+            .'document.body.className="split";}if(m.complete&&m.naturalWidth)go();else m.addEventListener("load",go);})();</script>';
+
+        return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
+            .'<title>Prototyp</title><style>'
+            .'body{margin:0;background:#eef0f4}main{padding:24px 16px;display:flex;justify-content:center}'
+            .'.mockup{display:block;width:100%;max-width:'.explode('x', $size)[0].'px;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.16)}'
+            .'body.split .mockup{display:none}.screens{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:28px 16px}'
+            .'.screens img{display:block;width:min(360px,86vw);height:auto;border-radius:16px;box-shadow:0 18px 40px rgba(0,0,0,.14)}'
+            .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'"'.$split.' alt=""></main>'.$script.'</body></html>';
+    }
+
     /** @param  list<string>  $refs */
     private function render(string $prompt, string $kind, array $refs): string
     {
@@ -157,12 +298,6 @@ class CodexPage
             throw new RuntimeException('The image agent drew no prototype.');
         }
         // PNG as Codex drew it: the small words of a design stay sharp, and a few MB is fine here.
-        $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
-
-        return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
-            .'<title>Prototyp</title><style>'
-            .'body{margin:0;background:#eef0f4}main{padding:24px 16px;display:flex;justify-content:center}'
-            .'.mockup{display:block;width:100%;max-width:'.explode('x', $size)[0].'px;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.16)}'
-            .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'" alt=""></main></body></html>';
+        return $this->page($bytes, $kind);
     }
 }

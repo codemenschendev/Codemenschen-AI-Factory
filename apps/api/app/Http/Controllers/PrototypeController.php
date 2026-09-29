@@ -303,6 +303,8 @@ class PrototypeController extends Controller
                 ? ($prototype->qa['mode'] ?? ($prototype->status === 'ready' ? 'hybrid' : PrototypeWriter::adsMode()))
                 : null,
             'title' => $prototype->title,
+            // Drawn by Codex as one picture: the share page shows it wide, never inside a phone.
+            'writer' => $prototype->qa['writer'] ?? null,
             // The visitor's own sentence, so "turn it into a real app" can carry it into the
             // wizard instead of asking them to type the same thing twice.
             'prompt' => $prototype->prompt,

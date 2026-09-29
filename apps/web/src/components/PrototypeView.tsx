@@ -13,6 +13,8 @@ interface Meta {
   kind?: string;
   /** How an ad was made: hybrid, claude, or codex alone (two steps, a minute or two). */
   mode?: string | null;
+  /** codex: the prototype is a drawing, shown wide (an app's screens one by one), not in a phone. */
+  writer?: string | null;
   photo_credit?: string | null;
   photo_credit_url?: string | null;
   id: string;
@@ -291,7 +293,7 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
       </div>}
       {/* An app is shown in a phone and a website in a window. Squeezing a 1120px landing page
           into 390px would be as wrong as hanging one app screen across a desktop. */}
-      {meta.kind === "app" ? (
+      {meta.kind === "app" && meta.writer !== "codex" ? (
         <div className="device-stage">
           <div>
             <div className="device">
