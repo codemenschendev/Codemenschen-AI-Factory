@@ -157,7 +157,8 @@ class CodexPage
      */
     public function screens(string $bytes): array
     {
-        $img = @imagecreatefromstring($bytes);
+        // Without GD the picture is shown whole, as before; a missing extension must not fail a build.
+        $img = function_exists('imagecreatefromstring') ? @imagecreatefromstring($bytes) : false;
         if ($img === false) {
             return [];
         }
