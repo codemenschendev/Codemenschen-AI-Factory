@@ -14,7 +14,7 @@ export const de = {
     login: "Anmelden",
   },
   hero: {
-    eyebrow: "App-Entwicklung · Made in Vienna",
+    eyebrow: "App-Entwicklung · Made in Gössendorf",
     titleA: "Deine App.",
     titleB: "Dein Eigentum.",
     lede: "Wähle eine fertige App-Idee oder beschreib deine eigene. Du siehst vorab einen Fixpreis, zahlst online, und unsere KI-Fabrik baut, testet und liefert die fertige App, inklusive Code und aller Rechte.",
@@ -104,8 +104,8 @@ export const de = {
   },
   about: {
     eyebrow: "Wer das baut",
-    title: "Ein echtes Unternehmen in Wien, keine Landing-Page.",
-    p: "Gebaut und betrieben von codemenschen.at, einem Software-Unternehmen in Wien. Schau uns nach, lies das Impressum, dann weißt du genau, wer verantwortlich ist.",
+    title: "Ein echtes Unternehmen in Gössendorf bei Graz, keine Landing-Page.",
+    p: "Gebaut und betrieben von codemenschen.at, einem Software-Unternehmen in Gössendorf bei Graz. Schau uns nach, lies das Impressum, dann weißt du genau, wer verantwortlich ist.",
     cta: "codemenschen.at besuchen ↗",
       chips: [
         { h: "Erfahrenes Team", p: "Apps und Web für kleine Unternehmen" },
@@ -214,7 +214,7 @@ export const de = {
   },
   appDev: {
     metaTitle: "App entwickeln lassen zum Festpreis · Werkprobe",
-    metaDesc: "Wir programmieren deine App, bauen die Landingpage dazu und bewerben sie auf Google und Meta. Kostenlose Vorschau, Festpreis, Team in Wien.",
+    metaDesc: "Wir programmieren deine App, bauen die Landingpage dazu und bewerben sie auf Google und Meta. Kostenlose Vorschau, Festpreis, Team in Gössendorf bei Graz.",
     eyebrow: "App-Entwicklung aus einer Hand",
     titleA: "Deine App.",
     titleB: "Programmiert und beworben.",
@@ -228,7 +228,7 @@ export const de = {
       { h: "1 kostenloser Prototyp pro Konto", p: "Du siehst deine App, bevor du zahlst." },
       { h: "Festpreis", p: "Umfang und Preis stehen vor dem Checkout fest." },
       { h: "Die App gehört dir", p: "Code, Repository und Store-Eintrag gehen an dich." },
-      { h: "Team in Wien", p: "Echte Menschen, per E-Mail und Telefon erreichbar." },
+      { h: "Team in Gössendorf", p: "Echte Menschen, per E-Mail und Telefon erreichbar." },
     ],
     one: {
       eyebrow: "Aus einer Hand",
