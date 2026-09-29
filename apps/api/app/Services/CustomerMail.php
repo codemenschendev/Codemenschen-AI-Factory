@@ -11,9 +11,9 @@ use App\Models\ChangeRequest;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Project;
+use App\Support\MailLink;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 
 /**
  * What a customer hears from us, and when.
@@ -283,7 +283,7 @@ class CustomerMail
 
     private function signIn(Customer $customer, string $locale): string
     {
-        return URL::temporarySignedRoute('auth.verify', now()->addDay(), [
+        return MailLink::signed('auth.verify', now()->addDay(), [
             'customer' => $customer->id,
             'locale' => $locale,
         ]);

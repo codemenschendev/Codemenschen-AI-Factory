@@ -45,6 +45,10 @@ return [
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
 
+    // Where signed links in e-mails point (App\Support\MailLink): the storefront's domain, whose
+    // /api/ goes to this API. Empty: the host of the request, as before.
+    'mail_link_url' => env('MAIL_LINK_URL'),
+
     // Bought websites: where a customer's own domain has to point (an A record), for the portal.
     'sites' => ['server_ip' => env('SITES_SERVER_IP', '65.108.206.249')],
 

@@ -13,13 +13,13 @@ use App\Jobs\BuildPrototype;
 use App\Jobs\RevisePrototype;
 use App\Models\Customer;
 use App\Models\Prototype;
+use App\Support\MailLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\URL;
 
 /**
  * Public prompt-to-prototype, the lead magnet. Every build needs an e-mail: a visitor who is not
@@ -208,7 +208,7 @@ class PrototypeController extends Controller
     /** The e-mail whose link signs the visitor in and starts the build. Valid for a day. */
     private static function sendBuildLink(Prototype $proto, string $email, string $locale): void
     {
-        $url = URL::temporarySignedRoute('prototypes.confirm', now()->addDay(), ['prototype' => $proto->id, 'locale' => $locale]);
+        $url = MailLink::signed('prototypes.confirm', now()->addDay(), ['prototype' => $proto->id, 'locale' => $locale]);
         if (config('mail.default') === 'log') {
             Log::info('prototype.build_link', ['email' => $email, 'url' => $url]);
 
