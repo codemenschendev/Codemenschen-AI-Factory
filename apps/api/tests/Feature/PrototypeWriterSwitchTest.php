@@ -137,7 +137,7 @@ class PrototypeWriterSwitchTest extends TestCase
         $out = app(PrototypeWriter::class)->build('Eine App für Taxifahrten in Graz', 'app');
 
         $this->assertSame(1, preg_match('~data-screens="([^"]+)"~', $out['html'], $m));
-        $this->assertSame($phones, json_decode(html_entity_decode($m[1]), true));
+        $this->assertEachPhoneAlone($phones, json_decode(html_entity_decode($m[1]), true));
         // The picture itself stays where a change request and the site build look for it.
         $this->assertSame(1, preg_match('~<img class="mockup" src="data:image/png;base64,~', $out['html']));
         $this->assertStringContainsString('<div class="screens"></div>', $out['html']);
@@ -160,7 +160,53 @@ class PrototypeWriterSwitchTest extends TestCase
             ['x' => 0.49, 'y' => 0.08, 'w' => 0.28, 'h' => 0.81], ['x' => 0.74, 'y' => 0.08, 'w' => 0.26, 'h' => 0.81]]);
         Http::fake(['sidecar.test/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => $claude]]]])]);
 
-        $this->assertSame($phones, app(\App\Domain\Ai\CodexPage::class)->screens($png));
+        $this->assertEachPhoneAlone($phones, app(\App\Domain\Ai\CodexPage::class)->screens($png));
+    }
+
+    public function test_a_soft_gradient_background_and_uneven_boxes_still_cut_in_the_gaps(): void
+    {
+        // A car rental app (2026-09-29): the background brightens towards the middle, and
+        // Claude's boxes were uneven (one a fifth of the width, the next nearly a third).
+        $im = imagecreatetruecolor(1536, 1024);
+        for ($x = 0; $x < 1536; $x++) {
+            $v = (int) round(228 + 24 * (1 - abs($x - 768) / 768));
+            imageline($im, $x, 0, $x, 1023, imagecolorallocate($im, $v, $v, $v + 2));
+        }
+        $phones = [[14, 90, 362, 850], [396, 90, 360, 850], [778, 90, 360, 850], [1160, 90, 362, 850]];
+        foreach ($phones as [$x, $y, $w, $h]) {
+            imagefilledrectangle($im, $x, $y, $x + $w - 1, $y + $h - 1, imagecolorallocate($im, 25, 25, 30));
+            imagefilledrectangle($im, $x + 12, $y + 12, $x + $w - 13, $y + $h - 13, imagecolorallocate($im, 250, 250, 252));
+            imagefilledrectangle($im, $x + 40, $y + 200, $x + $w - 40, $y + 260, imagecolorallocate($im, 30, 90, 240));
+        }
+        ob_start();
+        imagepng($im);
+        $png = (string) ob_get_clean();
+        $claude = json_encode([['x' => 0.0, 'y' => 0.08, 'w' => 0.275, 'h' => 0.85], ['x' => 0.275, 'y' => 0.08, 'w' => 0.2, 'h' => 0.85],
+            ['x' => 0.477, 'y' => 0.08, 'w' => 0.293, 'h' => 0.85], ['x' => 0.772, 'y' => 0.08, 'w' => 0.224, 'h' => 0.85]]);
+        Http::fake(['sidecar.test/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => $claude]]]])]);
+
+        $this->assertEachPhoneAlone($phones, app(\App\Domain\Ai\CodexPage::class)->screens($png));
+    }
+
+    /**
+     * Every box holds its whole phone and none of the next one.
+     *
+     * @param  list<array{0:int,1:int,2:int,3:int}>  $phones
+     * @param  list<array{0:int,1:int,2:int,3:int}>|null  $boxes
+     */
+    private function assertEachPhoneAlone(array $phones, ?array $boxes): void
+    {
+        $this->assertCount(count($phones), (array) $boxes);
+        foreach ($phones as $i => [$x, $y, $w, $h]) {
+            [$bx, $by, $bw, $bh] = $boxes[$i];
+            $this->assertTrue($bx <= $x && $by <= $y && $bx + $bw >= $x + $w && $by + $bh >= $y + $h, "box $i misses part of its phone");
+            if (isset($phones[$i + 1])) {
+                $this->assertLessThanOrEqual($phones[$i + 1][0], $bx + $bw, "box $i reaches into the next phone");
+            }
+            if ($i > 0) {
+                $this->assertGreaterThanOrEqual($phones[$i - 1][0] + $phones[$i - 1][2], $bx, "box $i reaches into the phone before");
+            }
+        }
     }
 
     public function test_a_site_drawing_is_not_cut(): void

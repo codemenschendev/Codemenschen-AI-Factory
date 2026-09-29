@@ -203,9 +203,13 @@ class CodexPage
             if (abs(($a[1] + $a[3]) - ($b[1] + $b[3])) / 2 > $h / 4) {
                 continue;
             }
-            $from = max(0, min($a[2], $b[0]) - $padX);
-            $to = min($w - 1, max($a[2], $b[0]) + $padX);
-            $cut = self::emptiest($img, $bg, $from, $to, max($a[1], $b[1]), min($a[3], $b[3]));
+            // Anywhere between the two middles: Claude's edges can be 40 px off, and a column
+            // through a phone always has more detail than the gap.
+            $from = max(0, intdiv($a[0] + $a[2], 2));
+            $to = min($w - 1, intdiv($b[0] + $b[2], 2));
+            // Measured from above the phones to below them: a column through a phone then crosses
+            // its top and bottom edge, even when the phone itself is one flat colour.
+            $cut = self::emptiest($img, $bg, $from, $to, max(0, min($a[1], $b[1]) - $padY), min($h, max($a[3], $b[3]) + $padY));
             $limits[$i][2] = min($limits[$i][2], $cut);
             $limits[$i + 1][0] = max($limits[$i + 1][0], $cut + 1);
         }
@@ -213,7 +217,12 @@ class CodexPage
         foreach ($limits as [$x0, $y0, $x1, $y1]) {
             $box = self::tighten($img, $bg, $x0, $y0, $x1, $y1);
             if ($box !== null && $box[2] >= $w * 0.08 && $box[3] >= $h * 0.3) {
-                $out[] = $box;
+                // A silver phone edge is as smooth as the background and gets trimmed with it:
+                // a few pixels back, never past the cut between two phones.
+                $m = 8;
+                $bx0 = max($x0, $box[0] - $m);
+                $by0 = max($y0, $box[1] - $m);
+                $out[] = [$bx0, $by0, min($x1, $box[0] + $box[2] + $m) - $bx0, min($y1, $box[1] + $box[3] + $m) - $by0];
             }
         }
         $boxes = $out;
@@ -235,47 +244,89 @@ class CodexPage
         return array_map(fn ($v) => (int) round($v / 4), $sum);
     }
 
-    /** The column between two screens with the fewest pixels that are not the background. */
-    private static function emptiest(\GdImage $img, array $bg, int $from, int $to, int $y0, int $y1): int
+    /** Brightness of one pixel, 0 to 255. */
+    private static function lum(\GdImage $img, int $x, int $y): float
     {
-        [$best, $least] = [intdiv($from + $to, 2), PHP_INT_MAX];
-        for ($x = $from; $x <= $to; $x++) {
-            $n = 0;
-            for ($y = $y0; $y < $y1; $y += 3) {
-                $c = imagecolorat($img, $x, $y);
-                $n += abs((($c >> 16) & 255) - $bg[0]) + abs((($c >> 8) & 255) - $bg[1]) + abs(($c & 255) - $bg[2]) > 36 ? 1 : 0;
-            }
-            if ($n < $least) {
-                [$best, $least] = [$x, $n];
-            }
-        }
+        $c = imagecolorat($img, $x, $y);
 
-        return $best;
+        return 0.3 * (($c >> 16) & 255) + 0.59 * (($c >> 8) & 255) + 0.11 * ($c & 255);
     }
 
-    /** The box shrunk until each edge touches something that is not the background. */
+    /**
+     * The column between two screens with the least detail. A drawing's background is often a
+     * soft gradient with shadows under the phones (2026-09-29: a car rental app), so "looks like
+     * the corners" cut in the wrong place; a gap is where nothing changes from pixel to pixel.
+     */
+    private static function emptiest(\GdImage $img, array $bg, int $from, int $to, int $y0, int $y1): int
+    {
+        $energy = [];
+        for ($x = $from; $x <= $to; $x++) {
+            [$n, $prev] = [0.0, null];
+            for ($y = $y0; $y < $y1; $y += 3) {
+                $l = self::lum($img, $x, $y);
+                $n += $prev === null ? 0 : abs($l - $prev);
+                $prev = $l;
+            }
+            $energy[$x] = $n;
+        }
+        if ($energy === []) {
+            return intdiv($from + $to, 2);
+        }
+        // The middle of the quietest run, not its first column: that one touches a phone's edge.
+        $least = min($energy);
+        [$run, $best] = [[], []];
+        foreach ($energy as $x => $n) {
+            if ($n <= $least + 2) {
+                $run[] = $x;
+                $best = count($run) > count($best) ? $run : $best;
+            } else {
+                $run = [];
+            }
+        }
+
+        return $best[intdiv(count($best), 2)];
+    }
+
+    /**
+     * The box shrunk until each edge touches something: a line is background while it is smooth
+     * and about as bright as the box's outer edge on that side, which is background by
+     * construction. Smooth alone would also eat a flat dark phone; "like the corners" alone
+     * failed on a gradient.
+     */
     private static function tighten(\GdImage $img, array $bg, int $x0, int $y0, int $x1, int $y1): ?array
     {
-        $plain = function (int $fixed, int $from, int $to, bool $row) use ($img, $bg): bool {
+        $line = function (int $fixed, int $from, int $to, bool $row) use ($img): array {
+            [$lo, $hi, $prev, $sum, $n, $jump] = [255.0, 0.0, null, 0.0, 0, 0.0];
             for ($i = $from; $i < $to; $i += 2) {
-                $c = $row ? imagecolorat($img, $i, $fixed) : imagecolorat($img, $fixed, $i);
-                if (abs((($c >> 16) & 255) - $bg[0]) + abs((($c >> 8) & 255) - $bg[1]) + abs(($c & 255) - $bg[2]) > 36) {
-                    return false;
-                }
+                $l = $row ? self::lum($img, $i, $fixed) : self::lum($img, $fixed, $i);
+                $jump = $prev === null ? $jump : max($jump, abs($l - $prev));
+                [$lo, $hi, $prev, $sum, $n] = [min($lo, $l), max($hi, $l), $l, $sum + $l, $n + 1];
             }
 
-            return true;
+            return [$n > 0 ? $sum / $n : 0.0, $jump <= 10 && $hi - $lo < 36];
         };
-        while ($y0 < $y1 - 1 && $plain($y0, $x0, $x1, true)) {
+        // The corners' brightness: an outer edge that is far from it lies on a phone already (Claude
+        // drew the box too small), and that side is left as it is.
+        $back = 0.3 * $bg[0] + 0.59 * $bg[1] + 0.11 * $bg[2];
+        $plain = function (int $fixed, int $from, int $to, bool $row, float $ref) use ($line, $back): bool {
+            [$mean, $smooth] = $line($fixed, $from, $to, $row);
+
+            return abs($ref - $back) < 40 && $smooth && abs($mean - $ref) < 30;
+        };
+        $ref = $line($y0, $x0, $x1, true)[0];
+        while ($y0 < $y1 - 1 && $plain($y0, $x0, $x1, true, $ref)) {
             $y0++;
         }
-        while ($y1 - 1 > $y0 && $plain($y1 - 1, $x0, $x1, true)) {
+        $ref = $line($y1 - 1, $x0, $x1, true)[0];
+        while ($y1 - 1 > $y0 && $plain($y1 - 1, $x0, $x1, true, $ref)) {
             $y1--;
         }
-        while ($x0 < $x1 - 1 && $plain($x0, $y0, $y1, false)) {
+        $ref = $line($x0, $y0, $y1, false)[0];
+        while ($x0 < $x1 - 1 && $plain($x0, $y0, $y1, false, $ref)) {
             $x0++;
         }
-        while ($x1 - 1 > $x0 && $plain($x1 - 1, $y0, $y1, false)) {
+        $ref = $line($x1 - 1, $y0, $y1, false)[0];
+        while ($x1 - 1 > $x0 && $plain($x1 - 1, $y0, $y1, false, $ref)) {
             $x1--;
         }
 
