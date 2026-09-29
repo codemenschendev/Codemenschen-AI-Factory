@@ -35,7 +35,7 @@ export function TwoFactorGate({ token, d, onPassed }: { token: string; d: Dict; 
       <div className="ops-brand">
         <span className="ops-logo" aria-hidden="true">A</span>
         <span className="ops-brand-text">
-          <strong>Werkprobe</strong>
+          <strong>Appmitki</strong>
           <span>{d.admin.consoleName}</span>
         </span>
       </div>

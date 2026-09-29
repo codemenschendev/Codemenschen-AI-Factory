@@ -321,7 +321,7 @@ class AdminOwnCampaignsTest extends TestCase
             && json_decode($r['object_story_spec'], true)['link_data']['link']
                 === "https://appwerk.codemenschen.at?utm_source=meta&utm_medium=paid_social&utm_campaign=appwerk-$id"
             && json_decode($r['object_story_spec'], true)['link_data']['name'] === 'Deine Website, fertig in wenigen Minuten');
-        Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/campaigns') && str_starts_with($r['name'], "Werkprobe #$id Appwerk Website AT"));
+        Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/campaigns') && str_starts_with($r['name'], "Appmitki #$id Appwerk Website AT"));
     }
 
     public function test_a_meta_refusal_says_why_and_leaves_nothing_half_built(): void

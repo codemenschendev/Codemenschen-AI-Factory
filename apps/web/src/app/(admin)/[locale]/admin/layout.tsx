@@ -11,7 +11,7 @@ import "../../../admin.css";
  * Being a second root layout is what lets that chrome go away entirely.
  */
 export const metadata: Metadata = {
-  title: "Werkprobe ops",
+  title: "Appmitki ops",
   robots: { index: false, follow: false },
 };
 

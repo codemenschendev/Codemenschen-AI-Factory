@@ -352,7 +352,7 @@ export function ClientAdsPanel({ token, locale, d }: { token: string; locale: Lo
                       {x.problems.map(problem)}
                     </td>
                     <td>
-                      {x.runs_on === "client" ? c.runsClient : c.runsWerkprobe}
+                      {x.runs_on === "client" ? c.runsClient : c.runsAppmitki}
                       {x.account && <div className="muted small num">{x.account}</div>}
                     </td>
                     <td>

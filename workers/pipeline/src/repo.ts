@@ -28,7 +28,7 @@ export async function ensureRepo(projectId: string, stack = "expo"): Promise<str
     }
     await exec("git", ["init", "-b", "main"], { cwd: dir });
     await exec("git", ["config", "user.email", "appwerk@codemenschen.at"], { cwd: dir });
-    await exec("git", ["config", "user.name", "Werkprobe"], { cwd: dir });
+    await exec("git", ["config", "user.name", "Appmitki"], { cwd: dir });
     if (seeded) await commitAll(dir, `chore: seed from ${stack} golden template`);
   }
   return dir;

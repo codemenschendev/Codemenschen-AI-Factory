@@ -67,7 +67,7 @@ export async function prepareExpoProject(dir: string, projectId: string, name: s
     if (obj[key] !== value) { obj[key] = value; changed = true; }
   };
   if (!expo.slug || expo.slug === "appwerk-app" || expo.slug === "factory-app") set(expo, "slug", id.slug);
-  if (!expo.name || expo.name === "Werkprobe App" || expo.name === "Appwerk App" || expo.name === "Factory App") set(expo, "name", name.slice(0, 30));
+  if (!expo.name || expo.name === "Appmitki App" || expo.name === "Werkprobe App" || expo.name === "Appwerk App" || expo.name === "Factory App") set(expo, "name", name.slice(0, 30));
   expo.android ??= {};
   expo.ios ??= {};
   if (!expo.android.package || String(expo.android.package).includes("PLACEHOLDER")) set(expo.android, "package", id.androidPackage);

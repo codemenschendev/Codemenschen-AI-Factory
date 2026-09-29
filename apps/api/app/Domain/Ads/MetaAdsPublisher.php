@@ -251,7 +251,7 @@ class MetaAdsPublisher implements Publisher
 
     private function name(MarketingCampaign $campaign): string
     {
-        return 'Werkprobe #'.$campaign->id.' '.mb_substr((string) ($campaign->project?->name ?? $campaign->prototype?->title ?? $campaign->strategy['name'] ?? ''), 0, 40);
+        return 'Appmitki #'.$campaign->id.' '.mb_substr((string) ($campaign->project?->name ?? $campaign->prototype?->title ?? $campaign->strategy['name'] ?? ''), 0, 40);
     }
 
     private function firstCreative(MarketingCampaign $campaign, string $kind): string

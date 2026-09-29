@@ -8,7 +8,7 @@ use App\Models\Project;
 use Stripe\StripeClient;
 
 /**
- * Werkprobe Care — €9/month per app, unlimited change rounds, cancel any time
+ * Appmitki Care — €9/month per app, unlimited change rounds, cancel any time
  * (ends with the billing month). Billing side only: Stripe subscription
  * checkout, webhook mirroring and cancellation. What Care unlocks lives in
  * PipelineOrchestrator::changeRequestMode().
@@ -35,7 +35,7 @@ class CareService
                     'currency' => 'eur',
                     'unit_amount' => Estimator::CARE_MONTHLY_EUR * 100,
                     'recurring' => ['interval' => 'month'],
-                    'product_data' => ['name' => "Werkprobe Care: {$project->name}"],
+                    'product_data' => ['name' => "Appmitki Care: {$project->name}"],
                 ],
             ]],
             'customer_email' => $project->customer->email,

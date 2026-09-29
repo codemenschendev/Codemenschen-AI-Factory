@@ -273,7 +273,7 @@ class LandingController extends Controller
     {
         $title = trim((string) preg_split('~\s[|:\x{2013}\x{2014}-]\s|:\s~u', (string) $prototype->title)[0]);
 
-        return mb_substr($title !== '' ? $title : 'Werkprobe', 0, 60);
+        return mb_substr($title !== '' ? $title : 'Appmitki', 0, 60);
     }
 
     /** Where the visitor came from, kept with the address: the ad, a post, a mail. */
@@ -294,8 +294,8 @@ class LandingController extends Controller
         $name = self::name($prototype);
 
         return $lang === 'de'
-            ? "Mit der Anmeldung bekommst du E-Mails von $name zu diesem Angebot. Du bestätigst per Link und kannst dich jederzeit mit einem Klick abmelden. Die Seite und die Liste betreibt Werkprobe (Codemenschen GmbH) für $name."
-            : "When you sign up you get e-mails from $name about this offer. You confirm by link and can unsubscribe at any time with one click. The page and the list are run by Werkprobe (Codemenschen GmbH) for $name.";
+            ? "Mit der Anmeldung bekommst du E-Mails von $name zu diesem Angebot. Du bestätigst per Link und kannst dich jederzeit mit einem Klick abmelden. Die Seite und die Liste betreibt Appmitki (Codemenschen GmbH) für $name."
+            : "When you sign up you get e-mails from $name about this offer. You confirm by link and can unsubscribe at any time with one click. The page and the list are run by Appmitki (Codemenschen GmbH) for $name.";
     }
 
     private static function sendConfirm(LandingSignup $row, Prototype $prototype, string $lang): void
@@ -345,7 +345,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 HTML;
         $foot = '<div class="aw-foot">'
             .($imprint !== null ? '<a href="'.e($imprint).'">'.($de ? 'Impressum' : 'Legal notice').'</a> · ' : '')
-            .($de ? 'Erstellt mit' : 'Made with').' <a href="'.e(rtrim((string) config('services.frontend_url'), '/')).'" target="_blank" rel="noopener">Werkprobe</a> · <a href="'.e($privacy).'" target="_blank" rel="noopener">'.($de ? 'Datenschutz' : 'Privacy').'</a></div>';
+            .($de ? 'Erstellt mit' : 'Made with').' <a href="'.e(rtrim((string) config('services.frontend_url'), '/')).'" target="_blank" rel="noopener">Appmitki</a> · <a href="'.e($privacy).'" target="_blank" rel="noopener">'.($de ? 'Datenschutz' : 'Privacy').'</a></div>';
 
         $html = stripos($html, '</head>') !== false ? preg_replace('~</head>~i', $inject.'</head>', $html, 1) : $inject.$html;
 

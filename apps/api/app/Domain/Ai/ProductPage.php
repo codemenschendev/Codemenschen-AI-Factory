@@ -99,7 +99,7 @@ class ProductPage
                     return false;
                 }
                 $res = Http::withOptions(['allow_redirects' => false, 'stream' => false])
-                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; WerkprobeBot/1.0; +https://appwerk.codemenschen.at)', 'Accept-Language' => 'de,en;q=0.8'])
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; AppmitkiBot/1.0; +https://appmitki.com)', 'Accept-Language' => 'de,en;q=0.8'])
                     ->timeout(15)->connectTimeout(8)->get($url);
                 if ($res->redirect() && ($to = $res->header('Location')) !== '') {
                     $url = str_starts_with($to, 'http') ? $to : rtrim($url, '/').'/'.ltrim($to, '/');
@@ -146,7 +146,7 @@ class ProductPage
                     return null;
                 }
                 $res = Http::withOptions(['allow_redirects' => false])
-                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; WerkprobeBot/1.0; +https://appwerk.codemenschen.at)'])
+                    ->withHeaders(['User-Agent' => 'Mozilla/5.0 (compatible; AppmitkiBot/1.0; +https://appmitki.com)'])
                     ->timeout(15)->connectTimeout(8)->get($url);
                 if ($res->redirect() && ($to = $res->header('Location')) !== '') {
                     $url = self::absolute($to, $url) ?? '';
