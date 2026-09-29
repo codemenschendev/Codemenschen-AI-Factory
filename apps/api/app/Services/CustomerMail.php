@@ -45,8 +45,8 @@ class CustomerMail
         $today = $start === null || ! $start->isFuture();
 
         $subject = $de
-            ? "Deine Bestellung bei Appwerk: {$project->name}"
-            : "Your Appwerk order: {$project->name}";
+            ? "Deine Bestellung bei Werkprobe: {$project->name}"
+            : "Your Werkprobe order: {$project->name}";
 
         if ($project->kind === 'site') {
             $this->send($customer, $subject, $this->siteBody($order, $project, $customer, $de, $link));
@@ -263,7 +263,7 @@ class CustomerMail
         $name = $project->name;
         $quote = '> '.str_replace("\n", "\n> ", mb_strimwidth(trim($reply), 0, 600, ' ...'));
 
-        $subject = $de ? "Antwort vom Appwerk Team: {$name}" : "Reply from the Appwerk team: {$name}";
+        $subject = $de ? "Antwort vom Werkprobe Team: {$name}" : "Reply from the Werkprobe team: {$name}";
         $lines = $de
             ? ['unser Team hat dir im Projekt geantwortet:', '', $quote, '', 'Bitte antworte direkt im Projekt, dann bleibt alles an einem Ort.']
             : ['our team replied to you in the project:', '', $quote, '', 'Please answer in the project, so everything stays in one place.'];
@@ -306,8 +306,8 @@ class CustomerMail
     private function footer(bool $de): string
     {
         return $de
-            ? "Appwerk, ein Angebot der Codemenschen GmbH, Wien.\nDiese E-Mail geht an dich, weil du bei Appwerk bestellt hast."
-            : "Appwerk, a service of Codemenschen GmbH, Vienna.\nYou receive this e-mail because you ordered at Appwerk.";
+            ? "Werkprobe, ein Angebot der Codemenschen GmbH, Gössendorf.\nDiese E-Mail geht an dich, weil du bei Werkprobe bestellt hast."
+            : "Werkprobe, a service of Codemenschen GmbH, Gössendorf, Austria.\nYou receive this e-mail because you ordered at Werkprobe.";
     }
 
     private function send(Customer $customer, string $subject, string $body): void

@@ -199,9 +199,9 @@ class PrototypeController extends Controller
             return;
         }
         Mail::raw($locale === 'de'
-            ? "Hallo,\n\nein Klick auf diesen Link bestätigt deine E-Mail und startet deinen Prototyp:\n\n$url\n\nDu landest direkt auf der Seite, auf der er entsteht. Der Link gilt 24 Stunden.\n\nWenn du nichts angefragt hast, ignoriere diese E-Mail.\n\nAppwerk"
-            : "Hello,\n\none click on this link confirms your e-mail and starts your prototype:\n\n$url\n\nYou land right on the page where it is built. The link is valid for 24 hours.\n\nIf you did not ask for this, ignore this e-mail.\n\nAppwerk",
-            fn ($m) => $m->to($email)->subject($locale === 'de' ? 'Starte deinen Appwerk Prototyp' : 'Start your Appwerk prototype'));
+            ? "Hallo,\n\nein Klick auf diesen Link bestätigt deine E-Mail und startet deinen Prototyp:\n\n$url\n\nDu landest direkt auf der Seite, auf der er entsteht. Der Link gilt 24 Stunden.\n\nWenn du nichts angefragt hast, ignoriere diese E-Mail.\n\nWerkprobe"
+            : "Hello,\n\none click on this link confirms your e-mail and starts your prototype:\n\n$url\n\nYou land right on the page where it is built. The link is valid for 24 hours.\n\nIf you did not ask for this, ignore this e-mail.\n\nWerkprobe",
+            fn ($m) => $m->to($email)->subject($locale === 'de' ? 'Starte deinen Werkprobe Prototyp' : 'Start your Werkprobe prototype'));
     }
 
     /**
@@ -326,7 +326,7 @@ class PrototypeController extends Controller
             "base-uri 'none'",
             "form-action 'none'",
             // Only our own share page may frame it; nobody can embed it elsewhere.
-            "frame-ancestors 'self' https://appwerk.codemenschen.at",
+            "frame-ancestors 'self' https://appwerk.codemenschen.at https://werkprobe.at https://www.werkprobe.at",
         ]);
 
         return response((string) $prototype->html, 200, [

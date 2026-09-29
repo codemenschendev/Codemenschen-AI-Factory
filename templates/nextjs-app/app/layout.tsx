@@ -1,4 +1,4 @@
-export const metadata = { title: "Appwerk App" };
+export const metadata = { title: "Werkprobe App" };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

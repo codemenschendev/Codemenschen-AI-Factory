@@ -1,4 +1,4 @@
-/** The Appwerk mark: an open "A" in the blue to violet of the site, then the name. */
+/** The Werkprobe mark: an open "W" in the blue to violet of the site, then the name. */
 export function Logo({ by }: { by?: string }) {
   return (
     <>
@@ -9,11 +9,10 @@ export function Logo({ by }: { by?: string }) {
             <stop offset="1" stopColor="#7c3aed" />
           </linearGradient>
         </defs>
-        <path d="M2 24 13 3.5a2.3 2.3 0 0 1 4 0L28 24" fill="none" stroke="url(#logo-g)" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M9.5 24 15 13.5" fill="none" stroke="#1d4ed8" strokeWidth="4.2" strokeLinecap="round" />
+        <path d="M2.5 3.5 8.5 22.5 15 9.5 21.5 22.5 27.5 3.5" fill="none" stroke="url(#logo-g)" strokeWidth="4.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
       <span className="logo-text">
-        <span className="logo-name">Appwerk</span>
+        <span className="logo-name">Werkprobe</span>
         {by && <span className="logo-by">{by}</span>}
       </span>
     </>
