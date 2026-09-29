@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\Ai\PrototypePhoto;
 use App\Domain\Ai\PrototypeWriter;
 use App\Models\Customer;
 use App\Models\Setting;
@@ -92,6 +93,24 @@ class PrototypeWriterSwitchTest extends TestCase
 
         Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test/v1/images') && count($r['refs']) === 1
             && str_contains($r['prompt'], 'Brot aus Graz') && $r['mockup'] === 'site');
+    }
+
+    public function test_a_changed_picture_of_real_size_is_not_lost(): void
+    {
+        // A real mockup is a few MB of base64. The photo pass ran its slot patterns over it, PHP
+        // gave up backtracking and the revised page was saved empty: a blank frame (2026-09-29).
+        $big = base64_encode(random_bytes(1_000_000));
+        Http::fake([
+            'sidecar.test/v1/chat/completions' => Http::response(['choices' => [['message' => ['content' => self::BRIEF]]]]),
+            'imagegen.test/v1/images' => Http::response(['base64' => $big, 'mime' => 'image/png']),
+        ]);
+        Setting::write('prototype.writer', 'codex');
+        $first = app(PrototypeWriter::class)->build('Website für eine Bäckerei in Graz', 'site');
+
+        $out = app(PrototypeWriter::class)->revise($first['html'], 'site', $first['qa'], 'Bäckerei', 'Mehr Blau bitte', app(PrototypePhoto::class));
+
+        $this->assertStringContainsString('<img class="mockup" src="data:', $out['html']);
+        $this->assertStringContainsString($big, $out['html']);
     }
 
     public function test_unknown_writer_is_claude_and_only_an_admin_switches(): void

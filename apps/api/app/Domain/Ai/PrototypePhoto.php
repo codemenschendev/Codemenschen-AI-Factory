@@ -176,7 +176,7 @@ class PrototypePhoto
             $pattern = '~<(\w+)([^>]*\sclass="[^"]*\b'.preg_quote($class, '~').'\b[^"]*"[^>]*)>(.*?)</\1>~is';
             $html = preg_replace_callback($pattern, fn (array $m) => self::isBrief($m[3]) && trim(strip_tags($m[3])) !== ''
                 ? '<'.$m[1].$m[2].'></'.$m[1].'>'
-                : $m[0], $html);
+                : $m[0], $html) ?? $html;
         }
 
         // The business's own logo where the model marked the wordmark. The name inside stays as

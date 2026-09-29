@@ -8,6 +8,7 @@ use App\Models\Prototype;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Log;
+use RuntimeException;
 use Throwable;
 
 /**
@@ -32,6 +33,10 @@ class RevisePrototype implements ShouldQueue
         }
         try {
             $out = $writer->revise((string) $proto->html, (string) $proto->kind, $proto->qa ?? [], (string) $proto->prompt, $this->change, $photo);
+            // An empty page would replace the one the visitor saw with a blank frame.
+            if (trim((string) $out['html']) === '') {
+                throw new RuntimeException('The change came back as an empty page.');
+            }
             $proto->update(['status' => 'ready', 'stage' => null, 'html' => $out['html'], 'title' => $out['title'] ?: $proto->title,
                 'qa' => $out['qa'], 'error' => null]);
         } catch (Throwable $e) {
