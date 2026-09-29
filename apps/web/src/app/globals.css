@@ -71,7 +71,8 @@ section { padding: 72px 0; }
 .nav { position: sticky; top: 0; z-index: 50; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(8px); border-bottom: 1px solid var(--border); }
 .nav-inner { display: flex; align-items: center; height: 72px; gap: 16px; }
 .nav-logo { display: inline-flex; align-items: center; gap: 9px; font-family: var(--font-display); color: var(--ink); text-decoration: none; white-space: nowrap; line-height: 1; }
-.logo-mark { width: 30px; height: 26px; flex: none; }
+.logo-mark { width: 34px; height: 28px; flex: none; }
+.logo-grad { background: linear-gradient(90deg, #2563eb, #7c3aed 60%, #a855f7); -webkit-background-clip: text; background-clip: text; color: transparent; }
 .logo-text { display: grid; gap: 3px; }
 .logo-name { font-family: var(--font-body); font-size: 1.45rem; font-weight: 800; letter-spacing: -0.03em; }
 .logo-by { font-family: var(--font-body); font-size: 0.68rem; font-weight: 500; color: var(--ink-soft); letter-spacing: 0; }

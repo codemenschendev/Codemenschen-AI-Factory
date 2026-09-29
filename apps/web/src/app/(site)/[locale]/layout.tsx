@@ -13,8 +13,8 @@ import { appsOnly, offeredKinds } from "@/lib/offer";
 import "../../globals.css";
 
 export const metadata: Metadata = {
-  title: "Werkprobe · Website, app and ads from one hand",
-  description: "Describe your idea and get a free preview in minutes. Website, app, ads and e-mails at a fixed price.",
+  title: "Appmitki · Your app, built at a fixed price",
+  description: "Describe your app idea and get a free, clickable preview in minutes. Fixed price, checked by our team.",
 };
 
 // The offer switch decides the links; a page older than a minute is built again.
@@ -53,7 +53,7 @@ export default async function LocaleLayout({
         {/* Sticky header, ported from the appwerk prototype (site/index.html:14-30) */}
         <header className="nav" id="top">
           <div className="wrap nav-inner">
-            <Link href={`/${locale}`} className="nav-logo" aria-label="Werkprobe">
+            <Link href={`/${locale}`} className="nav-logo" aria-label="Appmitki">
               <Logo by={dict.nav.by} />
             </Link>
             <NavLinks links={navLinks} />

@@ -67,7 +67,7 @@ class SiteBrief
         }
 
         try {
-            $res = Http::withHeaders(['user-agent' => 'WerkprobeAdBot/1.0'])
+            $res = Http::withHeaders(['user-agent' => 'AppmitkiAdBot/1.0'])
                 ->timeout(8)->connectTimeout(4)->maxRedirects(1)->get($url);
         } catch (Throwable) {
             return null;

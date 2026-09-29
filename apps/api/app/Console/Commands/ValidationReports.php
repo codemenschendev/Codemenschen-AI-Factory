@@ -93,7 +93,7 @@ class ValidationReports extends Command
             $lines[] = ($de ? 'Kosten pro bestätigter Anmeldung: ' : 'Cost per confirmed sign-up: ').$eur($f['cost_per_signup_eur']).($de ? ', Ziel: ' : ', goal: ').$eur($report['goals']['cpl']);
         }
         $lines = [...$lines, '', ($de ? 'Den ganzen Bericht und deine Warteliste findest du hier:' : 'The full report and your waitlist are here:'), $url, '',
-            $de ? 'Antworte einfach auf diese E-Mail, wenn du den nächsten Schritt besprechen willst.' : 'Just reply to this e-mail to talk about the next step.', '', 'Werkprobe'];
+            $de ? 'Antworte einfach auf diese E-Mail, wenn du den nächsten Schritt besprechen willst.' : 'Just reply to this e-mail to talk about the next step.', '', 'Appmitki'];
 
         Mail::raw(implode("\n", $lines), fn ($m) => $m->to($owner->email)
             ->subject(($de ? 'Dein Kampagnen-Bericht: ' : 'Your campaign report: ').strtoupper(str_replace('_', '-', $report['verdict']))));

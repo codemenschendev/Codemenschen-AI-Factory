@@ -32,7 +32,7 @@ class Totp
     }
 
     /** The link an authenticator app reads from the QR code. */
-    public static function uri(string $secret, string $account, string $issuer = 'Werkprobe'): string
+    public static function uri(string $secret, string $account, string $issuer = 'Appmitki'): string
     {
         return 'otpauth://totp/'.rawurlencode($issuer.':'.$account).'?'.http_build_query([
             'secret' => $secret, 'issuer' => $issuer, 'algorithm' => 'SHA1', 'digits' => self::DIGITS, 'period' => self::STEP,

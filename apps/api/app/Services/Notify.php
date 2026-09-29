@@ -87,7 +87,7 @@ class Notify
     /** Money: the spend guard stopped an ad, or could not look. Mail and chat, always. */
     public function money(string $subject, string $line): void
     {
-        $this->mailAdmin('[Werkprobe ads] '.$subject, $line);
+        $this->mailAdmin('[Appmitki ads] '.$subject, $line);
         $this->send($line);
     }
 
@@ -120,7 +120,7 @@ class Notify
     /**
      * One line to the operators' chat: the gateway hook if one is configured, and the Buzz
      * channel #appwerk-alerts if its drop folder is mounted. Buzz speaks signed Nostr events,
-     * not webhooks, so the API only leaves a file; the Werkprobe bot on the Buzz side posts it
+     * not webhooks, so the API only leaves a file; the Appmitki bot on the Buzz side posts it
      * (buzz/appwerk-dev-kit/deploy/listener.mjs in the OpenClaw repo). Both fail soft: a
      * notification must never break the pipeline.
      */
@@ -139,7 +139,7 @@ class Notify
             }
         }
 
-        $this->buzz('Werkprobe: '.$message);
+        $this->buzz('Appmitki: '.$message);
     }
 
     /**

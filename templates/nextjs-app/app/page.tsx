@@ -2,7 +2,7 @@
 export default function Page() {
   return (
     <main style={{ padding: 24 }}>
-      <h1>Werkprobe App</h1>
+      <h1>Appmitki App</h1>
       <p>Replace me per SPEC.md</p>
     </main>
   );

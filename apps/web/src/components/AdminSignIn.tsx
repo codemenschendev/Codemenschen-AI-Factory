@@ -38,7 +38,7 @@ export function AdminSignIn({ locale, d, denied }: { locale: Locale; d: Dict; de
       <div className="ops-brand">
         <span className="ops-logo" aria-hidden="true">A</span>
         <span className="ops-brand-text">
-          <strong>Werkprobe</strong>
+          <strong>Appmitki</strong>
           <span>{a.consoleName}</span>
         </span>
       </div>

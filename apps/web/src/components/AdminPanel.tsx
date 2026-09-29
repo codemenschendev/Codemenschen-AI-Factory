@@ -536,7 +536,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
         <div className="ops-brand">
           <span className="ops-logo" aria-hidden="true">A</span>
           <span className="ops-brand-text">
-            <strong>Werkprobe</strong>
+            <strong>Appmitki</strong>
             <span>{a.consoleName}</span>
           </span>
         </div>

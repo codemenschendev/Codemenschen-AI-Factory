@@ -8,7 +8,7 @@ import { StyleSheet, Text, View } from "react-native";
 export default function App() {
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Werkprobe App</Text>
+      <Text style={styles.title}>Appmitki App</Text>
       <Text>Replace me per SPEC.md</Text>
       <StatusBar style="auto" />
     </View>

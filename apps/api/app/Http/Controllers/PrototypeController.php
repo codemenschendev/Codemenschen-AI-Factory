@@ -215,9 +215,9 @@ class PrototypeController extends Controller
             return;
         }
         Mail::raw($locale === 'de'
-            ? "Hallo,\n\nein Klick auf diesen Link bestätigt deine E-Mail und startet deinen Prototyp:\n\n$url\n\nDu landest direkt auf der Seite, auf der er entsteht. Der Link gilt 24 Stunden.\n\nWenn du nichts angefragt hast, ignoriere diese E-Mail.\n\nWerkprobe"
-            : "Hello,\n\none click on this link confirms your e-mail and starts your prototype:\n\n$url\n\nYou land right on the page where it is built. The link is valid for 24 hours.\n\nIf you did not ask for this, ignore this e-mail.\n\nWerkprobe",
-            fn ($m) => $m->to($email)->subject($locale === 'de' ? 'Starte deinen Werkprobe Prototyp' : 'Start your Werkprobe prototype'));
+            ? "Hallo,\n\nein Klick auf diesen Link bestätigt deine E-Mail und startet deinen Prototyp:\n\n$url\n\nDu landest direkt auf der Seite, auf der er entsteht. Der Link gilt 24 Stunden.\n\nWenn du nichts angefragt hast, ignoriere diese E-Mail.\n\nAppmitki"
+            : "Hello,\n\none click on this link confirms your e-mail and starts your prototype:\n\n$url\n\nYou land right on the page where it is built. The link is valid for 24 hours.\n\nIf you did not ask for this, ignore this e-mail.\n\nAppmitki",
+            fn ($m) => $m->to($email)->subject($locale === 'de' ? 'Starte deinen Appmitki Prototyp' : 'Start your Appmitki prototype'));
     }
 
     /**
