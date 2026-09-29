@@ -21,6 +21,7 @@ class PrototypeQuestionsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->offerEveryKind();
         Queue::fake();
         $this->dir = sys_get_temp_dir().'/proto-uploads-'.bin2hex(random_bytes(4));
         config(['services.media.uploads_path' => $this->dir,

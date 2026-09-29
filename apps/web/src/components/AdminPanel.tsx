@@ -42,6 +42,8 @@ interface Overview {
   ads_mode: "hybrid" | "claude" | "codex";
   /** Who writes the site, app and e-mail prototypes. */
   prototype_writer: "claude" | "codex";
+  /** What the storefront offers (owner's switch, 2026-09-29: apps only for now). */
+  offer_kinds: string[];
   /** The spend guard: the kill switch, its two limits, and what runs now. */
   ads_guard: { killed: boolean; max_campaign_eur: number; max_daily_total_eur: number; running_daily_eur: number; running: number };
   /** Layout packs for the free prototypes: on or off, per kind, with a control group. */
@@ -342,6 +344,12 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   async function saveWriter(writer: Overview["prototype_writer"]) {
     const r = await call<{ prototype_writer: Overview["prototype_writer"] }>("/admin/prototype-writer", { method: "POST", body: JSON.stringify({ writer }) });
     if (r) setOverview((o) => (o ? { ...o, prototype_writer: r.prototype_writer } : o));
+  }
+
+  async function saveOffer(kinds: string[]) {
+    if (!kinds.length) return;
+    const r = await call<{ offer_kinds: string[] }>("/admin/offer-kinds", { method: "POST", body: JSON.stringify({ kinds }) });
+    if (r) setOverview((o) => (o ? { ...o, offer_kinds: r.offer_kinds } : o));
   }
 
   async function setKill(on: boolean) {
@@ -872,6 +880,27 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   {a.adsModes[m]}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26 }}>
+            <span className="cat">{a.offerTile}</span>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.offerHint}</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
+              {(["app", "site", "ads", "email", "campaign"] as const).map((k) => {
+                const on = (overview.offer_kinds ?? ["app"]).includes(k);
+                return (
+                  <label key={k} className="small" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    <input
+                      type="checkbox"
+                      checked={on}
+                      disabled={busy || (on && (overview.offer_kinds ?? []).length === 1)}
+                      onChange={() => void saveOffer(on ? overview.offer_kinds.filter((x) => x !== k) : [...(overview.offer_kinds ?? []), k])}
+                    />
+                    {d.proto.kinds[k]}
+                  </label>
+                );
+              })}
             </div>
           </div>
 

@@ -25,6 +25,7 @@ class PrototypeCapTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->offerEveryKind();
         Queue::fake();
     }
 

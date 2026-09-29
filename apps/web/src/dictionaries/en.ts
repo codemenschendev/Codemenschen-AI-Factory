@@ -1078,6 +1078,8 @@ export const en = {
       claude: "Claude writes the ads. Pictures come from the business's website, uploads, the library and Pexels. No render.",
       codex: "Codex gets the customer's words, the website summary and the uploaded pictures and designs the whole banner, text included.",
     },
+    offerTile: "Offer in the shop",
+    offerHint: "What customers can pick and have built. Switched-off kinds stay built and are only hidden. Apps only: the home page is the app page. Admins can still test everything.",
     writerTile: "Website, app and e-mail prototypes",
     writers: { claude: "Claude writes", codex: "Codex draws" },
     writerHints: {
@@ -1289,6 +1291,7 @@ export const en = {
     lead: "Describe your idea in one sentence. We build you a clickable preview right away.",
     label: "What do you want to build?",
     hint: "For example: a landing page for a hair salon with online booking and a price list.",
+    kindOff: "We do not offer this right now. We are happy to build you an app.",
     kindLabel: "What should we show you?",
     kinds: { site: "Website", app: "App", ads: "Ads", email: "E-mails", campaign: "Campaign" },
     kindHints: {

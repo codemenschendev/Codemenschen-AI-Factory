@@ -74,6 +74,8 @@ class AdminController extends Controller
             // Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone.
             'ads_mode' => PrototypeWriter::adsMode(),
             'prototype_writer' => PrototypeWriter::writer(),
+            // What the storefront offers; the rest stays built but hidden.
+            'offer_kinds' => PrototypeWriter::offered(),
             // The spend guard: kill switch, limits, and what runs now.
             'ads_guard' => app(SpendGuard::class)->limits() + ['running' => MarketingCampaign::where('platform_status', 'active')->count()],
             'revenue' => [
@@ -282,6 +284,21 @@ class AdminController extends Controller
         $notify->system("prototype writer set to {$writer} by {$by}");
 
         return response()->json(['prototype_writer' => $writer]);
+    }
+
+    /** Which kinds of prototype the storefront offers (owner's switch, 2026-09-29). */
+    public function offerKinds(Request $request, Notify $notify): JsonResponse
+    {
+        $kinds = $request->validate([
+            'kinds' => 'required|array|min:1',
+            'kinds.*' => 'string|in:'.implode(',', PrototypeWriter::KINDS),
+        ])['kinds'];
+        $kinds = array_values(array_intersect(PrototypeWriter::KINDS, $kinds));
+        $by = (string) $request->user()->email;
+        Setting::write('offer.kinds', $kinds, $by);
+        $notify->system('storefront offers '.implode(', ', $kinds)." (set by {$by})");
+
+        return response()->json(['offer_kinds' => PrototypeWriter::offered()]);
     }
 
     public function layoutsSettings(Request $request, Layouts $layouts, Notify $notify): JsonResponse

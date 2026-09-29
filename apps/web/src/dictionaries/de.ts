@@ -1078,6 +1078,8 @@ export const de = {
       claude: "Claude schreibt die Anzeigen. Bilder kommen von der Website, aus Uploads, der Bibliothek und Pexels. Kein Rendering.",
       codex: "Codex bekommt den Text des Kunden, die Zusammenfassung der Website und die hochgeladenen Bilder und gestaltet das ganze Banner samt Text.",
     },
+    offerTile: "Angebot im Shop",
+    offerHint: "Was Kunden auswählen und bauen lassen können. Ausgeschaltetes bleibt fertig gebaut und ist nur versteckt. Nur App: die Startseite ist die App-Seite. Admins können weiter alles testen.",
     writerTile: "Website-, App- und E-Mail-Prototypen",
     writers: { claude: "Claude schreibt", codex: "Codex zeichnet" },
     writerHints: {
@@ -1291,6 +1293,7 @@ export const de = {
     lead: "Beschreib deine Idee in einem Satz. Wir bauen dir sofort eine klickbare Vorschau.",
     label: "Was möchtest du bauen?",
     hint: "Zum Beispiel: eine Landingpage für ein Friseurstudio mit Online-Terminbuchung und Preisliste.",
+    kindOff: "Das bieten wir gerade nicht an. Eine App bauen wir dir gern.",
     kindLabel: "Was sollen wir dir zeigen?",
     kinds: { site: "Website", app: "App", ads: "Werbung", email: "E-Mails", campaign: "Kampagne" },
     kindHints: {

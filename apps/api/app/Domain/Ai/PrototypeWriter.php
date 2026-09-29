@@ -985,6 +985,26 @@ class PrototypeWriter
         return in_array($writer, self::WRITERS, true) ? $writer : 'claude';
     }
 
+    /**
+     * What the storefront offers (owner's switch, 2026-09-29: apps only for now). The other kinds
+     * stay built and working; they are only not offered to customers, and an admin can still
+     * build any of them to test.
+     */
+    public const OFFER_DEFAULT = ['app'];
+
+    /** @return list<string> */
+    public static function offered(): array
+    {
+        try {
+            $kinds = Setting::read('offer.kinds', self::OFFER_DEFAULT);
+        } catch (\Illuminate\Database\QueryException) {
+            return self::OFFER_DEFAULT;
+        }
+        $kinds = array_values(array_intersect(self::KINDS, is_array($kinds) ? $kinds : []));
+
+        return $kinds === [] ? self::OFFER_DEFAULT : $kinds;
+    }
+
     public const ADS_MODES = ['hybrid', 'claude', 'codex'];
 
     public static function adsMode(): string

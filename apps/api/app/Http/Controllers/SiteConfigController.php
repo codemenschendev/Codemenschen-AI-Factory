@@ -3,11 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Ads\AdSettings;
+use App\Domain\Ai\PrototypeWriter;
 use Illuminate\Http\JsonResponse;
 
 /**
- * What the storefront needs to know at run time and may show anybody: today only the Tag Manager
- * container, which the consent banner loads after a yes. Set in the console, so changing it needs
+ * What the storefront needs to know at run time and may show anybody: the Tag Manager container,
+ * which the consent banner loads after a yes, and which kinds of prototype are offered. Set in the console, so changing it needs
  * no rebuild.
  */
 class SiteConfigController extends Controller
@@ -16,7 +17,10 @@ class SiteConfigController extends Controller
     {
         $gtm = AdSettings::get('gtm_id');
 
-        return response()->json(['gtm_id' => preg_match('~^GTM-[A-Z0-9]{4,12}$~', $gtm) === 1 ? $gtm : null])
+        return response()->json([
+            'gtm_id' => preg_match('~^GTM-[A-Z0-9]{4,12}$~', $gtm) === 1 ? $gtm : null,
+            'kinds' => PrototypeWriter::offered(),
+        ])
             ->header('Cache-Control', 'public, max-age=60');
     }
 }
