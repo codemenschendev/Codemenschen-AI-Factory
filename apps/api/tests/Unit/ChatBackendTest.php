@@ -23,9 +23,9 @@ class ChatBackendTest extends TestCase
 
     public function test_a_claude_backend_passes_through(): void
     {
-        config(['services.ai_image.chat_backend_model' => 'claude-cli-chat/claude-sonnet-5']);
+        config(['services.ai_image.chat_backend_model' => 'claude-cli-chat/claude-sonnet-5-5']);
 
-        $this->assertSame('claude-cli-chat/claude-sonnet-5', ChatBackend::pin());
+        $this->assertSame('claude-cli-chat/claude-sonnet-5-5', ChatBackend::pin());
     }
 
     public function test_an_openai_backend_is_refused_before_a_token_is_spent(): void
