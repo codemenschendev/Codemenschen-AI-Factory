@@ -85,12 +85,15 @@ const creative = (prompt, size, refCount) => [
 
 // A whole prototype as one picture. The customer's sentence goes as it is; the only words added
 // say what to draw. With a reference attached, it is the current design and only the change is drawn.
-const mockup = (prompt, size, refCount, kind) => [
+const mockup = (prompt, size, refCount, kind, flat) => [
     'Generate exactly ONE image with your image generation tool, then reply "done".',
     'Do not run commands and do not write files: the image tool output is all that is needed.',
     '',
     `Format: ${shape(size)}.`,
-    kind === 'app'
+    kind === 'app' && flat
+        // The page puts each screen into its own phone frame, so the picture holds the screens alone.
+        ? 'Design a prototype of this app: its main screens as flat screen images side by side on a plain flat mid grey background (#8e939b), with wide empty gaps. Draw no phone, bezel, hand or shadow around them.'
+        : kind === 'app'
         ? 'Design a prototype of this app: its main screens, side by side, as a designer presents them.'
         : kind === 'email'
             ? 'Design a prototype of this e-mail, as a designer presents it.'
@@ -164,7 +167,7 @@ const render = async (body) => {
         const args = ['exec', '--skip-git-repo-check', '--sandbox', 'read-only', '-C', dir];
         if (refs.length) args.push('-i', refs.join(','));
         args.push('-');
-        const res = await run(args, (typeof body.mockup === 'string' ? mockup : body.creative === true ? creative : instruction)(String(body.prompt ?? ''), body.size, refs.length, body.mockup), TIMEOUT_MS, dir);
+        const res = await run(args, (typeof body.mockup === 'string' ? mockup : body.creative === true ? creative : instruction)(String(body.prompt ?? ''), body.size, refs.length, body.mockup, body.flat === true), TIMEOUT_MS, dir);
         // Two renders can finish while both run; each takes a picture no other job has claimed.
         // Codex files a run's pictures under generated_images/<session id>/, and prints that id.
         const session = /session id:\s*([0-9a-f-]{36})/i.exec(res.out + res.err)?.[1];

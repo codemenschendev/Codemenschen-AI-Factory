@@ -141,6 +141,23 @@ class PrototypeWriterSwitchTest extends TestCase
         // The picture itself stays where a change request and the site build look for it.
         $this->assertSame(1, preg_match('~<img class="mockup" src="data:image/png;base64,~', $out['html']));
         $this->assertStringContainsString('<div class="screens"></div>', $out['html']);
+        // Codex draws the screens alone and the page puts each into its own phone frame.
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test/v1/images') && ($r['flat'] ?? false) === true);
+        $this->assertStringContainsString(' data-flat="1"', $out['html']);
+        $this->assertStringContainsString('.phone{', $out['html']);
+    }
+
+    public function test_an_app_drawn_with_phones_keeps_them_when_changed_and_a_flat_one_stays_flat(): void
+    {
+        $this->fake();
+        Setting::write('prototype.writer', 'codex');
+        $old = '<img class="mockup" src="data:image/png;base64,'.base64_encode('old').'" data-screens="[]" alt="">';
+
+        app(\App\Domain\Ai\CodexPage::class)->revise($old, 'app', 'Mehr Grün');
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test/v1/images') && ! isset($r['flat']));
+
+        app(\App\Domain\Ai\CodexPage::class)->revise(str_replace(' alt=', ' data-flat="1" alt=', $old), 'app', 'Mehr Blau');
+        Http::assertSent(fn ($r) => str_contains($r->url(), 'imagegen.test/v1/images') && str_contains($r['prompt'], 'Mehr Blau') && ($r['flat'] ?? false) === true);
     }
 
     public function test_phones_close_together_are_cut_in_the_gap_even_when_claude_overlaps_them(): void

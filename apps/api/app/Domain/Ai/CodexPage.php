@@ -35,7 +35,7 @@ class CodexPage
     {
         $brief = $this->brief($prompt, $kind, $site, $product);
 
-        return ['html' => $this->render($brief, $kind, array_slice($refs, 0, 4)), 'brief' => $brief];
+        return ['html' => $this->render($brief, $kind, array_slice($refs, 0, 4), $kind === 'app'), 'brief' => $brief];
     }
 
     /** Claude's design brief for the drawing, from the sentence and what the website says. */
@@ -43,7 +43,9 @@ class CodexPage
     {
         [$what, $sections, $presentation] = match ($kind) {
             'app' => ['app design, its main screens', 'the three or four main screens of the app, each with its content',
-                'the screens side by side as phone screens on a plain light background. No annotations, no labels around them.'],
+                'the screens side by side as flat screen images, each shaped like a phone screen (tall, about 9 by 19, softly rounded corners), '
+                .'on a plain flat mid grey background (#8e939b) with wide empty gaps between them. Only what the screen shows: no phone body, no bezel, no notch, '
+                .'no hands, no shadows, no reflections, no annotations, no labels around them.'],
             'email' => ['e-mail design', 'the blocks of the e-mail body and its footer',
                 'the e-mail on a plain light background, no mail program around it. No annotations.'],
             default => ['website design, the homepage', 'three to five sections that suit this business, then the footer',
@@ -143,7 +145,8 @@ class CodexPage
             throw new RuntimeException('The prototype holds no picture to change.');
         }
 
-        return $this->render(trim($change), $kind, [(string) base64_decode($m[1])]);
+        // A picture drawn with phones around its screens (before 2026-09-30) keeps them when changed.
+        return $this->render(trim($change), $kind, [(string) base64_decode($m[1])], $kind === 'app' && self::flat($html));
     }
 
     /**
@@ -155,7 +158,7 @@ class CodexPage
      *
      * @return list<array{0:int,1:int,2:int,3:int}> x, y, width, height in pixels, left to right
      */
-    public function screens(string $bytes): array
+    public function screens(string $bytes, bool $flat = false): array
     {
         // Without GD the picture is shown whole, as before; a missing extension must not fail a build.
         $img = function_exists('imagecreatefromstring') ? @imagecreatefromstring($bytes) : false;
@@ -218,8 +221,9 @@ class CodexPage
             $box = self::tighten($img, $bg, $x0, $y0, $x1, $y1);
             if ($box !== null && $box[2] >= $w * 0.08 && $box[3] >= $h * 0.3) {
                 // A silver phone edge is as smooth as the background and gets trimmed with it:
-                // a few pixels back, never past the cut between two phones.
-                $m = 8;
+                // a few pixels back, never past the cut between two phones. A flat screen has no
+                // edge to lose, and a margin would show as a grey ring inside its frame.
+                $m = $flat ? 0 : 8;
                 $bx0 = max($x0, $box[0] - $m);
                 $by0 = max($y0, $box[1] - $m);
                 $out[] = [$bx0, $by0, min($x1, $box[0] + $box[2] + $m) - $bx0, min($y1, $box[1] + $box[3] + $m) - $by0];
@@ -356,22 +360,37 @@ class CodexPage
         return (string) $res->json('choices.0.message.content');
     }
 
-    /** The page around a drawn prototype; an app's screens are shown one by one when known. */
-    public function page(string $bytes, string $kind): string
+    /** Whether a drawn page holds flat app screens, which the page puts into its own phone frame. */
+    public static function flat(string $html): bool
+    {
+        return str_contains($html, ' data-flat="1"');
+    }
+
+    /**
+     * The page around a drawn prototype; an app's screens are shown one by one when known.
+     *
+     * `$flat`: the drawing has only the screens, no phones (2026-09-30). Every phone Codex drew
+     * looked different, with shadows and gradients the cut tripped over, so the page now puts each
+     * screen into one phone frame of its own, the same for every app.
+     */
+    public function page(string $bytes, string $kind, bool $flat = false): string
     {
         $size = self::SIZES[$kind] ?? self::SIZES['site'];
         $mime = (@getimagesizefromstring($bytes)['mime'] ?? null) ?: 'image/png';
-        $boxes = $kind === 'app' ? $this->screens($bytes) : [];
+        $boxes = $kind === 'app' ? $this->screens($bytes, $flat) : [];
         $split = $boxes === [] ? '' : ' data-screens="'.htmlspecialchars((string) json_encode($boxes), ENT_QUOTES).'"';
+        $framed = $flat && $boxes !== [];
         // The cut screens stand on the drawing's own background, so no lighter tile shows around them.
+        // Framed screens stand in their phones on the light page: their grey only told them apart.
         $page = '#eef0f4';
-        if ($boxes !== [] && ($img = @imagecreatefromstring($bytes)) !== false) {
+        if ($boxes !== [] && ! $framed && ($img = @imagecreatefromstring($bytes)) !== false) {
             $page = vsprintf('#%02x%02x%02x', self::background($img, imagesx($img), imagesy($img)));
         }
         // The screens are cut from the one picture in the browser, so its bytes are in the page once.
         $script = $boxes === [] ? '' : '<div class="screens"></div><script>(function(){var m=document.querySelector(".mockup"),b=JSON.parse(m.getAttribute("data-screens")||"[]");'
             .'function go(){var box=document.querySelector(".screens");b.forEach(function(r){var c=document.createElement("canvas");c.width=r[2];c.height=r[3];'
-            .'c.getContext("2d").drawImage(m,r[0],r[1],r[2],r[3],0,0,r[2],r[3]);var i=new Image();i.alt="";i.src=c.toDataURL("image/png");box.appendChild(i);});'
+            .'c.getContext("2d").drawImage(m,r[0],r[1],r[2],r[3],0,0,r[2],r[3]);var i=new Image();i.alt="";i.src=c.toDataURL("image/png");'
+            .'if(m.hasAttribute("data-flat")){var p=document.createElement("div");p.className="phone";p.appendChild(i);box.appendChild(p);}else box.appendChild(i);});'
             .'document.body.className="split";}if(m.complete&&m.naturalWidth)go();else m.addEventListener("load",go);})();</script>';
 
         return '<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">'
@@ -380,20 +399,24 @@ class CodexPage
             .'.mockup{display:block;width:100%;max-width:'.explode('x', $size)[0].'px;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.16)}'
             .'body.split .mockup{display:none}.screens{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:28px 16px}'
             .'.screens img{display:block;width:min(360px,86vw);height:auto}'
-            .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'"'.$split.' alt=""></main>'.$script.'</body></html>';
+            // The phone: a dark body with an even bezel and a pill at the top, over the screen's own corners.
+            .'.phone{position:relative;padding:12px;border-radius:52px;background:#111317;box-shadow:0 0 0 2px #2c2f36,0 24px 50px rgba(15,23,42,.22)}'
+            .'.phone:before{content:"";position:absolute;top:22px;left:50%;width:96px;height:26px;margin-left:-48px;border-radius:14px;background:#111317;z-index:1}'
+            .'.phone img{width:min(336px,78vw);border-radius:40px}'
+            .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'"'.$split.($framed ? ' data-flat="1"' : '').' alt=""></main>'.$script.'</body></html>';
     }
 
     /** @param  list<string>  $refs */
-    private function render(string $prompt, string $kind, array $refs): string
+    private function render(string $prompt, string $kind, array $refs, bool $flat = false): string
     {
         $size = self::SIZES[$kind] ?? self::SIZES['site'];
-        $job = ['prompt' => $prompt, 'size' => $size, 'refs' => $refs, 'mockup' => $kind];
+        $job = ['prompt' => $prompt, 'size' => $size, 'refs' => $refs, 'mockup' => $kind] + ($flat ? ['flat' => true] : []);
         $res = Http::pool(fn ($pool) => [$this->images->codexOn($pool, $job, 'mockup', self::TIMEOUT)]);
         $bytes = $this->images->codexBytes($res['mockup'] ?? null);
         if ($bytes === null) {
             throw new RuntimeException('The image agent drew no prototype.');
         }
         // PNG as Codex drew it: the small words of a design stay sharp, and a few MB is fine here.
-        return $this->page($bytes, $kind);
+        return $this->page($bytes, $kind, $flat);
     }
 }
