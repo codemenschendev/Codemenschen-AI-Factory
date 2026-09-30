@@ -1554,7 +1554,7 @@ export const en = {
           h: "The right",
           p: [
             "As a consumer in the EU you may withdraw within 14 days without giving any reason. The period starts when the contract is concluded.",
-            "An unambiguous statement to office@codemenschen.at before the period ends is enough. We confirm receipt and refund payments received without undue delay.",
+            "An unambiguous statement to developerweb@codemenschen.at before the period ends is enough. We confirm receipt and refund payments received without undue delay.",
           ],
         },
         {
@@ -1581,7 +1581,7 @@ export const en = {
           h: "1. Controller",
           p: [
             "Codemenschen GmbH, Anton-Hubmann-Platz 1/6, 8077 Gössendorf, Austria. Company register number FN 543274 h.",
-            "Questions about privacy and requests about your rights: office@codemenschen.at.",
+            "Questions about privacy and requests about your rights: developerweb@codemenschen.at.",
           ],
         },
         {
@@ -1653,7 +1653,7 @@ export const en = {
         {
           h: "11. Your rights",
           p: [
-            "You have the right to access, rectification, erasure, restriction of processing, data portability, and to object to processing based on our legitimate interest. Write to office@codemenschen.at.",
+            "You have the right to access, rectification, erasure, restriction of processing, data portability, and to object to processing based on our legitimate interest. Write to developerweb@codemenschen.at.",
             "If you think we handle your data wrongly, you can complain to the Austrian Data Protection Authority (dsb.gv.at).",
           ],
         },
@@ -1672,7 +1672,7 @@ export const en = {
             "Managing director: Ing. Patrick Fuchshofer, MBA",
             "Company register number: FN 543274 h",
             "Phone: +43 650 4861845",
-            "E-mail: office@codemenschen.at",
+            "E-mail: developerweb@codemenschen.at",
           ],
         },
         {
@@ -1684,7 +1684,7 @@ export const en = {
         {
           h: "Dispute resolution",
           p: [
-            "We are not obliged and not willing to take part in dispute resolution before a consumer arbitration board. For questions or complaints, just write to office@codemenschen.at.",
+            "We are not obliged and not willing to take part in dispute resolution before a consumer arbitration board. For questions or complaints, just write to developerweb@codemenschen.at.",
           ],
         },
       ],
@@ -1749,7 +1749,7 @@ export const en = {
       {
         h: "Data processing agreement",
         p: [
-          "When we process data of your customers for you, for example sign-ups on your landing page, you are the controller and we are your processor. For this we sign a data processing agreement under Art. 28 GDPR with you. Write to office@codemenschen.at.",
+          "When we process data of your customers for you, for example sign-ups on your landing page, you are the controller and we are your processor. For this we sign a data processing agreement under Art. 28 GDPR with you. Write to developerweb@codemenschen.at.",
         ],
       },
     ],
@@ -1779,7 +1779,7 @@ export const en = {
       ["Orders and invoices", "7 years (§ 132 BAO)"],
     ],
     contactTitle: "Questions, or found a security issue?",
-    contact: "Write to office@codemenschen.at. A person answers. All details of the processing are in the privacy policy.",
+    contact: "Write to developerweb@codemenschen.at. A person answers. All details of the processing are in the privacy policy.",
     privacyLink: "Read the privacy policy",
   },
   adConsent: {

@@ -1,4 +1,4 @@
-Contact: mailto:office@codemenschen.at
+Contact: mailto:developerweb@codemenschen.at
 Expires: 2027-09-30T00:00:00.000Z
 Preferred-Languages: de, en
 Canonical: https://appmitki.com/.well-known/security.txt
