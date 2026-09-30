@@ -41,7 +41,7 @@ class DataRequest
         $out = [
             'requested_for' => $email,
             'created_at' => now()->toIso8601String(),
-            'controller' => 'Codemenschen GmbH, office@codemenschen.at',
+            'controller' => 'Codemenschen GmbH, developerweb@codemenschen.at',
             'waitlist_signups' => LandingSignup::where('email', $email)->get()
                 ->map(fn ($s) => $s->only(['prototype_id', 'status', 'consent', 'source', 'ip', 'user_agent', 'created_at', 'confirmed_at', 'confirm_ip']))->all(),
         ];

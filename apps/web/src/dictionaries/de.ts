@@ -1556,7 +1556,7 @@ export const de = {
           h: "Das Recht",
           p: [
             "Als Verbraucherin oder Verbraucher in der EU kannst du binnen 14 Tagen ohne Angabe von Gründen widerrufen. Die Frist beginnt mit dem Vertragsabschluss.",
-            "Für den Widerruf genügt eine eindeutige Erklärung an office@codemenschen.at vor Ablauf der Frist. Wir bestätigen den Eingang und erstatten erhaltene Zahlungen unverzüglich zurück.",
+            "Für den Widerruf genügt eine eindeutige Erklärung an developerweb@codemenschen.at vor Ablauf der Frist. Wir bestätigen den Eingang und erstatten erhaltene Zahlungen unverzüglich zurück.",
           ],
         },
         {
@@ -1583,7 +1583,7 @@ export const de = {
           h: "1. Verantwortlich",
           p: [
             "Codemenschen GmbH, Anton-Hubmann-Platz 1/6, 8077 Gössendorf, Österreich. Firmenbuchnummer FN 543274 h.",
-            "Fragen zum Datenschutz und Anfragen zu deinen Rechten: office@codemenschen.at.",
+            "Fragen zum Datenschutz und Anfragen zu deinen Rechten: developerweb@codemenschen.at.",
           ],
         },
         {
@@ -1655,7 +1655,7 @@ export const de = {
         {
           h: "11. Deine Rechte",
           p: [
-            "Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch gegen Verarbeitungen, die auf unserem berechtigten Interesse beruhen. Schreib dazu an office@codemenschen.at.",
+            "Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung, Datenübertragbarkeit und Widerspruch gegen Verarbeitungen, die auf unserem berechtigten Interesse beruhen. Schreib dazu an developerweb@codemenschen.at.",
             "Wenn du meinst, dass wir mit deinen Daten nicht richtig umgehen, kannst du dich bei der Österreichischen Datenschutzbehörde beschweren (dsb.gv.at).",
           ],
         },
@@ -1674,7 +1674,7 @@ export const de = {
             "Geschäftsführer: Ing. Patrick Fuchshofer, MBA",
             "Firmenbuchnummer: FN 543274 h",
             "Telefon: +43 650 4861845",
-            "E-Mail: office@codemenschen.at",
+            "E-Mail: developerweb@codemenschen.at",
           ],
         },
         {
@@ -1686,7 +1686,7 @@ export const de = {
         {
           h: "Streitbeilegung",
           p: [
-            "Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen. Bei Fragen oder Beschwerden schreib uns einfach an office@codemenschen.at.",
+            "Wir sind nicht verpflichtet und nicht bereit, an Streitbeilegungsverfahren vor einer Verbraucherschlichtungsstelle teilzunehmen. Bei Fragen oder Beschwerden schreib uns einfach an developerweb@codemenschen.at.",
           ],
         },
       ],
@@ -1751,7 +1751,7 @@ export const de = {
       {
         h: "Auftragsverarbeitung",
         p: [
-          "Wenn wir für dich Daten deiner Kunden verarbeiten, zum Beispiel Anmeldungen auf deiner Landingpage, bist du der Verantwortliche und wir sind dein Auftragsverarbeiter. Dafür schließen wir mit dir einen Vertrag nach Art. 28 DSGVO (AVV). Schreib uns an office@codemenschen.at.",
+          "Wenn wir für dich Daten deiner Kunden verarbeiten, zum Beispiel Anmeldungen auf deiner Landingpage, bist du der Verantwortliche und wir sind dein Auftragsverarbeiter. Dafür schließen wir mit dir einen Vertrag nach Art. 28 DSGVO (AVV). Schreib uns an developerweb@codemenschen.at.",
         ],
       },
     ],
@@ -1781,7 +1781,7 @@ export const de = {
       ["Bestellungen und Rechnungen", "7 Jahre (§ 132 BAO)"],
     ],
     contactTitle: "Fragen oder eine Sicherheitslücke gefunden?",
-    contact: "Schreib an office@codemenschen.at. Wir antworten persönlich. Alle Details zur Verarbeitung stehen in der Datenschutzerklärung.",
+    contact: "Schreib an developerweb@codemenschen.at. Wir antworten persönlich. Alle Details zur Verarbeitung stehen in der Datenschutzerklärung.",
     privacyLink: "Zur Datenschutzerklärung",
   },
   adConsent: {
