@@ -3,6 +3,9 @@
 namespace App\Support;
 
 use DateTimeInterface;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
 
 /**
@@ -10,12 +13,18 @@ use Illuminate\Support\Facades\URL;
  * the storefront's own domain (appmitki.com, which passes /api/ on to the API) instead of the
  * API's technical host. Without MAIL_LINK_URL the link is built on the host of the request, as
  * before: a local setup has no proxy in front of its API.
+ *
+ * When the storefront serves the API too, the link opens a page of the storefront
+ * (/{locale}/signin/...) and nothing happens until the visitor presses its button, which posts
+ * the same signed address. A link that signs in on a plain GET and bounces on with a token is
+ * what phishing filters look for (Google flagged appmitki.com, 2026-09-30), and a mail scanner
+ * that opens every link would spend it before the customer does.
  */
 class MailLink
 {
     public static function signed(string $route, DateTimeInterface $expires, array $params): string
     {
-        $root = rtrim((string) config('services.mail_link_url'), '/');
+        $root = self::root();
         if ($root === '') {
             return URL::temporarySignedRoute($route, $expires, $params);
         }
@@ -24,10 +33,56 @@ class MailLink
         URL::forceRootUrl($root);
         URL::forceScheme((string) parse_url($root, PHP_URL_SCHEME) ?: 'https');
         try {
-            return URL::temporarySignedRoute($route, $expires, $params);
+            $url = URL::temporarySignedRoute($route, $expires, $params);
         } finally {
             URL::forceRootUrl(null);
             URL::forceScheme(null);
         }
+
+        return self::paged() ? self::page($url, (string) ($params['locale'] ?? 'de')) : $url;
+    }
+
+    /**
+     * A signed GET the API still receives (a link mailed before the page existed, or typed in):
+     * the storefront's page for it, or null when there is none and the GET goes on as before.
+     */
+    public static function pageFor(Request $request): ?string
+    {
+        if (! $request->isMethod('get') || ! self::paged()) {
+            return null;
+        }
+
+        return self::page(self::root().'/'.ltrim($request->getRequestUri(), '/'), (string) $request->query('locale', 'de'));
+    }
+
+    /** Hands the new token to the page: JSON for the page's POST, a redirect for a plain GET. */
+    public static function handOff(Request $request, string $path, string $token): JsonResponse|RedirectResponse
+    {
+        if ($request->isMethod('post')) {
+            return response()->json(['to' => $path, 'token' => $token]);
+        }
+
+        return redirect()->away(rtrim((string) config('services.frontend_url'), '/').$path.'#token='.$token);
+    }
+
+    private static function root(): string
+    {
+        return rtrim((string) config('services.mail_link_url'), '/');
+    }
+
+    /** Only where the storefront and the mail link share a host: the page posts to its own origin. */
+    private static function paged(): bool
+    {
+        $root = self::root();
+        $front = rtrim((string) config('services.frontend_url'), '/');
+
+        return $root !== '' && parse_url($root, PHP_URL_HOST) === parse_url($front, PHP_URL_HOST);
+    }
+
+    private static function page(string $url, string $locale): string
+    {
+        $locale = in_array($locale, ['de', 'en'], true) ? $locale : 'de';
+
+        return self::root()."/$locale/signin/".ltrim(substr($url, strlen(self::root().'/api/')), '/');
     }
 }

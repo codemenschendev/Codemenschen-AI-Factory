@@ -1795,6 +1795,16 @@ export const en = {
     declineAll: "Decline all",
     link: "Cookies and measurement",
   },
+  signin: {
+    title: "Sign in to Appmitki",
+    lede: "We sent you this link by e-mail. Press the button to sign in on appmitki.com.",
+    button: "Sign in now",
+    busy: "One moment...",
+    note: "We never ask for a password or card details. If you did not ask for a link, just close this page.",
+    expired: "This link has expired or was already used.",
+    again: "Ask for a new link",
+    failed: "That did not work. Please try again in a moment.",
+  },
   footer: {
     legal: "Terms, withdrawal information and privacy are online as a plain-language draft, with counsel review under way.",
     by: "Operated by Codemenschen GmbH, Gössendorf, Austria.",
