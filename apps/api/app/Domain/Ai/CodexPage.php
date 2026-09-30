@@ -399,10 +399,11 @@ class CodexPage
             .'.mockup{display:block;width:100%;max-width:'.explode('x', $size)[0].'px;height:auto;border-radius:12px;box-shadow:0 18px 40px rgba(0,0,0,.16)}'
             .'body.split .mockup{display:none}.screens{display:flex;flex-wrap:wrap;gap:28px;justify-content:center;padding:28px 16px}'
             .'.screens img{display:block;width:min(360px,86vw);height:auto}'
-            // The phone: a dark body with an even bezel and a pill at the top, over the screen's own corners.
-            .'.phone{position:relative;padding:12px;border-radius:52px;background:#111317;box-shadow:0 0 0 2px #2c2f36,0 24px 50px rgba(15,23,42,.22)}'
-            .'.phone:before{content:"";position:absolute;top:22px;left:50%;width:96px;height:26px;margin-left:-48px;border-radius:14px;background:#111317;z-index:1}'
-            .'.phone img{width:min(336px,78vw);border-radius:40px}'
+            // The phone: a dark body with a bezel, the screen inside with its own rounded corners.
+            .'.phone{position:relative;padding:44px 12px 16px;border-radius:48px;background:#111317;box-shadow:0 0 0 2px #2c2f36,0 24px 50px rgba(15,23,42,.22)}'
+            // The pill sits in the top bezel: a drawn screen has no status bar for it to cover.
+            .'.phone:before{content:"";position:absolute;top:13px;left:50%;width:84px;height:20px;margin-left:-42px;border-radius:11px;background:#000;box-shadow:inset 0 0 0 1px #24272e}'
+            .'.phone img{width:min(336px,78vw);border-radius:22px}'
             .'</style></head><body><main><img class="mockup" src="data:'.$mime.';base64,'.base64_encode($bytes).'"'.$split.($framed ? ' data-flat="1"' : '').' alt=""></main>'.$script.'</body></html>';
     }
 
