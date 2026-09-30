@@ -81,16 +81,18 @@ class AuthController extends Controller
     }
 
     /** A signed join link: the account is created only now, when the address has proven itself. */
-    public function join(Request $request): RedirectResponse
+    public function join(Request $request): RedirectResponse|JsonResponse
     {
         abort_unless($request->hasValidSignature(), 403, 'Link expired or invalid');
+        if ($page = MailLink::pageFor($request)) {
+            return redirect()->away($page);
+        }
         $locale = in_array($request->query('locale'), ['de', 'en'], true) ? $request->query('locale') : 'de';
         $customer = Customer::firstOrCreate(['email' => strtolower((string) $request->query('email'))], ['locale' => $locale]);
         $token = $customer->createToken('portal', ['portal'])->plainTextToken;
         app(Analytics::class)->record('signin_completed', $request, ['customer_id' => $customer->id], ['joined' => $customer->wasRecentlyCreated]);
-        $front = rtrim(config('services.frontend_url'), '/');
 
-        return redirect()->away("$front/$locale/account#token=$token");
+        return MailLink::handOff($request, "/$locale/account", $token);
     }
 
     /**
@@ -100,9 +102,12 @@ class AuthController extends Controller
      * again here: whoever stops being an admin between the mail and the click lands on their
      * account page, not in the console. The target is one of two fixed paths, never a URL.
      */
-    public function verify(Request $request, Customer $customer): RedirectResponse
+    public function verify(Request $request, Customer $customer): RedirectResponse|JsonResponse
     {
         abort_unless($request->hasValidSignature(), 403, 'Link expired or invalid');
+        if ($page = MailLink::pageFor($request)) {
+            return redirect()->away($page);
+        }
         $console = $request->query('to') === 'admin' && $customer->is_admin;
         // Named apart so a console session can be told from a customer's in the token table.
         $token = $customer->createToken($console ? 'ops' : 'portal', ['portal'])->plainTextToken;
@@ -110,9 +115,8 @@ class AuthController extends Controller
         if ($customer->is_admin) {
             Audit::record('signin', $customer, null, ['console' => $console], $request);
         }
-        $front = rtrim(config('services.frontend_url'), '/');
         $locale = in_array($request->query('locale'), ['de', 'en'], true) ? $request->query('locale') : ($customer->locale ?: 'de');
 
-        return redirect()->away("$front/$locale/".($console ? 'admin' : 'account')."#token=$token");
+        return MailLink::handOff($request, "/$locale/".($console ? 'admin' : 'account'), $token);
     }
 }

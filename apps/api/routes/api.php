@@ -35,7 +35,8 @@ Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:1
 Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60,prototypes');
 // The link in the e-mail a visitor gets when they build without being signed in: it signs them
 // in and starts the build (owner's decision 2026-09-19).
-Route::get('/prototypes/{prototype}/confirm', [PrototypeController::class, 'confirm'])->name('prototypes.confirm')->middleware('throttle:20,1,proto-confirm');
+// GET is what the e-mail opened before the confirm page existed; the page posts (MailLink).
+Route::match(['get', 'post'], '/prototypes/{prototype}/confirm', [PrototypeController::class, 'confirm'])->name('prototypes.confirm')->middleware('throttle:20,1,proto-confirm');
 Route::post('/prototypes/questions', [PrototypeController::class, 'questions'])->middleware('throttle:12,60,proto-questions');
 Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
 Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);
@@ -57,10 +58,11 @@ Route::post('/webhooks/stripe', StripeWebhookController::class);
 // and a visitor was locked out of signing in for the rest of the prototypes' hour.
 Route::post('/auth/magic-link', [AuthController::class, 'magicLink'])
     ->middleware('throttle:5,1,signin');
-Route::get('/auth/verify/{customer}', [AuthController::class, 'verify'])
-    ->name('auth.verify');
-Route::get('/auth/join', [AuthController::class, 'join'])
-    ->name('auth.join');
+// The e-mail opens a page of the storefront, whose button posts here (App\Support\MailLink).
+Route::match(['get', 'post'], '/auth/verify/{customer}', [AuthController::class, 'verify'])
+    ->name('auth.verify')->middleware('throttle:20,1,signin-link');
+Route::match(['get', 'post'], '/auth/join', [AuthController::class, 'join'])
+    ->name('auth.join')->middleware('throttle:20,1,signin-link');
 
 Route::middleware('auth:sanctum')->group(function () {
     // The one free change to a prototype, for a visitor who signed in.

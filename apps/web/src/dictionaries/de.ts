@@ -1797,6 +1797,16 @@ export const de = {
     declineAll: "Alle ablehnen",
     link: "Cookies und Messung",
   },
+  signin: {
+    title: "Bei Appmitki anmelden",
+    lede: "Du hast diesen Link per E-Mail von uns bekommen. Mit dem Knopf meldest du dich auf appmitki.com an.",
+    button: "Jetzt anmelden",
+    busy: "Einen Moment...",
+    note: "Wir fragen nie nach einem Passwort oder nach Kartendaten. Hast du keinen Link angefordert, schließ diese Seite einfach.",
+    expired: "Dieser Link ist abgelaufen oder wurde schon benutzt.",
+    again: "Neuen Link anfordern",
+    failed: "Das hat nicht geklappt. Versuch es gleich nochmal.",
+  },
   footer: {
     legal: "Bedingungen, Widerrufsbelehrung und Datenschutz stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft.",
     by: "Betrieben von der Codemenschen GmbH, Gössendorf, Österreich.",

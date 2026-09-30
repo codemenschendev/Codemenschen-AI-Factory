@@ -224,9 +224,12 @@ class PrototypeController extends Controller
      * The link from that e-mail: the address is confirmed, the customer exists from now on and is
      * signed in, and the build starts. Opened twice, it only signs in and shows the prototype.
      */
-    public function confirm(Request $request, Prototype $prototype): RedirectResponse
+    public function confirm(Request $request, Prototype $prototype): RedirectResponse|JsonResponse
     {
         abort_unless($request->hasValidSignature(), 403, 'Link expired or invalid');
+        if ($page = MailLink::pageFor($request)) {
+            return redirect()->away($page);
+        }
         $locale = in_array($request->query('locale'), ['de', 'en'], true) ? $request->query('locale') : 'de';
         $email = $prototype->qa['pending_email'] ?? null;
         $customer = $prototype->customer_id !== null ? Customer::find($prototype->customer_id)
@@ -244,9 +247,8 @@ class PrototypeController extends Controller
             app(Analytics::class)->record('prototype_confirmed', $request, ['customer_id' => $customer->id], ['kind' => $prototype->kind, 'prototype' => $prototype->id]);
         }
         $token = $customer->createToken('portal', ['portal'])->plainTextToken;
-        $front = rtrim((string) config('services.frontend_url'), '/');
 
-        return redirect()->away("$front/$locale/p/{$prototype->id}#token=$token");
+        return MailLink::handOff($request, "/$locale/p/{$prototype->id}", $token);
     }
 
     /** How many changes a signed-in visitor may ask for on one free prototype. */
