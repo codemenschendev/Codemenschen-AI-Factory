@@ -1314,6 +1314,7 @@ export const en = {
     siteUnreadable: "We could not open {domain} and would rather not guess what it sells. Describe it in one sentence and who it is for, and we will build it.",
     expired: "This prototype has expired.",
     shareTitle: "Your prototype",
+    draftNote: "Non-binding design draft by Appmitki, not an official page of the business shown. Names, logos and pictures belong to their owners.",
     shareHint: "This preview is live for a few days. Share the link, or let us turn it into a real project.",
     buySite: "Get this website live: {price}",
     buySiteHint: "The page as it is, live at its own address and on your domain. One price, hosting for the first year included.",
@@ -1797,6 +1798,7 @@ export const en = {
   footer: {
     legal: "Terms, withdrawal information and privacy are online as a plain-language draft, with counsel review under way.",
     by: "Operated by Codemenschen GmbH, Gössendorf, Austria.",
+    copyright: "© {year} Codemenschen GmbH. All rights reserved.",
     imprint: "Imprint (Impressum)",
   },
 };
