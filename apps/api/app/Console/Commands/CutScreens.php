@@ -29,7 +29,7 @@ class CutScreens extends Command
             if (preg_match('~<img class="mockup" src="data:[^;]+;base64,([^"]+)"~', (string) $proto->html, $m) !== 1) {
                 continue;
             }
-            $html = $pages->page((string) base64_decode($m[1]), 'app');
+            $html = $pages->page((string) base64_decode($m[1]), 'app', CodexPage::flat((string) $proto->html));
             $cut = str_contains($html, 'data-screens=');
             if ($cut) {
                 $proto->update(['html' => $html]);

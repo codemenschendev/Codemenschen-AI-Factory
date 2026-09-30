@@ -99,7 +99,8 @@ class ImageService
             ->timeout($timeout ?? (int) config('services.ai_image.codex_timeout', 420))->connectTimeout(10)
             ->post('/v1/images', $this->payload($job['prompt'], $job['size'], $job['refs'])
                 + (($job['creative'] ?? false) ? ['creative' => true] : [])
-                + (isset($job['mockup']) ? ['mockup' => $job['mockup']] : []));
+                + (isset($job['mockup']) ? ['mockup' => $job['mockup']] : [])
+                + (($job['flat'] ?? false) ? ['flat' => true] : []));
     }
 
     /** The picture in a pooled answer, or null for anything that is not one. */
