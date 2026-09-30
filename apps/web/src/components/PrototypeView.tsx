@@ -291,6 +291,8 @@ export function PrototypeView({ id, locale, d, embedded = false }: { id: string;
           </Link>
         </div>
       </div>}
+      {/* Always on, embedded too: the picture may carry another business's name and logo. */}
+      <p className="sh-draft">{p.draftNote}</p>
       {/* An app is shown in a phone and a website in a window. Squeezing a 1120px landing page
           into 390px would be as wrong as hanging one app screen across a desktop. */}
       {meta.kind === "app" && meta.writer !== "codex" ? (

@@ -76,6 +76,7 @@ export default async function LocaleLayout({
                 <Logo />
               </p>
               <p className="footer-small">{dict.footer.by}</p>
+              <p className="footer-small">{dict.footer.copyright.replace("{year}", String(new Date().getFullYear()))}</p>
             </div>
             <div className="footer-links">
               <Link href={`/${locale}/imprint`}>{dict.footer.imprint}</Link>

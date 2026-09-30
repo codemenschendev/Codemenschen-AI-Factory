@@ -1316,6 +1316,7 @@ export const de = {
     siteUnreadable: "Wir konnten {domain} nicht öffnen und wollen nicht raten, was dort verkauft wird. Beschreib es in einem Satz und für wen, dann bauen wir es.",
     expired: "Dieser Prototyp ist abgelaufen.",
     shareTitle: "Dein Prototyp",
+    draftNote: "Unverbindlicher Designentwurf von Appmitki, keine offizielle Seite der gezeigten Firma. Namen, Logos und Bilder gehören ihren Inhabern.",
     shareHint: "Diese Vorschau ist ein paar Tage gültig. Teile den Link oder lass uns daraus ein echtes Projekt machen.",
     buySite: "Diese Website online stellen: {price}",
     buySiteHint: "Die Seite, wie sie ist, online unter eigener Adresse und auf deiner Domain. Ein Preis, Hosting im ersten Jahr inklusive.",
@@ -1799,6 +1800,7 @@ export const de = {
   footer: {
     legal: "Bedingungen, Widerrufsbelehrung und Datenschutz stehen als Klartext-Entwurf online, die anwaltliche Freigabe läuft.",
     by: "Betrieben von der Codemenschen GmbH, Gössendorf, Österreich.",
+    copyright: "© {year} Codemenschen GmbH. Alle Rechte vorbehalten.",
     imprint: "Impressum",
   },
 };
