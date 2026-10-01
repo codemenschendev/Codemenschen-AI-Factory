@@ -59,29 +59,32 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
 
   const option = (key: keyof Consent, title: string, text: string) => (
     <label className="consent-opt">
+      <input type="checkbox" role="switch" className="consent-switch" checked={pick[key]} onChange={(e) => setPick({ ...pick, [key]: e.target.checked })} />
       <span>
         <strong>{title}</strong>
         <span>{text}</span>
       </span>
-      <input type="checkbox" role="switch" className="consent-switch" checked={pick[key]} onChange={(e) => setPick({ ...pick, [key]: e.target.checked })} />
     </label>
   );
 
+  // A bar along the bottom, one row on a wide screen: the big card covered half the page (2026-10-01).
   return (
     <div role="dialog" aria-label={c.title} className="consent">
-      <strong className="consent-title">{c.title}</strong>
-      <p className="consent-text">
-        {c.text}{" "}
-        <Link href={`/${locale}/privacy`}>{c.more}</Link>
-      </p>
+      <div className="consent-copy">
+        <strong className="consent-title">{c.title}</strong>
+        <p className="consent-text">
+          {c.text}{" "}
+          <Link href={`/${locale}/privacy`}>{c.more}</Link>
+        </p>
+      </div>
       <div className="consent-opts">
         {gtmId && option("stats", c.statsTitle, c.statsText)}
         {option("ads", c.adsTitle, c.adsText)}
       </div>
       {/* Allow and decline look the same on purpose: consent may not be nudged (EDPB 03/2022). */}
       <div className="consent-actions">
-        <button className="consent-btn" onClick={() => save({ stats: Boolean(gtmId), ads: true })}>{c.allowAll}</button>
         <button className="consent-btn" onClick={() => save({ stats: false, ads: false })}>{c.declineAll}</button>
+        <button className="consent-btn" onClick={() => save({ stats: Boolean(gtmId), ads: true })}>{c.allowAll}</button>
         <button className="consent-save" onClick={() => save(pick)}>{c.saveChoice}</button>
       </div>
     </div>
