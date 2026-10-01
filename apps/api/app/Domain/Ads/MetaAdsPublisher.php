@@ -251,6 +251,12 @@ class MetaAdsPublisher implements Publisher
 
     private function name(MarketingCampaign $campaign): string
     {
+        // Codemenschen's own campaigns advertise more than Appmitki (plugins, the agency): they go
+        // by the name given in the admin, as on Google, so Ads Manager reads "Gift Cards WP #7".
+        if (($campaign->strategy['kind'] ?? null) === 'own' && $campaign->project_id === null) {
+            return trim(mb_substr((string) ($campaign->strategy['name'] ?? 'Codemenschen'), 0, 60)).' #'.$campaign->id;
+        }
+
         return 'Appmitki #'.$campaign->id.' '.mb_substr((string) ($campaign->project?->name ?? $campaign->prototype?->title ?? $campaign->strategy['name'] ?? ''), 0, 40);
     }
 
