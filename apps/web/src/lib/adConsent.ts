@@ -7,7 +7,9 @@
  *   or an order back to that platform (X-Ad-Click header).
  *
  * The choice is kept in this browser so the question is asked once. Every read and write is
- * guarded: private windows and blocked storage just mean nothing is measured.
+ * guarded: private windows and blocked storage just mean nothing is measured. It is kept twice:
+ * in localStorage, and in a first-party cookie for the whole domain, so www and the bare domain
+ * (or a cleared storage with the cookie left) do not ask a second time.
  */
 
 const CONSENT = "appwerk.consent";
@@ -56,14 +58,48 @@ export function arrivedClick(): Click | null {
   return arrived;
 }
 
+/** The cookie for the whole site: "appmitki.com" for www.appmitki.com too; a host-only one on localhost. */
+const COOKIE = "appwerk_consent";
+const YEAR_S = 365 * 24 * 60 * 60;
+
+function cookieDomain(): string {
+  const host = window.location.hostname.replace(/^www\./, "");
+  return host.includes(".") && !/^[\d.]+$/.test(host) ? `; domain=${host}` : "";
+}
+
+function readCookie(): string | null {
+  try {
+    const m = document.cookie.match(new RegExp(`(?:^|; )${COOKIE}=([^;]*)`));
+    return m ? decodeURIComponent(m[1]) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCookie(value: string): void {
+  try {
+    document.cookie = `${COOKIE}=${encodeURIComponent(value)}; max-age=${YEAR_S}; path=/${cookieDomain()}; samesite=lax; secure`;
+  } catch {
+    /* cookies blocked */
+  }
+}
+
 /** The visitor's choice, or null when they have not been asked yet. */
 export function consent(): Consent | null {
   if (typeof window === "undefined") return null;
-  try {
-    const v = JSON.parse(read(CONSENT) ?? "null") as Partial<Consent> | null;
-    if (v && typeof v.stats === "boolean" && typeof v.ads === "boolean") return { stats: v.stats, ads: v.ads };
-  } catch {
-    /* unreadable: ask again */
+  const stored = read(CONSENT);
+  const kept = readCookie();
+  for (const raw of [stored, kept]) {
+    try {
+      const v = JSON.parse(raw ?? "null") as Partial<Consent> | null;
+      if (v && typeof v.stats === "boolean" && typeof v.ads === "boolean") {
+        // A choice made before the cookie existed gets it now, so the other address knows it too.
+        if (stored !== null && raw === stored && kept === null) writeCookie(stored);
+        return { stats: v.stats, ads: v.ads };
+      }
+    } catch {
+      /* unreadable: try the next, then ask again */
+    }
   }
   const legacy = read(LEGACY);
   return legacy === "yes" || legacy === "no" ? { stats: false, ads: legacy === "yes" } : null;
@@ -71,6 +107,7 @@ export function consent(): Consent | null {
 
 export function decide(value: Consent): void {
   write(CONSENT, JSON.stringify(value));
+  writeCookie(JSON.stringify(value));
   write(LEGACY, null);
   const click = arrivedClick();
   if (value.ads && click) write(CLICK, JSON.stringify(click));
