@@ -27,4 +27,13 @@ class SiteConfigTest extends TestCase
 
         $this->getJson('/api/site-config')->assertOk()->assertJsonPath('gtm_id', null);
     }
+
+    public function test_the_meta_pixel_is_named_only_when_it_is_a_pixel_id(): void
+    {
+        config(['services.ads.meta.pixel_id' => '408896953700952']);
+        $this->getJson('/api/site-config')->assertOk()->assertJsonPath('meta_pixel_id', '408896953700952');
+
+        config(['services.ads.meta.pixel_id' => '<script>']);
+        $this->getJson('/api/site-config')->assertOk()->assertJsonPath('meta_pixel_id', null);
+    }
 }

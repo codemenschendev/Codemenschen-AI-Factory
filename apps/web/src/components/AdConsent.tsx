@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { API_BASE } from "@/lib/api";
 import { OPEN_EVENT, arrivedClick, consent, decide, keepArrivedClick, reopen, type Consent } from "@/lib/adConsent";
 import { applyConsent } from "@/lib/gtm";
+import { applyMetaPixel, metaPageView } from "@/lib/metaPixel";
 import type { Dict, Locale } from "@/lib/i18n";
 
 /**
@@ -17,21 +19,27 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
   const c = d.adConsent;
   const [open, setOpen] = useState(false);
   const [gtmId, setGtmId] = useState<string | null>(null);
+  const [pixelId, setPixelId] = useState<string | null>(null);
+  const pathname = usePathname();
+  const firstPath = useRef(true);
   const [pick, setPick] = useState<Consent>({ stats: false, ads: false });
 
   useEffect(() => {
     let alive = true;
     keepArrivedClick();
     void (async () => {
-      const id = await fetch(`${API_BASE}/api/site-config`)
+      const cfg = await fetch(`${API_BASE}/api/site-config`)
         .then((r) => (r.ok ? r.json() : null))
-        .then((j: { gtm_id?: string | null } | null) => j?.gtm_id ?? null)
-        .catch(() => null);
+        .catch(() => null) as { gtm_id?: string | null; meta_pixel_id?: string | null } | null;
+      const id = cfg?.gtm_id ?? null;
+      const pixel = cfg?.meta_pixel_id ?? null;
       if (!alive) return;
       setGtmId(id);
+      setPixelId(pixel);
       const now = consent();
       if (now) {
         applyConsent(id, now);
+        applyMetaPixel(pixel, now.ads);
         setPick(now);
       } else if (id || arrivedClick()) {
         setOpen(true);
@@ -48,14 +56,24 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
     };
   }, []);
 
-  if (!open) return null;
+  // A page view per client-side navigation; the first one is sent when the pixel loads.
+  useEffect(() => {
+    if (firstPath.current) {
+      firstPath.current = false;
+      return;
+    }
+    metaPageView();
+  }, [pathname]);
 
   const save = (v: Consent) => {
     decide(v);
     applyConsent(gtmId, v);
+    applyMetaPixel(pixelId, v.ads);
     setPick(v);
     setOpen(false);
   };
+
+  if (!open) return null;
 
   const option = (key: keyof Consent, title: string, text: string) => (
     <label className="consent-opt">
