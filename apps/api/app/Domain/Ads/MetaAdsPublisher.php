@@ -151,7 +151,10 @@ class MetaAdsPublisher implements Publisher
             'name' => $this->name($campaign).': set',
             'campaign_id' => $ref['campaign_id'],
             'billing_event' => 'IMPRESSIONS',
-            'optimization_goal' => 'LINK_CLICKS',
+            // Landing page views once a pixel is set up (2026-10-01): link clicks bought people who
+            // tap and leave before the page has loaded. The pixel on appmitki.com and wp-giftcard.com
+            // reports the view; without a pixel Meta could not see one, so it stays link clicks.
+            'optimization_goal' => $this->cfg('pixel_id') ? 'LANDING_PAGE_VIEWS' : 'LINK_CLICKS',
             'bid_strategy' => 'LOWEST_COST_WITHOUT_CAP',
             'targeting' => json_encode(['geo_locations' => ['countries' => $countries]]),
             'dsa_beneficiary' => $this->cfg('dsa_beneficiary'),

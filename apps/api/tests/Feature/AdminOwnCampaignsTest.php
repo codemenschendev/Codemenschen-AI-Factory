@@ -314,7 +314,7 @@ class AdminOwnCampaignsTest extends TestCase
         $this->assertSame('paused', $c->platform_status, (string) $c->publish_error);
         $this->assertSame('c1', $c->platform_ref['campaign_id']);
         Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/adsets')
-            && $r['daily_budget'] === 1000 && $r['status'] === 'PAUSED'
+            && $r['daily_budget'] === 1000 && $r['status'] === 'PAUSED' && $r['optimization_goal'] === 'LINK_CLICKS'
             && json_decode($r['targeting'], true)['geo_locations']['countries'] === ['AT', 'DE']);
         Http::assertSent(fn ($r) => str_ends_with($r->url(), 'act_42/adcreatives')
             && json_decode($r['object_story_spec'], true)['page_id'] === '77'
@@ -361,5 +361,21 @@ class AdminOwnCampaignsTest extends TestCase
         $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
         $this->actingAs($customer, 'sanctum')->getJson('/api/admin/own-campaigns')->assertForbidden();
         $this->actingAs($customer, 'sanctum')->postJson('/api/admin/own-campaigns', $this->form())->assertForbidden();
+    }
+
+    public function test_with_a_pixel_the_ad_set_buys_landing_page_views(): void
+    {
+        $this->meta();
+        config(['services.ads.meta.pixel_id' => '408896953700952']);
+        Http::fake(['graph.facebook.com/*' => Http::sequence()
+            ->push(['images' => ['ad.jpg' => ['hash' => 'h1']]])
+            ->push(['id' => 'c1'])->push(['id' => 's1'])->push(['id' => 'cr1'])->push(['id' => 'ad1'])]);
+        $admin = $this->admin();
+        $id = $this->actingAs($admin, 'sanctum')->postJson('/api/admin/own-campaigns', $this->metaForm())->json('id');
+        $this->actingAs($admin, 'sanctum')->post("/api/admin/own-campaigns/$id/image", ['image' => UploadedFile::fake()->image('ad.jpg', 1080, 1080)])->assertOk();
+
+        (new PublishCampaign($id))->handle(app(PublisherRegistry::class), app(Preflight::class));
+
+        Http::assertSent(fn ($r) => str_ends_with($r->url(), '/adsets') && $r['optimization_goal'] === 'LANDING_PAGE_VIEWS');
     }
 }
