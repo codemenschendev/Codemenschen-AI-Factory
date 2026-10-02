@@ -41,4 +41,10 @@ class EstimatorTest extends TestCase
         $total = Estimator::oneTimeTotal(250, ['storePublishing' => true, 'marketingLaunch' => true]);
         $this->assertSame(250 + 79 + 129, $total);
     }
+
+    public function test_the_app_landing_page_is_sold_at_the_website_price(): void
+    {
+        $this->assertSame(Estimator::SITE_PRICE_EUR, Estimator::PACKAGE_PRICES['landingPage']);
+        $this->assertSame(250 + 299, Estimator::oneTimeTotal(250, ['landingPage' => true]));
+    }
 }

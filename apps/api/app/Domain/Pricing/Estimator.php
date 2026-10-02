@@ -35,6 +35,9 @@ class Estimator
         'storePublishing' => 79,
         'transferAssist' => 49,
         'marketingLaunch' => 129,
+        // The app's own landing page (2026-10-02). The app page always promised it; now the
+        // checkout sells it. Built by the team, the marketing kit goes onto it.
+        'landingPage' => self::SITE_PRICE_EUR,
     ];
 
     /** One paid change-request round (after the free REVIEW rounds / once released). Patrick's call. */
@@ -122,7 +125,7 @@ class Estimator
     }
 
     /**
-     * @param  array{storePublishing?:bool,transferAssist?:bool,marketingLaunch?:bool}  $packages
+     * @param  array{storePublishing?:bool,transferAssist?:bool,marketingLaunch?:bool,landingPage?:bool}  $packages
      */
     public static function oneTimeTotal(int $price, array $packages): int
     {

@@ -120,7 +120,7 @@ export const en = {
     items: [
       { q: "Do I really own the app?", a: "Yes. You commission the development; the finished app, its code and its store listing belong to you." },
       { q: "What if I don't like the result?", a: "You review a preview build before release and can request fixes within the agreed scope. If we cannot deliver the scope, you get a refund." },
-      { q: "Can you also market the app?", a: "Yes. An optional launch-marketing package plus a separate ad budget that is spent 1:1 on campaigns." },
+      { q: "Can you also market the app?", a: "Yes. With the launch-marketing package we write the campaigns and the AI marketing, and after your approval we set up the ads. They run on your own ad account, and you pay the budget to Google or Meta directly." },
     ],
   },
   final: {
@@ -237,7 +237,7 @@ export const en = {
       items: {
         proto: { h: "1. App prototype", p: "Your sentence becomes a clickable preview. You see your app before you pay a cent.", points: ["Free and without obligation", "Four screens of your app", "One change included"] },
         dev: { h: "2. App development", p: "We code your app with AI, and our team checks every paid project. You need no technical skills.", points: ["Web, iPhone or Android", "Ready in {days} working days", "Code and rights are yours"] },
-        mkt: { h: "3. App marketing", p: "So your app finds users: a landing page, ads on Google and Meta, and AI marketing so ChatGPT and other AI assistants know your app.", points: ["Landing page with sign-up form", "Ads with a fixed budget cap", "Findable for ChatGPT and co."] },
+        mkt: { h: "3. App marketing", p: "So your app finds users: ads for Google and Meta, its own landing page if you want one, and AI marketing so ChatGPT and other AI assistants know your app.", points: ["Ads with a fixed budget cap", "Landing page for €299 on top", "Findable for ChatGPT and co."] },
       },
       free: "Free",
     },
@@ -273,7 +273,7 @@ export const en = {
     prices: {
       title: "Prices for your app",
       lede: "You see every amount before you pay. The ad budget is separate and goes 1:1 into ads.",
-      landing: { h: "Landing page for the app", fig: "{price} fixed price", p: "Hosting is included for {months} months, then {monthly} a month." },
+      landing: { h: "Landing page for the app", fig: "{price} fixed price", p: "Optional at checkout. Hosting is included for {months} months, then {monthly} a month." },
     },
     faqTitle: "Common questions",
     final: {
@@ -368,12 +368,13 @@ export const en = {
       storePublishing: "Store publishing package",
       transferAssist: "Developer-account setup help",
       marketingLaunch: "Launch marketing package",
+      landingPage: "Landing page for the app",
     } as Record<string, string>,
     storeLocalesTitle: "Store-listing languages",
     storeLocalesNote: "App name, subtitle, description, keywords and release notes are generated for each language you tick.",
     localeNames: { de: "German", en: "English" } as Record<string, string>,
     adBudget: "Monthly ad budget (optional)",
-    adBudgetNote: "Billed separately after campaign approval, spent 1:1 on ads and never part of today's payment.",
+    adBudgetNote: "The ads run on your own ad account. You pay the budget to Google or Meta directly, never as part of today's payment.",
     adNone: "No ads for now",
     email: "Your e-mail",
     step1: "1 · What you get",
@@ -599,7 +600,7 @@ export const en = {
       copied: "Copied",
     },
     marketing: "Marketing",
-    marketingHint: "Your launch-marketing package: we generate campaign strategy, ad copy and landing copy for Google and Meta. Nothing is published and no budget is spent before your approval, and ads themselves go live in a later release.",
+    marketingHint: "Your launch-marketing package: we write campaign strategy, ad copy and landing copy for Google and Meta. After your approval we set the ads up, paused, in your own ad account and get in touch. You pay the budget to Google or Meta directly. Nothing is published without your approval.",
     marketingGenerate: "Generate campaign drafts",
     marketingGenerating: "Generating, this page refreshes automatically…",
     campaignApprove: "Approve content",
@@ -1543,7 +1544,7 @@ export const en = {
           p: [
             "The development price is fixed before you pay and is due today. Optional packages are listed separately at checkout.",
             "Connected apps run on our servers and carry a monthly hosting and maintenance fee from handover. The amount is shown at checkout, before you pay.",
-            "An ad budget is optional, billed separately, and spent 1:1 on ads. It is never part of today's payment.",
+            "An ad budget is optional. The ads run on your own ad account, and Google or Meta bill the budget to you directly. It is never part of today's payment.",
           ],
         },
         {

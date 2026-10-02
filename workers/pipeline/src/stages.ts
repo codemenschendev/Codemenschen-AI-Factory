@@ -193,7 +193,7 @@ const STAGE_PROMPTS: Record<string, string> = {
     "json_ld: <a schema.org JSON-LD object of type SoftwareApplication (or MobileApplication for a mobile app) with name, description, applicationCategory, operatingSystem, inLanguage, publisher {@type Organization, name: 'Codemenschen GmbH'}; offers only if a price is stated in SPEC.md; NO aggregateRating or review>, " +
     "faq: [{locale: 'de'|'en', q, a}] at least 5 per locale: the questions people type into ChatGPT or Perplexity for which this app is a fitting answer, each answered in 1 to 3 plain sentences that name the app, " +
     "ai_prompts: [{locale, prompt}] 5 per locale: prompts to test monthly whether AI assistants mention the app, " +
-    "directories: [{name, url, category, tagline, description}] 4 to 6 fitting software directories (for example Product Hunt, AlternativeTo, SaaSHub, Capterra, an Austrian or German app directory), each with a tagline of at most 60 characters and a description of at most 500 characters in the directory's language}. " +
+    "directories: [{name, url, category, tagline, description}] 4 to 6 places where the people this app is for actually look, chosen by the kind of app: software bought by businesses fits Capterra, SaaSHub, Product Hunt or AlternativeTo; a consumer app fits AlternativeTo, Product Hunt and app review sites; an app made for one shop, café or practice fits its Google Business Profile, its own website and local or industry listings, never business software directories. Each with a tagline of at most 60 characters and a description of at most 500 characters in the directory's language}. " +
     "Facts only from SPEC.md and the context; never invent users, ratings, awards or results; never promise that an AI will recommend the app.",
 };
 
