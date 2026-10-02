@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Domain\Sites\AppLanding;
 use App\Domain\Sites\MockupSite;
 use App\Domain\Sites\SiteService;
 use App\Models\Prototype;
@@ -40,6 +41,12 @@ class BuildSiteFromMockup implements ShouldQueue
         $project = $proto->project;
         if ($project !== null) {
             $project->recordEvent('site.built', ['from' => 'mockup', 'shots' => $out['qa']['from_mockup']['shots']]);
+            // An app's landing page has its own way online; the app project keeps its status.
+            if (AppLanding::bought($project)) {
+                AppLanding::ready($proto->fresh());
+
+                return;
+            }
             // Due already (waiver given, or the period is over): the page goes live now. Otherwise
             // pipeline:tick switches it on when the period ends, as for any bought site.
             if ($project->status === 'PAID' && ! $project->build_starts_at?->isFuture()) {

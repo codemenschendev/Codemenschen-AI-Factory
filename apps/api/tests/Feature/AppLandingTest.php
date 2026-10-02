@@ -98,4 +98,18 @@ class AppLandingTest extends TestCase
         $this->get("/l/{$page->id}/llms.txt")->assertOk()
             ->assertSee('Landing page: '.url("/l/{$page->id}"), false);
     }
+
+    public function test_a_design_picture_is_built_into_a_page_before_it_goes_online(): void
+    {
+        Queue::fake();
+        $project = $this->paidApp(['landingPage' => true]);
+        $this->completeProduct($project);
+        $page = $project->fresh()->prototype;
+        $page->update(['status' => 'ready', 'html' => '<img class="mockup" src="data:image/png;base64,AA">', 'qa' => ['mockup' => true]]);
+
+        AppLanding::ready($page->fresh());
+
+        $this->assertNull($page->fresh()->published_at);
+        Queue::assertPushed(\App\Jobs\BuildSiteFromMockup::class, fn ($j) => $j->prototypeId === $page->id);
+    }
 }
