@@ -10,6 +10,7 @@ use App\Domain\Design\DesignLibrary;
 use App\Domain\Design\DesignRefs;
 use App\Domain\Design\Layouts;
 use App\Domain\Qa\PageAudit;
+use App\Domain\Sites\AppLanding;
 use App\Models\Prototype;
 use App\Services\Notify;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -63,6 +64,8 @@ class BuildPrototype implements ShouldQueue
                 'status' => 'ready', 'stage' => null, 'title' => $out['title'], 'html' => $out['html'],
                 'qa' => $out['qa'] ?? null,
             ]);
+            // An app's bought landing page goes online as soon as it is written.
+            AppLanding::ready($proto->fresh());
 
             // Not an error: the page is live either way. It is a line somebody can act on, and the
             // admin panel reads the same column to say which prototypes went out with a fault.

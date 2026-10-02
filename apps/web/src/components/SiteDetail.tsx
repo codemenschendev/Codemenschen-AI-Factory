@@ -36,6 +36,7 @@ export function SiteDetail({
   d,
   hostingMonthlyEur,
   hostingFreeMonths,
+  title,
 }: {
   projectId: string;
   site: SiteInfo;
@@ -44,6 +45,8 @@ export function SiteDetail({
   d: Dict;
   hostingMonthlyEur: number;
   hostingFreeMonths: number;
+  /** An app's landing page names itself differently from a bought website. */
+  title?: string;
 }) {
   const s = d.project.site;
   const [info, setInfo] = useState<SiteInfo>(site);
@@ -92,7 +95,7 @@ export function SiteDetail({
     <div className="detail-layout">
       <div className="detail-stack">
         <div className="card">
-          <h3>{s.title}</h3>
+          <h3>{title ?? s.title}</h3>
           {info.url && info.live_at ? (
             <>
               <p className="small muted" style={{ margin: 0 }}>{s.live}</p>

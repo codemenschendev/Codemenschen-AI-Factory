@@ -407,6 +407,7 @@ export const de = {
   project: {
     site: {
       title: "Deine Website",
+      appTitle: "Landingpage deiner App",
       live: "Online unter",
       open: "Website öffnen ↗",
       liveFrom: "Geht am {date} online, nach der 14-tägigen Widerrufsfrist.",

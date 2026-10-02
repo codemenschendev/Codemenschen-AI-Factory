@@ -407,6 +407,7 @@ export const en = {
   project: {
     site: {
       title: "Your website",
+      appTitle: "Your app's landing page",
       live: "Live at",
       open: "Open website ↗",
       liveFrom: "Goes live on {date}, after the 14-day withdrawal period.",
