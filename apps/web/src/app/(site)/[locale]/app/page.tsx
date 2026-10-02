@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  DELIVERY_DAYS_HI,
+  DELIVERY_DAYS_LO,
   PACKAGE_PRICES,
   PRICE_MIN,
   SITE_HOSTING_FREE_MONTHS,
@@ -12,6 +14,7 @@ import { eur, getDict, isLocale, type Locale } from "@/lib/i18n";
 import { AppIdeas } from "@/components/AppIdeas";
 import { BudgetMeter } from "@/components/BudgetMeter";
 import { LandingMotion } from "@/components/LandingMotion";
+import { PaybackCalc } from "@/components/PaybackCalc";
 import { Icon } from "@/components/LineIcon";
 import "../../../home.css";
 
@@ -47,14 +50,18 @@ export default async function AppLanding({
   const proto = `/${locale}/prototype`;
   const start = `${proto}?kind=app`;
 
+  // Patrick's path (2026-09-24): prototype, development, marketing. Each card says what it costs.
+  const days = `${DELIVERY_DAYS_LO}${locale === "de" ? " bis " : " to "}${DELIVERY_DAYS_HI}`;
   const parts: {
     kind: keyof typeof x.one.items;
+    icon: string;
+    pic: string;
+    href: string;
     price: number;
-    from: boolean;
   }[] = [
-    { kind: "app", price: PRICE_MIN, from: true },
-    { kind: "site", price: SITE_PRICE_EUR, from: false },
-    { kind: "ads", price: PACKAGE_PRICES.marketingLaunch, from: true },
+    { kind: "proto", icon: "preview", pic: "step-preview", href: start, price: 0 },
+    { kind: "dev", icon: "app", pic: "svc-app", href: `/${locale}/create`, price: PRICE_MIN },
+    { kind: "mkt", icon: "ads", pic: "svc-ads", href: "#prices", price: PACKAGE_PRICES.marketingLaunch },
   ];
   const trustIcons = ["preview", "euro", "shield", "team"];
   const stepPics = ["step-describe", "step-preview", "step-approve", "step-launch"];
@@ -97,7 +104,7 @@ export default async function AppLanding({
                 <Link className="btn btn-primary" href={start}>
                   {x.cta} <Icon name="arrow" className="btn-ico" />
                 </Link>
-                <a className="btn btn-ghost" href="#prices">
+                <a className="btn btn-ghost" href="#payback">
                   {x.cta2}
                 </a>
               </div>
@@ -118,7 +125,7 @@ export default async function AppLanding({
                 <ul>
                   {x.stack.map((s, i) => (
                     <li key={s}>
-                      <Icon name={["app", "site", "ads"][i]} className="stack-ico" />
+                      <Icon name={["preview", "app", "ads"][i]} className="stack-ico" />
                       {s}
                       <Icon name="check" className="tick" />
                     </li>
@@ -170,15 +177,11 @@ export default async function AppLanding({
             {parts.map((s) => {
               const it = x.one.items[s.kind];
               return (
-                <Link
-                  className="svc reveal"
-                  key={s.kind}
-                  href={`${proto}?kind=${s.kind}`}
-                >
+                <Link className="svc reveal" key={s.kind} href={s.href}>
                   <div className="svc-thumb">
                     {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
                     <img
-                      src={`/home/svc-${s.kind}.webp`}
+                      src={`/home/${s.pic}.webp`}
                       alt=""
                       width={348}
                       height={178}
@@ -186,7 +189,7 @@ export default async function AppLanding({
                     />
                   </div>
                   <span className="svc-ico">
-                    <Icon name={s.kind} />
+                    <Icon name={s.icon} />
                   </span>
                   <h3>{it.h}</h3>
                   <p>{it.p}</p>
@@ -194,16 +197,20 @@ export default async function AppLanding({
                     {it.points.map((pt) => (
                       <li key={pt}>
                         <Icon name="check" className="tick" />
-                        {pt}
+                        {fill(pt, { days })}
                       </li>
                     ))}
                   </ul>
                   <div className="svc-foot">
                     <div>
-                      <small>
-                        {s.from ? d.home.services.from : d.home.services.fixed}
-                      </small>
-                      <b>{eur(s.price, locale)}</b>
+                      {s.price === 0 ? (
+                        <b>{x.one.free}</b>
+                      ) : (
+                        <>
+                          <small>{d.home.services.from}</small>
+                          <b>{eur(s.price, locale)}</b>
+                        </>
+                      )}
                     </div>
                     <span className="svc-go">
                       <Icon name="arrow" />
@@ -216,7 +223,21 @@ export default async function AppLanding({
         </div>
       </section>
 
-      <section className="section section-tint" id="how">
+      {/* Patrick: "cool charts" that show when the investment pays for itself. */}
+      <section className="section section-tint" id="payback">
+        <div className="wrap">
+          <div className="sec-head">
+            <div>
+              <p className="eyebrow reveal">{x.payback.eyebrow}</p>
+              <h2 className="reveal">{x.payback.title}</h2>
+              <p className="section-lede reveal">{x.payback.lede}</p>
+            </div>
+          </div>
+          <PaybackCalc t={x.payback} locale={locale} devMin={PRICE_MIN} devDefault={790} />
+        </div>
+      </section>
+
+      <section className="section" id="how">
         <div className="wrap">
           <p className="eyebrow reveal">{d.how.eyebrow}</p>
           <h2 className="reveal">{x.how.title}</h2>
@@ -242,7 +263,7 @@ export default async function AppLanding({
         </div>
       </section>
 
-      <section className="section" id="apps">
+      <section className="section section-tint" id="apps">
         <div className="wrap">
           <div className="sec-head">
             <div>
@@ -255,7 +276,7 @@ export default async function AppLanding({
         </div>
       </section>
 
-      <section className="section section-tint" id="prices">
+      <section className="section" id="prices">
         <div className="wrap">
           <div className="sec-head">
             <div>
@@ -284,7 +305,7 @@ export default async function AppLanding({
         </div>
       </section>
 
-      <section className="section" id="faq">
+      <section className="section section-tint" id="faq">
         <div className="wrap faq-wrap">
           <h2 className="reveal">{x.faqTitle}</h2>
           <div className="faq-list">

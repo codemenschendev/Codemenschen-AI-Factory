@@ -34,7 +34,7 @@ export const CATALOG: CatalogEntry[] = [
     name: "FormPilot",
     icon: "◧",
     status: "available",
-    price: 3900,
+    price: 1290,
     appType: "B",
     cat: { en: "B2B · Form automation", de: "B2B · Formular-Automatisierung" },
     cardDesc: {
@@ -112,7 +112,7 @@ export const CATALOG: CatalogEntry[] = [
     name: "Mealgrid",
     icon: "◔",
     status: "available",
-    price: 1400,
+    price: 590,
     appType: "A",
     cat: { en: "Consumer · Meal planning", de: "Consumer · Essensplanung" },
     cardDesc: {
@@ -268,7 +268,7 @@ export const CATALOG: CatalogEntry[] = [
     name: "Praxo",
     icon: "◍",
     status: "available",
-    price: 2400,
+    price: 890,
     appType: "B",
     cat: { en: "B2B · Appointment reminders", de: "B2B · Terminerinnerungen" },
     cardDesc: {
@@ -346,7 +346,7 @@ export const CATALOG: CatalogEntry[] = [
     name: "Rechni",
     icon: "◐",
     status: "available",
-    price: 3000,
+    price: 990,
     appType: "B",
     cat: { en: "B2B · Invoice reminders", de: "B2B · Zahlungserinnerungen" },
     cardDesc: {

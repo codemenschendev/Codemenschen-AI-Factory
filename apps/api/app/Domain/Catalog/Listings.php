@@ -10,11 +10,11 @@ namespace App\Domain\Catalog;
 class Listings
 {
     public const ALL = [
-        'formpilot' => ['name' => 'FormPilot', 'price' => 3900, 'appType' => 'B'],
-        'mealgrid' => ['name' => 'Mealgrid', 'price' => 1400, 'appType' => 'A'],
+        'formpilot' => ['name' => 'FormPilot', 'price' => 1290, 'appType' => 'B'],
+        'mealgrid' => ['name' => 'Mealgrid', 'price' => 590, 'appType' => 'A'],
         'countbee' => ['name' => 'Countbee', 'price' => 300, 'appType' => 'A'],
-        'praxo' => ['name' => 'Praxo', 'price' => 2400, 'appType' => 'B'],
-        'rechni' => ['name' => 'Rechni', 'price' => 3000, 'appType' => 'B'],
+        'praxo' => ['name' => 'Praxo', 'price' => 890, 'appType' => 'B'],
+        'rechni' => ['name' => 'Rechni', 'price' => 990, 'appType' => 'B'],
     ];
 
     /** @return array{name:string,price:int,appType:string}|null */
