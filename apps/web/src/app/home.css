@@ -395,3 +395,27 @@
   .lp .svc-grid-3 { display: grid; grid-template-columns: 1fr; margin: 0; padding: 0; overflow: visible; }
   .lp .svc-grid-3 .svc { flex: none; }
 }
+
+/* ---------- Payback calculator (PaybackCalc) ---------- */
+.lp .pb { display: grid; grid-template-columns: 340px 1fr; gap: 22px; background: #fff; border: 1px solid var(--border); border-radius: 20px; padding: 24px; box-shadow: var(--shadow); }
+.lp .pb-controls { display: grid; gap: 18px; align-content: start; }
+.lp .pb-field { display: grid; gap: 8px; }
+.lp .pb-label { display: flex; justify-content: space-between; gap: 12px; font-size: 0.88rem; color: var(--ink-soft); }
+.lp .pb-label b { color: var(--ink); font-variant-numeric: tabular-nums; }
+.lp .pb-field input[type="range"] { width: 100%; accent-color: var(--accent); }
+.lp .pb-check { display: flex; gap: 10px; align-items: center; font-size: 0.86rem; color: var(--ink-soft); }
+.lp .pb-check input { accent-color: var(--accent); width: 18px; height: 18px; }
+.lp .pb-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 14px; }
+.lp .pb-kpis > div { background: var(--tint); border-radius: 14px; padding: 12px 14px; }
+.lp .pb-kpis small { display: block; font-size: 0.78rem; color: var(--ink-soft); margin-bottom: 4px; }
+.lp .pb-kpis b { font-family: var(--font-display); font-size: 1.15rem; letter-spacing: -0.02em; }
+.lp .pb-good { color: #15803d; }
+.lp .pb-wait { color: #b45309; }
+.lp .pb-chart { width: 100%; height: auto; display: block; }
+.lp .pb-zero { stroke: #cbd5e1; stroke-dasharray: 4 4; }
+.lp .pb-line { fill: none; stroke: #4f46e5; stroke-width: 3; stroke-linejoin: round; }
+.lp .pb-dot { fill: #15803d; stroke: #fff; stroke-width: 3; }
+.lp .pb-axis { font-size: 11px; fill: #94a3b8; }
+.lp .pb-note { margin: 8px 0 0; font-size: 0.8rem; color: var(--ink-soft); }
+@media (max-width: 900px) { .lp .pb { grid-template-columns: 1fr; padding: 18px; } }
+@media (max-width: 560px) { .lp .pb-kpis { grid-template-columns: 1fr; } }
