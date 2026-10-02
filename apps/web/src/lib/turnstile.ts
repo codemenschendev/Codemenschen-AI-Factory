@@ -70,7 +70,8 @@ export async function turnstileToken(): Promise<string | null> {
   return new Promise((resolve) => {
     waiting = resolve;
     ts.execute(widget!);
-    // A check the visitor never answers must not hang the form forever.
-    setTimeout(() => waiting === resolve && settle(null), 60_000);
+    // A check the visitor never answers must not hang the form forever. Long enough to notice
+    // the box and tick it: a token that comes after this is lost.
+    setTimeout(() => waiting === resolve && settle(null), 5 * 60_000);
   });
 }

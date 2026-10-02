@@ -322,6 +322,7 @@ export const en = {
     refineFeatures: "Add features:",
     refineAgain: "Sharpen again with these answers",
     refineLimit: "Today's limit for the assistant is reached. You can of course keep editing the description yourself.",
+    refineBot: "The security check did not work. Reload the page and try again.",
     refineUnavailable: "The assistant is not reachable right now. Just write the description yourself. That is all we need.",
     refineOffTopic: "That does not sound like an app idea. Describe what the app should do, and for whom.",
     audience: "Who is it for?",

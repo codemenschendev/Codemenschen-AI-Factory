@@ -103,7 +103,11 @@ export function CreateWizard({
       setAccepted(false);
       setRounds((r) => r + 1);
     } catch (e) {
-      setRefineError(e instanceof ApiError && e.status === 429 ? w.refineLimit : w.refineUnavailable);
+      setRefineError(
+        e instanceof ApiError && e.status === 429 ? w.refineLimit
+          : e instanceof ApiError && (e.body as { error?: string } | null)?.error === "turnstile" ? w.refineBot
+          : w.refineUnavailable,
+      );
     } finally {
       setRefining(false);
     }
