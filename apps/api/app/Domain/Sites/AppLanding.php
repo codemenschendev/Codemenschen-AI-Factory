@@ -3,6 +3,7 @@
 namespace App\Domain\Sites;
 
 use App\Jobs\BuildPrototype;
+use App\Jobs\BuildSiteFromMockup;
 use App\Models\Project;
 use App\Models\Prototype;
 use App\Services\Notify;
@@ -23,12 +24,14 @@ class AppLanding
     private const ROLE = [
         'de' => 'Diese Website ist die Landingpage einer neuen App. Eine Seite: was die App für wen tut, die wichtigsten Funktionen, '
             .'für welche Geräte sie ist, kurze Fragen und Antworten, und ein Anmeldeformular (ein E-Mail-Feld und ein Knopf, '
-            .'"Benachrichtige mich, wenn die App erscheint") oben und noch einmal am Ende. Das Formular sendet nichts: nach dem Absenden '
-            .'zeigt es an seiner Stelle ein kurzes Danke. Keine erfundenen Nutzerzahlen, Bewertungen oder Preise. Schreib die Seite auf Deutsch.',
+            .'"Benachrichtige mich, wenn die App erscheint") oben und noch einmal am Ende. Technischer Hinweis, nicht auf die Seite schreiben: '
+            .'das Formular sendet nichts, nach dem Absenden zeigt es an seiner Stelle ein kurzes Danke. Die Angaben unten sind Stoff für die Seite, '
+            .'nicht wörtlich übernehmen. Keine erfundenen Nutzerzahlen, Bewertungen oder Preise. Schreib die Seite auf Deutsch.',
         'en' => 'This website is the landing page of a new app. One page: what the app does and for whom, its main features, '
             .'which devices it runs on, a few questions and answers, and a sign-up form (an e-mail field and one button, '
-            .'"Tell me when the app is out") near the top and again at the end. The form sends nothing: on submit it shows a short '
-            .'thank-you in place of the form. No invented user numbers, ratings or prices. Write the page in English.',
+            .'"Tell me when the app is out") near the top and again at the end. Technical note, never write it on the page: the form '
+            .'sends nothing, on submit it shows a short thank-you in place of the form. The facts below are material for the page, '
+            .'not text to copy. No invented user numbers, ratings or prices. Write the page in English.',
     ];
 
     /** Whether this project bought a landing page with its app. */
@@ -61,11 +64,20 @@ class AppLanding
         $project->recordEvent('landing.started', ['prototype_id' => $proto->id]);
     }
 
-    /** Called when the writer is done: an app's page goes online by itself. */
+    /**
+     * Called when the writer is done, and again when a design picture has been built into a page:
+     * an app's page goes online by itself. A picture never goes online; it is built first, as for
+     * a bought website (BuildSiteFromMockup calls back here).
+     */
     public static function ready(Prototype $proto): void
     {
         $project = $proto->project;
         if ($project === null || ! self::bought($project) || $proto->published_at !== null || $proto->status !== 'ready') {
+            return;
+        }
+        if (MockupSite::isMockup($proto)) {
+            BuildSiteFromMockup::dispatch($proto->id);
+
             return;
         }
         $proto->update(['published_at' => now()]);
