@@ -322,6 +322,7 @@ export const de = {
     refineFeatures: "Funktionen übernehmen:",
     refineAgain: "Mit den Antworten nochmal schärfen",
     refineLimit: "Das Tageslimit für den Assistenten ist erreicht. Die Beschreibung kannst du natürlich weiter selbst bearbeiten.",
+    refineBot: "Die Sicherheitsprüfung hat nicht geklappt. Lade die Seite neu und versuch es noch einmal.",
     refineUnavailable: "Der Assistent ist gerade nicht erreichbar. Schreib die Beschreibung einfach selbst. Das reicht völlig.",
     refineOffTopic: "Das klingt nicht nach einer App-Idee. Beschreib, was die App für wen tun soll.",
     audience: "Für wen ist sie?",
