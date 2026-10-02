@@ -1330,6 +1330,7 @@ export const en = {
     label: "What do you want to build?",
     hint: "For example: a landing page for a hair salon with online booking and a price list.",
     kindOff: "We do not offer this right now. We are happy to build you an app.",
+    bot: "The security check did not work. Reload the page and try again.",
     kindLabel: "What should we show you?",
     kinds: { site: "Website", app: "App", ads: "Ads", email: "E-mails", campaign: "Campaign" },
     kindHints: {
@@ -1649,6 +1650,7 @@ export const en = {
           p: [
             "Your description is sent to an AI model that writes the prototype (see section 8). One prototype per account is free; for that we store your e-mail address with the prototype. We also store the IP address so that nobody creates more than 5 prototypes a day. Prototype, description and IP address are deleted after 7 days, unless you order an app from it.",
             "Photos in the prototype are searched at Pexels with a few keywords. Pexels receives no data about you.",
+            "We protect the prototype form and the idea helper against automated requests with Cloudflare Turnstile (Cloudflare, Inc., USA). Turnstile checks your browser, for example the IP address and technical features, and sets no advertising cookies for it. The legal basis is our legitimate interest in preventing abuse (Art. 6(1)(f) GDPR). Cloudflare is certified under the EU-US Data Privacy Framework.",
           ],
         },
         {
@@ -1668,7 +1670,7 @@ export const en = {
           h: "8. Building the app, changes and chat",
           p: [
             "To build your app we store the project with its code, preview and history. When you ask for changes, we store the messages in the project chat and any screenshots you attach. This stays stored as long as the project exists and is deleted with your account.",
-            "Text and code are written by the AI model Claude from Anthropic PBC (USA). Your description, your chat messages and attached screenshots are sent to Anthropic for this. Images for ads are made by an image model from OpenAI (USA) from a description of the app, without your contact details. The installable Android app is built by the Expo service (650 Industries, Inc., USA) from your app's code. Transfers to the USA rely on the EU-US Data Privacy Framework or the EU standard contractual clauses.",
+            "Text and code are written by an AI model of a specialised AI provider in the USA. Your description, your chat messages and attached screenshots are sent to this provider for this. Images for ads are made by an image model of an AI provider in the USA from a description of the app, without your contact details. The installable Android app is built by the Expo service (650 Industries, Inc., USA) from your app's code. Transfers to the USA rely on the EU-US Data Privacy Framework or the EU standard contractual clauses.",
             "Please do not send passwords, health data or other people's data in the chat unless the change really needs it.",
           ],
         },
@@ -1773,7 +1775,7 @@ export const en = {
       {
         h: "AI and your content",
         p: [
-          "Text and code are written by the AI model Claude from Anthropic (USA). Images for ads are made by OpenAI (USA) from a description of the app, without your contact details. Transfers to the USA rely on the EU-US Data Privacy Framework or the EU standard contractual clauses.",
+          "Text, code and images for ads are made by AI models of specialised AI providers in the USA. Images are made from a description of the app, without your contact details. Transfers to the USA rely on the EU-US Data Privacy Framework or the EU standard contractual clauses.",
           "The AI suggests, you decide. You approve everything that goes public or costs money. An automatic check stops pages that state prices, insurer contracts, certificates or awards you never named.",
         ],
       },
@@ -1798,8 +1800,8 @@ export const en = {
       ["Amazon Web Services", "Backup copy, Frankfurt data centre", "Luxembourg"],
       ["World4You Internet Services GmbH", "E-mails", "Austria"],
       ["Stripe Payments Europe, Ltd.", "Payments", "Ireland"],
-      ["Anthropic PBC", "Text and code (AI)", "USA"],
-      ["OpenAI", "Images for ads (AI)", "USA"],
+      ["AI providers", "Text, code and images for ads (AI)", "USA"],
+      ["Cloudflare, Inc.", "Protection against automated requests", "USA"],
       ["650 Industries (Expo)", "Building the Android app", "USA"],
       ["Google Ireland Ltd.", "Analytics and ads, only with consent", "Ireland"],
       ["Meta Platforms Ireland Ltd.", "Ads, only with consent", "Ireland"],

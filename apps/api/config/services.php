@@ -35,6 +35,11 @@ return [
         ],
     ],
 
+    // Cloudflare Turnstile (App\Http\Middleware\VerifyTurnstile). Empty secret = check off.
+    'turnstile' => [
+        'secret' => env('TURNSTILE_SECRET_KEY'),
+    ],
+
     'stripe' => [
         'secret' => env('STRIPE_SECRET'),
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),

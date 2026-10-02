@@ -1332,6 +1332,7 @@ export const de = {
     label: "Was möchtest du bauen?",
     hint: "Zum Beispiel: eine Landingpage für ein Friseurstudio mit Online-Terminbuchung und Preisliste.",
     kindOff: "Das bieten wir gerade nicht an. Eine App bauen wir dir gern.",
+    bot: "Die Sicherheitsprüfung hat nicht geklappt. Lade die Seite neu und versuch es noch einmal.",
     kindLabel: "Was sollen wir dir zeigen?",
     kinds: { site: "Website", app: "App", ads: "Werbung", email: "E-Mails", campaign: "Kampagne" },
     kindHints: {
@@ -1651,6 +1652,7 @@ export const de = {
           p: [
             "Deine Beschreibung schicken wir an ein KI-Modell, das daraus den Prototyp schreibt (siehe Punkt 8). Pro Konto ist ein Prototyp kostenlos; dafür speichern wir deine E-Mail-Adresse zum Prototyp. Die IP-Adresse speichern wir ebenfalls, damit niemand mehr als 5 Prototypen am Tag erzeugt. Prototyp, Beschreibung und IP-Adresse werden nach 7 Tagen gelöscht, außer du bestellst daraus eine App.",
             "Fotos im Prototyp suchen wir mit wenigen Stichworten bei Pexels. Pexels erhält dabei keine Daten von dir.",
+            "Gegen automatisierte Anfragen schützen wir das Formular für den Prototyp und die Ideen-Hilfe mit Cloudflare Turnstile (Cloudflare, Inc., USA). Turnstile prüft deinen Browser, zum Beispiel IP-Adresse und technische Merkmale, und setzt dafür keine Werbe-Cookies. Rechtsgrundlage ist unser berechtigtes Interesse, Missbrauch abzuwehren (Art. 6 Abs. 1 lit. f DSGVO). Cloudflare ist nach dem EU-US Data Privacy Framework zertifiziert.",
           ],
         },
         {
@@ -1670,7 +1672,7 @@ export const de = {
           h: "8. Bau der App, Änderungen und Chat",
           p: [
             "Für den Bau deiner App speichern wir das Projekt mit Code, Vorschau und Verlauf. Wünschst du Änderungen, speichern wir die Nachrichten im Projekt-Chat und Screenshots, die du anhängst. Das bleibt gespeichert, solange das Projekt besteht, und wird mit deinem Konto gelöscht.",
-            "Texte und Code schreibt das KI-Modell Claude von Anthropic PBC (USA). Deine Beschreibung, deine Chat-Nachrichten und angehängte Screenshots werden dafür an Anthropic übermittelt. Bilder für Anzeigen erzeugt ein Bildmodell von OpenAI (USA) aus einer Beschreibung der App, ohne deine Kontaktdaten. Die installierbare Android-App baut der Dienst Expo (650 Industries, Inc., USA) aus dem Code deiner App. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework oder die EU-Standardvertragsklauseln.",
+            "Texte und Code schreibt ein KI-Modell eines spezialisierten KI-Dienstleisters in den USA. Deine Beschreibung, deine Chat-Nachrichten und angehängte Screenshots werden dafür an diesen Dienstleister übermittelt. Bilder für Anzeigen erzeugt ein Bildmodell eines KI-Dienstleisters in den USA aus einer Beschreibung der App, ohne deine Kontaktdaten. Die installierbare Android-App baut der Dienst Expo (650 Industries, Inc., USA) aus dem Code deiner App. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework oder die EU-Standardvertragsklauseln.",
             "Bitte schick im Chat keine Passwörter, Gesundheitsdaten oder Daten Dritter, die für die Änderung nicht nötig sind.",
           ],
         },
@@ -1775,7 +1777,7 @@ export const de = {
       {
         h: "KI und deine Inhalte",
         p: [
-          "Texte und Code schreibt das KI-Modell Claude von Anthropic (USA). Bilder für Anzeigen entstehen bei OpenAI (USA), aus einer Beschreibung der App und ohne deine Kontaktdaten. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework oder die EU-Standardvertragsklauseln.",
+          "Texte, Code und Bilder für Anzeigen erstellen KI-Modelle spezialisierter KI-Dienstleister in den USA. Bilder entstehen aus einer Beschreibung der App, ohne deine Kontaktdaten. Die Übermittlung in die USA stützt sich auf das EU-US Data Privacy Framework oder die EU-Standardvertragsklauseln.",
           "Die KI macht Vorschläge, du entscheidest. Alles, was öffentlich wird oder Geld kostet, gibst du frei. Eine automatische Prüfung stoppt Seiten mit Preisen, Kassenverträgen, Zertifikaten oder Auszeichnungen, die du nie genannt hast.",
         ],
       },
@@ -1800,8 +1802,8 @@ export const de = {
       ["Amazon Web Services", "Sicherungskopie, Rechenzentrum Frankfurt", "Luxemburg"],
       ["World4You Internet Services GmbH", "E-Mails", "Österreich"],
       ["Stripe Payments Europe, Ltd.", "Zahlungen", "Irland"],
-      ["Anthropic PBC", "Texte und Code (KI)", "USA"],
-      ["OpenAI", "Bilder für Anzeigen (KI)", "USA"],
+      ["KI-Dienstleister", "Texte, Code und Bilder für Anzeigen (KI)", "USA"],
+      ["Cloudflare, Inc.", "Schutz vor automatisierten Anfragen", "USA"],
       ["650 Industries (Expo)", "Android-App bauen", "USA"],
       ["Google Ireland Ltd.", "Analytics und Anzeigen, nur mit Einwilligung", "Irland"],
       ["Meta Platforms Ireland Ltd.", "Anzeigen, nur mit Einwilligung", "Irland"],

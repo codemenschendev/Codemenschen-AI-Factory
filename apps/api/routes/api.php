@@ -32,12 +32,12 @@ use Illuminate\Support\Facades\Route;
 Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:120,1,t');
 
 // Public prompt-to-prototype (lead magnet): no auth. Throttle on top of the per-IP daily cap.
-Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware('throttle:8,60,prototypes');
+Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware(['throttle:8,60,prototypes', 'turnstile']);
 // The link in the e-mail a visitor gets when they build without being signed in: it signs them
 // in and starts the build (owner's decision 2026-09-19).
 // GET is what the e-mail opened before the confirm page existed; the page posts (MailLink).
 Route::match(['get', 'post'], '/prototypes/{prototype}/confirm', [PrototypeController::class, 'confirm'])->name('prototypes.confirm')->middleware('throttle:20,1,proto-confirm');
-Route::post('/prototypes/questions', [PrototypeController::class, 'questions'])->middleware('throttle:12,60,proto-questions');
+Route::post('/prototypes/questions', [PrototypeController::class, 'questions'])->middleware(['throttle:12,60,proto-questions', 'turnstile']);
 Route::get('/prototypes/{prototype}', [PrototypeController::class, 'show']);
 Route::get('/prototypes/{prototype}/raw', [PrototypeController::class, 'raw']);
 // A campaign's live landing page: the sign-up and the two links in its mails.
@@ -48,7 +48,7 @@ Route::get('/landing/signups/{signup}/remove', [LandingController::class, 'remov
 Route::get('/site-config', [SiteConfigController::class, 'show']);
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
-Route::post('/quotes/refine', QuoteRefineController::class)->middleware('throttle:5,1,refine');
+Route::post('/quotes/refine', QuoteRefineController::class)->middleware(['throttle:5,1,refine', 'turnstile']);
 Route::get('/quotes/{quote}', [QuoteController::class, 'show']);
 Route::post('/checkout', [CheckoutController::class, 'store']);
 Route::post('/webhooks/stripe', StripeWebhookController::class);

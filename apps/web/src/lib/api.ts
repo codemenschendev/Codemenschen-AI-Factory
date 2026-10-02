@@ -1,6 +1,7 @@
 /** Factory API client — the browser talks to api.appwerk.codemenschen.at. */
 import { adClickHeader } from "./adConsent";
 import { tagEvent } from "./gtm";
+import { TURNSTILE_PATHS, turnstileToken } from "./turnstile";
 export const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
@@ -21,6 +22,7 @@ export async function api<T>(
   init?: RequestInit & { token?: string },
 ): Promise<T> {
   const click = init?.method === "POST" && LEAD_PATHS.includes(path) ? adClickHeader() : null;
+  const bot = init?.method === "POST" && TURNSTILE_PATHS.includes(path) ? await turnstileToken() : null;
   const res = await fetch(`${API_BASE}/api${path}`, {
     ...init,
     headers: {
@@ -29,6 +31,7 @@ export async function api<T>(
       accept: "application/json",
       ...(init?.token ? { authorization: `Bearer ${init.token}` } : {}),
       ...(click ? { "x-ad-click": click } : {}),
+      ...(bot ? { "x-turnstile": bot } : {}),
       ...init?.headers,
     },
   });

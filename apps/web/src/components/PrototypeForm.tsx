@@ -116,9 +116,10 @@ export function PrototypeForm({
   /** 429 cap, 403 free prototype used, 422 no e-mail or too long: each says something the visitor can act on. */
   function failed(err: unknown) {
     const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
-    const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string } | null }).body : null;
+    const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string; error?: string } | null }).body : null;
     setError(status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
       : body?.code === "kind_off" ? p.kindOff
+      : body?.error === "turnstile" ? p.bot
       : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
     setStep("write");
     setBusy(false);

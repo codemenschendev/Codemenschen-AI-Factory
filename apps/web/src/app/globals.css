@@ -365,3 +365,11 @@ footer.site .logo-by { color: #94a3b8; }
   .lp .sec-link, .ad .ad-back, .acc-page .acc-who a, .acc-page .acc-who .pp-link, .pp .pp-history .pp-link { padding-top: 8px; padding-bottom: 8px; }
   .pj .lang-toggle, .pj .phone-actions .lang-toggle { padding: 8px 14px; }
 }
+
+/* Cloudflare Turnstile (lib/turnstile.ts): empty unless Cloudflare wants the visitor to tick a box. */
+.ts-box {
+  position: fixed;
+  right: 16px;
+  bottom: 16px;
+  z-index: 60;
+}
