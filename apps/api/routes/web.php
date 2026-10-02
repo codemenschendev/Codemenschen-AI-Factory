@@ -11,3 +11,6 @@ Route::get('/l/{prototype}', [LandingController::class, 'page'])->name('landing.
 // A bought website's Impressum, on our address and on the customer's own domain.
 Route::get('/l/{prototype}/impressum', [LandingController::class, 'imprint']);
 Route::get('/impressum', [LandingController::class, 'imprintByHost']);
+// An app landing page's llms.txt for AI assistants (App-Marketing kit).
+Route::get('/l/{prototype}/llms.txt', [LandingController::class, 'llms']);
+Route::get('/llms.txt', [LandingController::class, 'llmsByHost']);

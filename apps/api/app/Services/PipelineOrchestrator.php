@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Domain\Pricing\Estimator;
+use App\Domain\Sites\AppLanding;
 use App\Jobs\DispatchStageJob;
 use App\Models\ChangeRequest;
 use App\Models\PipelineRun;
@@ -259,6 +260,8 @@ class PipelineOrchestrator
                 ['criterion' => $c['criterion'], 'kind' => $c['kind'] ?? 'automated'],
             );
         }
+        // A bought landing page is written from the same spec, alongside the app.
+        app(AppLanding::class)->start($project);
         $this->dispatchStage($project, 'uiux');
     }
 
@@ -408,9 +411,12 @@ class PipelineOrchestrator
         $kit = $run->output['ai_visibility'] ?? null;
         if (is_array($kit) && $kit !== []) {
             $project->update(['ai_visibility' => $kit]);
-            // The portal promises the customer that we add the kit to the landing page and list the
-            // app in the directories: an operator gets the to-do.
-            $this->notify->note($project, 'AI marketing kit ready: add llms.txt, JSON-LD and the FAQ to the landing page, then list the app in '
+            // The kit goes onto a landing page bought here by itself (LandingController::withAiKit).
+            // A page elsewhere and the directory listings are an operator's to-do.
+            $page = AppLanding::bought($project)
+                ? 'it is on the app landing page already'
+                : 'add llms.txt, JSON-LD and the FAQ to the customer\'s own landing page';
+            $this->notify->note($project, "AI marketing kit ready: {$page}; list the app in "
                 .count((array) ($kit['directories'] ?? [])).' directories (texts in the portal, Marketing tab).');
         }
         $project->recordEvent('marketing.generated', [

@@ -92,6 +92,7 @@ class LandingController extends Controller
         ], ['prototype' => $prototype->id, 'campaign' => $prototype->parent_id]);
 
         $html = self::withSignup((string) $prototype->html, $prototype, $lang, $source, self::imprintHref($request, $prototype));
+        $html = self::withAiKit($html, $prototype, $lang, $request);
         $csp = implode('; ', [
             "default-src 'none'",
             "style-src 'unsafe-inline'",
@@ -113,6 +114,74 @@ class LandingController extends Controller
             'X-Robots-Tag' => $prototype->project_id === null ? 'noindex' : null,
             'Referrer-Policy' => 'strict-origin-when-cross-origin',
         ]));
+    }
+
+    /**
+     * The App-Marketing kit on an app's landing page: the app's schema.org entry and its FAQ in
+     * the page's language, both as JSON-LD in the head, and a link to its llms.txt. Data blocks
+     * only, nothing runs, so the page's CSP is untouched.
+     */
+    public static function withAiKit(string $html, Prototype $prototype, string $lang, ?Request $request = null): string
+    {
+        $kit = $prototype->project?->ai_visibility;
+        if (! is_array($kit) || ! ($prototype->project->order?->packages['marketingLaunch'] ?? false)) {
+            return $html;
+        }
+        $url = $request !== null ? $request->url() : self::url($prototype);
+        $blocks = [];
+        if (is_array($kit['json_ld'] ?? null)) {
+            $blocks[] = ['@context' => 'https://schema.org'] + $kit['json_ld'] + ['url' => $url];
+        }
+        $faq = array_values(array_filter($kit['faq'] ?? [], fn ($f) => is_array($f) && ($f['locale'] ?? '') === $lang));
+        if ($faq !== []) {
+            $blocks[] = ['@context' => 'https://schema.org', '@type' => 'FAQPage', 'mainEntity' => array_map(fn ($f) => [
+                '@type' => 'Question', 'name' => (string) $f['q'],
+                'acceptedAnswer' => ['@type' => 'Answer', 'text' => (string) $f['a']],
+            ], $faq)];
+        }
+        $head = '';
+        foreach ($blocks as $b) {
+            $head .= '<script type="application/ld+json">'.json_encode($b, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_HEX_TAG).'</script>';
+        }
+        if (is_string($kit['llms_txt'] ?? null)) {
+            // On the customer's own domain the page is the root, so is its llms.txt.
+            $own = $request !== null && $request->path() === '/';
+            $head .= '<link rel="alternate" type="text/plain" title="llms.txt" href="'.($own ? '/llms.txt' : '/l/'.$prototype->id.'/llms.txt').'">';
+        }
+        if ($head === '') {
+            return $html;
+        }
+        $out = preg_replace('~</head>~i', $head.'</head>', $html, 1);
+
+        return is_string($out) ? $out : $html;
+    }
+
+    /** The kit's llms.txt for AI assistants, at /l/{id}/llms.txt and /llms.txt on an own domain. */
+    public function llms(Request $request, Prototype $prototype): Response
+    {
+        abort_unless(self::isLanding($prototype) && $prototype->published_at !== null && $prototype->isLive(), 404);
+
+        return self::llmsResponse($prototype, self::url($prototype));
+    }
+
+    public function llmsByHost(Request $request): Response
+    {
+        $project = self::projectForHost($request);
+        abort_if($project === null || $project->prototype === null, 404);
+
+        return self::llmsResponse($project->prototype, 'https://'.$project->domain);
+    }
+
+    private static function llmsResponse(Prototype $prototype, string $url): Response
+    {
+        $project = $prototype->project;
+        $text = $project?->ai_visibility['llms_txt'] ?? null;
+        abort_unless(is_string($text) && ($project->order?->packages['marketingLaunch'] ?? false), 404);
+
+        return response(str_replace('{LANDING_URL}', $url, $text), 200, [
+            'Content-Type' => 'text/plain; charset=UTF-8',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
     }
 
     /** A bought website's Impressum, at /l/{id}/impressum. */
@@ -161,7 +230,15 @@ class LandingController extends Controller
         $host = preg_replace('~^www\.~', '', strtolower($request->getHost()));
         $own = preg_replace('~^www\.~', '', strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST)));
 
-        return $host === $own ? null : Project::where('kind', 'site')->where('status', 'PUBLISHED')->where('domain', $host)->first();
+        if ($host === $own) {
+            return null;
+        }
+
+        // A bought website, or an app's bought landing page once it is online.
+        return Project::where('domain', $host)
+            ->where(fn ($q) => $q->where(fn ($q) => $q->where('kind', 'site')->where('status', 'PUBLISHED'))
+                ->orWhere(fn ($q) => $q->where('kind', '!=', 'site')->whereHas('prototype', fn ($q) => $q->whereNotNull('published_at'))))
+            ->first();
     }
 
     /**

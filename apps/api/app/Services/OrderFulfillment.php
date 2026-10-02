@@ -85,11 +85,6 @@ class OrderFulfillment
         // time on 2026-09-07.
         app(CustomerMail::class)->orderPaid($order->fresh(), $project);
 
-        // The landing page is built by the team, so the team has to hear about it.
-        if (! empty($order->packages['landingPage'])) {
-            app(Notify::class)->note($project, 'bought the app landing page: build it by hand and add the AI-visibility kit once the marketing plan exists.');
-        }
-
         return $project;
     }
 }

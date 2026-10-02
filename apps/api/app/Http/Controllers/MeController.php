@@ -4,11 +4,12 @@ namespace App\Http\Controllers;
 
 use App\Domain\Analytics\Analytics;
 use App\Domain\Pricing\Estimator;
+use App\Domain\Sites\AppLanding;
 use App\Domain\Sites\Imprint;
 use App\Domain\Sites\SiteService;
 use App\Models\ChangeMessage;
-use App\Models\Prototype;
 use App\Models\Project;
+use App\Models\Prototype;
 use App\Services\CareService;
 use App\Services\ChangeChat;
 use App\Services\ChangeShots;
@@ -39,7 +40,7 @@ class MeController extends Controller
             'id' => $project->id,
             'name' => $project->name,
             'kind' => $project->kind,
-            'site' => $project->kind === 'site' ? self::site($project) : null,
+            'site' => self::hasSite($project) ? self::site($project) : null,
             'status' => $project->status,
             'fix_attempts' => $project->fix_attempts,
             'revision_rounds' => $project->revision_rounds,
@@ -299,6 +300,12 @@ class MeController extends Controller
         return response()->download($path);
     }
 
+    /** A bought website, or the landing page bought with an app. */
+    private static function hasSite(Project $project): bool
+    {
+        return $project->kind === 'site' || AppLanding::bought($project);
+    }
+
     /** A bought website: where it is, when it goes live, and the domain the customer asked for. */
     private static function site(Project $project): array
     {
@@ -322,7 +329,7 @@ class MeController extends Controller
     /** The customer fills in their Impressum; the site's footer links it from then on. */
     public function imprint(Request $request, Project $project): JsonResponse
     {
-        abort_unless($project->customer_id === $request->user()->id && $project->kind === 'site', 404);
+        abort_unless($project->customer_id === $request->user()->id && self::hasSite($project), 404);
         $data = $request->validate(Imprint::rules());
         $clean = [];
         foreach ([...Imprint::REQUIRED, ...Imprint::OPTIONAL] as $f) {
@@ -337,7 +344,7 @@ class MeController extends Controller
     /** The customer names their domain (or clears it); a person connects it. */
     public function domain(Request $request, Project $project, SiteService $sites): JsonResponse
     {
-        abort_unless($project->customer_id === $request->user()->id && $project->kind === 'site', 404);
+        abort_unless($project->customer_id === $request->user()->id && self::hasSite($project), 404);
         $data = $request->validate(['domain' => 'nullable|string|max:300']);
         $domain = SiteService::normalizeDomain((string) ($data['domain'] ?? ''));
         abort_if($domain === false, 422, 'That is not a domain. Enter it like example.at.');
@@ -356,7 +363,7 @@ class MeController extends Controller
                 'id' => $p->id,
                 'name' => $p->name,
                 'kind' => $p->kind,
-                'site_url' => $p->kind === 'site' ? SiteService::url($p) : null,
+                'site_url' => self::hasSite($p) ? SiteService::url($p) : null,
                 'status' => $p->status,
                 'stack' => $p->stack,
                 'build_starts_at' => $p->build_starts_at?->toIso8601String(),

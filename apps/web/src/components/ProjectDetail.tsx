@@ -304,6 +304,12 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
           <SiteDetail projectId={p.id} site={p.site} token={token} locale={locale} d={d} hostingMonthlyEur={p.site.hosting_monthly_eur} hostingFreeMonths={p.site.hosting_free_months} />
         </div>
       )}
+      {/* The landing page bought with an app: Claude writes it from the spec, it goes online by itself. */}
+      {p.kind !== "site" && p.site && token && (
+        <div style={{ marginTop: 24 }}>
+          <SiteDetail projectId={p.id} site={p.site} token={token} locale={locale} d={d} hostingMonthlyEur={p.site.hosting_monthly_eur} hostingFreeMonths={p.site.hosting_free_months} title={d.project.site.appTitle} />
+        </div>
+      )}
       {p.kind !== "site" && (<>
       {p.change_requests?.some((c) => c.status === "in_progress") && (
         <p className="note" style={{ marginTop: 16 }}>{d.project.changesInProgress}</p>
