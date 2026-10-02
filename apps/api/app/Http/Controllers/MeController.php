@@ -71,6 +71,8 @@ class MeController extends Controller
                 ->where('version', $project->campaigns()->max('version') ?? 0)
                 ->with('creatives:id,marketing_campaign_id,kind,locale,content')
                 ->get(['id', 'platform', 'strategy', 'status', 'ad_budget_monthly_eur']),
+            // Part of the App-Marketing package, so only there.
+            'ai_visibility' => ($project->order->packages['marketingLaunch'] ?? false) ? $project->ai_visibility : null,
             'runs' => $project->runs()->latest()->limit(30)
                 ->get(['stage', 'attempt', 'status', 'started_at', 'finished_at']),
             'events' => $project->events()->latest('created_at')->limit(50)

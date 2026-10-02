@@ -7,6 +7,7 @@ import { eur, type Dict, type Locale } from "@/lib/i18n";
 import { ChangeChat } from "@/components/ChangeChat";
 import { SiteDetail, type SiteInfo } from "@/components/SiteDetail";
 import { useToken } from "@/lib/token";
+import { AiVisibilityKit, type AiVisibility } from "./AiVisibilityKit";
 
 interface Detail {
   id: string;
@@ -51,6 +52,7 @@ interface Detail {
     creatives: { id: number; kind: string; locale: string | null; content: string }[];
   }[];
   order?: { total_one_time_eur: number };
+  ai_visibility?: AiVisibility | null;
 }
 
 type TabKey = "app" | "store" | "marketing" | "activity";
@@ -685,6 +687,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               </div>
             ))
           )}
+          {p.ai_visibility && <AiVisibilityKit kit={p.ai_visibility} t={d.project.ai} locale={locale} />}
         </div>
       )}
 

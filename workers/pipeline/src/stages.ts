@@ -54,7 +54,7 @@ const GATEWAY_SCHEMAS: Record<string, string> = {
     "Respond in EXACTLY this layout and nothing else:\n===SPEC===\n<full SPEC.md markdown>\n===CRITERIA===\n<JSON array of {\"key\": \"kebab-case\", \"criterion\": \"...\", \"kind\": \"automated\"|\"manual\"} with 5-12 entries>",
   uiux: "Respond in EXACTLY this layout and nothing else:\n===SCREENS===\n<full SCREENS.md markdown>\n===TOKENS===\n<JSON object of design tokens>",
   assets: 'Respond with ONLY a JSON array of {kind, locale, content} as specified.',
-  marketing: 'Respond with ONLY the JSON object {campaigns: [...]} as specified.',
+  marketing: 'Respond with ONLY the JSON object {campaigns: [...], ai_visibility: {...}} as specified.',
   coding:
     'Use your file and shell tools to do the work DIRECTLY in the repository directory given below (it is on this machine). When finished, respond with ONLY {"done": true, "summary": "<what you implemented>", "files": ["..."]}.',
   fix: 'Use your file and shell tools to fix the code DIRECTLY in the repository directory given below. Never weaken tests or criteria. Re-run `npm test` there. Respond with ONLY {"done": true, "summary": "<what you fixed>"}.',
@@ -186,7 +186,15 @@ const STAGE_PROMPTS: Record<string, string> = {
   assets:
     "You are the Store-Asset Agent. Read SPEC.md and the app context, then write store-assets.json: a JSON array of {kind, locale, content} with kind in [name, subtitle, description, keywords, release_notes] for EACH locale listed in the context's store_locales (one entry per kind and locale, nothing for other languages). Rules: honest, no hype, no unverifiable claims; keywords = comma-separated list ≤100 chars; description ≤ 4000 chars, subtitle ≤ 30 chars, name ≤ 30 chars.",
   marketing:
-    "You are the Marketing Agent. Read SPEC.md and the app context, then write marketing-plan.json: {campaigns: [{platform: 'google'|'meta', strategy: {audience, angle, funnel, budget_hint}, creatives: [{kind: 'headline'|'ad_copy'|'landing'|'image_prompt', locale: 'de'|'en', content}]}]} — one campaign per platform, ≥3 headlines + 2 ad copies + 1 landing section + 1 image_prompt per campaign and locale. Rules: honest, no earnings promises, no fake urgency, comply with Google/Meta ad policies; German for DACH audience first.",
+    "You are the Marketing Agent. Read SPEC.md and the app context, then write marketing-plan.json: {campaigns: [{platform: 'google'|'meta', strategy: {audience, angle, funnel, budget_hint}, creatives: [{kind: 'headline'|'ad_copy'|'landing'|'image_prompt', locale: 'de'|'en', content}]}]} — one campaign per platform, ≥3 headlines + 2 ad copies + 1 landing section + 1 image_prompt per campaign and locale. Rules: honest, no earnings promises, no fake urgency, comply with Google/Meta ad policies; German for DACH audience first. " +
+    // AI marketing (2026-10-02): the App-Marketing package promises that ChatGPT and other AI
+    // assistants can learn about the app. This kit is what we hand over for that.
+    "Also add ai_visibility to the same JSON object: {llms_txt: '<an llms.txt file in English markdown: # app name, > one-line summary, then sections Features, Who it is for, Platforms, Pricing only if stated in SPEC.md, Links with the landing page URL placeholder {LANDING_URL}>', " +
+    "json_ld: <a schema.org JSON-LD object of type SoftwareApplication (or MobileApplication for a mobile app) with name, description, applicationCategory, operatingSystem, inLanguage, publisher {@type Organization, name: 'Codemenschen GmbH'}; offers only if a price is stated in SPEC.md; NO aggregateRating or review>, " +
+    "faq: [{locale: 'de'|'en', q, a}] at least 5 per locale: the questions people type into ChatGPT or Perplexity for which this app is a fitting answer, each answered in 1 to 3 plain sentences that name the app, " +
+    "ai_prompts: [{locale, prompt}] 5 per locale: prompts to test monthly whether AI assistants mention the app, " +
+    "directories: [{name, url, category, tagline, description}] 4 to 6 fitting software directories (for example Product Hunt, AlternativeTo, SaaSHub, Capterra, an Austrian or German app directory), each with a tagline of at most 60 characters and a description of at most 500 characters in the directory's language}. " +
+    "Facts only from SPEC.md and the context; never invent users, ratings, awards or results; never promise that an AI will recommend the app.",
 };
 
 async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
@@ -418,7 +426,16 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
           { kind: "image_prompt", locale, content: `Clean product shot of a mobile app called ${c.name}, minimal, no text` },
         ]),
       });
-      return ok({ campaigns: [mkCampaign("google"), mkCampaign("meta")] });
+      return ok({
+        campaigns: [mkCampaign("google"), mkCampaign("meta")],
+        ai_visibility: {
+          llms_txt: `# ${c.name}\n\n> [STAGING] ${c.idea ?? "A focused app"}\n\n## Links\n- Landing page: {LANDING_URL}\n`,
+          json_ld: { "@context": "https://schema.org", "@type": "SoftwareApplication", name: c.name, description: c.idea ?? c.name, applicationCategory: "BusinessApplication", operatingSystem: "Web", publisher: { "@type": "Organization", name: "Codemenschen GmbH" } },
+          faq: (["de", "en"] as const).map((locale) => ({ locale, q: `[STAGING] ${c.name}?`, a: `[STAGING] ${c.idea ?? c.name}` })),
+          ai_prompts: (["de", "en"] as const).map((locale) => ({ locale, prompt: `[STAGING] ${c.idea ?? c.name}` })),
+          directories: [{ name: "AlternativeTo", url: "https://alternativeto.net", category: "Productivity", tagline: `[STAGING] ${c.name}`, description: c.idea ?? c.name }],
+        },
+      });
     }
   }
 }
@@ -476,11 +493,36 @@ async function collectStageOutput(job: StageJob, dir: string): Promise<Record<st
       ) {
         throw new Error("marketing agent produced invalid marketing-plan.json");
       }
-      return { campaigns: plan.campaigns };
+      return { campaigns: plan.campaigns, ai_visibility: validAiVisibility(plan.ai_visibility) };
     }
     default:
       return {};
   }
+}
+
+/**
+ * The AI-visibility kit of the marketing plan, or null when the agent left it out or got its shape
+ * wrong: the ads plan must not fail because of it, and the portal says when it is missing.
+ */
+export function validAiVisibility(v: unknown): Record<string, unknown> | null {
+  if (!v || typeof v !== "object") return null;
+  const k = v as { llms_txt?: unknown; json_ld?: unknown; faq?: unknown; ai_prompts?: unknown; directories?: unknown };
+  const list = (x: unknown, keys: string[]) =>
+    Array.isArray(x) && x.length > 0 && x.every((i) => i && typeof i === "object" && keys.every((key) => typeof (i as Record<string, unknown>)[key] === "string" && (i as Record<string, string>)[key].trim() !== ""));
+  if (typeof k.llms_txt !== "string" || k.llms_txt.trim() === "") return null;
+  if (!k.json_ld || typeof k.json_ld !== "object" || Array.isArray(k.json_ld)) return null;
+  const ld = k.json_ld as Record<string, unknown>;
+  // Invented ratings would be fake reviews in search results: they never pass.
+  delete ld.aggregateRating;
+  delete ld.review;
+  if (!list(k.faq, ["locale", "q", "a"]) || !list(k.directories, ["name", "tagline", "description"])) return null;
+  return {
+    llms_txt: k.llms_txt,
+    json_ld: ld,
+    faq: k.faq,
+    ai_prompts: list(k.ai_prompts, ["locale", "prompt"]) ? k.ai_prompts : [],
+    directories: k.directories,
+  };
 }
 
 function ok(output: Record<string, unknown>): StageResult {

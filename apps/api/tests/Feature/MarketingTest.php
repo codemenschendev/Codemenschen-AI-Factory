@@ -37,7 +37,7 @@ class MarketingTest extends TestCase
         $this->token = $order->customer->createToken('portal')->plainTextToken;
     }
 
-    private function completeMarketingRun(): void
+    private function completeMarketingRun(?array $kit = null): void
     {
         $run = PipelineRun::where('project_id', $this->project->id)
             ->where('stage', 'marketing')->latest('created_at')->firstOrFail();
@@ -51,7 +51,7 @@ class MarketingTest extends TestCase
                     ['kind' => 'headline', 'locale' => 'de', 'content' => 'Einfach erledigt'],
                     ['kind' => 'ad_copy', 'locale' => 'de', 'content' => 'Ehrliche Copy.'],
                 ],
-            ]]],
+            ]]] + ($kit !== null ? ['ai_visibility' => $kit] : []),
         ], ['Authorization' => "Bearer $token"])->assertOk();
     }
 
@@ -91,5 +91,26 @@ class MarketingTest extends TestCase
         $this->withHeader('Authorization', "Bearer {$this->token}")
             ->postJson("/api/me/projects/{$this->project->id}/marketing/generate")
             ->assertStatus(409);
+    }
+
+    public function test_the_ai_visibility_kit_is_kept_and_shown_with_the_marketing_package(): void
+    {
+        $kit = ['llms_txt' => "# App\n> one job", 'json_ld' => ['@type' => 'SoftwareApplication', 'name' => 'App'],
+            'faq' => [['locale' => 'de', 'q' => 'Welche App?', 'a' => 'Diese.']], 'ai_prompts' => [],
+            'directories' => [['name' => 'AlternativeTo', 'tagline' => 't', 'description' => 'd']]];
+        $this->withHeader('Authorization', "Bearer {$this->token}")
+            ->postJson("/api/me/projects/{$this->project->id}/marketing/generate")->assertOk();
+        $this->completeMarketingRun($kit);
+
+        $this->assertSame($kit, $this->project->fresh()->ai_visibility);
+        $this->withHeader('Authorization', "Bearer {$this->token}")
+            ->getJson("/api/me/projects/{$this->project->id}")
+            ->assertOk()->assertJsonPath('ai_visibility.llms_txt', "# App\n> one job");
+
+        // Without the package nothing is shown.
+        $this->project->order->update(['packages' => []]);
+        $this->withHeader('Authorization', "Bearer {$this->token}")
+            ->getJson("/api/me/projects/{$this->project->id}")
+            ->assertOk()->assertJsonPath('ai_visibility', null);
     }
 }

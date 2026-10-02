@@ -53,3 +53,13 @@
   .pj .tab { flex: 1; padding: 8px 10px; }
   .pj .card { padding: 18px; }
 }
+
+/* AI marketing kit (AiVisibilityKit) */
+.kit-pre { background: var(--tint); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; max-height: 260px; overflow: auto; margin: 6px 0; }
+.kit-actions { display: flex; gap: 8px; margin: 4px 0 10px; }
+.kit-faq { display: grid; gap: 10px; margin: 6px 0; }
+.kit-faq dt { font-weight: 600; }
+.kit-faq dd { margin: 2px 0 0; color: var(--ink-soft); }
+.kit-dirs { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.kit-dir { border: 1px solid var(--border); border-radius: 12px; padding: 12px 14px; }
+.kit-prompts { margin: 6px 0; padding-left: 18px; }

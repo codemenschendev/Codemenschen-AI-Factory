@@ -403,9 +403,20 @@ class PipelineOrchestrator
                 ]);
             }
         }
+        // The AI-visibility kit (llms.txt, JSON-LD, FAQ, directory listings): the "KI-Marketing" the
+        // App-Marketing package promises. A plan without it keeps the kit of the run before.
+        $kit = $run->output['ai_visibility'] ?? null;
+        if (is_array($kit) && $kit !== []) {
+            $project->update(['ai_visibility' => $kit]);
+            // The portal promises the customer that we add the kit to the landing page and list the
+            // app in the directories: an operator gets the to-do.
+            $this->notify->note($project, 'AI marketing kit ready: add llms.txt, JSON-LD and the FAQ to the landing page, then list the app in '
+                .count((array) ($kit['directories'] ?? [])).' directories (texts in the portal, Marketing tab).');
+        }
         $project->recordEvent('marketing.generated', [
             'campaigns' => count($run->output['campaigns'] ?? []),
             'version' => $version,
+            'ai_visibility' => is_array($kit) && $kit !== [],
         ]);
     }
 
