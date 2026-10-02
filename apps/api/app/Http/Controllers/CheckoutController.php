@@ -29,6 +29,7 @@ class CheckoutController extends Controller
             'packages.storePublishing' => 'boolean',
             'packages.transferAssist' => 'boolean',
             'packages.marketingLaunch' => 'boolean',
+            'packages.landingPage' => 'boolean',
             'ad_budget_monthly_eur' => 'nullable|integer|in:'.implode(',', Estimator::AD_BUDGET_OPTIONS),
             // FAGG § 18 express waiver — must be an explicit choice, never defaulted.
             'fagg_waiver' => 'required|boolean',

@@ -12,6 +12,7 @@ use App\Models\Project;
 use App\Services\CareService;
 use App\Services\ChangeChat;
 use App\Services\ChangeShots;
+use App\Services\Notify;
 use App\Services\PipelineOrchestrator;
 use App\Services\PublishingService;
 use App\Services\Refiner;
@@ -279,6 +280,10 @@ class MeController extends Controller
         $project->recordEvent('marketing.campaign_decided', [
             'campaign_id' => $campaign->id, 'decision' => $data['decision'],
         ], 'customer:'.$request->user()->email);
+        // The ads are set up by the team in the customer's own ad account; approving is the go.
+        if ($data['decision'] === 'approved') {
+            app(Notify::class)->note($project, "approved the {$campaign->platform} campaign: set it up paused in the customer's own ad account, the customer pays the platform directly.");
+        }
 
         return response()->json(['status' => $campaign->status]);
     }

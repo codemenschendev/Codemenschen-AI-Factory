@@ -120,7 +120,7 @@ export const de = {
     items: [
       { q: "Gehört mir die App wirklich?", a: "Ja. Du beauftragst die Entwicklung; die fertige App, ihr Code und ihr Store-Eintrag gehören dir." },
       { q: "Was, wenn mir das Ergebnis nicht gefällt?", a: "Du prüfst einen Preview-Build vor dem Release und kannst Korrekturen im vereinbarten Umfang anfordern. Können wir den Umfang nicht liefern, gibt es eine Erstattung." },
-      { q: "Könnt ihr die App auch vermarkten?", a: "Ja. Ein optionales Launch-Marketing-Paket plus ein separates Werbebudget, das 1:1 in Kampagnen fließt." },
+      { q: "Könnt ihr die App auch vermarkten?", a: "Ja. Mit dem Launch-Marketing-Paket schreiben wir die Kampagnen und das KI-Marketing, nach deiner Freigabe richten wir die Anzeigen ein. Sie laufen auf deinem eigenen Werbekonto, das Budget zahlst du direkt an Google oder Meta." },
     ],
   },
   final: {
@@ -237,7 +237,7 @@ export const de = {
       items: {
         proto: { h: "1. App-Prototyp", p: "Aus deinem Satz wird eine klickbare Vorschau. Du siehst deine App, bevor du einen Cent zahlst.", points: ["Kostenlos und unverbindlich", "Vier Bildschirme deiner App", "Eine Änderung inklusive"] },
         dev: { h: "2. App-Entwicklung", p: "Wir programmieren deine App mit KI, und unser Team prüft jedes bezahlte Projekt. Du musst nichts Technisches können.", points: ["Web, iPhone oder Android", "Fertig in {days} Werktagen", "Code und Rechte gehören dir"] },
-        mkt: { h: "3. App-Marketing", p: "Damit deine App Nutzer findet: eine Landingpage, Anzeigen auf Google und Meta und KI-Marketing, damit ChatGPT und andere KI-Assistenten deine App kennen.", points: ["Landingpage mit Anmeldeformular", "Anzeigen mit fester Budgetgrenze", "Auffindbar für ChatGPT und Co."] },
+        mkt: { h: "3. App-Marketing", p: "Damit deine App Nutzer findet: Anzeigen für Google und Meta, auf Wunsch eine eigene Landingpage, und KI-Marketing, damit ChatGPT und andere KI-Assistenten deine App kennen.", points: ["Anzeigen mit fester Budgetgrenze", "Landingpage für 299 € dazu", "Auffindbar für ChatGPT und Co."] },
       },
       free: "Gratis",
     },
@@ -273,7 +273,7 @@ export const de = {
     prices: {
       title: "Preise für deine App",
       lede: "Du siehst jeden Betrag vor der Bezahlung. Das Werbebudget ist getrennt und fließt 1:1 in Anzeigen.",
-      landing: { h: "Landingpage für die App", fig: "{price} Festpreis", p: "Hosting ist {months} Monate inklusive, danach {monthly} im Monat." },
+      landing: { h: "Landingpage für die App", fig: "{price} Festpreis", p: "Optional im Checkout. Hosting ist {months} Monate inklusive, danach {monthly} im Monat." },
     },
     faqTitle: "Häufige Fragen",
     final: {
@@ -368,12 +368,13 @@ export const de = {
       storePublishing: "Store-Publishing-Paket",
       transferAssist: "Developer-Account-Einrichtung",
       marketingLaunch: "Launch-Marketing-Paket",
+      landingPage: "Landingpage für die App",
     } as Record<string, string>,
     storeLocalesTitle: "Sprachen des Store-Listings",
     storeLocalesNote: "App-Name, Untertitel, Beschreibung, Keywords und Release Notes werden für jede angehakte Sprache erzeugt.",
     localeNames: { de: "Deutsch", en: "Englisch" } as Record<string, string>,
     adBudget: "Monatliches Werbebudget (optional)",
-    adBudgetNote: "Separat abgerechnet nach Kampagnen-Freigabe, fließt 1:1 in Anzeigen und ist nie Teil der heutigen Zahlung.",
+    adBudgetNote: "Die Anzeigen laufen auf deinem eigenen Werbekonto. Du zahlst das Budget direkt an Google oder Meta, es ist nie Teil der heutigen Zahlung.",
     adNone: "Vorerst keine Anzeigen",
     email: "Deine E-Mail",
     step1: "1 · Leistungsumfang",
@@ -599,7 +600,7 @@ export const de = {
       copied: "Kopiert",
     },
     marketing: "Marketing",
-    marketingHint: "Dein Launch-Marketing-Paket: Wir erzeugen Kampagnen-Strategie, Ad-Copy und Landing-Texte für Google und Meta. Ohne deine Freigabe wird nichts veröffentlicht und kein Budget ausgegeben. Die Anzeigen selbst gehen in einem späteren Release live.",
+    marketingHint: "Dein Launch-Marketing-Paket: Wir schreiben Kampagnen-Strategie, Anzeigentexte und Landing-Texte für Google und Meta. Nach deiner Freigabe richten wir die Anzeigen pausiert in deinem eigenen Werbekonto ein und melden uns bei dir. Das Budget zahlst du direkt an Google oder Meta. Ohne deine Freigabe wird nichts veröffentlicht.",
     marketingGenerate: "Kampagnen-Entwürfe erzeugen",
     marketingGenerating: "Wird erzeugt, die Seite aktualisiert sich automatisch …",
     campaignApprove: "Inhalte freigeben",
@@ -1545,7 +1546,7 @@ export const de = {
           p: [
             "Der Entwicklungspreis steht vor der Zahlung fest und ist heute fällig. Optionale Pakete werden im Checkout einzeln ausgewiesen.",
             "Verbundene Apps laufen auf unseren Servern und haben ab Übergabe eine monatliche Gebühr für Hosting und Wartung. Der Betrag steht im Checkout, bevor du zahlst.",
-            "Ein Werbebudget ist optional, wird getrennt abgerechnet und geht 1:1 in die Anzeigen. Es ist nie Teil der heutigen Zahlung.",
+            "Ein Werbebudget ist optional. Die Anzeigen laufen auf deinem eigenen Werbekonto, Google oder Meta rechnen das Budget direkt mit dir ab. Es ist nie Teil der heutigen Zahlung.",
           ],
         },
         {

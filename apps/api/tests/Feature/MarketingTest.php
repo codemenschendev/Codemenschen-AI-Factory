@@ -74,6 +74,9 @@ class MarketingTest extends TestCase
         $this->assertSame('pending_approval', $campaign->status);
         $this->assertSame(500, $campaign->ad_budget_monthly_eur);
         $this->assertSame(2, $campaign->creatives()->count());
+        // The team sets the ads up by hand, so approving must reach them.
+        $this->mock(\App\Services\Notify::class)->shouldReceive('note')->once()
+            ->withArgs(fn ($p, string $note) => str_contains($note, 'approved the google campaign'));
 
         $this->withHeader('Authorization', "Bearer {$this->token}")
             ->postJson("/api/me/projects/{$this->project->id}/campaigns/{$campaign->id}/decide", ['decision' => 'approved'])
