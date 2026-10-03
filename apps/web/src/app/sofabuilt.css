@@ -81,15 +81,16 @@ body.sb {
 .sb-desk-page { padding: 28px 0 64px; background: var(--tint); }
 .dk { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 960px) { .dk { grid-template-columns: 1fr; } }
-.dk-main, .dk-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.dk-main, .dk-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 0; margin: 0; }
 .dk-side { position: sticky; top: 84px; }
 @media (max-width: 960px) { .dk-side { position: static; } }
 .dk-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
 .dk-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .dk-eyebrow { display: inline-block; margin: 0 0 12px; padding: 5px 10px; border-radius: 8px; background: var(--accent-soft); color: var(--accent); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; }
-.dk-head h1 { font-family: var(--font-display); font-size: clamp(28px, 3.4vw, 40px); margin: 0 0 10px; }
+.dk-head h1 { font-family: var(--font-display); font-size: clamp(28px, 3vw, 38px); margin: 0 0 10px; white-space: nowrap; }
+@media (max-width: 520px) { .dk-head h1 { white-space: normal; } }
 .dk-lede { margin: 0; color: var(--ink-soft); line-height: 1.55; max-width: 420px; }
-.dk-art { width: 240px; flex: none; }
+.dk-art { width: 190px; flex: none; }
 @media (max-width: 640px) { .dk-art { display: none; } }
 .dk-body { display: flex; flex-direction: column; gap: 22px; }
 .dk-muted { margin: 0; color: var(--ink-soft); font-size: 14px; line-height: 1.5; }
