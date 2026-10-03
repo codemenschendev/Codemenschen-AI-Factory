@@ -103,4 +103,24 @@ class DeskTest extends TestCase
         $this->assertSame(290, $q['build_eur']);
         $this->assertFalse($q['too_big']);
     }
+
+    public function test_the_customer_picks_parts_and_the_model_keeps_them(): void
+    {
+        $session = \App\Models\DeskSession::create(['door' => 'idea', 'locale' => 'en', 'scope' => [
+            'name' => 'A', 'purpose' => 'p', 'features' => ['x'], 'not_included' => [], 'requires' => ['woocommerce' => false],
+            'modules' => [['key' => 'woo', 'qty' => 1, 'why' => 'shop'], ['key' => 'email', 'qty' => 1, 'why' => 'mails']],
+        ]]);
+
+        $res = $this->postJson("/api/desk/{$session->id}/modules", ['modules' => [['key' => 'woo'], ['key' => 'block'], ['key' => 'nope'], ['key' => 'base']]])
+            ->assertOk();
+        $this->assertSame(['woo', 'block'], array_column($res->json('scope.modules'), 'key'));
+        $this->assertSame(290 + 150 + 80, $res->json('price.build_eur'));
+        $this->assertNotEmpty($res->json('module_options'));
+
+        // The next turn may reword features but not bring e-mails back.
+        $this->fakeModel(['reply' => 'Updated.', 'scope' => ['name' => 'A', 'features' => ['y'], 'modules' => [['key' => 'woo'], ['key' => 'email']]], 'ready' => true]);
+        $this->postJson("/api/desk/{$session->id}/messages", ['text' => 'ok then'])->assertOk()
+            ->assertJsonPath('scope.features.0', 'y')
+            ->assertJsonPath('price.build_eur', 520);
+    }
 }

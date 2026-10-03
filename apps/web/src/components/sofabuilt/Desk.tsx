@@ -26,7 +26,8 @@ type Price = {
   delivery_days: [number, number];
 };
 type Research = { name: string; slug: string; installs: number; rating: number; url: string };
-type Session = { id: string; door: Door; ready: boolean; scope: Scope | null; price: Price | null; research: Research[]; messages: Message[] };
+type Option = { key: string; label: string; eur: number; max: number };
+type Session = { id: string; door: Door; ready: boolean; scope: Scope | null; price: Price | null; research: Research[]; messages: Message[]; module_options?: Option[] };
 type CatalogItem = { id: string; name: string; category: string; price: string; features: string[]; installs: number | null; own_from_eur: number };
 
 const STORE = "sofabuilt.desk";
@@ -108,6 +109,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<Record<number, string>>({});
   const [launch, setLaunch] = useState<Record<string, boolean>>({});
+  const [more, setMore] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const end = useRef<HTMLDivElement>(null);
@@ -189,6 +191,18 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
   function sendAnswers() {
     const answers = questions.flatMap((q, i) => (picked[i] ? [`${q.q} ${picked[i]}`] : []));
     send([...answers, text.trim()].filter(Boolean).join("\n"));
+  }
+
+  /** The customer adds or removes a part; the API prices it, no model call. */
+  async function togglePart(key: string, on: boolean) {
+    if (!session?.scope || busy) return;
+    const current = session.scope.modules.map((m) => ({ key: m.key, qty: m.qty }));
+    const modules = on ? [...current, { key, qty: 1 }] : current.filter((m) => m.key !== key);
+    try {
+      setSession(await api<Session>(`/desk/${session.id}/modules`, { method: "POST", body: JSON.stringify({ modules }) }));
+    } catch {
+      setError(t.unavailable);
+    }
   }
 
   function reset() {
@@ -385,28 +399,59 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
           )}
         </div>
 
-        {price && (
-          <div className="dk-card">
+        {price && session?.scope && (
+          <div className="dk-card dk-pricecard">
             <div className="dk-card-head">
               <h3>{t.priceTitle}</h3>
               <span className="dk-pill dk-pill-grey">EUR</span>
             </div>
-            <table className="dk-lines">
-              <tbody>
-                {price.lines.map((l) => (
-                  <tr key={l.key}>
-                    <td>
-                      {l.label}
-                      {l.qty > 1 ? ` × ${l.qty}` : ""}
-                    </td>
-                    <td>{eur(l.eur)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-            <div className="dk-total">
+            <p className="dk-sub">{t.parts}</p>
+            <p className="dk-hint">{t.partsHint}</p>
+            <div className="dk-parts">
+              {price.lines.map((l) => (
+                <label key={l.key} className={`dk-part is-on${l.key === "base" ? " is-fixed" : ""}`}>
+                  <input type="checkbox" checked disabled={l.key === "base" || busy} onChange={() => togglePart(l.key, false)} />
+                  <span>
+                    {l.label}
+                    {l.qty > 1 ? ` × ${l.qty}` : ""}
+                  </span>
+                  <b>{eur(l.eur)}</b>
+                </label>
+              ))}
+              {more &&
+                (session.module_options ?? [])
+                  .filter((o) => !price.lines.some((l) => l.key === o.key))
+                  .map((o) => (
+                    <label key={o.key} className="dk-part">
+                      <input type="checkbox" checked={false} disabled={busy} onChange={() => togglePart(o.key, true)} />
+                      <span>{o.label}</span>
+                      <b>+{eur(o.eur)}</b>
+                    </label>
+                  ))}
+            </div>
+            <button type="button" className="dk-more" onClick={() => setMore(!more)}>
+              {more ? t.showLess : `+ ${t.addMore}`}
+            </button>
+            <div className="dk-subtotal">
               <span>{t.build}</span>
               <b>{eur(price.build_eur)}</b>
+            </div>
+            <p className="dk-sub dk-sub-launch">
+              <Ico name="rocket" className="dk-launch-ico" />
+              {t.launchTitle}
+            </p>
+            <div className="dk-parts">
+              {Object.entries(price.launch).map(([k, l]) => (
+                <label key={k} className={`dk-part${launch[k] ? " is-on" : ""}`}>
+                  <input type="checkbox" checked={!!launch[k]} onChange={(e) => setLaunch({ ...launch, [k]: e.target.checked })} />
+                  <span>{l.label}</span>
+                  <b>+{eur(l.eur)}</b>
+                </label>
+              ))}
+            </div>
+            <div className="dk-total">
+              <span>{t.total}</span>
+              <b>{eur(total)}</b>
             </div>
             <div className="dk-meta">
               <span>
@@ -419,24 +464,6 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
               </span>
             </div>
             {price.too_big && <p className="dk-error">{t.tooBig}</p>}
-          </div>
-        )}
-
-        {price && (
-          <div className="dk-card dk-launch">
-            <div className="dk-card-head">
-              <h3>
-                <Ico name="rocket" className="dk-launch-ico" />
-                {t.launchTitle}
-              </h3>
-            </div>
-            {Object.entries(price.launch).map(([k, l]) => (
-              <label key={k} className="dk-check">
-                <input type="checkbox" checked={!!launch[k]} onChange={(e) => setLaunch({ ...launch, [k]: e.target.checked })} />
-                <span>{l.label}</span>
-                <b>{eur(l.eur)}</b>
-              </label>
-            ))}
           </div>
         )}
 
