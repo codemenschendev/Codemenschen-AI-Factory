@@ -1,0 +1,188 @@
+/**
+ * Sofabuilt's own words (docs/specs/sofabuilt.md). Kept apart from the Appmitki dictionaries: one
+ * brand's copy never leaks into the other. Rules: short plain sentences, no income promises, no
+ * other plugin's name or logo, no AI provider named.
+ */
+const en = {
+  meta: {
+    title: "Sofabuilt · Your idea. We build it. You relax.",
+    description:
+      "Describe your WordPress plugin idea. We research it, price it, build it, test it and help you launch it. You pay once and own the code.",
+  },
+  nav: { how: "How it works", what: "What you get", prices: "Prices", faq: "FAQ", cta: "Start with an idea" },
+  hero: {
+    eyebrow: "WordPress plugins, built for you",
+    title: ["Your idea.", "We build it.", "You relax."],
+    lede:
+      "Tell us what your plugin should do. We research the market, scope it, give you a fixed price and build it. You test it live before you take it. Then use it on your own sites or sell it.",
+    doors: [
+      {
+        key: "idea",
+        h: "I have my own idea",
+        p: "Describe it in a sentence. We ask what we need, then show scope and price.",
+        cta: "Describe my idea",
+      },
+      {
+        key: "premium",
+        h: "Make my own version of a premium plugin",
+        p: "Paying every year for a plugin you use a little of? We build your own version with the features you need. You pay once.",
+        cta: "Show me popular plugins",
+      },
+    ],
+    note: "Chat, scope and price are free. You pay only when you agree.",
+  },
+  how: {
+    title: "How it works",
+    steps: [
+      { h: "Describe", p: "One sentence is enough. Or pick a premium plugin you want your own version of." },
+      { h: "Research and price", p: "We look at what exists, list the features in and out of scope, and price every part." },
+      { h: "Agree and pay", p: "You see the full price before you pay. Nothing starts without your yes." },
+      { h: "Relax", p: "We build, test and hand over. You try it live in your browser first, with one change round included." },
+    ],
+  },
+  what: {
+    title: "What you get",
+    items: [
+      { h: "Code that is yours", p: "The plugin, its source and its repository. Licensed under the GPL like every WordPress plugin." },
+      { h: "Tested before you see it", p: "Checked with the same tool the WordPress.org review team uses, and with tests for every agreed feature." },
+      { h: "Try it before you take it", p: "A live WordPress in your browser with your plugin installed. Nothing to set up." },
+      { h: "Ready to launch", p: "Readme, changelog and store texts. On request a sales page, a store listing and ads." },
+      { h: "Kept up to date", p: "With the care plan we update it for new WordPress, WooCommerce and PHP versions and fix security issues." },
+      { h: "Real people", p: "A team in Austria checks every paid project and answers by e-mail." },
+    ],
+  },
+  license: {
+    title: "Paying for a plugin every year?",
+    lede: "Compare what a yearly licence costs you over time with a plugin of your own. An example, not an offer: your price depends on the features you need.",
+    yearly: "Licence per year",
+    sites: "Sites",
+    build: "Your own version, once",
+    years: "Years",
+    licenceTotal: "Licences over {years} years",
+    ownTotal: "Your own plugin",
+    saved: "Difference",
+    note: "Example without taxes and without a care plan. Prices of premium plugins differ by vendor and plan.",
+  },
+  prices: {
+    title: "Prices",
+    lede: "Every part has its own line. You see the total before you pay.",
+    items: [
+      { h: "Plugin build", fig: "from €290", p: "Fixed price from the agreed scope. One change round included." },
+      { h: "Launch", fig: "optional", p: "Sales page, store listing, ads with a fixed budget cap. The ad budget runs on your own ad account." },
+      { h: "Care plan", fig: "monthly", p: "Updates for new WordPress, WooCommerce and PHP versions, security fixes." },
+    ],
+  },
+  faq: {
+    title: "Questions",
+    items: [
+      { q: "Do I own the plugin?", a: "Yes. You get the code and the repository. WordPress plugins are licensed under the GPL, so you may use, change and sell it." },
+      { q: "Is it legal to build a version of a premium plugin?", a: "Yes, when it is new code with its own name. We never copy another plugin's name, logo or texts. The scope says which features are included." },
+      { q: "Will it sell?", a: "We cannot promise that. Most plugins sell little, some sell a lot. We help with the sales page, the listing and ads, and we show you an honest calculation before you start." },
+      { q: "Which platforms?", a: "WordPress and WooCommerce today. Shopify apps come later." },
+      { q: "What if I do not like the result?", a: "You try it live before delivery and get one change round. More changes are possible at a fixed price per round." },
+    ],
+  },
+  final: { title: "Got an idea for a plugin?", lede: "Tell us in one sentence. Scope and price are free.", cta: "Start with an idea" },
+  desk: {
+    title: "The desk opens soon",
+    lede: "Here you will describe your idea in a chat and see scope and price grow next to it. We are setting it up right now.",
+    mail: "Can't wait? Send your idea to",
+    back: "Back to the start page",
+  },
+  footer: { by: "A Codemenschen product, Gössendorf, Austria", imprint: "Imprint", privacy: "Privacy" },
+};
+
+const de: typeof en = {
+  meta: {
+    title: "Sofabuilt · Deine Idee. Wir bauen sie. Du lehnst dich zurück.",
+    description:
+      "Beschreib deine Idee für ein WordPress-Plugin. Wir recherchieren, kalkulieren, bauen, testen und helfen beim Start. Du zahlst einmal und der Code gehört dir.",
+  },
+  nav: { how: "So geht's", what: "Was du bekommst", prices: "Preise", faq: "Fragen", cta: "Mit einer Idee starten" },
+  hero: {
+    eyebrow: "WordPress-Plugins, für dich gebaut",
+    title: ["Deine Idee.", "Wir bauen sie.", "Du lehnst dich zurück."],
+    lede:
+      "Sag uns, was dein Plugin können soll. Wir schauen uns den Markt an, legen den Umfang fest, nennen dir einen Festpreis und bauen es. Du testest es live, bevor du es übernimmst. Dann nutzt du es auf deinen Seiten oder verkaufst es.",
+    doors: [
+      {
+        key: "idea",
+        h: "Ich habe eine eigene Idee",
+        p: "Beschreib sie in einem Satz. Wir fragen nach, was wir brauchen, und zeigen dir Umfang und Preis.",
+        cta: "Meine Idee beschreiben",
+      },
+      {
+        key: "premium",
+        h: "Meine eigene Version eines Premium-Plugins",
+        p: "Du zahlst jedes Jahr für ein Plugin, von dem du wenig nutzt? Wir bauen deine eigene Version mit den Funktionen, die du brauchst. Du zahlst einmal.",
+        cta: "Beliebte Plugins zeigen",
+      },
+    ],
+    note: "Chat, Umfang und Preis sind kostenlos. Du zahlst erst, wenn du zustimmst.",
+  },
+  how: {
+    title: "So geht's",
+    steps: [
+      { h: "Beschreiben", p: "Ein Satz reicht. Oder wähl ein Premium-Plugin, von dem du deine eigene Version willst." },
+      { h: "Recherche und Preis", p: "Wir schauen, was es gibt, listen auf, was drin ist und was nicht, und bepreisen jeden Teil." },
+      { h: "Zustimmen und zahlen", p: "Du siehst den vollen Preis vor der Zahlung. Ohne dein Ja startet nichts." },
+      { h: "Zurücklehnen", p: "Wir bauen, testen und übergeben. Vorher probierst du es live im Browser, eine Änderungsrunde ist inklusive." },
+    ],
+  },
+  what: {
+    title: "Was du bekommst",
+    items: [
+      { h: "Code, der dir gehört", p: "Das Plugin, der Quellcode und das Repository. Unter der GPL lizenziert wie jedes WordPress-Plugin." },
+      { h: "Getestet, bevor du es siehst", p: "Geprüft mit demselben Werkzeug, das das Review-Team von WordPress.org nutzt, und mit Tests für jede vereinbarte Funktion." },
+      { h: "Ausprobieren vor der Übernahme", p: "Ein echtes WordPress im Browser, dein Plugin ist schon installiert. Du musst nichts einrichten." },
+      { h: "Bereit für den Start", p: "Readme, Changelog und Store-Texte. Auf Wunsch eine Verkaufsseite, ein Store-Eintrag und Anzeigen." },
+      { h: "Immer aktuell", p: "Mit dem Wartungsplan halten wir es für neue Versionen von WordPress, WooCommerce und PHP aktuell und schließen Sicherheitslücken." },
+      { h: "Echte Menschen", p: "Ein Team in Österreich prüft jedes bezahlte Projekt und antwortet per E-Mail." },
+    ],
+  },
+  license: {
+    title: "Du zahlst jedes Jahr für ein Plugin?",
+    lede: "Vergleich, was eine Jahreslizenz über die Zeit kostet, mit einem eigenen Plugin. Ein Beispiel, kein Angebot: dein Preis hängt von den Funktionen ab, die du brauchst.",
+    yearly: "Lizenz pro Jahr",
+    sites: "Websites",
+    build: "Deine eigene Version, einmalig",
+    years: "Jahre",
+    licenceTotal: "Lizenzen über {years} Jahre",
+    ownTotal: "Dein eigenes Plugin",
+    saved: "Unterschied",
+    note: "Beispiel ohne Steuern und ohne Wartungsplan. Preise von Premium-Plugins unterscheiden sich je nach Anbieter und Paket.",
+  },
+  prices: {
+    title: "Preise",
+    lede: "Jeder Teil hat eine eigene Zeile. Du siehst die Summe, bevor du zahlst.",
+    items: [
+      { h: "Plugin-Entwicklung", fig: "ab 290 €", p: "Festpreis aus dem vereinbarten Umfang. Eine Änderungsrunde inklusive." },
+      { h: "Start", fig: "optional", p: "Verkaufsseite, Store-Eintrag, Anzeigen mit fester Budgetgrenze. Das Werbebudget läuft über dein eigenes Werbekonto." },
+      { h: "Wartungsplan", fig: "monatlich", p: "Updates für neue Versionen von WordPress, WooCommerce und PHP, Sicherheitsfixes." },
+    ],
+  },
+  faq: {
+    title: "Fragen",
+    items: [
+      { q: "Gehört mir das Plugin?", a: "Ja. Du bekommst den Code und das Repository. WordPress-Plugins stehen unter der GPL, du darfst es nutzen, ändern und verkaufen." },
+      { q: "Darf man eine Version eines Premium-Plugins bauen?", a: "Ja, wenn es neuer Code mit eigenem Namen ist. Wir übernehmen nie Namen, Logo oder Texte eines anderen Plugins. Im Umfang steht, welche Funktionen dabei sind." },
+      { q: "Verkauft es sich?", a: "Das können wir nicht versprechen. Die meisten Plugins verkaufen sich wenig, manche sehr gut. Wir helfen mit Verkaufsseite, Store-Eintrag und Anzeigen und zeigen dir vorher eine ehrliche Rechnung." },
+      { q: "Für welche Plattformen?", a: "Heute WordPress und WooCommerce. Shopify-Apps kommen später." },
+      { q: "Und wenn mir das Ergebnis nicht gefällt?", a: "Du probierst es vor der Übergabe live aus und hast eine Änderungsrunde. Weitere Änderungen gibt es zum Festpreis pro Runde." },
+    ],
+  },
+  final: { title: "Eine Idee für ein Plugin?", lede: "Sag sie uns in einem Satz. Umfang und Preis sind kostenlos.", cta: "Mit einer Idee starten" },
+  desk: {
+    title: "Der Desk öffnet bald",
+    lede: "Hier beschreibst du bald deine Idee im Chat und siehst daneben Umfang und Preis wachsen. Wir richten ihn gerade ein.",
+    mail: "Du willst nicht warten? Schick deine Idee an",
+    back: "Zurück zur Startseite",
+  },
+  footer: { by: "Ein Produkt von Codemenschen, Gössendorf, Österreich", imprint: "Impressum", privacy: "Datenschutz" },
+};
+
+export type SbDict = typeof en;
+
+export function sbDict(locale: string): SbDict {
+  return locale === "de" ? de : en;
+}
