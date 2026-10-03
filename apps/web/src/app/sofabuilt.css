@@ -181,3 +181,17 @@ body.sb h3 { font-family: Manrope, Inter, system-ui, sans-serif; letter-spacing:
 .sb-research li { display: flex; flex-direction: column; }
 .sb-research a { color: var(--sb-ink); font-weight: 600; }
 .sb-research span { font-size: 13px; color: var(--sb-muted); }
+.sb-order { display: grid; gap: 10px; }
+.sb-order h4 { margin: 0; }
+.sb-order fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 6px; }
+.sb-order legend { font-size: 13px; color: var(--sb-muted); margin-bottom: 4px; }
+.sb-check { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+.sb-check span { flex: 1; }
+.sb-check input { margin-top: 3px; accent-color: var(--sb-green); }
+.sb-check-text { font-size: 13px; color: var(--sb-muted); line-height: 1.45; }
+.sb-check-text a { color: var(--sb-green); }
+.sb-order-total { display: flex; justify-content: space-between; margin: 4px 0; padding-top: 10px; border-top: 1px solid var(--sb-line); font-size: 17px; }
+.sb-order input[type="email"], .sb-order input[type="text"] { padding: 11px 12px; border-radius: 12px; border: 1px solid var(--sb-line); background: #fff; font: inherit; }
+.sb-order .sb-btn { border: 0; cursor: pointer; font: inherit; font-weight: 600; }
+.sb-order .sb-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
+.sb-steps-1 { grid-template-columns: 1fr !important; text-align: left; margin: 24px 0; }

@@ -49,6 +49,8 @@ return [
     ],
 
     'frontend_url' => env('FRONTEND_URL', 'http://localhost:3000'),
+    // Sofabuilt's storefront (docs/specs/sofabuilt.md); sofabuilt.com once it is bought.
+    'sofabuilt_url' => env('SOFABUILT_URL', 'https://sofabuilt.codemenschen.at'),
 
     // Where signed links in e-mails point (App\Support\MailLink): the storefront's domain, whose
     // /api/ goes to this API. Empty: the host of the request, as before.

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Analytics\Analytics;
 use App\Domain\Payments\StripeKeys;
 use App\Domain\Pricing\Estimator;
+use App\Domain\Pricing\Packages;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Quote;
@@ -26,10 +27,8 @@ class CheckoutController extends Controller
             'email' => 'required|email',
             'name' => 'nullable|string|max:120',
             'packages' => 'array',
-            'packages.storePublishing' => 'boolean',
-            'packages.transferAssist' => 'boolean',
-            'packages.marketingLaunch' => 'boolean',
-            'packages.landingPage' => 'boolean',
+            // Which keys a quote may carry depends on what it is for (Packages::for).
+            'packages.*' => 'boolean',
             'ad_budget_monthly_eur' => 'nullable|integer|in:'.implode(',', Estimator::AD_BUDGET_OPTIONS),
             // FAGG § 18 express waiver — must be an explicit choice, never defaulted.
             'fagg_waiver' => 'required|boolean',
@@ -51,17 +50,16 @@ class CheckoutController extends Controller
             ['name' => $data['name'] ?? null, 'locale' => $data['locale'] ?? $quote->locale],
         );
 
-        $packages = $data['packages'] ?? [];
+        $packages = array_intersect_key($data['packages'] ?? [], Packages::for($quote));
         if ($quote->kind === 'site') {
-            // A website is bought as it is; the launch marketing is the one package that fits.
-            $packages = array_intersect_key($packages, ['marketingLaunch' => 1]);
             abort_if($quote->prototype === null, 410, 'The website preview is gone.');
         }
-        $total = Estimator::oneTimeTotal($quote->price_eur, $packages);
+        $total = Packages::total($quote, $packages);
 
         $order = Order::create([
             'customer_id' => $customer->id,
             'quote_id' => $quote->id,
+            'brand' => $quote->brand ?? 'appmitki',
             'packages' => $packages,
             'ad_budget_monthly_eur' => $data['ad_budget_monthly_eur'] ?? 0,
             'total_one_time_eur' => $total,
@@ -101,8 +99,9 @@ class CheckoutController extends Controller
     private function createSession(StripeClient $stripe, Order $order, Quote $quote): StripeSession
     {
         $locale = $order->locale;
-        $front = rtrim(config('services.frontend_url'), '/');
+        $front = self::front($quote);
         $name = match (true) {
+            $quote->kind === 'plugin' => 'Sofabuilt plugin: '.mb_substr((string) ($quote->breakdown['scope']['name'] ?? 'WordPress plugin'), 0, 80),
             $quote->kind === 'site' => 'Website: '.mb_substr((string) ($quote->idea ?: 'one page'), 0, 80),
             (bool) $quote->listing_slug => ucfirst($quote->listing_slug).' — App development',
             default => 'Custom app development',
@@ -116,14 +115,14 @@ class CheckoutController extends Controller
                 'product_data' => ['name' => $name],
             ],
         ]];
-        foreach (Estimator::PACKAGE_PRICES as $key => $fee) {
+        foreach (Packages::for($quote) as $key => $fee) {
             if (! empty($order->packages[$key])) {
                 $lineItems[] = [
                     'quantity' => 1,
                     'price_data' => [
                         'currency' => 'eur',
                         'unit_amount' => $fee * 100,
-                        'product_data' => ['name' => ucfirst(preg_replace('/(?<!^)[A-Z]/', ' $0', $key))],
+                        'product_data' => ['name' => Packages::label($quote, $key)],
                     ],
                 ];
             }
@@ -140,7 +139,15 @@ class CheckoutController extends Controller
             'locale' => $locale,
             'invoice_creation' => ['enabled' => true],
             'success_url' => "$front/$locale/success?order={$order->id}&kind={$quote->kind}",
-            'cancel_url' => "$front/$locale/checkout?quote={$quote->id}",
+            'cancel_url' => $quote->kind === 'plugin' ? "$front/$locale/desk" : "$front/$locale/checkout?quote={$quote->id}",
         ]);
+    }
+
+    /** The storefront the buyer came from: Stripe sends them back there. */
+    public static function front(Quote $quote): string
+    {
+        return rtrim((string) (($quote->brand ?? 'appmitki') === 'sofabuilt'
+            ? config('services.sofabuilt_url', 'https://sofabuilt.codemenschen.at')
+            : config('services.frontend_url')), '/');
     }
 }

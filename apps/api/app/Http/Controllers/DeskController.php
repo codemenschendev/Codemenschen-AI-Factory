@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use App\Domain\Sofabuilt\DeskAgent;
 use App\Domain\Sofabuilt\Pricing;
 use App\Domain\Sofabuilt\WpOrg;
+use App\Domain\Pricing\Packages;
 use App\Models\DeskSession;
+use App\Models\Quote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -99,6 +101,34 @@ class DeskController extends Controller
         return response()->json(self::payload($session->fresh()));
     }
 
+    /**
+     * The agreed scope becomes a quote: the price frozen as it stands, valid 14 days. The launch
+     * options are chosen at checkout like any package.
+     */
+    public function quote(DeskSession $session): JsonResponse
+    {
+        abort_unless($session->ready && $session->scope !== null, 409, 'The scope is not ready yet.');
+        $price = Pricing::quote($session->scope, $session->locale);
+        abort_if($price['too_big'], 409, 'Too big for one build.');
+        $scope = $session->scope;
+        $quote = Quote::create([
+            'kind' => 'plugin',
+            'brand' => 'sofabuilt',
+            'idea' => mb_substr(trim(($scope['name'] ?? '').': '.($scope['purpose'] ?? ''), ': '), 0, 200),
+            'features' => array_column($scope['modules'] ?? [], 'key'),
+            'breakdown' => ['scope' => $scope, 'lines' => $price['lines'], 'delivery_days' => $price['delivery_days'],
+                'care_monthly_eur' => $price['care_monthly_eur'], 'desk_session_id' => $session->id],
+            'price_eur' => $price['build_eur'],
+            'app_type' => 'A',
+            'hosting_monthly_eur' => 0,
+            'locale' => $session->locale,
+            'valid_until' => now()->addDays(14),
+        ]);
+        $session->update(['quote_id' => $quote->id]);
+
+        return response()->json(['quote_id' => $quote->id, 'price_eur' => $quote->price_eur, 'packages' => Packages::for($quote)], 201);
+    }
+
     private static function payload(DeskSession $session): array
     {
         return [
@@ -106,6 +136,7 @@ class DeskController extends Controller
             'door' => $session->door,
             'locale' => $session->locale,
             'status' => $session->status,
+            'quote_id' => $session->quote_id,
             'ready' => $session->ready,
             'scope' => $session->scope,
             'research' => array_values($session->research ?? []),

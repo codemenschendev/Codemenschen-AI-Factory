@@ -53,6 +53,12 @@ class CustomerMail
 
             return;
         }
+        if ($project->kind === 'plugin') {
+            $this->send($customer, $de ? "Deine Bestellung bei Sofabuilt: {$project->name}" : "Your Sofabuilt order: {$project->name}",
+                $this->pluginBody($order, $project, $customer, $de, $today ? null : $start), 'Sofabuilt');
+
+            return;
+        }
 
         $body = $de ? implode("\n", [
             $this->hello($customer, true),
@@ -310,13 +316,53 @@ class CustomerMail
             : "Appmitki, a service of Codemenschen GmbH, Gössendorf, Austria.\nYou receive this e-mail because you ordered at Appmitki.";
     }
 
-    private function send(Customer $customer, string $subject, string $body): void
+    /** A Sofabuilt plugin order (docs/specs/sofabuilt.md). No portal link yet: the review comes by e-mail. */
+    private function pluginBody(Order $order, Project $project, Customer $customer, bool $de, ?\Carbon\CarbonInterface $later): string
+    {
+        $days = $order->quote?->breakdown['delivery_days'] ?? [2, 3];
+
+        return $de ? implode("\n", [
+            $this->hello($customer, true),
+            '',
+            'danke, deine Zahlung ist angekommen. Wir bauen jetzt dein Plugin.',
+            '',
+            "Plugin: {$project->name}",
+            "Betrag: {$order->total_one_time_eur} Euro",
+            $later !== null
+                ? 'Start: '.$later->format('d.m.Y').', nach Ablauf der 14-tägigen Widerrufsfrist.'
+                : "Start: sofort. Rechne mit {$days[0]} bis {$days[1]} Werktagen.",
+            '',
+            'Was jetzt passiert: wir bauen das Plugin nach dem vereinbarten Umfang und testen es. Dann bekommst du einen Link, unter dem du es live in einem WordPress im Browser ausprobierst. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du das Plugin als ZIP und den Code.',
+            '',
+            'Fragen jederzeit: einfach auf diese E-Mail antworten.',
+            '',
+            "Sofabuilt, ein Angebot der Codemenschen GmbH, Gössendorf.\nDiese E-Mail geht an dich, weil du bei Sofabuilt bestellt hast.",
+        ]) : implode("\n", [
+            $this->hello($customer, false),
+            '',
+            'thank you, your payment has arrived. We are building your plugin now.',
+            '',
+            "Plugin: {$project->name}",
+            "Amount: {$order->total_one_time_eur} euros",
+            $later !== null
+                ? 'Start: '.$later->format('d M Y').', after the 14-day withdrawal period.'
+                : "Start: now. Expect {$days[0]} to {$days[1]} working days.",
+            '',
+            'What happens now: we build the plugin to the agreed scope and test it. Then you get a link where you try it live in a WordPress in your browser. You approve it or ask for changes, one round is included. After that you get the plugin as a ZIP and the code.',
+            '',
+            'Questions at any time: just reply to this e-mail.',
+            '',
+            "Sofabuilt, a service of Codemenschen GmbH, Gössendorf, Austria.\nYou receive this e-mail because you ordered at Sofabuilt.",
+        ]);
+    }
+
+    private function send(Customer $customer, string $subject, string $body, ?string $fromName = null): void
     {
         if (config('mail.default') === 'log') {
             Log::info('customer.mail', ['to' => $customer->email, 'subject' => $subject]);
         }
         try {
-            Mail::to($customer->email)->send(new CustomerNotice($subject, $body));
+            Mail::to($customer->email)->send(new CustomerNotice($subject, $body, $fromName));
         } catch (\Throwable $e) {
             Log::warning('customer.mail_failed', ['to' => $customer->email, 'subject' => $subject, 'error' => mb_substr($e->getMessage(), 0, 200)]);
         }
