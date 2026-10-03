@@ -205,4 +205,4 @@ body.sb {
 .dk-pricecard .dk-total b { font-size: 24px; }
 
 /* The service cards end in what to do next instead of a price. */
-body.sb .svc-go-label { font-size: 15px; color: var(--accent); }
+body.sb .svc-foot b.svc-go-label { font-size: 16px; font-weight: 600; color: var(--accent); }
