@@ -79,7 +79,8 @@ async function withSandbox() {
 
   const target = path.join(SANDBOX, "wp", "wp-content", "plugins", info.slug);
   rmSync(target, { recursive: true, force: true });
-  cpSync(PLUGIN_DIR, target, { recursive: true });
+  // Hidden files never ship (Plugin Check rejects them), so they are not tested either.
+  cpSync(PLUGIN_DIR, target, { recursive: true, filter: (src) => !path.basename(src).startsWith(".") });
   installed = true;
 
   if (info.requiresWoo) wp(["plugin", "activate", "woocommerce"], { allowFail: true });
