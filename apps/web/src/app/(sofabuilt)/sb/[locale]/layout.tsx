@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { LOCALES, isLocale } from "@/lib/i18n";
+import { LOCALES, isLocale, type Locale } from "@/lib/i18n";
 import { sbDict } from "@/dictionaries/sofabuilt";
 import { SbLogo } from "@/components/sofabuilt/SbLogo";
+import { LangSwitch } from "@/components/LangSwitch";
+import { MobileNav } from "@/components/MobileNav";
+import { NavLinks } from "@/components/NavLinks";
 import "../../../globals.css";
 import "../../../sofabuilt.css";
 
 /**
- * Sofabuilt's root layout (docs/specs/sofabuilt.md). Reached only on its own host: proxy.ts
- * rewrites /en/... to /sb/en/... there. Not indexed until the brand launches.
+ * Sofabuilt's root layout (docs/specs/sofabuilt.md), in Appmitki's header and footer: the same
+ * system, a sibling brand. Reached only on its own host (proxy.ts). Not indexed before launch.
  */
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -32,46 +35,50 @@ export default async function SofabuiltLayout({
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const d = sbDict(locale);
-  const other = locale === "en" ? "de" : "en";
+  const links = [
+    { href: `/${locale}#services`, label: d.nav.what },
+    { href: `/${locale}#how`, label: d.nav.how },
+    { href: `/${locale}#prices`, label: d.nav.prices },
+    { href: `/${locale}#faq`, label: d.nav.faq },
+  ];
+  const cta = { href: `/${locale}/desk`, label: d.nav.cta };
+  const by = locale === "de" ? "von codemenschen" : "by codemenschen";
 
   return (
     <html lang={locale}>
       <body className="sb">
-        <header className="sb-nav">
-          <div className="wrap sb-nav-inner">
-            <Link href={`/${locale}`} aria-label="Sofabuilt">
-              <SbLogo />
+        <header className="nav" id="top">
+          <div className="wrap nav-inner">
+            <Link href={`/${locale}`} className="nav-logo" aria-label="Sofabuilt">
+              <SbLogo by={by} />
             </Link>
-            <nav className="sb-nav-links">
-              <a href={`/${locale}#how`}>{d.nav.how}</a>
-              <a href={`/${locale}#what`}>{d.nav.what}</a>
-              <a href={`/${locale}#prices`}>{d.nav.prices}</a>
-              <a href={`/${locale}#faq`}>{d.nav.faq}</a>
-            </nav>
-            <div className="sb-nav-right">
-              <a className="sb-lang" href={`/${other}`} hrefLang={other}>
-                {other.toUpperCase()}
-              </a>
-              <Link className="sb-btn sb-btn-sm" href={`/${locale}/desk`}>
-                {d.nav.cta}
+            <NavLinks links={links} />
+            <div className="nav-right">
+              <LangSwitch current={locale as Locale} />
+              <Link className="btn btn-primary btn-sm nav-cta" href={cta.href}>
+                <span className="nav-cta-long">{d.nav.cta}</span>
+                <span className="nav-cta-short">{d.nav.cta.split(" ")[0]}</span>
               </Link>
+              <MobileNav links={links} cta={cta} />
             </div>
           </div>
         </header>
         {children}
-        <footer className="sb-footer">
-          <div className="wrap sb-footer-inner">
+        <footer className="site">
+          <div className="wrap footer-inner">
             <div>
-              <SbLogo />
-              <p>{d.footer.by}</p>
-              <p>© {new Date().getFullYear()} Codemenschen GmbH</p>
+              <p className="nav-logo">
+                <SbLogo />
+              </p>
+              <p className="footer-small">{d.footer.by}</p>
+              <p className="footer-small">© {new Date().getFullYear()} Codemenschen GmbH</p>
             </div>
-            <nav>
+            <div className="footer-links">
               <Link href={`/${locale}/imprint`}>{d.footer.imprint}</Link>
               <Link href={`/${locale}/privacy`}>{d.footer.privacy}</Link>
               <Link href={`/${locale}/terms`}>{d.footer.terms}</Link>
               <Link href={`/${locale}/withdrawal`}>{d.footer.withdrawal}</Link>
-            </nav>
+            </div>
           </div>
         </footer>
       </body>

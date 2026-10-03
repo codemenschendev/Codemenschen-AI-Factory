@@ -143,6 +143,33 @@ const en = {
     ],
     back: "Back to the start page",
   },
+  page: {
+    cta2: "Compare with a licence",
+    stackLabel: "Your plugin",
+    stack: ["Research and scope", "Build and test", "Store and ads"],
+    trust: [
+      { h: "Free scope and price", p: "You see everything before you pay." },
+      { h: "Fixed price", p: "Every part has its own line." },
+      { h: "The code is yours", p: "GPL, ZIP and repository." },
+      { h: "Team in Gössendorf", p: "Real people, by e-mail and phone." },
+    ],
+    one: {
+      eyebrow: "Two ways in",
+      title: "Your idea, or your own version of a paid plugin.",
+      lede: "Both end the same way: a plugin that belongs to you, tested and ready to launch.",
+      from: "from",
+      items: [
+        { h: "I have my own idea", p: "Describe it in a sentence. We ask what we need, check what exists on wordpress.org and show scope and price.", points: ["Research of similar plugins", "Scope with what is in and out", "Price line by line"], price: 290 },
+        { h: "My own version of a premium plugin", p: "Paying every year for a plugin you use a little of? We build your own version with the features you need.", points: ["New code, its own name", "The features you really use", "Paid once"], price: 290 },
+        { h: "Launch and care", p: "A sales page, a store listing and ads with a fixed budget cap. Updates for new WordPress versions with the care plan.", points: ["Sales page with sign-up form", "Store listing and ads", "Care plan, monthly"], price: 79 },
+      ],
+    },
+    licenceEyebrow: "Do the maths",
+    howEyebrow: "How it works",
+    pricesNote: "No hidden fees. An ad budget runs on your own ad account and is never part of a payment to us.",
+    faqTitle: "Frequently asked questions",
+    finalEyebrow: "Start now",
+  },
   footer: { by: "A Codemenschen product, Gössendorf, Austria", imprint: "Imprint", privacy: "Privacy", terms: "Terms", withdrawal: "Withdrawal" },
 };
 
@@ -285,6 +312,33 @@ const de: typeof en = {
       "Du gibst frei oder wünschst Änderungen. Dann bekommst du das ZIP und den Code.",
     ],
     back: "Zurück zur Startseite",
+  },
+  page: {
+    cta2: "Mit einer Lizenz vergleichen",
+    stackLabel: "Dein Plugin",
+    stack: ["Recherche und Umfang", "Bauen und testen", "Store und Anzeigen"],
+    trust: [
+      { h: "Umfang und Preis gratis", p: "Du siehst alles, bevor du zahlst." },
+      { h: "Festpreis", p: "Jeder Teil hat eine eigene Zeile." },
+      { h: "Der Code gehört dir", p: "GPL, ZIP und Repository." },
+      { h: "Team in Gössendorf", p: "Echte Menschen, per E-Mail und Telefon." },
+    ],
+    one: {
+      eyebrow: "Zwei Wege hinein",
+      title: "Deine Idee oder deine eigene Version eines bezahlten Plugins.",
+      lede: "Beide enden gleich: ein Plugin, das dir gehört, getestet und bereit für den Start.",
+      from: "ab",
+      items: [
+        { h: "Ich habe eine eigene Idee", p: "Beschreib sie in einem Satz. Wir fragen nach, schauen, was es auf wordpress.org gibt, und zeigen Umfang und Preis.", points: ["Recherche ähnlicher Plugins", "Umfang mit allem, was drin ist und was nicht", "Preis Zeile für Zeile"], price: 290 },
+        { h: "Meine eigene Version eines Premium-Plugins", p: "Du zahlst jedes Jahr für ein Plugin, von dem du wenig nutzt? Wir bauen deine eigene Version mit den Funktionen, die du brauchst.", points: ["Neuer Code, eigener Name", "Die Funktionen, die du wirklich nutzt", "Einmal bezahlt"], price: 290 },
+        { h: "Start und Wartung", p: "Eine Verkaufsseite, ein Store-Eintrag und Anzeigen mit fester Budgetgrenze. Updates für neue WordPress-Versionen mit dem Wartungsplan.", points: ["Verkaufsseite mit Anmeldeformular", "Store-Eintrag und Anzeigen", "Wartungsplan, monatlich"], price: 79 },
+      ],
+    },
+    licenceEyebrow: "Rechne es durch",
+    howEyebrow: "So geht's",
+    pricesNote: "Keine versteckten Gebühren. Ein Werbebudget läuft über dein eigenes Werbekonto und ist nie Teil einer Zahlung an uns.",
+    faqTitle: "Häufige Fragen",
+    finalEyebrow: "Jetzt starten",
   },
   footer: { by: "Ein Produkt von Codemenschen, Gössendorf, Österreich", imprint: "Impressum", privacy: "Datenschutz", terms: "AGB", withdrawal: "Widerruf" },
 };
