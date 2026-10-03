@@ -76,11 +76,8 @@ class OrderFulfillment
                 if (! $project->build_starts_at->isFuture()) {
                     $sites->goLive($project);
                 }
-            } elseif ($plugin) {
-                // Sofabuilt plugins get their own pipeline in phase 1c; until then the team builds.
-                app(Notify::class)->note($project, 'Sofabuilt plugin paid: build it from the scope in the quote (desk '
-                    .($quote->breakdown['desk_session_id'] ?? '?').').');
             } elseif (! $project->build_starts_at->isFuture()) {
+                // Apps and Sofabuilt plugins (stack wp-plugin) run through the same pipeline.
                 app(PipelineOrchestrator::class)->start($project);
             }
 
