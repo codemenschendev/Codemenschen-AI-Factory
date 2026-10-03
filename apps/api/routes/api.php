@@ -13,6 +13,7 @@ use App\Http\Controllers\AdsController;
 use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\DeskController;
 use App\Http\Controllers\DesignLibraryController;
 use App\Http\Controllers\InternalRunController;
 use App\Http\Controllers\LandingController;
@@ -46,6 +47,11 @@ Route::get('/landing/signups/{signup}/confirm', [LandingController::class, 'conf
 Route::get('/landing/signups/{signup}/remove', [LandingController::class, 'remove'])->name('landing.remove')->middleware('throttle:30,1,landing-link');
 
 Route::get('/site-config', [SiteConfigController::class, 'show']);
+// Sofabuilt's desk (docs/specs/sofabuilt.md): idea in, priced scope out. Each turn is a model call.
+Route::get('/desk/catalog', [DeskController::class, 'catalog'])->middleware('throttle:60,1,desk-catalog');
+Route::post('/desk', [DeskController::class, 'store'])->middleware('throttle:10,10,desk-new');
+Route::get('/desk/{session}', [DeskController::class, 'show'])->middleware('throttle:120,1,desk-show');
+Route::post('/desk/{session}/messages', [DeskController::class, 'message'])->middleware(['throttle:12,1,desk-turn', 'turnstile']);
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
 Route::post('/quotes/refine', QuoteRefineController::class)->middleware(['throttle:5,1,refine', 'turnstile']);
