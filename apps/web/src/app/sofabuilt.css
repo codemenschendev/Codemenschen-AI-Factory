@@ -82,7 +82,7 @@ body.sb {
 .dk { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(320px, 1fr); gap: 20px; align-items: start; }
 @media (max-width: 960px) { .dk { grid-template-columns: 1fr; } }
 .dk-main, .dk-side { display: flex; flex-direction: column; gap: 16px; min-width: 0; padding: 0; margin: 0; }
-.dk-side { position: sticky; top: 84px; }
+.dk-side { position: static; }
 @media (max-width: 960px) { .dk-side { position: static; } }
 .dk-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); }
 .dk-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
