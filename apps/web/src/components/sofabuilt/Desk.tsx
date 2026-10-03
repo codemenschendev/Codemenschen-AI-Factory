@@ -221,7 +221,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
           {!door && (
             <>
               <p className="dk-q-title">{t.chooseDoor}</p>
-              <div className="dk-options dk-options-2">
+              <div className="dk-options">
                 {doors.map((d) => (
                   <button key={d.key} type="button" className="dk-option dk-option-tall" onClick={() => setDoor(d.key as Door)}>
                     <span className="dk-option-ico">
@@ -283,7 +283,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
                 <span className="dk-num">{i + 1}</span>
                 {q.q}
               </p>
-              <div className={`dk-options ${q.options.length > 3 ? "dk-options-4" : "dk-options-3"}`}>
+              <div className="dk-options">
                 {q.options.map((o) => {
                   const on = picked[i] === o;
                   return (
