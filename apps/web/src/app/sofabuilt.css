@@ -203,3 +203,6 @@ body.sb {
 .dk-more { margin-top: 8px; background: none; border: 0; padding: 4px 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
 .dk-subtotal { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-weight: 600; }
 .dk-pricecard .dk-total b { font-size: 24px; }
+
+/* The service cards end in what to do next instead of a price. */
+body.sb .svc-go-label { font-size: 15px; color: var(--accent); }

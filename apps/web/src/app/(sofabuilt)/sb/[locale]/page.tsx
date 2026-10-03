@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { eur, isLocale, type Locale } from "@/lib/i18n";
+import { isLocale, type Locale } from "@/lib/i18n";
 import { sbDict } from "@/dictionaries/sofabuilt";
 import { LandingMotion } from "@/components/LandingMotion";
 import { LicenseCalc } from "@/components/sofabuilt/LicenseCalc";
@@ -124,10 +124,10 @@ export default async function SofabuiltHome({ params }: { params: Promise<{ loca
                     </li>
                   ))}
                 </ul>
+                {/* No price on the ways in (owner, 2026-10-03): first what you get; prices are below and on the desk. */}
                 <div className="svc-foot">
                   <div>
-                    <small>{x.one.from}</small>
-                    <b>{eur(it.price, locale)}</b>
+                    <b className="svc-go-label">{it.go}</b>
                   </div>
                   <span className="svc-go">
                     <Icon name="arrow" />
