@@ -153,9 +153,10 @@ body.sb {
 .dk-out ul { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 6px; font-size: 14px; }
 .dk-out li { display: flex; gap: 8px; }
 .dk-out-ico { flex: none; width: 17px; height: 17px; color: #e5485d; }
-.dk-lines { width: 100%; border-collapse: collapse; font-size: 14px; }
+.dk-lines { width: 100%; border-collapse: collapse; font-size: 14px; table-layout: fixed; }
+.dk-lines td:first-child { white-space: normal; overflow-wrap: anywhere; padding-right: 12px; }
 .dk-lines td { padding: 7px 0; border-bottom: 1px solid var(--border); vertical-align: top; }
-.dk-lines td:last-child { text-align: right; white-space: nowrap; padding-left: 12px; font-weight: 600; border-left: 1px solid var(--border); }
+.dk-lines td:last-child { width: 72px; text-align: right; white-space: nowrap; padding-left: 12px; font-weight: 600; border-left: 1px solid var(--border); }
 .dk-total { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; padding: 12px 14px; border-radius: 10px; background: var(--accent-soft); color: var(--accent); font-weight: 700; }
 .dk-total b { font-size: 22px; }
 .dk-meta { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 12px; font-size: 13px; color: var(--ink-soft); }
