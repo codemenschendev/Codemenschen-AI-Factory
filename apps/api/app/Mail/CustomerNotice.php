@@ -4,6 +4,7 @@ namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
+use Illuminate\Mail\Mailables\Address;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
@@ -20,11 +21,15 @@ class CustomerNotice extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public function __construct(public string $subjectLine, public string $body) {}
+    /** $fromName: the brand the customer bought from; the address stays the one mailbox we read. */
+    public function __construct(public string $subjectLine, public string $body, public ?string $fromName = null) {}
 
     public function envelope(): Envelope
     {
-        return new Envelope(subject: $this->subjectLine);
+        return new Envelope(
+            subject: $this->subjectLine,
+            from: $this->fromName !== null ? new Address((string) config('mail.from.address'), $this->fromName) : null,
+        );
     }
 
     public function content(): Content

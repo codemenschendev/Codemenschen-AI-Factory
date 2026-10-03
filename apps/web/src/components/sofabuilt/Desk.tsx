@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { ApiError, api } from "@/lib/api";
 import type { SbDict } from "@/dictionaries/sofabuilt";
+import { SbCheckout } from "./SbCheckout";
 
 type Door = "idea" | "premium";
 type Question = { q: string; options: string[] };
@@ -260,23 +261,20 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
             </table>
             <p className="sb-small">{fill(t.delivery, { lo: session.price.delivery_days[0], hi: session.price.delivery_days[1] })}</p>
             <p className="sb-small">{fill(t.care, { price: eur(session.price.care_monthly_eur) })}</p>
-            <h4>{t.launchTitle}</h4>
-            <ul className="sb-launch">
+            {!session.ready && <h4>{t.launchTitle}</h4>}
+            {!session.ready && <ul className="sb-launch">
               {Object.entries(session.price.launch).map(([k, l]) => (
                 <li key={k}>
                   <span>{l.label}</span>
                   <span>{eur(l.eur)}</span>
                 </li>
               ))}
-            </ul>
+            </ul>}
             {session.price.too_big && <p className="sb-warn">{t.tooBig}</p>}
             {session.ready && !session.price.too_big && (
               <div className="sb-ready">
                 <p>{t.ready}</p>
-                <a className="sb-btn" href={`mailto:developerweb@codemenschen.at?subject=${encodeURIComponent(`Sofabuilt offer ${session.id}`)}`}>
-                  {t.order}
-                </a>
-                <p className="sb-small">{t.orderHint}</p>
+                <SbCheckout sessionId={session.id} buildEur={session.price.build_eur} launch={session.price.launch} t={t.checkout} locale={locale} />
               </div>
             )}
           </div>

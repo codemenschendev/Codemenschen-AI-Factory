@@ -52,6 +52,7 @@ Route::get('/desk/catalog', [DeskController::class, 'catalog'])->middleware('thr
 Route::post('/desk', [DeskController::class, 'store'])->middleware('throttle:10,10,desk-new');
 Route::get('/desk/{session}', [DeskController::class, 'show'])->middleware('throttle:120,1,desk-show');
 Route::post('/desk/{session}/messages', [DeskController::class, 'message'])->middleware(['throttle:12,1,desk-turn', 'turnstile']);
+Route::post('/desk/{session}/quote', [DeskController::class, 'quote'])->middleware('throttle:10,10,desk-quote');
 Route::post('/quotes', [QuoteController::class, 'store']);
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
 Route::post('/quotes/refine', QuoteRefineController::class)->middleware(['throttle:5,1,refine', 'turnstile']);

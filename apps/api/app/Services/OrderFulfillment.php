@@ -45,17 +45,20 @@ class OrderFulfillment
 
             $quote = $order->quote;
             $site = $quote->kind === 'site';
-            $name = $quote->listing_slug
-                ? ucfirst($quote->listing_slug)
-                : mb_substr($quote->idea ?? ($site ? 'Website' : 'Custom app'), 0, 60);
+            $plugin = $quote->kind === 'plugin';
+            $name = match (true) {
+                $plugin => mb_substr((string) ($quote->breakdown['scope']['name'] ?? 'WordPress plugin'), 0, 60),
+                (bool) $quote->listing_slug => ucfirst($quote->listing_slug),
+                default => mb_substr($quote->idea ?? ($site ? 'Website' : 'Custom app'), 0, 60),
+            };
 
             $project = Project::create([
                 'order_id' => $order->id,
                 'customer_id' => $order->customer_id,
                 'name' => $name,
-                'kind' => $site ? 'site' : 'app',
+                'kind' => $site ? 'site' : ($plugin ? 'plugin' : 'app'),
                 'status' => 'PAID',
-                'stack' => $site ? 'site' : (($quote->platform ?? 'mobile') === 'web' ? 'nextjs' : 'expo'),
+                'stack' => $site ? 'site' : ($plugin ? 'wp-plugin' : (($quote->platform ?? 'mobile') === 'web' ? 'nextjs' : 'expo')),
                 'build_starts_at' => $order->fagg_waiver ? now() : now()->addDays(14),
             ]);
             $project->recordEvent('project.created', [
@@ -73,6 +76,10 @@ class OrderFulfillment
                 if (! $project->build_starts_at->isFuture()) {
                     $sites->goLive($project);
                 }
+            } elseif ($plugin) {
+                // Sofabuilt plugins get their own pipeline in phase 1c; until then the team builds.
+                app(Notify::class)->note($project, 'Sofabuilt plugin paid: build it from the scope in the quote (desk '
+                    .($quote->breakdown['desk_session_id'] ?? '?').').');
             } elseif (! $project->build_starts_at->isFuture()) {
                 app(PipelineOrchestrator::class)->start($project);
             }

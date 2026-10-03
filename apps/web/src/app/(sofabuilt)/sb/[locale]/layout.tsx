@@ -69,6 +69,8 @@ export default async function SofabuiltLayout({
             <nav>
               <Link href={`/${locale}/imprint`}>{d.footer.imprint}</Link>
               <Link href={`/${locale}/privacy`}>{d.footer.privacy}</Link>
+              <Link href={`/${locale}/terms`}>{d.footer.terms}</Link>
+              <Link href={`/${locale}/withdrawal`}>{d.footer.withdrawal}</Link>
             </nav>
           </div>
         </footer>

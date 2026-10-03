@@ -7,5 +7,5 @@ export default async function Page({ params }: { params: Promise<{ locale: strin
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
 
-  return <LegalPage locale={locale as Locale} d={sbLegalDict(locale as Locale)} doc="imprint" docs={SB_LEGAL_DOCS} />;
+  return <LegalPage locale={locale as Locale} d={sbLegalDict(locale as Locale)} doc="withdrawal" docs={SB_LEGAL_DOCS} />;
 }

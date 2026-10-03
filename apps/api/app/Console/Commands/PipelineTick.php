@@ -30,6 +30,9 @@ class PipelineTick extends Command
 
                     return;
                 }
+                if ($p->kind === 'plugin') {
+                    return; // Sofabuilt plugins have no pipeline yet (phase 1c); the team builds them.
+                }
                 $this->info("starting deferred project {$p->id}");
                 $orchestrator->start($p);
             });
