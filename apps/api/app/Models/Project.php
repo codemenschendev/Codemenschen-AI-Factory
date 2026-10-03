@@ -97,6 +97,13 @@ class Project extends Model
     /** Browser preview of the latest build, when the release stage exported one. */
     public function previewUrl(): ?string
     {
+        // A Sofabuilt plugin is tried in WordPress Playground: a WordPress in the browser that
+        // installs the built ZIP from our blueprint (PluginPreviewController).
+        if ($this->kind === 'plugin') {
+            return $this->builds()->where('platform', 'plugin')->exists()
+                ? 'https://playground.wordpress.net/?blueprint-url='.rawurlencode(rtrim(config('app.url'), '/')."/api/plugin/{$this->id}/blueprint.json")
+                : null;
+        }
         if (! $this->builds()->where('platform', 'web')->exists()) {
             return null;
         }

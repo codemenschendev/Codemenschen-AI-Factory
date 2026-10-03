@@ -6,6 +6,7 @@
 import { createServer } from "node:http";
 import { AGENT_MODE, runStage } from "./stages.ts";
 import { GATEWAY_MODE, RELAY_MODE, gatewayComplete } from "./gateway.ts";
+import { ensureSandbox } from "./wpsandbox.ts";
 import { REFINE_AVAILABLE, refineIdea } from "./refine.ts";
 import { changeChat } from "./changechat.ts";
 import { mockupSite } from "./mockupsite.ts";
@@ -205,3 +206,6 @@ createServer((req, res) => {
 }).listen(PORT, BIND, () =>
   console.log(`pipeline worker on ${BIND}:${PORT} (agent mode: ${AGENT_MODE}, gateway mode: ${GATEWAY_MODE}, relay mode: ${RELAY_MODE})`),
 );
+
+// Sofabuilt: build the WordPress sandbox in the background so the first plugin test does not wait.
+ensureSandbox().catch((e) => console.warn("wp-sandbox not ready:", e instanceof Error ? e.message.slice(0, 300) : e));

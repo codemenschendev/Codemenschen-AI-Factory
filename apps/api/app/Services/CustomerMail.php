@@ -174,6 +174,11 @@ class CustomerMail
         $de = $this->german($project->order?->locale ?? $customer->locale);
         $link = $this->signIn($customer, $de ? 'de' : 'en');
         $name = $project->name;
+        if ($project->kind === 'plugin') {
+            $this->pluginStatus($project, $customer, $to, $de, $link);
+
+            return;
+        }
 
         [$subject, $lines] = match (true) {
             $to === 'REVIEW' && $project->revision_rounds > 0 => $de
@@ -314,6 +319,58 @@ class CustomerMail
         return $de
             ? "Appmitki, ein Angebot der Codemenschen GmbH, Gössendorf.\nDiese E-Mail geht an dich, weil du bei Appmitki bestellt hast."
             : "Appmitki, a service of Codemenschen GmbH, Gössendorf, Austria.\nYou receive this e-mail because you ordered at Appmitki.";
+    }
+
+    /** A Sofabuilt plugin's preview, approval or problem, in Sofabuilt's name. */
+    private function pluginStatus(Project $project, Customer $customer, string $to, bool $de, string $link): void
+    {
+        $name = $project->name;
+        $try = $project->previewUrl();
+        $zip = rtrim(config('app.url'), '/')."/api/plugin/{$project->id}/plugin.zip";
+        [$subject, $lines] = match (true) {
+            $to === 'REVIEW' => $de
+                ? ["Dein Plugin ist bereit zum Ausprobieren: {$name}", [
+                    $project->revision_rounds > 0 ? 'die Änderungen sind umgesetzt und getestet.' : 'dein Plugin ist gebaut und getestet.',
+                    '',
+                    'Probier es live aus. Ein WordPress startet im Browser, dein Plugin ist installiert und du bist angemeldet:',
+                    (string) $try,
+                    '',
+                    'Dann gib es in deinem Projekt frei oder wünsch dir Änderungen (Link 24 Stunden gültig):',
+                    $link,
+                ]]
+                : ["Your plugin is ready to try: {$name}", [
+                    $project->revision_rounds > 0 ? 'the changes are done and tested.' : 'your plugin is built and tested.',
+                    '',
+                    'Try it live. A WordPress starts in your browser with your plugin installed and you logged in:',
+                    (string) $try,
+                    '',
+                    'Then approve it in your project or ask for changes (link valid for 24 hours):',
+                    $link,
+                ]],
+            $to === 'READY' => $de
+                ? ["Dein Plugin gehört dir: {$name}", [
+                    'danke für die Freigabe. Hier ist dein Plugin als ZIP, bereit zum Hochladen unter Plugins > Installieren:',
+                    $zip,
+                    '',
+                    'Den Quellcode findest du in deinem Projekt. Mach vor der Installation ein Backup deiner Website.',
+                    $link,
+                ]]
+                : ["Your plugin is yours: {$name}", [
+                    'thank you for approving. Here is your plugin as a ZIP, ready to upload under Plugins > Add New:',
+                    $zip,
+                    '',
+                    'The source code is in your project. Back up your site before you install it.',
+                    $link,
+                ]],
+            default => $de
+                ? ["Wir haben ein Problem gesehen: {$name}", ['beim Bau deines Plugins ist etwas schiefgegangen. Ein Mensch bei uns schaut sich das jetzt an. Du musst nichts tun.']]
+                : ["We saw a problem: {$name}", ['something went wrong while building your plugin. A person on our side is looking at it now. Nothing to do for you.']],
+        };
+        $footer = $de
+            ? "Sofabuilt, ein Angebot der Codemenschen GmbH, Gössendorf.\nDiese E-Mail geht an dich, weil du bei Sofabuilt bestellt hast."
+            : "Sofabuilt, a service of Codemenschen GmbH, Gössendorf, Austria.\nYou receive this e-mail because you ordered at Sofabuilt.";
+
+        $this->send($customer, $subject, implode("\n", array_merge([$this->hello($customer, $de), ''], $lines, ['', $footer])), 'Sofabuilt');
     }
 
     /** A Sofabuilt plugin order (docs/specs/sofabuilt.md). No portal link yet: the review comes by e-mail. */

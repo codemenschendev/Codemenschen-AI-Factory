@@ -13,7 +13,7 @@ interface Detail {
   id: string;
   name: string;
   /** app, or site: a bought website, shown by SiteDetail instead of the pipeline screens. */
-  kind?: "app" | "site";
+  kind?: "app" | "site" | "plugin";
   site?: SiteInfo | null;
   status: string;
   failed_reason: string | null;
@@ -326,17 +326,18 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
       {/* ---------------- App: preview, downloads, approval, change requests ---------------- */}
       {active === "app" && (
         <div className="detail-layout">
-        <PhonePreview url={p.preview_url ?? null} version={p.builds.find((b) => b.platform === "web")?.version ?? null} d={d} />
+        {/* A Sofabuilt plugin runs in WordPress Playground in its own tab, not in a phone frame. */}
+        {p.kind !== "plugin" && <PhonePreview url={p.preview_url ?? null} version={p.builds.find((b) => b.platform === "web")?.version ?? null} d={d} />}
         <div className="detail-stack">
           <div className="card">
             <h3>{d.project.builds}</h3>
             {p.builds.length === 0 && <p className="est-empty" style={{ margin: 0 }}>{d.project.buildsPending}</p>}
             {p.preview_url && (
               <a className="btn btn-primary btn-block" href={p.preview_url} target="_blank" rel="noopener noreferrer">
-                {d.project.openPreview}
+                {p.kind === "plugin" ? d.project.openPlugin : d.project.openPreview}
               </a>
             )}
-            {p.preview_url && <p className="small muted" style={{ margin: 0 }}>{d.project.previewHint}</p>}
+            {p.preview_url && <p className="small muted" style={{ margin: 0 }}>{p.kind === "plugin" ? d.project.pluginHint : d.project.previewHint}</p>}
             {p.builds
               .filter((b) => b.platform !== "web")
               .map((b) => (

@@ -20,6 +20,7 @@ use App\Http\Controllers\LandingController;
 use App\Http\Controllers\LibraryController;
 use App\Http\Controllers\MeController;
 use App\Http\Controllers\MediaController;
+use App\Http\Controllers\PluginPreviewController;
 use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\QuoteController;
@@ -224,6 +225,9 @@ Route::get('/admin/design-library/{id}/image', [DesignLibraryController::class, 
 
 // Static web preview of a built app (release stage export); unguessable URL, no login.
 Route::get('/preview/{project}/{path?}', PreviewController::class)->where('path', '.*');
+// A Sofabuilt plugin in WordPress Playground: the blueprint and the ZIP it installs.
+Route::get('/plugin/{project}/blueprint.json', [PluginPreviewController::class, 'blueprint'])->middleware('throttle:60,1,plugin-preview');
+Route::get('/plugin/{project}/plugin.zip', [PluginPreviewController::class, 'zip'])->middleware('throttle:60,1,plugin-preview');
 
 // Worker callbacks — authenticated by the per-run callback token.
 Route::post('/internal/runs/{run}/heartbeat', [InternalRunController::class, 'heartbeat']);

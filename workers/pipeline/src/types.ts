@@ -21,7 +21,9 @@ export interface StageJob {
   change_images?: { mime: string; data: string }[];
   context: {
     name: string;
-    stack: "expo" | "nextjs";
+    stack: "expo" | "nextjs" | "wp-plugin";
+    /** Sofabuilt plugins: the scope agreed on the desk (name, purpose, features, not_included, requires, modules). */
+    scope?: Record<string, unknown> | null;
     idea: string | null;
     listing_slug: string | null;
     audience: string | null;

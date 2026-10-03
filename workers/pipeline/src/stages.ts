@@ -8,6 +8,8 @@ import { REPOS_PATH, archiveRepo, commitAll, ensureRepo, writeRepoFile } from ".
 import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson, gatewayComplete, relayAgent } from "./gateway.ts";
 import { EAS_MODE, easBuildAndroid } from "./eas.ts";
 import { alignExpoDeps, exportWebPreview } from "./web.ts";
+import { ensureSandbox } from "./wpsandbox.ts";
+import { WP_PLUGIN_PRODUCT, WP_PLUGIN_RULES, zipPlugin } from "./wpplugin.ts";
 
 const exec = promisify(execFile);
 
@@ -66,7 +68,10 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const spec = existsSync(path.join(dir, "SPEC.md")) ? await readFile(path.join(dir, "SPEC.md"), "utf8") : "";
   const hostDir = `${REPOS_HOST_PATH}/${job.project_id}`;
   const isCode = job.stage === "coding" || job.stage === "fix" || job.stage === "revise";
-  const system = `${STAGE_PROMPTS[job.stage]}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
+  // A WordPress plugin gets the plugin rules (Sofabuilt): the code stages and the spec.
+  const plugin = job.context.stack === "wp-plugin";
+  const stackRules = plugin && isCode ? `\n\n${WP_PLUGIN_RULES}` : plugin && job.stage === "product" ? `\n\n${WP_PLUGIN_PRODUCT}` : "";
+  const system = `${STAGE_PROMPTS[job.stage]}${stackRules}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const changeRequest = job.context.change_request
     ? `\n\nCustomer change request (round ${job.context.revision_round}):\n${job.context.change_request}` +
@@ -233,6 +238,18 @@ async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
  * buildStage: EAS builds are spent only on an approved preview.
  */
 async function releaseStage(job: StageJob, dir: string): Promise<Record<string, unknown>> {
+  if (job.context.stack === "wp-plugin") {
+    // A plugin's artifact is its ZIP; the API turns it into a WordPress Playground link.
+    const zip = await zipPlugin(dir, job.project_id);
+    const bundle = await archiveRepo(job.project_id, zip.version);
+    return {
+      builds: [
+        { platform: "plugin", version: zip.version, artifact_path: zip.artifact_path },
+        { platform: "bundle", version: zip.version, artifact_path: bundle },
+      ],
+      slug: zip.slug,
+    };
+  }
   const version = await packageVersion(dir);
   // SDK-compatible versions before anything is archived, exported or built.
   if (job.context.stack === "expo") await alignExpoDeps(dir);
@@ -343,6 +360,9 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
       return ok({});
     }
     case "test": {
+      // A plugin is tested inside a WordPress sandbox; without it the WordPress checks would be
+      // skipped and a broken plugin would pass, so a sandbox that cannot be built fails the stage.
+      if (c.stack === "wp-plugin") await ensureSandbox();
       // Deterministic: run the repo's own tests, parse the JSON summary line.
       const criteria: { key: string; kind: string }[] = existsSync(path.join(dir, "acceptance-criteria.json"))
         ? JSON.parse(await readFile(path.join(dir, "acceptance-criteria.json"), "utf8"))
