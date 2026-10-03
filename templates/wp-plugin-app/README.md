@@ -4,7 +4,8 @@
   (Plugin Name, Description, Version, Requires at least, Requires PHP, Author, License: GPLv2 or later,
   Text Domain: <slug>, and `Requires Plugins: woocommerce` when it needs WooCommerce), plus
   `readme.txt` in the WordPress.org format, `uninstall.php`, `includes/`, `assets/`, `languages/`.
-- The folder name used for checks and the ZIP is the Text Domain (`<slug>`).
+- The folder name used for checks and the ZIP is the Text Domain (`<slug>`). `plugin/` holds only
+  what ships: no hidden files, no Markdown. `Tested up to` in readme.txt is the current WordPress version.
 - `npm test` runs `test/run.mjs`: PHP syntax, activation in a real WordPress (SQLite), Plugin Check
   (the tool the WordPress.org review team uses) and one case per automated acceptance criterion in
   `test/cases/<key>.mjs`.

@@ -16,12 +16,12 @@ const exec = promisify(execFile);
 export const WP_PLUGIN_RULES =
   "This repository is a WordPress plugin (see README.md). The plugin lives in plugin/ with the main file plugin/<slug>.php, where <slug> is the Text Domain. " +
   "Follow the WordPress coding standards and the WordPress.org plugin guidelines: a full plugin header (Plugin Name, Description, Version, Requires at least, Requires PHP, Author: Sofabuilt, License: GPLv2 or later, Text Domain, and 'Requires Plugins: woocommerce' when needed); " +
-  "a readme.txt in the WordPress.org format (Contributors, Tags, Requires at least, Tested up to, Stable tag, License, short description, Description, Installation, FAQ, Changelog); " +
+  "a readme.txt in the WordPress.org format (Contributors, Tags, Requires at least, Tested up to = the current WordPress version, Stable tag = the plugin Version, License, short description, Description, Installation, FAQ, Changelog); " +
   "an ABSPATH guard at the top of every PHP file; a unique prefix or namespace for every function, class, option, hook, post type and script handle; " +
   "nonces and capability checks on every form and AJAX/REST write; sanitize every input and escape every output (esc_html, esc_attr, esc_url, wp_kses_post); $wpdb->prepare for SQL; " +
   "all user-facing strings translatable with the plugin's text domain; enqueue scripts and styles properly and only where needed; " +
   "no external requests, tracking or remote assets without an explicit setting the site owner turns on; uninstall.php removes the plugin's options and tables. " +
-  "Never use the name, logo or texts of another plugin or company. " +
+  "Never use the name, logo or texts of another plugin or company. No hidden files and no Markdown files inside plugin/. " +
   "Tests: npm test runs PHP lint, activation in a WordPress sandbox and Plugin Check; every automated criterion needs test/cases/<key>.mjs using the helpers in test/wp.mjs (needWordPress(), wp([...]), phpEval('...')).";
 
 /** Added to the product prompt for a plugin: what a good spec and testable criteria look like. */
@@ -63,7 +63,7 @@ export async function zipPlugin(dir: string, projectId: string): Promise<{ artif
     const out = path.join(ARTIFACTS_PATH, rel);
     await mkdir(path.dirname(out), { recursive: true });
     await rm(out, { force: true });
-    await exec("zip", ["-qr", out, info.slug, "-x", "*.DS_Store", "*/.git*"], { cwd: tmp });
+    await exec("zip", ["-qr", out, info.slug, "-x", "*/.*"], { cwd: tmp });
     return { artifact_path: rel, version: info.version, slug: info.slug };
   } finally {
     await rm(tmp, { recursive: true, force: true });
