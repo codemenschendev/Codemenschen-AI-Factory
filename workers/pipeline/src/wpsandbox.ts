@@ -6,7 +6,7 @@
  */
 import { execFile } from "node:child_process";
 import { promisify } from "node:util";
-import { copyFile, mkdir, rm, writeFile } from "node:fs/promises";
+import { copyFile, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import path from "node:path";
 import { REPOS_PATH } from "./repo.ts";
@@ -16,6 +16,16 @@ export const SANDBOX = path.join(REPOS_PATH, ".wp-sandbox");
 const PLUGINS = ["sqlite-database-integration", "plugin-check", "woocommerce"];
 
 let building: Promise<void> | null = null;
+
+/** The sandbox's WordPress as major.minor (for readme.txt's "Tested up to"), or null without one. */
+export async function currentWordPress(): Promise<string | null> {
+  try {
+    const src = await readFile(path.join(SANDBOX, "wp", "wp-includes", "version.php"), "utf8");
+    return src.match(/\$wp_version\s*=\s*'(\d+\.\d+)/)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function ensureSandbox(): Promise<void> {
   if (existsSync(path.join(SANDBOX, ".ready"))) return Promise.resolve();

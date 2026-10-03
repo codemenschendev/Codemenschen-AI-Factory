@@ -8,7 +8,7 @@ import { REPOS_PATH, archiveRepo, commitAll, ensureRepo, writeRepoFile } from ".
 import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson, gatewayComplete, relayAgent } from "./gateway.ts";
 import { EAS_MODE, easBuildAndroid } from "./eas.ts";
 import { alignExpoDeps, exportWebPreview } from "./web.ts";
-import { ensureSandbox } from "./wpsandbox.ts";
+import { currentWordPress, ensureSandbox } from "./wpsandbox.ts";
 import { WP_PLUGIN_PRODUCT, WP_PLUGIN_RULES, zipPlugin } from "./wpplugin.ts";
 
 const exec = promisify(execFile);
@@ -70,7 +70,9 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const isCode = job.stage === "coding" || job.stage === "fix" || job.stage === "revise";
   // A WordPress plugin gets the plugin rules (Sofabuilt): the code stages and the spec.
   const plugin = job.context.stack === "wp-plugin";
-  const stackRules = plugin && isCode ? `\n\n${WP_PLUGIN_RULES}` : plugin && job.stage === "product" ? `\n\n${WP_PLUGIN_PRODUCT}` : "";
+  const wpNow = plugin ? await currentWordPress() : null;
+  const wpLine = wpNow ? ` The current WordPress version is ${wpNow}: use it for "Tested up to" in readme.txt.` : "";
+  const stackRules = plugin && isCode ? `\n\n${WP_PLUGIN_RULES}${wpLine}` : plugin && job.stage === "product" ? `\n\n${WP_PLUGIN_PRODUCT}${wpLine}` : "";
   const system = `${STAGE_PROMPTS[job.stage]}${stackRules}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const changeRequest = job.context.change_request
@@ -475,8 +477,14 @@ async function collectStageOutput(job: StageJob, dir: string): Promise<Record<st
       }
       return { criteria };
     }
-    case "test":
     case "fix": {
+      // The orchestrator re-runs the deterministic test stage after every fix and never reads a
+      // fix report; a fix agent that did not write one has not failed (the gateway and relay
+      // agents never do, which failed every fix round, 2026-10-03).
+      const report = await readJson("test-report.json");
+      return report && typeof report.failed === "number" ? { report, criteria_results: report.criteria_results ?? {} } : {};
+    }
+    case "test": {
       const report = await readJson("test-report.json");
       if (!report || typeof report.failed !== "number") {
         throw new Error(`${job.stage} agent produced invalid test-report.json`);
