@@ -19,8 +19,6 @@ export default async function DeskPage({
   return (
     <main className="sb-desk-page">
       <div className="wrap">
-        <h1 className="sb-h2">{d.desk.title}</h1>
-        <p className="sb-section-lede">{d.desk.lede}</p>
         <Desk t={d.desk} doors={d.hero.doors} locale={locale} start={start === "idea" || start === "premium" ? start : null} />
       </div>
     </main>

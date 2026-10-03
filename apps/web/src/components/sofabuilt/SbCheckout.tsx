@@ -10,18 +10,18 @@ import type { SbDict } from "@/dictionaries/sofabuilt";
  */
 export function SbCheckout({
   sessionId,
-  buildEur,
-  launch,
+  total,
+  picked,
   t,
   locale,
 }: {
   sessionId: string;
-  buildEur: number;
-  launch: Record<string, { label: string; eur: number }>;
+  /** Build plus the launch options ticked in the desk's launch card. */
+  total: number;
+  picked: Record<string, boolean>;
   t: SbDict["desk"]["checkout"];
   locale: string;
 }) {
-  const [picked, setPicked] = useState<Record<string, boolean>>({});
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [startNow, setStartNow] = useState(false);
@@ -29,7 +29,6 @@ export function SbCheckout({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const eur = (n: number) => (locale === "de" ? `${n.toLocaleString("de-AT")} €` : `€${n.toLocaleString("en-IE")}`);
-  const total = buildEur + Object.entries(launch).reduce((s, [k, l]) => s + (picked[k] ? l.eur : 0), 0);
   const [before, after] = t.terms.split("{terms}");
   const [mid, end] = (after ?? "").split("{withdrawal}");
 
@@ -54,17 +53,6 @@ export function SbCheckout({
 
   return (
     <form className="sb-order" onSubmit={pay}>
-      <h4>{t.title}</h4>
-      <fieldset>
-        <legend>{t.launch}</legend>
-        {Object.entries(launch).map(([k, l]) => (
-          <label key={k} className="sb-check">
-            <input type="checkbox" checked={!!picked[k]} onChange={(e) => setPicked({ ...picked, [k]: e.target.checked })} />
-            <span>{l.label}</span>
-            <b>{eur(l.eur)}</b>
-          </label>
-        ))}
-      </fieldset>
       <p className="sb-order-total">
         <span>{t.total}</span>
         <b>{eur(total)}</b>
