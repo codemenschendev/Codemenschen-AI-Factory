@@ -20,10 +20,11 @@ export default async function SofabuiltHome({ params }: { params: Promise<{ loca
   const x = d.page;
   const desk = `/${locale}/desk`;
   const doors = [`${desk}?start=idea`, `${desk}?start=premium`, "#prices"];
-  const doorPics = ["step-describe", "svc-app", "svc-ads"];
+  // Sofabuilt's own pictures (public/sofabuilt), in the style of Appmitki's.
+  const doorPics = ["sb-idea", "sb-premium", "sb-launch"];
   const doorIcons = ["preview", "app", "ads"];
   const trustIcons = ["preview", "euro", "shield", "team"];
-  const stepPics = ["step-describe", "step-preview", "step-approve", "step-launch"];
+  const stepPics = ["step-describe", "step-research", "step-approve", "step-relax"];
   const priceIcons = ["app", "store", "server"];
 
   return (
@@ -58,7 +59,7 @@ export default async function SofabuiltHome({ params }: { params: Promise<{ loca
 
             <div className="hero-photo" aria-hidden="true">
               {/* eslint-disable-next-line @next/next/no-img-element -- one fixed hero picture */}
-              <img src="/home/hero-people.webp" alt="" width={1960} height={802} fetchPriority="high" />
+              <img src="/sofabuilt/hero.webp" alt="" width={1960} height={802} fetchPriority="high" />
               <div className="float stats stack">
                 <p className="float-label">{x.stackLabel}</p>
                 <ul>
@@ -108,7 +109,7 @@ export default async function SofabuiltHome({ params }: { params: Promise<{ loca
               <Link className="svc reveal" key={it.h} href={doors[i]}>
                 <div className="svc-thumb">
                   {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
-                  <img src={`/home/${doorPics[i]}.webp`} alt="" width={348} height={178} loading="lazy" />
+                  <img src={`/sofabuilt/${doorPics[i]}.webp`} alt="" width={348} height={178} loading="lazy" />
                 </div>
                 <span className="svc-ico">
                   <Icon name={doorIcons[i]} />
@@ -160,7 +161,7 @@ export default async function SofabuiltHome({ params }: { params: Promise<{ loca
               <li className="step reveal" key={st.h}>
                 <div className="step-pic">
                   {/* eslint-disable-next-line @next/next/no-img-element -- fixed, small pictures */}
-                  <img src={`/home/${stepPics[i]}.webp`} alt="" width={420} height={230} loading="lazy" />
+                  <img src={`/sofabuilt/${stepPics[i]}.webp`} alt="" width={420} height={230} loading="lazy" />
                   <span className="step-num">{i + 1}</span>
                 </div>
                 <h3>{st.h}</h3>
