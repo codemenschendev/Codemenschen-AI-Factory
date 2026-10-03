@@ -26,7 +26,7 @@ export const WP_PLUGIN_RULES =
 
 /** Added to the product prompt for a plugin: what a good spec and testable criteria look like. */
 export const WP_PLUGIN_PRODUCT =
-  "This is a WordPress plugin. The context's `scope` is what the customer agreed to and paid for: build exactly its features, nothing from not_included. " +
+  "This is a WordPress plugin. The context's `scope` is what the customer agreed to and paid for: build exactly its features, nothing from not_included. Its `modules` are the parts the customer paid for and are binding: a feature that would need a part not in `modules` is out of scope. " +
   "SPEC.md: slug (lowercase, hyphens, a new name, never another plugin's), admin screens, front-end output (blocks/shortcodes), data stored (options, post types, tables), hooks, requirements. " +
   "Automated criteria must be checkable with WP-CLI inside WordPress (for example: an option is registered with a default, a shortcode renders the expected markup, a REST route returns 200 for an admin, a post type exists).";
 

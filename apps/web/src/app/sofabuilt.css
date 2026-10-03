@@ -187,3 +187,19 @@ body.sb {
 .sb-order .sb-btn { border: 0; cursor: pointer; font: inherit; font-weight: 600; }
 .sb-order .sb-btn:disabled { opacity: 0.5; cursor: default; transform: none; box-shadow: none; }
 .sb-steps-1 { text-align: left; }
+
+/* Price card: parts the customer ticks, launch options, the total (owner, 2026-10-03). */
+.dk-sub { display: flex; align-items: center; gap: 8px; margin: 4px 0 2px; font-weight: 700; font-size: 15px; }
+.dk-sub-launch { margin-top: 18px; }
+.dk-hint { margin: 0 0 10px; color: var(--ink-soft); font-size: 13px; }
+.dk-parts { display: grid; gap: 6px; }
+.dk-part { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; border: 1px solid var(--border); background: #fff; font-size: 14px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+.dk-part:hover { border-color: var(--accent); }
+.dk-part.is-on { background: var(--accent-soft); border-color: #c7d2fe; }
+.dk-part.is-fixed { cursor: default; }
+.dk-part input { width: 17px; height: 17px; accent-color: var(--accent); flex: none; }
+.dk-part span { flex: 1; line-height: 1.35; }
+.dk-part b { flex: none; white-space: nowrap; }
+.dk-more { margin-top: 8px; background: none; border: 0; padding: 4px 0; color: var(--accent); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.dk-subtotal { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-weight: 600; }
+.dk-pricecard .dk-total b { font-size: 24px; }

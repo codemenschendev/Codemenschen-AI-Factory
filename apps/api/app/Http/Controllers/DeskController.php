@@ -89,6 +89,10 @@ class DeskController extends Controller
 
         $session->messages()->create(['role' => 'assistant', 'body' => $out['reply'], 'meta' => ['questions' => $out['questions']]]);
         $scope = $out['scope'] ?? $session->scope;
+        // Parts the customer picked by hand win over the model: it may only reword the features.
+        if ($out['scope'] !== null && ($session->scope['modules_changed'] ?? false)) {
+            $scope['modules'] = $session->scope['modules'];
+        }
         $research = $session->research ?? [];
         if ($out['search'] !== null) {
             foreach ($wporg->search($out['search']) as $row) {
@@ -97,6 +101,33 @@ class DeskController extends Controller
             $research = array_slice($research, -8, null, true);
         }
         $session->update(['scope' => $scope, 'research' => $research, 'ready' => $out['ready'] && $scope !== null]);
+
+        return response()->json(self::payload($session->fresh()));
+    }
+
+    /**
+     * The customer adds or removes parts of the plugin themselves. No model call: the price follows
+     * at once, and the next chat turn sees the changed modules and brings the features in line.
+     */
+    public function modules(Request $request, DeskSession $session): JsonResponse
+    {
+        abort_unless($session->status === 'open' && $session->scope !== null, 409, 'No scope yet.');
+        $data = $request->validate(['modules' => 'present|array|max:20', 'modules.*.key' => 'required|string', 'modules.*.qty' => 'nullable|integer|min:1|max:9']);
+        $known = config('sofabuilt.modules');
+        $before = collect($session->scope['modules'] ?? [])->keyBy('key');
+        $modules = [];
+        foreach ($data['modules'] as $m) {
+            if (! isset($known[$m['key']]) || $m['key'] === 'base' || isset($modules[$m['key']])) {
+                continue;
+            }
+            $modules[$m['key']] = ['key' => $m['key'], 'qty' => (int) ($m['qty'] ?? 1),
+                'why' => (string) ($before[$m['key']]['why'] ?? ''), 'by_customer' => ! $before->has($m['key']) ? true : (bool) ($before[$m['key']]['by_customer'] ?? false)];
+        }
+        $scope = $session->scope;
+        $scope['modules'] = array_values($modules);
+        // The customer changed the parts by hand; the next turn reconciles the feature list with them.
+        $scope['modules_changed'] = true;
+        $session->update(['scope' => $scope]);
 
         return response()->json(self::payload($session->fresh()));
     }
@@ -141,6 +172,7 @@ class DeskController extends Controller
             'scope' => $session->scope,
             'research' => array_values($session->research ?? []),
             'price' => $session->scope ? Pricing::quote($session->scope, $session->locale) : null,
+            'module_options' => Pricing::options($session->locale),
             'messages' => $session->messages()->get(['id', 'role', 'body', 'meta', 'created_at']),
         ];
     }

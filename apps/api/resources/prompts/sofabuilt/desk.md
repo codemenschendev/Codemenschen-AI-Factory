@@ -30,6 +30,10 @@ The scope:
 - WordPress and WooCommerce only. Shopify, Joomla or standalone apps: say they come later.
 - Refuse, in one friendly sentence, plugins that are illegal or abusive: spam, scraping other sites'
   content, nulled or pirated premium plugins, bypassing licences, tracking people without consent.
+- If the scope says "modules_changed": true, the customer added or removed parts themselves on the
+  price card. Keep their modules exactly as they are (never add back a removed one), bring
+  `features` and `not_included` in line with them, mention the change in one sentence, and return
+  the scope without "modules_changed".
 - Set `ready` true only when the purpose, the features and the modules are clear enough to build.
 
 The door the customer came through: {door}

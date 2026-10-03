@@ -9,6 +9,23 @@ namespace App\Domain\Sofabuilt;
 class Pricing
 {
     /**
+     * Every part the customer can add or remove on the desk, with its price.
+     *
+     * @return list<array{key: string, label: string, eur: int, max: int}>
+     */
+    public static function options(string $locale = 'en'): array
+    {
+        $lang = $locale === 'de' ? 'de' : 'en';
+        $repeatable = config('sofabuilt.repeatable', []);
+        $out = [];
+        foreach (config('sofabuilt.modules') as $key => $m) {
+            $out[] = ['key' => $key, 'label' => $m[$lang], 'eur' => (int) $m['eur'], 'max' => (int) ($repeatable[$key] ?? 1)];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param  array{modules?: list<array{key?: string, qty?: int}>}|null  $scope
      * @return array{lines: list<array{key: string, label: string, qty: int, eur: int}>, build_eur: int, too_big: bool, care_monthly_eur: int, launch: array<string, array{label: string, eur: int}>, delivery_days: array{0: int, 1: int}}
      */
