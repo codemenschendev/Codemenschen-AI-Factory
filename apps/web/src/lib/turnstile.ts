@@ -8,8 +8,12 @@ const SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? "0x4AAAAAAFL1ujbj
 // Cloudflare's always-pass test key: the real one only works on appmitki.com.
 const TEST_KEY = "1x00000000000000000000AA";
 
-/** The requests that carry a token. */
-export const TURNSTILE_PATHS = ["/prototypes", "/prototypes/questions", "/quotes/refine"];
+/** The requests that carry a token: the ones that cost a model call. */
+const TURNSTILE_PATHS = ["/prototypes", "/prototypes/questions", "/quotes/refine"];
+
+export function needsTurnstile(path: string): boolean {
+  return TURNSTILE_PATHS.includes(path) || /^\/desk\/[0-9a-f-]{36}\/messages$/.test(path);
+}
 
 type Turnstile = {
   render: (el: HTMLElement, opts: Record<string, unknown>) => string;
@@ -54,7 +58,7 @@ export async function turnstileToken(): Promise<string | null> {
     const el = document.createElement("div");
     el.className = "ts-box";
     document.body.appendChild(el);
-    const local = /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+    const local = /(^|\.)localhost$|^127\.0\.0\.1$/.test(window.location.hostname);
     widget = ts.render(el, {
       sitekey: local ? TEST_KEY : SITE_KEY,
       execution: "execute",
