@@ -19,10 +19,13 @@ export function LegalPage({
   locale,
   d,
   doc,
+  docs = LEGAL_DOCS,
 }: {
   locale: Locale;
   d: Dict;
   doc: LegalDoc;
+  /** The documents this site has; the links at the end name only these. */
+  docs?: readonly LegalDoc[];
 }) {
   const l = d.legal;
   const page = l[doc];
@@ -52,7 +55,7 @@ export function LegalPage({
 
         <p className="lg-updated">{"updated" in page ? page.updated : l.updated}</p>
         <nav className="lg-more">
-          {LEGAL_DOCS.filter((other) => other !== doc).map((other) => (
+          {docs.filter((other) => other !== doc).map((other) => (
             <Link key={other} href={`/${locale}/${other}`}>{l[other].title}</Link>
           ))}
         </nav>
