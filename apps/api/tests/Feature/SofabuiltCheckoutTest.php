@@ -30,7 +30,7 @@ class SofabuiltCheckoutTest extends TestCase
         $session = $this->readySession();
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         $this->assertSame(290 + 150 + 90, $res->json('price_eur'));
-        $this->assertSame(['salesPage' => 299, 'listing' => 79, 'ads' => 129], $res->json('packages'));
+        $this->assertSame(['salesPage' => 299, 'listing' => 79, 'sellReady' => 199, 'ads' => 129], $res->json('packages'));
         $this->assertSame($res->json('quote_id'), $session->fresh()->quote_id);
 
         $this->postJson('/api/desk/'.$this->readySession(false)->id.'/quote')->assertStatus(409);
@@ -45,12 +45,12 @@ class SofabuiltCheckoutTest extends TestCase
         $this->postJson('/api/checkout', [
             'quote_id' => $quote, 'email' => 'shop@example.com', 'fagg_waiver' => true, 'terms' => true, 'locale' => 'en',
             // An app package is not on offer for a plugin and is dropped.
-            'packages' => ['listing' => true, 'storePublishing' => true],
+            'packages' => ['listing' => true, 'sellReady' => true, 'storePublishing' => true],
         ])->assertStatus(503);
         $order = Order::firstOrFail();
         $this->assertSame('sofabuilt', $order->brand);
-        $this->assertSame(['listing' => true], $order->packages);
-        $this->assertSame(530 + 79, $order->total_one_time_eur);
+        $this->assertSame(['listing' => true, 'sellReady' => true], $order->packages);
+        $this->assertSame(530 + 79 + 199, $order->total_one_time_eur);
 
         $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 609, []);
 
@@ -60,7 +60,7 @@ class SofabuiltCheckoutTest extends TestCase
         $run = PipelineRun::where('project_id', $project->id)->sole();
         $this->assertSame('product', $run->stage);
         Http::assertSent(fn ($r) => str_ends_with($r->url(), '/run') && ($r['context']['stack'] ?? null) === 'wp-plugin'
-            && ($r['context']['scope']['name'] ?? null) === 'Extra Options');
+            && ($r['context']['scope']['name'] ?? null) === 'Extra Options' && ($r['context']['sell_ready'] ?? null) === true);
         Mail::assertSent(CustomerNotice::class, fn ($m) => str_contains($m->subjectLine, 'Sofabuilt') && $m->fromName === 'Sofabuilt');
     }
 

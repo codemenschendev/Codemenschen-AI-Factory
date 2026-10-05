@@ -33,6 +33,7 @@ const en: { terms: Doc; withdrawal: Doc } = {
           "The care plan is optional and monthly. It is offered after handover and can be cancelled at any time.",
           "An ad budget is optional. Ads run on your own ad account, and Google or Meta bill the budget to you directly. It is never part of a payment to us.",
           "Store fees, for example for a seller account, are passed on at cost when they apply.",
+          "With the ready-to-sell option your sales run through Freemius, in your own seller account and under its terms. Freemius keeps a share of each sale; we are not part of that contract.",
         ],
       },
       {
@@ -125,6 +126,7 @@ const de: typeof en = {
           "Der Wartungsplan ist optional und monatlich. Wir bieten ihn nach der Übergabe an, er ist jederzeit kündbar.",
           "Ein Werbebudget ist optional. Anzeigen laufen auf deinem eigenen Werbekonto, Google oder Meta rechnen das Budget direkt mit dir ab. Es ist nie Teil einer Zahlung an uns.",
           "Gebühren von Stores, zum Beispiel für ein Verkäuferkonto, geben wir zum Selbstkostenpreis weiter, wenn sie anfallen.",
+          "Mit der Option Bereit zum Verkauf laufen deine Verkäufe über Freemius, in deinem eigenen Verkäuferkonto und nach dessen Bedingungen. Freemius behält einen Anteil pro Verkauf; wir sind an diesem Vertrag nicht beteiligt.",
         ],
       },
       {

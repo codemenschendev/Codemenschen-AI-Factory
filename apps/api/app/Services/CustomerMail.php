@@ -327,6 +327,7 @@ class CustomerMail
         $name = $project->name;
         $try = $project->previewUrl();
         $zip = rtrim(config('app.url'), '/')."/api/plugin/{$project->id}/plugin.zip";
+        $sell = ! empty($project->order?->packages['sellReady']);
         [$subject, $lines] = match (true) {
             $to === 'REVIEW' => $de
                 ? ["Dein Plugin ist bereit zum Ausprobieren: {$name}", [
@@ -348,20 +349,20 @@ class CustomerMail
                     $link,
                 ]],
             $to === 'READY' => $de
-                ? ["Dein Plugin gehört dir: {$name}", [
+                ? ["Dein Plugin gehört dir: {$name}", array_merge([
                     'danke für die Freigabe. Hier ist dein Plugin als ZIP, bereit zum Hochladen unter Plugins > Installieren:',
                     $zip,
                     '',
                     'Den Quellcode findest du in deinem Projekt. Mach vor der Installation ein Backup deiner Website.',
                     $link,
-                ]]
-                : ["Your plugin is yours: {$name}", [
+                ], $sell ? ['', 'Bereit zum Verkauf: Lizenzschlüssel, Updates und Checkout sind eingebaut (über Freemius). Lege dir ein kostenloses Konto auf freemius.com an und schick uns eine kurze Antwort. Wir verbinden dein Plugin damit und laden es für den Verkauf hoch.'] : [])]
+                : ["Your plugin is yours: {$name}", array_merge([
                     'thank you for approving. Here is your plugin as a ZIP, ready to upload under Plugins > Add New:',
                     $zip,
                     '',
                     'The source code is in your project. Back up your site before you install it.',
                     $link,
-                ]],
+                ], $sell ? ['', 'Ready to sell: licence keys, updates and the checkout are built in (through Freemius). Create a free account on freemius.com and send us a short reply. We connect your plugin to it and upload it for sale.'] : [])],
             default => $de
                 ? ["Wir haben ein Problem gesehen: {$name}", ['beim Bau deines Plugins ist etwas schiefgegangen. Ein Mensch bei uns schaut sich das jetzt an. Du musst nichts tun.']]
                 : ["We saw a problem: {$name}", ['something went wrong while building your plugin. A person on our side is looking at it now. Nothing to do for you.']],

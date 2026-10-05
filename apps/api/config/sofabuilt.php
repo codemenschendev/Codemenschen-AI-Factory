@@ -34,6 +34,9 @@ return [
     'launch' => [
         'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
         'listing' => ['eur' => 79, 'en' => 'Store listing: texts, banner, icon, submission', 'de' => 'Store-Eintrag: Texte, Banner, Icon, Einreichung'],
+        // Sell-ready (2026-10-05): licence keys, automatic updates for buyers and a checkout that also
+        // handles EU VAT, through Freemius. We build it in; the seller's Freemius account is theirs.
+        'sellReady' => ['eur' => 199, 'en' => 'Ready to sell: licence keys, automatic updates and checkout with VAT handled', 'de' => 'Bereit zum Verkauf: Lizenzschlüssel, automatische Updates und Checkout inklusive Mehrwertsteuer'],
         'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
     ],
 
