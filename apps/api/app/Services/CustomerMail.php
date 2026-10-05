@@ -377,6 +377,7 @@ class CustomerMail
                     $zip,
                     '',
                     $shop ? 'Den Quellcode findest du auch in deinem Projekt.' : 'Den Quellcode findest du in deinem Projekt. Mach vor der Installation ein Backup deiner Website.',
+                    'Funktioniert etwas nicht wie vereinbart? Schreib es in deinem Projekt in den Chat, gern mit einem Screenshot. Fehler beheben wir kostenlos.',
                     $link,
                 ], $sell ? ['', 'Bereit zum Verkauf: Lizenzschlüssel, Updates und Checkout sind eingebaut (über Freemius). Lege dir ein kostenloses Konto auf freemius.com an und schick uns eine kurze Antwort. Wir verbinden dein Plugin damit und laden es für den Verkauf hoch.'] : [])]
                 : ["{$what[1]} is yours: {$name}", array_merge([
@@ -388,6 +389,7 @@ class CustomerMail
                     $zip,
                     '',
                     $shop ? 'The source code is also in your project.' : 'The source code is in your project. Back up your site before you install it.',
+                    'Something does not work as agreed? Tell us in the chat of your project, a screenshot helps. We fix faults free of charge.',
                     $link,
                 ], $sell ? ['', 'Ready to sell: licence keys, updates and the checkout are built in (through Freemius). Create a free account on freemius.com and send us a short reply. We connect your plugin to it and upload it for sale.'] : [])],
             default => $de

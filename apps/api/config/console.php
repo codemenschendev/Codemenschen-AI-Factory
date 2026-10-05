@@ -16,6 +16,9 @@ return [
     'care_quota_brands' => ['sofabuilt'],
     'care_edits_per_month' => 3,
 
+    // A fault in what was agreed is fixed free this long after the order (statutory warranty, 2 years).
+    'warranty_months' => 24,
+
     // Packs of change credits: number of changes => price in EUR.
     'packs' => [
         5 => 45,

@@ -17,9 +17,9 @@ class PluginFeatureTest extends TestCase
 {
     use RefreshDatabase;
 
-    private array $replies = [];
+    protected array $replies = [];
 
-    private array $asked = [];
+    protected array $asked = [];
 
     protected function setUp(): void
     {
@@ -37,7 +37,7 @@ class PluginFeatureTest extends TestCase
         ]);
     }
 
-    private function plugin(): Project
+    protected function plugin(): Project
     {
         $session = DeskSession::create(['door' => 'idea', 'locale' => 'en', 'platform' => 'wordpress', 'ready' => true, 'scope' => [
             'platform' => 'wordpress', 'name' => 'Quick FAQ', 'purpose' => 'FAQ blocks.', 'features' => ['faq'], 'not_included' => [],
@@ -52,7 +52,7 @@ class PluginFeatureTest extends TestCase
         return $project->fresh();
     }
 
-    private function as(Project $project): array
+    protected function as(Project $project): array
     {
         $this->app['auth']->forgetGuards();
 

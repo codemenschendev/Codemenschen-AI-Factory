@@ -123,6 +123,17 @@ class ChangeChat
         if ($out['scope'] === 'out') {
             $meta['type'] = 'declined';
             $this->notify->alert($project, 'change chat: out of scope before a round: '.mb_substr($out['reason'] ?: $body, 0, 200));
+        } elseif ($out['scope'] === 'bug' && $out['items'] && $this->orchestrator->underWarranty($project)) {
+            // A fault in what was agreed: fixed free under the warranty, and a person looks at it.
+            $meta['type'] = 'card';
+            $meta['card'] = [
+                'items' => $out['items'],
+                'mode' => 'warranty',
+                'round' => $project->revision_rounds + 1,
+                'price_eur' => 0,
+                'free_rounds_left' => $this->orchestrator->freeRoundsLeft($project),
+            ];
+            $this->notify->alert($project, 'change chat: the customer reports a fault, a warranty round is offered');
         } elseif ($out['scope'] === 'feature' && $out['items'] && $mode !== 'none') {
             $price = Pricing::feature(Platforms::of($project->order?->quote?->breakdown['scope'] ?? null), $out['modules'], $project->care_status === 'active');
             $meta['type'] = 'card';
@@ -194,7 +205,7 @@ class ChangeChat
             // The price on the card is the price paid: recomputed only to drop anything unknown.
             ? $this->orchestrator->requestFeature($project, $text, 'customer:'.$customer->email, $faggWaiver, $ip, $items,
                 ['eur' => (int) $card_['price_eur'], 'modules' => (array) ($card_['modules'] ?? []), 'discount_pct' => (int) ($card_['discount_pct'] ?? 0)])
-            : $this->orchestrator->requestChanges($project, $text, 'customer:'.$customer->email, $faggWaiver, $ip, $items);
+            : $this->orchestrator->requestChanges($project, $text, 'customer:'.$customer->email, $faggWaiver, $ip, $items, ($card_['mode'] ?? null) === 'warranty');
 
         $project->changeMessages()->whereNull('change_request_id')->where('id', '<=', $card->id)
             ->update(['change_request_id' => $cr->id]);
@@ -353,7 +364,7 @@ class ChangeChat
                 $items[] = ['text' => mb_substr($text, 0, 300)];
             }
         }
-        $scope = in_array($res->json('scope'), ['in', 'borderline', 'out', 'feature'], true) ? $res->json('scope') : 'in';
+        $scope = in_array($res->json('scope'), ['in', 'borderline', 'out', 'feature', 'bug'], true) ? $res->json('scope') : 'in';
         // A new feature is only something we price for a Sofabuilt plugin; elsewhere it stays "out".
         if ($scope === 'feature' && $project->kind !== 'plugin') {
             $scope = 'out';
