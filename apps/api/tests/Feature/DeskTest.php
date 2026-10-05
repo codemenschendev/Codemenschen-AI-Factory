@@ -51,7 +51,7 @@ class DeskTest extends TestCase
         $this->assertStringNotContainsString('—', $res->json('messages.1.body'));
         // Unknown keys never reach the price; a repeatable module is capped.
         $this->assertSame(['woo', 'email', 'external_api'], array_column($res->json('scope.modules'), 'key'));
-        $this->assertSame(290 + 150 + 60 + 150 * 4, $res->json('price.build_eur'));
+        $this->assertSame(149 + 79 + 29 + 79 * 4, $res->json('price.build_eur'));
     }
 
     public function test_a_turn_without_a_new_scope_keeps_the_old_one(): void
@@ -67,7 +67,7 @@ class DeskTest extends TestCase
         $this->postJson("/api/desk/$id/messages", ['text' => 'hello there'])->assertOk();
 
         $this->postJson("/api/desk/$id/messages", ['text' => 'and more'])->assertOk()
-            ->assertJsonPath('scope.name', 'A')->assertJsonPath('ready', true)->assertJsonPath('price.build_eur', 370);
+            ->assertJsonPath('scope.name', 'A')->assertJsonPath('ready', true)->assertJsonPath('price.build_eur', 188);
     }
 
     public function test_a_model_failure_keeps_the_question_and_says_so(): void
@@ -94,13 +94,13 @@ class DeskTest extends TestCase
         $this->fakeModel(['reply' => 'x']);
         $items = $this->getJson('/api/desk/catalog')->assertOk()->json('items');
         $this->assertNotEmpty($items);
-        $this->assertGreaterThanOrEqual(290, $items[0]['own_from_eur']);
+        $this->assertGreaterThanOrEqual(149, $items[0]['own_from_eur']);
     }
 
     public function test_base_is_always_priced_once(): void
     {
         $q = Pricing::quote(['modules' => [['key' => 'base'], ['key' => 'base']]]);
-        $this->assertSame(290, $q['build_eur']);
+        $this->assertSame(149, $q['build_eur']);
         $this->assertFalse($q['too_big']);
     }
 
@@ -114,13 +114,13 @@ class DeskTest extends TestCase
         $res = $this->postJson("/api/desk/{$session->id}/modules", ['modules' => [['key' => 'woo'], ['key' => 'block'], ['key' => 'nope'], ['key' => 'base']]])
             ->assertOk();
         $this->assertSame(['woo', 'block'], array_column($res->json('scope.modules'), 'key'));
-        $this->assertSame(290 + 150 + 80, $res->json('price.build_eur'));
+        $this->assertSame(149 + 79 + 39, $res->json('price.build_eur'));
         $this->assertNotEmpty($res->json('module_options'));
 
         // The next turn may reword features but not bring e-mails back.
         $this->fakeModel(['reply' => 'Updated.', 'scope' => ['name' => 'A', 'features' => ['y'], 'modules' => [['key' => 'woo'], ['key' => 'email']]], 'ready' => true]);
         $this->postJson("/api/desk/{$session->id}/messages", ['text' => 'ok then'])->assertOk()
             ->assertJsonPath('scope.features.0', 'y')
-            ->assertJsonPath('price.build_eur', 520);
+            ->assertJsonPath('price.build_eur', 267);
     }
 }

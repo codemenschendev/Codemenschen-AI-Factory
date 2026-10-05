@@ -9,6 +9,7 @@ use App\Domain\Pricing\Packages;
 use App\Models\Customer;
 use App\Models\Order;
 use App\Models\Quote;
+use App\Services\CareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Stripe\Checkout\Session as StripeSession;
@@ -35,6 +36,8 @@ class CheckoutController extends Controller
             // The terms are a condition of the sale, so the server refuses an order without them.
             // A box that is only checked in the browser is decoration.
             'terms' => 'required|accepted',
+            // Sofabuilt: Care with its free first months, ticked by the buyer (never by default).
+            'care_trial' => 'nullable|boolean',
             'locale' => 'nullable|in:de,en',
             // Store-listing languages; defaults to every supported one.
             'store_locales' => 'nullable|array|min:1',
@@ -67,6 +70,7 @@ class CheckoutController extends Controller
             'fagg_waiver' => $data['fagg_waiver'],
             'fagg_waiver_at' => $data['fagg_waiver'] ? now() : null,
             'fagg_waiver_ip' => $data['fagg_waiver'] ? $request->ip() : null,
+            'care_trial' => $quote->kind === 'plugin' && ! empty($data['care_trial']),
             'terms_accepted_at' => now(),
             'terms_accepted_ip' => $request->ip(),
             'locale' => $data['locale'] ?? $quote->locale,
@@ -131,7 +135,17 @@ class CheckoutController extends Controller
         // Type B hosting is a separate subscription started at delivery, and ad
         // budget is billed separately after campaign approval — neither belongs
         // in this one-time session (appwerk doc 27 decision, doc 05 rules).
-        return $stripe->checkout->sessions->create([
+        // With the Care trial the card is kept for the monthly charge after the free months; Stripe
+        // shows the buyer that it is saved, and the text below says what it is for.
+        $care = $order->care_trial ? [
+            'customer_creation' => 'always',
+            'payment_intent_data' => ['setup_future_usage' => 'off_session'],
+            'custom_text' => ['submit' => ['message' => $order->locale === 'de'
+                ? sprintf('Wartungsplan: die ersten %d Monate gratis, danach %d € pro Monat. Jederzeit kündbar.', CareService::trialMonths(), CareService::monthlyForQuote($quote))
+                : sprintf('Care: the first %d months are free, then €%d a month. Cancel any time.', CareService::trialMonths(), CareService::monthlyForQuote($quote))]],
+        ] : [];
+
+        return $stripe->checkout->sessions->create($care + [
             'mode' => 'payment',
             'line_items' => $lineItems,
             'customer_email' => $order->customer->email,

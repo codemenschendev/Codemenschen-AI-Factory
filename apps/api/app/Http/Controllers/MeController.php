@@ -48,7 +48,7 @@ class MeController extends Controller
             'free_rounds_left' => $orchestrator->freeRoundsLeft($project),
             'change_request_mode' => $orchestrator->changeRequestMode($project),
             'revision_price_eur' => Estimator::REVISION_PRICE_EUR,
-            'care_monthly_eur' => Estimator::CARE_MONTHLY_EUR,
+            'care_monthly_eur' => CareService::monthly($project),
             'care_status' => $project->care_status ?? 'none',
             'care_ends_at' => $project->care_ends_at?->toIso8601String(),
             'change_requests' => $project->changeRequests()->latest('id')

@@ -24,6 +24,7 @@ class Order extends Model
         'packages' => 'array',
         'store_locales' => 'array',
         'fagg_waiver' => 'boolean',
+        'care_trial' => 'boolean',
         'fagg_waiver_at' => 'datetime',
     ];
 

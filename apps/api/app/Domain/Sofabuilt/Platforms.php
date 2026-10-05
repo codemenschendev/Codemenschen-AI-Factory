@@ -52,6 +52,12 @@ class Platforms
         return self::get($platform, 'catalog', []);
     }
 
+    /** Care per month: WordPress's at the top of the config, a platform may set its own (Shopify includes hosting). */
+    public static function care(string $platform): int
+    {
+        return (int) ($platform === 'wordpress' ? config('sofabuilt.care_monthly_eur') : config("sofabuilt.$platform.care_monthly_eur", config('sofabuilt.care_monthly_eur')));
+    }
+
     /** A catalogue price per year: "$15/mo" becomes "$180", a yearly price stays as it is. */
     public static function yearly(string $price): string
     {

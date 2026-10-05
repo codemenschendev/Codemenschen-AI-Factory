@@ -31,7 +31,7 @@ export function LicenseCalc({ t, locale }: { t: SbDict["license"]; locale: strin
       <div className="sb-calc-inputs">
         {slider(t.yearly, yearly, setYearly, 49, 999, 10)}
         {slider(t.sites, sites, setSites, 1, 25, 1, false)}
-        {slider(t.build, build, setBuild, 290, 1500, 10)}
+        {slider(t.build, build, setBuild, 149, 1000, 10)}
         {slider(t.years, years, setYears, 1, 5, 1, false)}
       </div>
       <div className="sb-calc-out">

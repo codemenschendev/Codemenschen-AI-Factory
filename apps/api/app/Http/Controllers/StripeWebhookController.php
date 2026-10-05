@@ -73,8 +73,11 @@ class StripeWebhookController extends Controller
                 return response('ignored', 200);
             }
             if ($order->status !== 'paid') {
-                app(OrderFulfillment::class)
+                $project = app(OrderFulfillment::class)
                     ->markPaid($order, $session->payment_intent, (int) ($session->amount_total / 100), $event->toArray());
+                if ($order->care_trial && $project !== null) {
+                    app(CareService::class)->startTrial($project, (string) ($session->customer ?? ''), (string) ($session->payment_intent ?? ''));
+                }
             }
         }
 

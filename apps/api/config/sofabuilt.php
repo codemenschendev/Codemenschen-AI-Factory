@@ -4,32 +4,33 @@
  * Sofabuilt (docs/specs/sofabuilt.md): what the desk agent may price and what it knows about the
  * market. The agent picks module keys; the price is computed here, never by the model.
  *
- * Prices in EUR are the first proposal (2026-10-03), to be confirmed by the owner. Catalogue prices
+ * Prices in EUR: halved on 2026-10-05 (owner: a low price to win customers; the money is in Care
+ * and the work that follows). Earlier proposal 2026-10-03. Catalogue prices
  * are approximate list prices of other vendors for one site and one year, shown as "about".
  */
 return [
 
     'modules' => [
-        'base' => ['eur' => 290, 'en' => 'The plugin itself: a settings page, ready for other languages, removes itself cleanly', 'de' => 'Das Plugin selbst: eine Einstellungsseite, bereit für andere Sprachen, entfernt sich sauber'],
-        'data' => ['eur' => 90, 'en' => 'Its own kind of entries you manage in the admin (for example bookings)', 'de' => 'Eigene Einträge, die du im Admin verwaltest (zum Beispiel Buchungen)'],
-        'block' => ['eur' => 80, 'en' => 'A part you place on any page of your site', 'de' => 'Ein Baustein, den du auf jede Seite setzen kannst'],
-        'form' => ['eur' => 90, 'en' => 'A form for your visitors that checks what they type', 'de' => 'Ein Formular für deine Besucher, das die Eingaben prüft'],
-        'woo' => ['eur' => 150, 'en' => 'Works with your shop: products, cart, checkout or orders', 'de' => 'Arbeitet mit deinem Shop: Produkte, Warenkorb, Kasse oder Bestellungen'],
-        'admin_list' => ['eur' => 90, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
-        'rest' => ['eur' => 60, 'en' => 'Updates on the page without reloading it', 'de' => 'Änderungen auf der Seite ohne neu zu laden'],
-        'external_api' => ['eur' => 150, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
-        'email' => ['eur' => 60, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
-        'schedule' => ['eur' => 50, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
-        'roles' => ['eur' => 60, 'en' => 'Who may see or change what', 'de' => 'Wer was sehen oder ändern darf'],
-        'payments' => ['eur' => 200, 'en' => 'Taking payments', 'de' => 'Zahlungen annehmen'],
-        'import_export' => ['eur' => 90, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
+        'base' => ['eur' => 149, 'en' => 'The plugin itself: a settings page, ready for other languages, removes itself cleanly', 'de' => 'Das Plugin selbst: eine Einstellungsseite, bereit für andere Sprachen, entfernt sich sauber'],
+        'data' => ['eur' => 49, 'en' => 'Its own kind of entries you manage in the admin (for example bookings)', 'de' => 'Eigene Einträge, die du im Admin verwaltest (zum Beispiel Buchungen)'],
+        'block' => ['eur' => 39, 'en' => 'A part you place on any page of your site', 'de' => 'Ein Baustein, den du auf jede Seite setzen kannst'],
+        'form' => ['eur' => 49, 'en' => 'A form for your visitors that checks what they type', 'de' => 'Ein Formular für deine Besucher, das die Eingaben prüft'],
+        'woo' => ['eur' => 79, 'en' => 'Works with your shop: products, cart, checkout or orders', 'de' => 'Arbeitet mit deinem Shop: Produkte, Warenkorb, Kasse oder Bestellungen'],
+        'admin_list' => ['eur' => 49, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
+        'rest' => ['eur' => 29, 'en' => 'Updates on the page without reloading it', 'de' => 'Änderungen auf der Seite ohne neu zu laden'],
+        'external_api' => ['eur' => 79, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+        'email' => ['eur' => 29, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
+        'schedule' => ['eur' => 29, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
+        'roles' => ['eur' => 29, 'en' => 'Who may see or change what', 'de' => 'Wer was sehen oder ändern darf'],
+        'payments' => ['eur' => 99, 'en' => 'Taking payments', 'de' => 'Zahlungen annehmen'],
+        'import_export' => ['eur' => 49, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
     ],
 
     // Modules that may be ordered more than once (one line per service).
     'repeatable' => ['external_api' => 4],
 
     // A scope above this is too big for one fixed-price build: the desk suggests splitting it.
-    'max_build_eur' => 1990,
+    'max_build_eur' => 990,
 
     'launch' => [
         'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
@@ -75,22 +76,24 @@ return [
      */
     'shopify' => [
         'modules' => [
-            'base' => ['eur' => 350, 'en' => 'The app itself: its own page in your Shopify admin, safe install and removal, privacy rules handled', 'de' => 'Die App selbst: eine eigene Seite in deinem Shopify-Admin, sichere Installation und Entfernung, Datenschutz-Regeln erledigt'],
-            'storefront' => ['eur' => 120, 'en' => 'A block on your shop pages that you place in the theme editor', 'de' => 'Ein Baustein auf deinen Shop-Seiten, den du im Theme-Editor platzierst'],
-            'products' => ['eur' => 90, 'en' => 'Works with your products: reads or changes them', 'de' => 'Arbeitet mit deinen Produkten: liest oder ändert sie'],
-            'orders' => ['eur' => 120, 'en' => 'Works with your orders', 'de' => 'Arbeitet mit deinen Bestellungen'],
-            'customers' => ['eur' => 90, 'en' => 'Works with your customers', 'de' => 'Arbeitet mit deinen Kunden'],
-            'discounts' => ['eur' => 150, 'en' => 'Your own discount rules in the cart and at checkout', 'de' => 'Eigene Rabattregeln im Warenkorb und an der Kasse'],
-            'checkout' => ['eur' => 180, 'en' => 'Changes in the checkout or on the thank-you page', 'de' => 'Änderungen an der Kasse oder auf der Danke-Seite'],
-            'data' => ['eur' => 90, 'en' => 'Its own kind of entries you manage in the admin', 'de' => 'Eigene Einträge, die du im Admin verwaltest'],
-            'admin_list' => ['eur' => 90, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
-            'external_api' => ['eur' => 150, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
-            'email' => ['eur' => 60, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
-            'schedule' => ['eur' => 50, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
-            'import_export' => ['eur' => 90, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
-            'billing' => ['eur' => 120, 'en' => 'Monthly plans for the shops that install it, billed by Shopify', 'de' => 'Monatliche Tarife für die Shops, die sie installieren, abgerechnet über Shopify'],
+            'base' => ['eur' => 199, 'en' => 'The app itself: its own page in your Shopify admin, safe install and removal, privacy rules handled', 'de' => 'Die App selbst: eine eigene Seite in deinem Shopify-Admin, sichere Installation und Entfernung, Datenschutz-Regeln erledigt'],
+            'storefront' => ['eur' => 59, 'en' => 'A block on your shop pages that you place in the theme editor', 'de' => 'Ein Baustein auf deinen Shop-Seiten, den du im Theme-Editor platzierst'],
+            'products' => ['eur' => 49, 'en' => 'Works with your products: reads or changes them', 'de' => 'Arbeitet mit deinen Produkten: liest oder ändert sie'],
+            'orders' => ['eur' => 59, 'en' => 'Works with your orders', 'de' => 'Arbeitet mit deinen Bestellungen'],
+            'customers' => ['eur' => 49, 'en' => 'Works with your customers', 'de' => 'Arbeitet mit deinen Kunden'],
+            'discounts' => ['eur' => 79, 'en' => 'Your own discount rules in the cart and at checkout', 'de' => 'Eigene Rabattregeln im Warenkorb und an der Kasse'],
+            'checkout' => ['eur' => 99, 'en' => 'Changes in the checkout or on the thank-you page', 'de' => 'Änderungen an der Kasse oder auf der Danke-Seite'],
+            'data' => ['eur' => 49, 'en' => 'Its own kind of entries you manage in the admin', 'de' => 'Eigene Einträge, die du im Admin verwaltest'],
+            'admin_list' => ['eur' => 49, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
+            'external_api' => ['eur' => 79, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'email' => ['eur' => 29, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
+            'schedule' => ['eur' => 29, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
+            'import_export' => ['eur' => 49, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
+            'billing' => ['eur' => 69, 'en' => 'Monthly plans for the shops that install it, billed by Shopify', 'de' => 'Monatliche Tarife für die Shops, die sie installieren, abgerechnet über Shopify'],
         ],
         'repeatable' => ['external_api' => 4],
+        // Care for a Shopify app includes running it on our server: Shopify needs it hosted.
+        'care_monthly_eur' => 29,
         'launch' => [
             'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
             'listing' => ['eur' => 99, 'en' => 'Shopify App Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Shopify App Store: Texte, Screenshots, Icon, Einreichung'],
@@ -139,7 +142,14 @@ return [
     // What the desk offers (2026-10-05, owner: "focus only Shopify, WordPress"). Chrome stays built and hidden.
     'offered' => ['wordpress', 'shopify'],
 
+    /*
+     * Care (2026-10-05): updates for new platform versions, security fixes, and changes asked for in
+     * the customer's project page. The first months are free when the buyer ticks it at checkout;
+     * then it renews monthly until cancelled. Care customers pay less for new features.
+     */
     'care_monthly_eur' => 19,
+    'care_trial_months' => 3,
+    'care_feature_discount_pct' => 20,
 
     'delivery_days' => [2, 3],
 

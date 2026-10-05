@@ -25,6 +25,7 @@ type Price = {
   build_eur: number;
   too_big: boolean;
   care_monthly_eur: number;
+  care_trial_months?: number;
   launch: Record<string, { label: string; eur: number }>;
   delivery_days: [number, number];
 };
@@ -510,7 +511,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
               <Ico name="done" className="dk-feat-ico" />
               {t.ready}
             </p>
-            <SbCheckout sessionId={session.id} total={total} picked={launch} t={t.checkout} locale={locale} />
+            <SbCheckout sessionId={session.id} total={total} picked={launch} care={{ monthly: price.care_monthly_eur, trialMonths: price.care_trial_months ?? 3 }} t={t.checkout} locale={locale} />
           </div>
         )}
 

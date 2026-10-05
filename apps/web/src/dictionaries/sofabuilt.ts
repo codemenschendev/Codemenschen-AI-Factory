@@ -67,9 +67,9 @@ const en = {
     title: "Prices",
     lede: "Every part has its own line. You see the total before you pay.",
     items: [
-      { h: "Plugin build", fig: "from €290", p: "Fixed price from the agreed scope. One change round included." },
+      { h: "Build", fig: "from €149", p: "WordPress plugins from €149, Shopify apps from €199. Fixed price from the agreed scope. One change round included." },
       { h: "Launch", fig: "optional", p: "Sales page, store listing, ads with a fixed budget cap. The ad budget runs on your own ad account." },
-      { h: "Care plan", fig: "monthly", p: "Updates for new WordPress, WooCommerce and PHP versions, security fixes." },
+      { h: "Care plan", fig: "from €19 a month", p: "First 3 months free. Updates for new versions, security fixes and changes you ask for in your project page. Shopify apps €29 a month, hosting included." },
     ],
   },
   faq: {
@@ -117,7 +117,7 @@ const en = {
     priceTitle: "Price",
     build: "Plugin build",
     delivery: "Ready in {lo} to {hi} working days after you order",
-    care: "Care plan, optional: {price} a month",
+    care: "Care plan, optional: {price} a month, first 3 months free",
     launchTitle: "Launch (optional)",
     tooBig: "This is a big one. Let us split it into a first version and a second step.",
     ready: "The scope is ready.",
@@ -147,7 +147,7 @@ const en = {
       pay: "Pay {price} and start",
       paying: "Opening the payment …",
       failed: "The payment page did not open. Try again or write to us.",
-      careLater: "The care plan is offered after handover.",
+      careTrial: "Add the care plan: the first {months} months are free, then {price} a month. Updates for new versions, security fixes and changes you ask for in your project page. Your card is kept for it. Cancel any time.",
     },
   },
   success: {
@@ -176,8 +176,8 @@ const en = {
       lede: "Both end the same way: a plugin that belongs to you, tested and ready to launch.",
       from: "from",
       items: [
-        { h: "I have my own idea", p: "Describe it in a sentence. We ask what we need, check what exists on wordpress.org and show scope and price.", points: ["Research of similar plugins", "Scope with what is in and out", "Price line by line"], go: "Describe my idea", price: 290 },
-        { h: "My own version of a premium plugin", p: "Paying every year for a plugin you use a little of? We build your own version with the features you need.", points: ["New code, its own name", "The features you really use", "Paid once"], go: "Show popular plugins", price: 290 },
+        { h: "I have my own idea", p: "Describe it in a sentence. We ask what we need, check what exists on wordpress.org and show scope and price.", points: ["Research of similar plugins", "Scope with what is in and out", "Price line by line"], go: "Describe my idea", price: 149 },
+        { h: "My own version of a premium plugin", p: "Paying every year for a plugin you use a little of? We build your own version with the features you need.", points: ["New code, its own name", "The features you really use", "Paid once"], go: "Show popular plugins", price: 149 },
         { h: "Launch and care", p: "A sales page, a store listing and ads with a fixed budget cap. Updates for new WordPress versions with the care plan.", points: ["Sales page with sign-up form", "Store listing and ads", "Care plan, monthly"], go: "Optional after delivery", price: 79 },
       ],
     },
@@ -254,9 +254,9 @@ const de: typeof en = {
     title: "Preise",
     lede: "Jeder Teil hat eine eigene Zeile. Du siehst die Summe, bevor du zahlst.",
     items: [
-      { h: "Plugin-Entwicklung", fig: "ab 290 €", p: "Festpreis aus dem vereinbarten Umfang. Eine Änderungsrunde inklusive." },
+      { h: "Entwicklung", fig: "ab 149 €", p: "WordPress-Plugins ab 149 €, Shopify-Apps ab 199 €. Festpreis aus dem vereinbarten Umfang. Eine Änderungsrunde inklusive." },
       { h: "Start", fig: "optional", p: "Verkaufsseite, Store-Eintrag, Anzeigen mit fester Budgetgrenze. Das Werbebudget läuft über dein eigenes Werbekonto." },
-      { h: "Wartungsplan", fig: "monatlich", p: "Updates für neue Versionen von WordPress, WooCommerce und PHP, Sicherheitsfixes." },
+      { h: "Wartungsplan", fig: "ab 19 € pro Monat", p: "Die ersten 3 Monate gratis. Updates für neue Versionen, Sicherheitsfixes und Änderungen, die du auf deiner Projektseite wünschst. Shopify-Apps 29 € pro Monat, Hosting inklusive." },
     ],
   },
   faq: {
@@ -304,7 +304,7 @@ const de: typeof en = {
     priceTitle: "Preis",
     build: "Plugin-Entwicklung",
     delivery: "Fertig in {lo} bis {hi} Werktagen nach der Bestellung",
-    care: "Wartungsplan, optional: {price} pro Monat",
+    care: "Wartungsplan, optional: {price} pro Monat, die ersten 3 Monate gratis",
     launchTitle: "Start (optional)",
     tooBig: "Das ist ein großes Projekt. Teilen wir es in eine erste Version und einen zweiten Schritt.",
     ready: "Der Umfang steht.",
@@ -334,7 +334,7 @@ const de: typeof en = {
       pay: "{price} zahlen und starten",
       paying: "Zahlung wird geöffnet …",
       failed: "Die Zahlungsseite ging nicht auf. Versuch es noch einmal oder schreib uns.",
-      careLater: "Den Wartungsplan bieten wir nach der Übergabe an.",
+      careTrial: "Wartungsplan dazu: die ersten {months} Monate gratis, danach {price} pro Monat. Updates für neue Versionen, Sicherheitsfixes und Änderungen, die du auf deiner Projektseite wünschst. Deine Karte wird dafür gespeichert. Jederzeit kündbar.",
     },
   },
   success: {
@@ -363,8 +363,8 @@ const de: typeof en = {
       lede: "Beide enden gleich: ein Plugin, das dir gehört, getestet und bereit für den Start.",
       from: "ab",
       items: [
-        { h: "Ich habe eine eigene Idee", p: "Beschreib sie in einem Satz. Wir fragen nach, schauen, was es auf wordpress.org gibt, und zeigen Umfang und Preis.", points: ["Recherche ähnlicher Plugins", "Umfang mit allem, was drin ist und was nicht", "Preis Zeile für Zeile"], go: "Meine Idee beschreiben", price: 290 },
-        { h: "Meine eigene Version eines Premium-Plugins", p: "Du zahlst jedes Jahr für ein Plugin, von dem du wenig nutzt? Wir bauen deine eigene Version mit den Funktionen, die du brauchst.", points: ["Neuer Code, eigener Name", "Die Funktionen, die du wirklich nutzt", "Einmal bezahlt"], go: "Beliebte Plugins zeigen", price: 290 },
+        { h: "Ich habe eine eigene Idee", p: "Beschreib sie in einem Satz. Wir fragen nach, schauen, was es auf wordpress.org gibt, und zeigen Umfang und Preis.", points: ["Recherche ähnlicher Plugins", "Umfang mit allem, was drin ist und was nicht", "Preis Zeile für Zeile"], go: "Meine Idee beschreiben", price: 149 },
+        { h: "Meine eigene Version eines Premium-Plugins", p: "Du zahlst jedes Jahr für ein Plugin, von dem du wenig nutzt? Wir bauen deine eigene Version mit den Funktionen, die du brauchst.", points: ["Neuer Code, eigener Name", "Die Funktionen, die du wirklich nutzt", "Einmal bezahlt"], go: "Beliebte Plugins zeigen", price: 149 },
         { h: "Start und Wartung", p: "Eine Verkaufsseite, ein Store-Eintrag und Anzeigen mit fester Budgetgrenze. Updates für neue WordPress-Versionen mit dem Wartungsplan.", points: ["Verkaufsseite mit Anmeldeformular", "Store-Eintrag und Anzeigen", "Wartungsplan, monatlich"], go: "Optional nach der Übergabe", price: 79 },
       ],
     },
