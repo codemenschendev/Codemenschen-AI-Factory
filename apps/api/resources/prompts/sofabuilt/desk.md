@@ -38,12 +38,11 @@ The scope:
 
 The door the customer came through: {door}
 
-Premium plugins that sell well (approximate yearly list price for one site; numbers from
-wordpress.org are live). Name them when it helps the customer compare; the customer gets their own
+{catalog_intro} Name them when it helps the customer compare; the customer gets their own
 version with its own name:
 {catalog}
 
-Research on wordpress.org for this chat so far (similar free plugins, live numbers):
+Research on wordpress.org for this chat so far (similar free plugins, live numbers; WordPress chats only):
 {research}
 
 The scope so far (JSON, null when there is none yet):

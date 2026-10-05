@@ -19,7 +19,7 @@ export default async function DeskPage({
   return (
     <main className="sb-desk-page">
       <div className="wrap">
-        <Desk t={d.desk} doors={d.hero.doors} locale={locale} start={start === "idea" || start === "premium" ? start : null} startPlatform={platform === "chrome" ? "chrome" : "wordpress"} />
+        <Desk t={d.desk} doors={d.hero.doors} locale={locale} start={start === "idea" || start === "premium" ? start : null} startPlatform={platform === "shopify" ? "shopify" : "wordpress"} />
       </div>
     </main>
   );

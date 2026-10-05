@@ -329,53 +329,65 @@ class CustomerMail
         $zip = rtrim(config('app.url'), '/')."/api/plugin/{$project->id}/plugin.zip";
         $sell = ! empty($project->order?->packages['sellReady']);
         $chrome = $project->stack === 'chrome-ext';
+        $shop = $project->stack === 'shopify';
+        $what = $shop ? ['Deine App', 'Your app'] : ($chrome ? ['Deine Erweiterung', 'Your extension'] : ['Dein Plugin', 'Your plugin']);
         [$subject, $lines] = match (true) {
             $to === 'REVIEW' => $de
-                ? [($chrome ? "Deine Erweiterung ist bereit zum Ausprobieren: " : "Dein Plugin ist bereit zum Ausprobieren: ").$name, [
-                    $project->revision_rounds > 0 ? 'die Änderungen sind umgesetzt und getestet.' : 'dein Plugin ist gebaut und getestet.',
+                ? ["{$what[0]} ist bereit zum Ausprobieren: {$name}", [
+                    $project->revision_rounds > 0 ? 'die Änderungen sind umgesetzt und getestet.' : lcfirst($what[0]).' ist gebaut und getestet.',
                     '',
-                    ...($chrome ? [
+                    ...($shop ? [
+                        'Probier sie in einem kostenlosen Shopify-Entwicklungsshop aus: lade die ZIP herunter und entpacke sie, dann im Ordner "npm install" und "shopify app dev" ausführen (Shopify CLI). Die App öffnet sich in deinem Shop. Die Schritte stehen auch in der README. Lieber ohne Technik? Antworte auf diese E-Mail, dann richten wir sie in deinem Entwicklungsshop ein.',
+                        $zip,
+                    ] : ($chrome ? [
                         'Probier sie in Chrome aus: lade die ZIP herunter und entpacke sie, öffne chrome://extensions, schalte oben rechts den Entwicklermodus ein und klicke auf "Entpackte Erweiterung laden". Wähle den entpackten Ordner.',
                         $zip,
                     ] : [
                         'Probier es live aus. Ein WordPress startet im Browser, dein Plugin ist installiert und du bist angemeldet:',
                         (string) $try,
-                    ]),
+                    ])),
                     '',
                     'Dann gib es in deinem Projekt frei oder wünsch dir Änderungen (Link 24 Stunden gültig):',
                     $link,
                 ]]
-                : [($chrome ? "Your extension is ready to try: " : "Your plugin is ready to try: ").$name, [
-                    $project->revision_rounds > 0 ? 'the changes are done and tested.' : 'your plugin is built and tested.',
+                : ["{$what[1]} is ready to try: {$name}", [
+                    $project->revision_rounds > 0 ? 'the changes are done and tested.' : lcfirst($what[1]).' is built and tested.',
                     '',
-                    ...($chrome ? [
+                    ...($shop ? [
+                        'Try it on a free Shopify development store: download the ZIP and unzip it, then run "npm install" and "shopify app dev" in the folder (Shopify CLI). The app opens in your store. The README has the same steps. Rather skip the technical part? Reply to this e-mail and we set it up in your development store.',
+                        $zip,
+                    ] : ($chrome ? [
                         'Try it in Chrome: download the ZIP and unzip it, open chrome://extensions, switch on Developer mode at the top right and click "Load unpacked". Pick the unzipped folder.',
                         $zip,
                     ] : [
                         'Try it live. A WordPress starts in your browser with your plugin installed and you logged in:',
                         (string) $try,
-                    ]),
+                    ])),
                     '',
                     'Then approve it in your project or ask for changes (link valid for 24 hours):',
                     $link,
                 ]],
             $to === 'READY' => $de
-                ? [($chrome ? "Deine Erweiterung gehört dir: " : "Dein Plugin gehört dir: ").$name, array_merge([
-                    $chrome
+                ? ["{$what[0]} gehört dir: {$name}", array_merge([
+                    $shop
+                        ? 'danke für die Freigabe. Hier ist deine App mit dem ganzen Code als ZIP. Sie läuft auf einem Server deiner Wahl (die README erklärt es, eine Docker-Datei ist dabei) und wird mit "shopify app deploy" bei Shopify angemeldet:'
+                        : ($chrome
                         ? 'danke für die Freigabe. Hier ist deine Erweiterung als ZIP, bereit für den Chrome Web Store oder zum Laden in Chrome:'
-                        : 'danke für die Freigabe. Hier ist dein Plugin als ZIP, bereit zum Hochladen unter Plugins > Installieren:',
+                        : 'danke für die Freigabe. Hier ist dein Plugin als ZIP, bereit zum Hochladen unter Plugins > Installieren:'),
                     $zip,
                     '',
-                    'Den Quellcode findest du in deinem Projekt. Mach vor der Installation ein Backup deiner Website.',
+                    $shop ? 'Den Quellcode findest du auch in deinem Projekt.' : 'Den Quellcode findest du in deinem Projekt. Mach vor der Installation ein Backup deiner Website.',
                     $link,
                 ], $sell ? ['', 'Bereit zum Verkauf: Lizenzschlüssel, Updates und Checkout sind eingebaut (über Freemius). Lege dir ein kostenloses Konto auf freemius.com an und schick uns eine kurze Antwort. Wir verbinden dein Plugin damit und laden es für den Verkauf hoch.'] : [])]
-                : [($chrome ? "Your extension is yours: " : "Your plugin is yours: ").$name, array_merge([
-                    $chrome
+                : ["{$what[1]} is yours: {$name}", array_merge([
+                    $shop
+                        ? 'thank you for approving. Here is your app with all its code as a ZIP. It runs on a server of your choice (the README explains it, a Docker file is included) and is registered with Shopify through "shopify app deploy":'
+                        : ($chrome
                         ? 'thank you for approving. Here is your extension as a ZIP, ready for the Chrome Web Store or to load in Chrome:'
-                        : 'thank you for approving. Here is your plugin as a ZIP, ready to upload under Plugins > Add New:',
+                        : 'thank you for approving. Here is your plugin as a ZIP, ready to upload under Plugins > Add New:'),
                     $zip,
                     '',
-                    'The source code is in your project. Back up your site before you install it.',
+                    $shop ? 'The source code is also in your project.' : 'The source code is in your project. Back up your site before you install it.',
                     $link,
                 ], $sell ? ['', 'Ready to sell: licence keys, updates and the checkout are built in (through Freemius). Create a free account on freemius.com and send us a short reply. We connect your plugin to it and upload it for sale.'] : [])],
             default => $de
@@ -405,9 +417,11 @@ class CustomerMail
                 ? 'Start: '.$later->format('d.m.Y').', nach Ablauf der 14-tägigen Widerrufsfrist.'
                 : "Start: sofort. Rechne mit {$days[0]} bis {$days[1]} Werktagen.",
             '',
-            $project->stack === 'chrome-ext'
+            $project->stack === 'shopify'
+                ? 'Was jetzt passiert: wir bauen die App nach dem vereinbarten Umfang und testen sie. Dann bekommst du sie zum Ausprobieren in einem Shopify-Entwicklungsshop, mit einer kurzen Anleitung. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du die App mit dem ganzen Code, bereit für deinen Server und den Shopify App Store.'
+                : ($project->stack === 'chrome-ext'
                 ? 'Was jetzt passiert: wir bauen die Erweiterung nach dem vereinbarten Umfang und testen sie. Dann bekommst du sie zum Ausprobieren in Chrome, mit einer kurzen Anleitung. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du die ZIP für den Chrome Web Store und den Code.'
-                : 'Was jetzt passiert: wir bauen das Plugin nach dem vereinbarten Umfang und testen es. Dann bekommst du einen Link, unter dem du es live in einem WordPress im Browser ausprobierst. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du das Plugin als ZIP und den Code.',
+                : 'Was jetzt passiert: wir bauen das Plugin nach dem vereinbarten Umfang und testen es. Dann bekommst du einen Link, unter dem du es live in einem WordPress im Browser ausprobierst. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du das Plugin als ZIP und den Code.'),
             '',
             'Fragen jederzeit: einfach auf diese E-Mail antworten.',
             '',
@@ -423,9 +437,11 @@ class CustomerMail
                 ? 'Start: '.$later->format('d M Y').', after the 14-day withdrawal period.'
                 : "Start: now. Expect {$days[0]} to {$days[1]} working days.",
             '',
-            $project->stack === 'chrome-ext'
+            $project->stack === 'shopify'
+                ? 'What happens now: we build the app to the agreed scope and test it. Then you get it to try on a Shopify development store, with short steps. You approve it or ask for changes, one round is included. After that you get the app with all its code, ready for your server and the Shopify App Store.'
+                : ($project->stack === 'chrome-ext'
                 ? 'What happens now: we build the extension to the agreed scope and test it. Then you get it to try in Chrome, with short steps. You approve it or ask for changes, one round is included. After that you get the ZIP for the Chrome Web Store and the code.'
-                : 'What happens now: we build the plugin to the agreed scope and test it. Then you get a link where you try it live in a WordPress in your browser. You approve it or ask for changes, one round is included. After that you get the plugin as a ZIP and the code.',
+                : 'What happens now: we build the plugin to the agreed scope and test it. Then you get a link where you try it live in a WordPress in your browser. You approve it or ask for changes, one round is included. After that you get the plugin as a ZIP and the code.'),
             '',
             'Questions at any time: just reply to this e-mail.',
             '',

@@ -3,8 +3,9 @@ FROM node:22-alpine
 # eas-cli call os.userInfo(), which needs a passwd entry for that uid.
 ARG WORKER_UID=1000
 ARG WORKER_GID=1000
-# PHP and zip for Sofabuilt's WordPress plugins (test sandbox, Plugin Check, release ZIP).
-RUN apk add --no-cache git tar zip unzip curl \
+# PHP and zip for Sofabuilt's WordPress plugins (test sandbox, Plugin Check, release ZIP); openssl for
+# Prisma in Shopify apps.
+RUN apk add --no-cache git tar zip unzip curl openssl \
     php83 php83-phar php83-mbstring php83-xml php83-xmlreader php83-xmlwriter php83-simplexml php83-dom \
     php83-tokenizer php83-ctype php83-pdo php83-pdo_sqlite php83-sqlite3 php83-curl php83-openssl php83-zip \
     php83-iconv php83-fileinfo php83-session php83-intl php83-gd \

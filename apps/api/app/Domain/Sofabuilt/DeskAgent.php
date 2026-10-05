@@ -17,6 +17,25 @@ use RuntimeException;
  */
 class DeskAgent
 {
+    /** What the prompt says about the platform of the chat. */
+    private const PLATFORM_TEXTS = [
+        'wordpress' => [
+            'product' => 'WordPress or WooCommerce plugin',
+            'rule' => 'WordPress and WooCommerce only in this chat. Shopify apps: the customer can start a Shopify chat. Joomla, Shopware or standalone apps: say they come later.',
+            'catalog' => 'Premium plugins that sell well (approximate yearly list price for one site; numbers from wordpress.org are live).',
+        ],
+        'shopify' => [
+            'product' => 'Shopify app (an app in the Shopify admin, with blocks on the shop pages when needed)',
+            'rule' => 'Shopify only in this chat. WordPress plugins: the customer can start a WordPress chat. Shopware, Wix or standalone apps: say they come later. The merchant needs a place to run the app (a small server or a host like Fly.io or Render); mention it once, plainly, when the scope is ready. Keep `requires` as {"woocommerce": false, "wordpress": "", "php": ""}.',
+            'catalog' => 'Paid Shopify apps that sell well (cheapest paid plan from the Shopify App Store, shown per year, and its review count).',
+        ],
+        'chrome' => [
+            'product' => 'Chrome browser extension',
+            'rule' => 'Chrome extensions only in this chat (they also run in Edge and Brave). WordPress plugins: the customer can start a WordPress chat. Firefox, Safari or standalone apps: say they come later. Keep `requires` as {"woocommerce": false, "wordpress": "", "php": ""}.',
+            'catalog' => 'Paid extensions that sell well.',
+        ],
+    ];
+
     public function __construct(private WpOrg $wporg) {}
 
     /** @return array{reply: string, questions: list<array{q: string, options: list<string>}>, scope: ?array, search: ?string, ready: bool} */
@@ -50,13 +69,14 @@ class DeskAgent
 
     public function prompt(DeskSession $session): string
     {
-        $chrome = $session->platform === 'chrome';
+        $texts = self::PLATFORM_TEXTS[$session->platform] ?? self::PLATFORM_TEXTS['wordpress'];
         $modules = collect(Platforms::modules($session->platform))->map(fn ($m, $k) => "  - {$k}: {$m['en']}")->implode("\n");
         $catalog = collect(Platforms::catalog($session->platform))->map(function ($p) {
-            $live = $p['slug'] ? $this->wporg->info($p['slug']) : null;
+            $live = ($p['slug'] ?? null) ? $this->wporg->info($p['slug']) : null;
             $stats = $live ? sprintf(', free version on wordpress.org: %s installs, rating %d/100', number_format($live['installs']), $live['rating']) : '';
+            $stats .= isset($p['reviews']) ? sprintf(', %s reviews', number_format($p['reviews'])) : '';
 
-            return "  - {$p['name']} ({$p['category']}, about {$p['price']}/year{$stats}): ".implode(', ', $p['features']);
+            return "  - {$p['name']} ({$p['category']}, about ".Platforms::yearly($p['price'])."/year{$stats}): ".implode(', ', $p['features']);
         })->implode("\n");
         $research = collect($session->research ?? [])->map(fn ($r) => sprintf('  - %s: %s installs, rating %d/100, %d ratings, updated %s',
             $r['name'], number_format($r['installs']), $r['rating'], $r['ratings'], $r['updated']))->implode("\n");
@@ -64,10 +84,9 @@ class DeskAgent
             ->map(fn ($m) => ($m->role === 'customer' ? 'Customer' : 'You').': '.mb_substr($m->body, 0, 2000))->implode("\n\n");
 
         return Prompts::get('sofabuilt/desk', [
-            'product' => $chrome ? 'Chrome browser extension' : 'WordPress or WooCommerce plugin',
-            'platform_rule' => $chrome
-                ? 'Chrome extensions only in this chat (they also run in Edge and Brave). WordPress plugins: the customer can start a WordPress chat. Firefox, Safari, Shopify or standalone apps: say they come later. Keep `requires` as {"woocommerce": false, "wordpress": "", "php": ""}.'
-                : 'WordPress and WooCommerce only in this chat. Chrome extensions: the customer can start a Chrome chat. Shopify, Joomla or standalone apps: say they come later.',
+            'product' => $texts['product'],
+            'platform_rule' => $texts['rule'],
+            'catalog_intro' => $texts['catalog'],
             'language' => $session->locale === 'de' ? 'German' : 'English',
             'door' => $session->door === 'premium'
                 ? 'own version of a premium plugin (help them pick one from the list below, or the one they name)'
@@ -106,7 +125,7 @@ class DeskAgent
         $scope = null;
         if (is_array($data['scope'] ?? null)) {
             $s = $data['scope'];
-            $known = array_merge(Platforms::modules('wordpress'), Platforms::modules('chrome'));
+            $known = array_merge(...array_map(fn ($p) => Platforms::modules($p), Platforms::ALL));
             $modules = [];
             foreach (is_array($s['modules'] ?? null) ? $s['modules'] : [] as $m) {
                 $key = is_array($m) ? ($m['key'] ?? null) : $m;
