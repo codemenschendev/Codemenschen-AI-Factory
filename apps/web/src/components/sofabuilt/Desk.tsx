@@ -447,9 +447,11 @@ export function Desk({
                     }
                   }}
                   placeholder={
-                    door === "premium" || messages.length
+                    platform === "app"
+                      ? messages.length ? t.placeholderAppMore : t.placeholderApp
+                      : door === "premium" || messages.length
                       ? platform === "shopify" ? t.placeholderPremiumShopify : t.placeholderPremium
-                      : platform === "app" ? t.placeholderApp : platform === "chrome" ? t.placeholderChrome : platform === "shopify" ? t.placeholderShopify : t.placeholder
+                      : platform === "chrome" ? t.placeholderChrome : platform === "shopify" ? t.placeholderShopify : t.placeholder
                   }
                   rows={3}
                 />
