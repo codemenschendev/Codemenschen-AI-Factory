@@ -50,6 +50,7 @@ Route::get('/landing/signups/{signup}/remove', [LandingController::class, 'remov
 Route::get('/site-config', [SiteConfigController::class, 'show']);
 // Sofabuilt's desk (docs/specs/sofabuilt.md): idea in, priced scope out. Each turn is a model call.
 Route::get('/desk/catalog', [DeskController::class, 'catalog'])->middleware('throttle:60,1,desk-catalog');
+Route::get('/desk/config', [DeskController::class, 'config'])->middleware('throttle:60,1,desk-config');
 Route::post('/desk', [DeskController::class, 'store'])->middleware('throttle:10,10,desk-new');
 Route::get('/desk/{session}', [DeskController::class, 'show'])->middleware('throttle:120,1,desk-show');
 Route::post('/desk/{session}/messages', [DeskController::class, 'message'])->middleware(['throttle:12,1,desk-turn', 'turnstile']);
@@ -158,6 +159,8 @@ Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admi
     Route::post('/ads-mode', [AdminController::class, 'adsMode']);
     Route::post('/prototype-writer', [AdminController::class, 'prototypeWriter']);
     Route::post('/offer-kinds', [AdminController::class, 'offerKinds']);
+    Route::get('/sofabuilt', [AdminController::class, 'sofabuilt']);
+    Route::post('/sofabuilt', [AdminController::class, 'sofabuiltSettings']);
     // The validation test and the spend guard (ValidationController, SpendGuard).
     Route::get('/prototypes/{prototype}/validation', [ValidationController::class, 'show']);
     Route::post('/prototypes/{prototype}/validation', [ValidationController::class, 'store']);

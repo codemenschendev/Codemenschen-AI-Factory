@@ -18,7 +18,9 @@ class Platforms
     /** @return list<string> */
     public static function offered(): array
     {
-        return array_values(array_intersect(self::ALL, config('sofabuilt.offered', self::ALL)));
+        $offered = array_values(array_intersect(self::ALL, (array) Settings::get('offered')));
+
+        return $offered === [] ? ['wordpress'] : $offered;
     }
 
     public static function of(?array $scope): string

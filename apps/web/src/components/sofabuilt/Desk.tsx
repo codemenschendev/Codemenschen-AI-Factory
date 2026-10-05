@@ -8,7 +8,8 @@ import { SbCheckout } from "./SbCheckout";
 
 type Door = "idea" | "premium";
 type Platform = "wordpress" | "shopify" | "chrome";
-// What the desk offers (owner, 2026-10-05: WordPress and Shopify). Chrome stays built, not shown.
+// What the desk offers until /desk/config answers (the admin's switch decides; owner 2026-10-05:
+// WordPress and Shopify). Chrome stays built, shown only when switched on.
 const OFFERED: Platform[] = ["wordpress", "shopify"];
 type Question = { q: string; options: string[] };
 type Message = { id: number; role: "customer" | "assistant"; body: string; meta?: { questions?: Question[] } | null };
@@ -112,6 +113,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
   // A Chrome extension starts from an idea: there is no premium catalogue for it yet.
   const [door, setDoor] = useState<Door | null>(startPlatform === "chrome" ? "idea" : start);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
+  const [offered, setOffered] = useState<Platform[]>(OFFERED);
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<Record<number, string>>({});
   const [launch, setLaunch] = useState<Record<string, boolean>>({});
@@ -123,6 +125,10 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
   const eur = (n: number) => (de ? `${n.toLocaleString("de-AT")} €` : `€${n.toLocaleString("en-IE")}`);
   const num = (n: number) => n.toLocaleString(de ? "de-AT" : "en-IE");
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
+
+  useEffect(() => {
+    api<{ offered: Platform[] }>("/desk/config").then((r) => r.offered.length && setOffered(r.offered)).catch(() => {});
+  }, []);
 
   useEffect(() => {
     let id: string | null = null;
@@ -240,7 +246,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
 
         <div className="dk-card dk-body" aria-live="polite">
           <div className="dk-platforms" role="tablist">
-            {OFFERED.map((p) => (
+            {offered.map((p) => (
               <button
                 key={p}
                 type="button"

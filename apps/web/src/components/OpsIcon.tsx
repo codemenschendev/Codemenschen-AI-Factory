@@ -107,6 +107,13 @@ const PATHS: Record<string, React.ReactNode> = {
       <path d="M6 12h10" />
     </>
   ),
+  sofabuilt: (
+    <>
+      <path d="M4 15v-3a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v3" />
+      <path d="M3 15h18v3H3z" />
+      <path d="M6 10V7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v3" />
+    </>
+  ),
   site: (
     <>
       <path d="M14 4h6v6" />
