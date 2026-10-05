@@ -3,8 +3,10 @@
 namespace App\Domain\Sofabuilt;
 
 /**
- * The price of a desk scope, from config/sofabuilt.php. The agent names modules; every euro comes
- * from here, so a model can never talk a price up or down.
+ * The price of a desk scope, from config/sofabuilt.php: build minutes times the platform's hourly
+ * rate (owner, 2026-10-05). The agent names modules and estimates their minutes for the idea; the
+ * minutes are held to between half and three times the usual time of the part, and every euro is
+ * computed here, so a model can never talk a price far up or down.
  */
 class Pricing
 {
@@ -19,7 +21,7 @@ class Pricing
         $repeatable = Platforms::repeatable($platform);
         $out = [];
         foreach (Platforms::modules($platform) as $key => $m) {
-            $out[] = ['key' => $key, 'label' => $m[$lang], 'eur' => (int) $m['eur'], 'max' => (int) ($repeatable[$key] ?? 1)];
+            $out[] = ['key' => $key, 'label' => $m[$lang], 'eur' => self::eur($platform, (int) $m['minutes']), 'minutes' => (int) $m['minutes'], 'max' => (int) ($repeatable[$key] ?? 1)];
         }
 
         return $out;
@@ -47,7 +49,7 @@ class Pricing
         }
         $sum = 0;
         foreach ($picked as $key => $n) {
-            $sum += (int) round($known[$key]['eur'] * (int) Settings::get('price_pct') / 100) * $n;
+            $sum += self::eur($platform, (int) $known[$key]['minutes']) * $n;
         }
         $pct = $care ? (int) config('sofabuilt.care_feature_discount_pct', 20) : 0;
         $eur = max(\App\Domain\Pricing\Estimator::REVISION_PRICE_EUR, (int) round($sum * (100 - $pct) / 100));
@@ -57,7 +59,7 @@ class Pricing
 
     /**
      * @param  array{modules?: list<array{key?: string, qty?: int}>}|null  $scope
-     * @return array{lines: list<array{key: string, label: string, qty: int, eur: int}>, build_eur: int, too_big: bool, care_monthly_eur: int, launch: array<string, array{label: string, eur: int}>, delivery_days: array{0: int, 1: int}}
+     * @return array{lines: list<array{key: string, label: string, qty: int, minutes: int, eur: int}>, build_eur: int, too_big: bool, care_monthly_eur: int, launch: array<string, array{label: string, eur: int}>, delivery_days: array{0: int, 1: int}}
      */
     public static function quote(?array $scope, string $locale = 'en'): array
     {
@@ -66,9 +68,16 @@ class Pricing
         $repeatable = Platforms::repeatable($platform);
         $lang = $locale === 'de' ? 'de' : 'en';
         $qty = ['base' => 1];
+        $estimate = [];
         foreach ((array) ($scope['modules'] ?? []) as $m) {
             $key = is_array($m) ? (string) ($m['key'] ?? '') : (string) $m;
-            if (! isset($modules[$key]) || $key === 'base') {
+            if (! isset($modules[$key])) {
+                continue;
+            }
+            if (is_array($m) && isset($m['minutes'])) {
+                $estimate[$key] = (int) $m['minutes'];
+            }
+            if ($key === 'base') {
                 continue;
             }
             $n = max(1, (int) (is_array($m) ? ($m['qty'] ?? 1) : 1));
@@ -76,14 +85,16 @@ class Pricing
         }
         $lines = [];
         foreach ($qty as $key => $n) {
-            // The admin's price lever (Settings price_pct) scales every part, rounded to whole euros.
-            $lines[] = ['key' => $key, 'label' => $modules[$key][$lang], 'qty' => $n, 'eur' => (int) round($modules[$key]['eur'] * (int) Settings::get('price_pct') / 100) * $n];
+            $minutes = self::minutes((int) $modules[$key]['minutes'], $estimate[$key] ?? null);
+            $lines[] = ['key' => $key, 'label' => $modules[$key][$lang], 'qty' => $n, 'minutes' => $minutes * $n, 'eur' => self::eur($platform, $minutes) * $n];
         }
         $build = array_sum(array_column($lines, 'eur'));
 
         return [
             'lines' => $lines,
             'build_eur' => $build,
+            'build_minutes' => array_sum(array_column($lines, 'minutes')),
+            'rate_eur_hour' => Platforms::rate($platform),
             'too_big' => $build > (int) Settings::get('max_build_eur'),
             'care_monthly_eur' => Platforms::care($platform),
             'care_trial_months' => (int) Settings::get('care_trial_months'),
@@ -91,5 +102,21 @@ class Pricing
             'delivery_days' => Platforms::deliveryDays($platform),
             'hosting_monthly_eur' => Platforms::hosting($platform, array_keys($qty)),
         ];
+    }
+
+    /** The model's estimate for one unit of a part, held near the part's usual minutes. */
+    public static function minutes(int $usual, ?int $estimate): int
+    {
+        if ($estimate === null || $estimate <= 0) {
+            return $usual;
+        }
+
+        return max(max(1, intdiv($usual, 2)), min($usual * 3, $estimate));
+    }
+
+    /** Minutes into euros at the platform's rate and the admin's price lever (Settings price_pct). */
+    public static function eur(string $platform, int $minutes): int
+    {
+        return (int) round($minutes * Platforms::rate($platform) / 60 * (int) Settings::get('price_pct') / 100);
     }
 }

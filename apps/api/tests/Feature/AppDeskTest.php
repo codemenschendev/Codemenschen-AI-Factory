@@ -66,4 +66,27 @@ class AppDeskTest extends TestCase
         $this->postJson('/api/desk', ['door' => 'idea', 'platform' => 'app'])->assertCreated()->assertJsonPath('platform', 'app');
         $this->postJson('/api/desk', ['door' => 'idea', 'platform' => 'wordpress'])->assertStatus(503);
     }
+
+    public function test_the_price_is_the_estimated_build_time_at_the_platforms_rate(): void
+    {
+        // A complex screen (40 min), a far too long base (cut to 3 x 15) and a part with no estimate.
+        $id = $this->chat([['key' => 'base', 'minutes' => 500], ['key' => 'screen', 'minutes' => 40], ['key' => 'local_save']]);
+
+        $res = $this->getJson("/api/desk/$id")->assertOk();
+        $this->assertSame([45, 40, 5], array_column($res->json('price.lines'), 'minutes'));
+        $res->assertJsonPath('price.build_eur', 90)->assertJsonPath('price.build_minutes', 90)->assertJsonPath('price.rate_eur_hour', 60);
+
+        // The admin's hourly rate for apps; WordPress keeps its own.
+        Settings::write(['rate_app' => 30], 'test');
+        $this->getJson("/api/desk/$id")->assertJsonPath('price.build_eur', 23 + 20 + 3);
+        $this->assertSame(60, \App\Domain\Sofabuilt\Platforms::rate('wordpress'));
+    }
+
+    public function test_parts_ticked_by_hand_keep_the_estimate_of_the_parts_kept(): void
+    {
+        $id = $this->chat([['key' => 'base', 'minutes' => 20], ['key' => 'screen', 'minutes' => 30]]);
+
+        $this->postJson("/api/desk/$id/modules", ['modules' => [['key' => 'screen'], ['key' => 'photos']]])->assertOk()
+            ->assertJsonPath('price.build_eur', 20 + 30 + 10);
+    }
 }
