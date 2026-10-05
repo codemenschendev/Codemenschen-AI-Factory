@@ -12,8 +12,11 @@ class Platforms
 {
     public const ALL = ['wordpress', 'shopify', 'chrome'];
 
+    /** Appmitki's phone apps on the same desk; never one of Sofabuilt's platforms (config `app`). */
+    public const APP = 'app';
+
     /** The pipeline stack each platform is built on (worker templates/<stack>-app). */
-    public const STACKS = ['wordpress' => 'wp-plugin', 'shopify' => 'shopify', 'chrome' => 'chrome-ext'];
+    public const STACKS = ['wordpress' => 'wp-plugin', 'shopify' => 'shopify', 'chrome' => 'chrome-ext', 'app' => 'expo'];
 
     /** @return list<string> */
     public static function offered(): array
@@ -27,7 +30,7 @@ class Platforms
     {
         $p = $scope['platform'] ?? 'wordpress';
 
-        return in_array($p, self::ALL, true) ? $p : 'wordpress';
+        return in_array($p, [...self::ALL, self::APP], true) ? $p : 'wordpress';
     }
 
     /** @return array<string, array{eur: int, en: string, de: string}> */
@@ -58,6 +61,21 @@ class Platforms
     public static function care(string $platform): int
     {
         return (int) ($platform === 'wordpress' ? config('sofabuilt.care_monthly_eur') : config("sofabuilt.$platform.care_monthly_eur", config('sofabuilt.care_monthly_eur')));
+    }
+
+    /** Monthly server fee: only an app whose parts need our server (`server` in the config). */
+    public static function hosting(string $platform, array $keys): int
+    {
+        $modules = self::modules($platform);
+        $server = array_filter($keys, fn ($k) => ! empty($modules[$k]['server']));
+
+        return $server === [] ? 0 : (int) config("sofabuilt.$platform.hosting_monthly_eur", 0);
+    }
+
+    /** @return array{0: int, 1: int} */
+    public static function deliveryDays(string $platform): array
+    {
+        return config("sofabuilt.$platform.delivery_days", config('sofabuilt.delivery_days'));
     }
 
     /** A catalogue price per year: "$15/mo" becomes "$180", a yearly price stays as it is. */

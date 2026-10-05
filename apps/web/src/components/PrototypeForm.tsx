@@ -89,11 +89,6 @@ export function PrototypeForm({
   // The business's own pictures. They go up with the build, never on their own.
   const [files, setFiles] = useState<File[]>([]);
   const [dragging, setDragging] = useState(false);
-
-  // The live price in the side column (PriceCalc) follows what is typed here.
-  useEffect(() => {
-    window.dispatchEvent(new CustomEvent("appmitki:idea", { detail: { text: prompt, kind } }));
-  }, [prompt, kind]);
   const previews = useMemo(() => files.map((f) => URL.createObjectURL(f)), [files]);
   useEffect(() => () => previews.forEach((u) => URL.revokeObjectURL(u)), [previews]);
 

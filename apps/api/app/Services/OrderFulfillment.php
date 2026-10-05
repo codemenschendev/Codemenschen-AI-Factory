@@ -49,6 +49,8 @@ class OrderFulfillment
             $plugin = $quote->kind === 'plugin';
             $name = match (true) {
                 $plugin => mb_substr((string) ($quote->breakdown['scope']['name'] ?? 'WordPress plugin'), 0, 60),
+                // An Appmitki app from the desk keeps the name agreed there.
+                ! empty($quote->breakdown['scope']['name']) => mb_substr((string) $quote->breakdown['scope']['name'], 0, 60),
                 (bool) $quote->listing_slug => ucfirst($quote->listing_slug),
                 default => mb_substr($quote->idea ?? ($site ? 'Website' : 'Custom app'), 0, 60),
             };

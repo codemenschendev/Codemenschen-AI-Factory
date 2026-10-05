@@ -1,12 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { AppDesk } from "@/components/AppDesk";
 import { Icon } from "@/components/LineIcon";
 import { PrototypeForm, type ProtoKind } from "@/components/PrototypeForm";
-import { PriceCalc } from "@/components/PriceCalc";
 import { PrototypeHistory } from "@/components/PrototypeHistory";
+import { appDesk } from "@/dictionaries/appDesk";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { appsOnly, offeredKinds } from "@/lib/offer";
 import "../../../prototype.css";
+import "../../../sofabuilt.css";
 
 export const metadata: Metadata = { title: "Prototype" };
 
@@ -18,10 +20,10 @@ export default async function PrototypePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ kind?: string }>;
+  searchParams: Promise<{ kind?: string; form?: string }>;
 }) {
   const { locale: raw } = await params;
-  const { kind } = await searchParams;
+  const { kind, form } = await searchParams;
   // Only what is on offer; an old link to a hidden kind opens on the first one that is.
   const kinds: ProtoKind[] = await offeredKinds();
   const initialKind = kinds.find((k) => k === kind) ?? kinds[0];
@@ -32,6 +34,19 @@ export default async function PrototypePage({
   const apps = appsOnly(kinds);
   const steps = apps ? d.appDev.how.steps : d.how.steps;
   const trust = apps ? d.appDev.trust : d.home.trust;
+
+  // Apps start on the desk: scope and price part by part, like Sofabuilt (owner, 2026-10-05).
+  // The plain form stays for the free preview the desk hands over to (?form=1).
+  if (apps && !form) {
+    const a = appDesk(locale);
+    return (
+      <main className="sb-desk-page sb-vars">
+        <div className="wrap">
+          <AppDesk t={a.desk} doors={a.doors} locale={locale} />
+        </div>
+      </main>
+    );
+  }
 
   return (
     <main className="pp">
@@ -65,7 +80,6 @@ export default async function PrototypePage({
               ))}
             </ol>
           </div>
-          {kinds.includes("app") && <PriceCalc d={d} locale={locale} />}
           <ul className="pp-trust">
             {trust.map((t) => (
               <li key={t.h}>

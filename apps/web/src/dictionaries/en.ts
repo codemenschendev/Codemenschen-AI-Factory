@@ -1463,14 +1463,6 @@ export const en = {
     daysLeft: "{n} days left",
     oneDayLeft: "1 day left",
     forget: "Remove",
-    calc: {
-      title: "Rough estimate",
-      empty: "Describe your app on the left. The price appears here while you write.",
-      thinking: "Thinking about your idea",
-      off: "The estimate is not available right now. You get the price with your preview.",
-      total: "Rough total",
-      note: "A first estimate from your description. With your preview you get the fixed price, before you pay anything.",
-    },
     page: {
       pill: "1 free prototype per account · no credit card",
       asideTitle: "What happens next",

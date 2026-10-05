@@ -29,6 +29,11 @@ class DeskAgent
             'rule' => 'Shopify only in this chat. WordPress plugins: the customer can start a WordPress chat. Shopware, Wix or standalone apps: say they come later. The merchant needs a place to run the app (a small server or a host like Fly.io or Render); mention it once, plainly, when the scope is ready. Keep `requires` as {"woocommerce": false, "wordpress": "", "php": ""}.',
             'catalog' => 'Paid Shopify apps that sell well (cheapest paid plan from the Shopify App Store, shown per year, and its review count).',
         ],
+        'app' => [
+            'product' => 'phone app for iPhone and Android',
+            'rule' => 'Phone apps only in this chat.',
+            'catalog' => '',
+        ],
         'chrome' => [
             'product' => 'Chrome browser extension',
             'rule' => 'Chrome extensions only in this chat (they also run in Edge and Brave). WordPress plugins: the customer can start a WordPress chat. Firefox, Safari or standalone apps: say they come later. Keep `requires` as {"woocommerce": false, "wordpress": "", "php": ""}.',
@@ -83,7 +88,8 @@ class DeskAgent
         $conversation = $session->messages()->latest('id')->limit(24)->get()->reverse()
             ->map(fn ($m) => ($m->role === 'customer' ? 'Customer' : 'You').': '.mb_substr($m->body, 0, 2000))->implode("\n\n");
 
-        return Prompts::get('sofabuilt/desk', [
+        // Appmitki's app chat has its own prompt: another brand, another customer.
+        return Prompts::get($session->platform === Platforms::APP ? 'appmitki/desk' : 'sofabuilt/desk', [
             'product' => $texts['product'],
             'platform_rule' => $texts['rule'],
             'catalog_intro' => $texts['catalog'],
@@ -125,7 +131,7 @@ class DeskAgent
         $scope = null;
         if (is_array($data['scope'] ?? null)) {
             $s = $data['scope'];
-            $known = array_merge(...array_map(fn ($p) => Platforms::modules($p), Platforms::ALL));
+            $known = array_merge(...array_map(fn ($p) => Platforms::modules($p), [...Platforms::ALL, Platforms::APP]));
             $modules = [];
             foreach (is_array($s['modules'] ?? null) ? $s['modules'] : [] as $m) {
                 $key = is_array($m) ? ($m['key'] ?? null) : $m;
