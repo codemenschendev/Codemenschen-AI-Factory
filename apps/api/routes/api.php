@@ -25,6 +25,7 @@ use App\Http\Controllers\PreviewController;
 use App\Http\Controllers\PrototypeController;
 use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\QuoteRefineController;
+use App\Http\Controllers\RoughEstimateController;
 use App\Http\Controllers\SiteConfigController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\ValidationController;
@@ -57,6 +58,8 @@ Route::post('/desk/{session}/messages', [DeskController::class, 'message'])->mid
 Route::post('/desk/{session}/quote', [DeskController::class, 'quote'])->middleware('throttle:10,10,desk-quote');
 Route::post('/desk/{session}/modules', [DeskController::class, 'modules'])->middleware('throttle:60,1,desk-modules');
 Route::post('/quotes', [QuoteController::class, 'store']);
+// The live price while the idea is typed on the prototype page.
+Route::post('/estimate/rough', RoughEstimateController::class)->middleware('throttle:20,1,rough');
 // Wizard "sharpen my idea": OpenClaw via the worker; daily caps live in the controller.
 Route::post('/quotes/refine', QuoteRefineController::class)->middleware(['throttle:5,1,refine', 'turnstile']);
 Route::get('/quotes/{quote}', [QuoteController::class, 'show']);

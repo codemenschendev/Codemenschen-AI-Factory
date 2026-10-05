@@ -1,62 +1,83 @@
 "use client";
 
-import { useState } from "react";
-import { estimate, FEATURES, HOSTING_MONTHLY, type FeatureKey, type Platform } from "@ai-factory/pricing";
+import { useEffect, useRef, useState } from "react";
+import { api } from "@/lib/api";
 import type { Dict, Locale } from "@/lib/i18n";
 
+type Part = { name: string; eur: number };
+type State = { kind: "empty" } | { kind: "thinking"; last: Part[] | null } | { kind: "done"; parts: Part[]; total: number } | { kind: "off" };
+
+const WAIT_MS = 1200;
+const MIN_CHARS = 20;
+
 /**
- * The price beside the idea, the way the Sofabuilt desk shows it: the visitor picks where the
- * app runs and what it needs, the total follows at once. Same engine as the real quote
- * (Estimator::estimate), so the number here is the number at checkout for that scope.
+ * The price that follows the idea while it is typed (Patrick, 2026-10-05: "todo app estimate
+ * rough: checkboxes 15, saving of items 5, releasing app to store 15"). PrototypeForm sends
+ * the text as an "appmitki:idea" event; after a pause in typing the API (RoughEstimate) splits
+ * it into priced parts. Only the newest answer is shown.
  */
 export function PriceCalc({ d, locale }: { d: Dict; locale: Locale }) {
   const t = d.proto.calc;
-  const w = d.wizard;
-  const [platform, setPlatform] = useState<Platform>("mobile");
-  const [features, setFeatures] = useState<FeatureKey[]>([]);
+  const [state, setState] = useState<State>({ kind: "empty" });
+  const seq = useRef(0);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const money = (n: number) =>
     new Intl.NumberFormat(locale === "de" ? "de-AT" : "en-GB", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-  const est = estimate({ audience: "consumer", platform, features });
-  const monthly = HOSTING_MONTHLY[est.appType];
-  const toggle = (f: FeatureKey) => setFeatures((fs) => (fs.includes(f) ? fs.filter((x) => x !== f) : [...fs, f]));
+
+  useEffect(() => {
+    const onIdea = (e: Event) => {
+      const { text, kind } = (e as CustomEvent<{ text: string; kind: string }>).detail;
+      if (timer.current) clearTimeout(timer.current);
+      const id = ++seq.current;
+      if (kind !== "app" || text.trim().length < MIN_CHARS) {
+        setState({ kind: "empty" });
+        return;
+      }
+      setState((s) => ({ kind: "thinking", last: s.kind === "done" ? s.parts : s.kind === "thinking" ? s.last : null }));
+      timer.current = setTimeout(() => {
+        api<{ parts: Part[]; total: number }>("/estimate/rough", { method: "POST", body: JSON.stringify({ text: text.trim(), locale }) })
+          .then((r) => id === seq.current && setState(r.parts.length ? { kind: "done", parts: r.parts, total: r.total } : { kind: "empty" }))
+          .catch(() => id === seq.current && setState({ kind: "off" }));
+      }, WAIT_MS);
+    };
+    window.addEventListener("appmitki:idea", onIdea);
+    return () => {
+      window.removeEventListener("appmitki:idea", onIdea);
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, [locale]);
+
+  const parts = state.kind === "done" ? state.parts : state.kind === "thinking" ? state.last : null;
+  const total = state.kind === "done" ? state.total : parts ? parts.reduce((s, p) => s + p.eur, 0) : 0;
 
   return (
-    <div className="pp-card pp-calc">
+    <div className="pp-card pp-calc" aria-live="polite">
       <h2>{t.title}</h2>
-      <div className="pp-calc-plat" role="radiogroup" aria-label={w.platform}>
-        {(["mobile", "web", "both"] as Platform[]).map((p) => (
-          <button key={p} type="button" role="radio" aria-checked={platform === p} onClick={() => setPlatform(p)}>
-            {w.platOpts[p]}
-          </button>
-        ))}
-      </div>
-      <ul className="pp-calc-feats">
-        {(Object.keys(FEATURES) as FeatureKey[]).map((f) => (
-          <li key={f}>
-            <label>
-              <input type="checkbox" checked={features.includes(f)} onChange={() => toggle(f)} />
-              {w.featureLabels[f]}
-            </label>
-          </li>
-        ))}
-      </ul>
-      <dl className="pp-calc-sum">
-        <div>
-          <dt>{t.once}</dt>
-          <dd className="pp-calc-total">{money(est.price)}</dd>
-        </div>
-        <div>
-          <dt>{t.monthly}</dt>
-          <dd>{monthly ? fill(t.perMonth, { price: money(monthly) }) : t.noMonthly}</dd>
-        </div>
-        <div>
-          <dt>{t.delivery}</dt>
-          <dd>{fill(t.days, { lo: est.daysLo, hi: est.daysHi })}</dd>
-        </div>
-      </dl>
-      <p className="pp-calc-note">{monthly ? t.noteServer : t.note}</p>
+      {state.kind === "thinking" && (
+        <p className="pp-calc-thinking">
+          <span className="pp-calc-dots" aria-hidden="true"><i /><i /><i /></span>
+          {t.thinking}
+        </p>
+      )}
+      {state.kind === "empty" && <p className="pp-calc-empty">{t.empty}</p>}
+      {state.kind === "off" && <p className="pp-calc-empty">{t.off}</p>}
+      {parts && parts.length > 0 && (
+        <>
+          <ul className={`pp-calc-parts${state.kind === "thinking" ? " is-stale" : ""}`}>
+            {parts.map((p) => (
+              <li key={p.name}>
+                <span>{p.name}</span>
+                <b>{money(p.eur)}</b>
+              </li>
+            ))}
+          </ul>
+          <div className={`pp-calc-sum${state.kind === "thinking" ? " is-stale" : ""}`}>
+            <span>{t.total}</span>
+            <b className="pp-calc-total">{money(total)}</b>
+          </div>
+          <p className="pp-calc-note">{t.note}</p>
+        </>
+      )}
     </div>
   );
 }
-
-const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
