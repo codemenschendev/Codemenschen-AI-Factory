@@ -42,6 +42,42 @@ return [
     ],
 
     /*
+     * Appmitki apps on the same desk (2026-10-05, owner: "Appmitki the Sofabuilt way, for apps").
+     * Prices on Patrick's scale (Teams 2026-10-05: "todo app estimate rough: checkboxes 15, saving of
+     * items 5, releasing app to store 15"). The price at checkout is the price on the desk. Parts
+     * marked `server` need our server, so the app carries the monthly hosting of a connected app.
+     */
+    'app' => [
+        'modules' => [
+            'base' => ['eur' => 15, 'en' => 'Your app for iPhone and Android, released in the App Store and Google Play', 'de' => 'Deine App für iPhone und Android, veröffentlicht im App Store und bei Google Play'],
+            'screen' => ['eur' => 15, 'en' => 'A screen with its own job, for example a list where you tick off tasks', 'de' => 'Ein Bildschirm mit eigener Aufgabe, zum Beispiel eine Liste zum Abhaken'],
+            'local_save' => ['eur' => 5, 'en' => 'Keeps your entries on the phone', 'de' => 'Merkt sich deine Einträge am Handy'],
+            'accounts' => ['eur' => 20, 'en' => 'Accounts and login', 'de' => 'Konten und Login', 'server' => true],
+            'sync' => ['eur' => 25, 'en' => 'Your data on every device, shared with others', 'de' => 'Deine Daten auf jedem Gerät, mit anderen geteilt', 'server' => true],
+            'payments' => ['eur' => 30, 'en' => 'Payments or subscriptions', 'de' => 'Zahlungen oder Abos', 'server' => true],
+            'notifications' => ['eur' => 10, 'en' => 'Reminders and notifications', 'de' => 'Erinnerungen und Benachrichtigungen'],
+            'photos' => ['eur' => 10, 'en' => 'Photos and camera', 'de' => 'Fotos und Kamera'],
+            'maps' => ['eur' => 15, 'en' => 'Maps and location', 'de' => 'Karten und Standort'],
+            'booking' => ['eur' => 20, 'en' => 'Calendar or booking', 'de' => 'Kalender oder Buchungen'],
+            'chat' => ['eur' => 30, 'en' => 'Chat between users', 'de' => 'Chat zwischen Nutzern', 'server' => true],
+            'ai' => ['eur' => 30, 'en' => 'AI features, for example suggestions or texts', 'de' => 'KI-Funktionen, zum Beispiel Vorschläge oder Texte', 'server' => true],
+            'stats' => ['eur' => 20, 'en' => 'Statistics or an admin area', 'de' => 'Statistiken oder ein Verwaltungsbereich'],
+            'external_api' => ['eur' => 20, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'language' => ['eur' => 5, 'en' => 'Another language, per language', 'de' => 'Eine weitere Sprache, pro Sprache'],
+        ],
+        'repeatable' => ['screen' => 8, 'external_api' => 3, 'language' => 5],
+        // The store release is a part of the app here, so the store package is not sold again.
+        'launch' => [
+            'landingPage' => ['eur' => 299, 'en' => 'Landing page for your app', 'de' => 'Landingpage für deine App'],
+            'marketingLaunch' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+            'transferAssist' => ['eur' => 49, 'en' => 'Help moving the app to your own store accounts', 'de' => 'Hilfe beim Umzug der App auf deine eigenen Store-Konten'],
+        ],
+        'care_monthly_eur' => 9,
+        'hosting_monthly_eur' => 19,
+        'delivery_days' => [1, 2],
+    ],
+
+    /*
      * Chrome extensions (2026-10-05, roadmap step 2). Same desk, same pricing rules, its own parts.
      * No premium catalogue yet: Chrome extensions come in through the "own idea" door.
      */

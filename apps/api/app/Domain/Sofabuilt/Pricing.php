@@ -88,7 +88,8 @@ class Pricing
             'care_monthly_eur' => Platforms::care($platform),
             'care_trial_months' => (int) Settings::get('care_trial_months'),
             'launch' => array_map(fn ($l) => ['label' => $l[$lang], 'eur' => $l['eur']], Platforms::launch($platform)),
-            'delivery_days' => config('sofabuilt.delivery_days'),
+            'delivery_days' => Platforms::deliveryDays($platform),
+            'hosting_monthly_eur' => Platforms::hosting($platform, array_keys($qty)),
         ];
     }
 }

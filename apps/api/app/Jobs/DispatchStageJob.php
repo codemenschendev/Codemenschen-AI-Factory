@@ -61,8 +61,9 @@ class DispatchStageJob implements ShouldQueue
                 'change_kind' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->value('kind') ?? 'change',
                 'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status'])->toArray(),
                 'last_test_report' => $project->testReports()->latest()->first()?->report,
-                // Sofabuilt: the scope the customer agreed to on the desk; the plugin is built to it.
-                'scope' => $project->kind === 'plugin' ? ($quote->breakdown['scope'] ?? null) : null,
+                // The scope the customer agreed to on the desk (a Sofabuilt plugin or an Appmitki app
+                // ordered there); it is built to it.
+                'scope' => $quote->breakdown['scope'] ?? null,
                 // Sofabuilt's sell-ready package: the plugin gets licensing, updates and checkout built in.
                 'sell_ready' => $project->kind === 'plugin' && ! empty($project->order->packages['sellReady']),
             ],

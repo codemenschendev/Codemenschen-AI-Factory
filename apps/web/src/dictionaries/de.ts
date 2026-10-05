@@ -1465,14 +1465,6 @@ export const de = {
     daysLeft: "noch {n} Tage",
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
-    calc: {
-      title: "Grobe Schätzung",
-      empty: "Beschreib deine App links. Der Preis erscheint hier, während du schreibst.",
-      thinking: "Denkt über deine Idee nach",
-      off: "Die Schätzung ist gerade nicht verfügbar. Den Preis bekommst du mit deinem Prototyp.",
-      total: "Grob gesamt",
-      note: "Eine erste Schätzung aus deiner Beschreibung. Mit deinem Prototyp bekommst du den Fixpreis, bevor du etwas zahlst.",
-    },
     page: {
       pill: "1 kostenloser Prototyp pro Konto · ohne Kreditkarte",
       asideTitle: "So geht es weiter",

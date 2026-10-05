@@ -70,7 +70,7 @@ class CheckoutController extends Controller
             'fagg_waiver' => $data['fagg_waiver'],
             'fagg_waiver_at' => $data['fagg_waiver'] ? now() : null,
             'fagg_waiver_ip' => $data['fagg_waiver'] ? $request->ip() : null,
-            'care_trial' => $quote->kind === 'plugin' && ! empty($data['care_trial']),
+            'care_trial' => ($quote->kind === 'plugin' || Packages::fromDesk($quote)) && ! empty($data['care_trial']),
             'terms_accepted_at' => now(),
             'terms_accepted_ip' => $request->ip(),
             'locale' => $data['locale'] ?? $quote->locale,
@@ -108,6 +108,7 @@ class CheckoutController extends Controller
             $quote->kind === 'plugin' => 'Sofabuilt plugin: '.mb_substr((string) ($quote->breakdown['scope']['name'] ?? 'WordPress plugin'), 0, 80),
             $quote->kind === 'site' => 'Website: '.mb_substr((string) ($quote->idea ?: 'one page'), 0, 80),
             (bool) $quote->listing_slug => ucfirst($quote->listing_slug).' — App development',
+            ! empty($quote->breakdown['scope']['name']) => 'App: '.mb_substr((string) $quote->breakdown['scope']['name'], 0, 80),
             default => 'Custom app development',
         };
 
@@ -153,7 +154,11 @@ class CheckoutController extends Controller
             'locale' => $locale,
             'invoice_creation' => ['enabled' => true],
             'success_url' => "$front/$locale/success?order={$order->id}&kind={$quote->kind}",
-            'cancel_url' => $quote->kind === 'plugin' ? "$front/$locale/desk" : "$front/$locale/checkout?quote={$quote->id}",
+            'cancel_url' => match (true) {
+                $quote->kind === 'plugin' => "$front/$locale/desk",
+                Packages::fromDesk($quote) => "$front/$locale/prototype",
+                default => "$front/$locale/checkout?quote={$quote->id}",
+            },
         ]);
     }
 

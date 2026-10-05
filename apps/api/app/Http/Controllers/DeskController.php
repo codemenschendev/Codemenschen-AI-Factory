@@ -56,15 +56,17 @@ class DeskController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // Appmitki's app chat (platform app) is always open; Sofabuilt's follows its admin switch.
+        $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en', 'platform' => 'nullable|in:'.implode(',', [...Platforms::offered(), Platforms::APP])]);
         // The admin can close the desk (Settings desk_open): chats already open go on.
-        abort_unless((bool) Settings::get('desk_open'), 503, 'The desk is closed right now.');
-        $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en', 'platform' => 'nullable|in:'.implode(',', Platforms::offered())]);
+        abort_unless(($data['platform'] ?? null) === Platforms::APP || (bool) Settings::get('desk_open'), 503, 'The desk is closed right now.');
         $key = 'desk:sessions:'.$request->ip().':'.now()->toDateString();
         abort_if((int) Cache::get($key, 0) >= self::SESSIONS_PER_IP_DAY, 429, 'Too many chats today.');
         self::bump($key);
         $session = DeskSession::create([
             'door' => $data['door'], 'locale' => $data['locale'] ?? 'en', 'ip' => $request->ip(),
             'platform' => $data['platform'] ?? 'wordpress',
+            'brand' => ($data['platform'] ?? null) === Platforms::APP ? 'appmitki' : 'sofabuilt',
             'customer_id' => $request->user('sanctum')?->id,
         ]);
 
@@ -158,16 +160,20 @@ class DeskController extends Controller
         $price = Pricing::quote($session->scope, $session->locale);
         abort_if($price['too_big'], 409, 'Too big for one build.');
         $scope = $session->scope;
+        // An Appmitki app is an app order like any other (stack expo), only priced from its parts.
+        $app = $session->platform === Platforms::APP;
         $quote = Quote::create([
-            'kind' => 'plugin',
-            'brand' => 'sofabuilt',
+            'kind' => $app ? 'app' : 'plugin',
+            'brand' => $app ? 'appmitki' : 'sofabuilt',
             'idea' => mb_substr(trim(($scope['name'] ?? '').': '.($scope['purpose'] ?? ''), ': '), 0, 200),
-            'features' => array_column($scope['modules'] ?? [], 'key'),
+            'platform' => $app ? 'mobile' : null,
+            // An app's parts in the feature words the app pipeline and change chat know.
+            'features' => $app ? self::appFeatures($scope) : array_column($scope['modules'] ?? [], 'key'),
             'breakdown' => ['scope' => $scope, 'lines' => $price['lines'], 'delivery_days' => $price['delivery_days'],
                 'care_monthly_eur' => $price['care_monthly_eur'], 'desk_session_id' => $session->id],
             'price_eur' => $price['build_eur'],
-            'app_type' => 'A',
-            'hosting_monthly_eur' => 0,
+            'app_type' => $price['hosting_monthly_eur'] > 0 ? 'B' : 'A',
+            'hosting_monthly_eur' => $price['hosting_monthly_eur'],
             'locale' => $session->locale,
             'valid_until' => now()->addDays(14),
         ]);
@@ -192,6 +198,15 @@ class DeskController extends Controller
             'platform' => $session->platform,
             'messages' => $session->messages()->get(['id', 'role', 'body', 'meta', 'created_at']),
         ];
+    }
+
+    /** @return list<string> Estimator feature keys for the app desk's parts */
+    private static function appFeatures(array $scope): array
+    {
+        $map = ['accounts' => 'auth', 'payments' => 'pay', 'stats' => 'dash', 'ai' => 'ai', 'notifications' => 'notif',
+            'external_api' => 'api', 'language' => 'i18n', 'local_save' => 'offline'];
+
+        return array_values(array_unique(array_filter(array_map(fn ($m) => $map[$m['key'] ?? ''] ?? null, $scope['modules'] ?? []))));
     }
 
     private static function bump(string $key): void

@@ -7,7 +7,7 @@ import type { SbDict } from "@/dictionaries/sofabuilt";
 import { SbCheckout } from "./SbCheckout";
 
 type Door = "idea" | "premium";
-type Platform = "wordpress" | "shopify" | "chrome";
+type Platform = "wordpress" | "shopify" | "chrome" | "app";
 // What the desk offers until /desk/config answers (the admin's switch decides; owner 2026-10-05:
 // WordPress and Shopify). Chrome stays built, shown only when switched on.
 const OFFERED: Platform[] = ["wordpress", "shopify"];
@@ -29,6 +29,8 @@ type Price = {
   care_trial_months?: number;
   launch: Record<string, { label: string; eur: number }>;
   delivery_days: [number, number];
+  /** Appmitki apps whose parts need the server; 0 otherwise. */
+  hosting_monthly_eur?: number;
 };
 type Research = { name: string; slug: string; installs: number; rating: number; url: string };
 type Option = { key: string; label: string; eur: number; max: number };
@@ -102,18 +104,39 @@ function DeskArt() {
   );
 }
 
+/** Platforms without a premium catalogue start straight from the idea. */
+const ideaOnly = (p: Platform) => p === "chrome" || p === "app";
+
 /**
  * The Sofabuilt desk (docs/specs/sofabuilt.md), in the owner's reference layout: the idea and
  * the assistant's questions on the left as tappable cards, scope, price, launch and similar
  * plugins on the right. The chat id lives in this browser so a reload continues it.
+ * Appmitki uses the same desk for apps (`only="app"`): one platform, no tabs, and a free preview
+ * of the agreed app before ordering (`onPreview`).
  */
-export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["desk"]; doors: SbDict["hero"]["doors"]; locale: string; start: Door | null; startPlatform: Platform }) {
+export function Desk({
+  t,
+  doors,
+  locale,
+  start,
+  startPlatform,
+  only,
+  onPreview,
+}: {
+  t: SbDict["desk"];
+  doors: SbDict["hero"]["doors"];
+  locale: string;
+  start: Door | null;
+  startPlatform: Platform;
+  only?: Platform;
+  onPreview?: (scope: Scope) => void;
+}) {
   const [session, setSession] = useState<Session | null>(null);
-  const [platform, setPlatform] = useState<Platform>(startPlatform);
-  // A Chrome extension starts from an idea: there is no premium catalogue for it yet.
-  const [door, setDoor] = useState<Door | null>(startPlatform === "chrome" ? "idea" : start);
+  const [platform, setPlatform] = useState<Platform>(only ?? startPlatform);
+  const [door, setDoor] = useState<Door | null>(ideaOnly(only ?? startPlatform) ? "idea" : start);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
-  const [offered, setOffered] = useState<Platform[]>(OFFERED);
+  const [offered, setOffered] = useState<Platform[]>(only ? [only] : OFFERED);
+  const store = only ? `${STORE}.${only}` : STORE;
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<Record<number, string>>({});
   const [launch, setLaunch] = useState<Record<string, boolean>>({});
@@ -127,27 +150,30 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
   useEffect(() => {
+    if (only) return;
     api<{ offered: Platform[] }>("/desk/config").then((r) => r.offered.length && setOffered(r.offered)).catch(() => {});
-  }, []);
+  }, [only]);
 
   useEffect(() => {
     let id: string | null = null;
     try {
-      id = localStorage.getItem(STORE);
+      id = localStorage.getItem(store);
     } catch {}
     if (!id) return;
     api<Session>(`/desk/${id}`)
       .then((s) => {
+        // A chat of another platform (an old one in this browser) is not this desk's.
+        if (only && s.platform !== only) throw new Error("other platform");
         setSession(s);
         setDoor(s.door);
         if (s.platform) setPlatform(s.platform);
       })
       .catch(() => {
         try {
-          localStorage.removeItem(STORE);
+          localStorage.removeItem(store);
         } catch {}
       });
-  }, []);
+  }, [only, store]);
 
   useEffect(() => {
     if (door === "premium" && platform !== "chrome" && catalog.length === 0) {
@@ -183,7 +209,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
       if (!s) {
         s = await api<Session>("/desk", { method: "POST", body: JSON.stringify({ door: door ?? "idea", locale, platform }) });
         try {
-          localStorage.setItem(STORE, s.id);
+          localStorage.setItem(store, s.id);
         } catch {}
       }
       setSession({ ...s, messages: [...s.messages, { id: -1, role: "customer", body }] });
@@ -220,10 +246,10 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
 
   function reset() {
     try {
-      localStorage.removeItem(STORE);
+      localStorage.removeItem(store);
     } catch {}
     setSession(null);
-    setDoor(platform === "chrome" ? "idea" : null);
+    setDoor(ideaOnly(platform) ? "idea" : null);
     setPicked({});
     setError(null);
   }
@@ -245,6 +271,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
         </div>
 
         <div className="dk-card dk-body" aria-live="polite">
+          {offered.length > 1 && (
           <div className="dk-platforms" role="tablist">
             {offered.map((p) => (
               <button
@@ -260,7 +287,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                   if (session) {
                     if (!window.confirm(fill(t.switchPlatform, { platform: t.platforms[p] }))) return;
                     try {
-                      localStorage.removeItem(STORE);
+                      localStorage.removeItem(store);
                     } catch {}
                     setSession(null);
                     setPicked({});
@@ -268,7 +295,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                   }
                   setPlatform(p);
                   setCatalog([]);
-                  setDoor(p === "chrome" ? "idea" : null);
+                  setDoor(ideaOnly(p) ? "idea" : null);
                 }}
               >
                 <Ico name={p === "chrome" ? "site" : p === "shopify" ? "cart" : "store"} />
@@ -276,6 +303,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
               </button>
             ))}
           </div>
+          )}
           {!door && (
             <>
               <p className="dk-q-title">{t.chooseDoor}</p>
@@ -421,7 +449,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                   placeholder={
                     door === "premium" || messages.length
                       ? platform === "shopify" ? t.placeholderPremiumShopify : t.placeholderPremium
-                      : platform === "chrome" ? t.placeholderChrome : platform === "shopify" ? t.placeholderShopify : t.placeholder
+                      : platform === "app" ? t.placeholderApp : platform === "chrome" ? t.placeholderChrome : platform === "shopify" ? t.placeholderShopify : t.placeholder
                   }
                   rows={3}
                 />
@@ -508,6 +536,9 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
               <span>{t.total}</span>
               <b>{eur(total)}</b>
             </div>
+            {(price.hosting_monthly_eur ?? 0) > 0 && (
+              <p className="dk-hint dk-hosting">{fill(t.hosting, { price: eur(price.hosting_monthly_eur ?? 0) })}</p>
+            )}
             <div className="dk-meta">
               <span>
                 <Ico name="clock" className="dk-meta-ico" />
@@ -528,6 +559,14 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
               <Ico name="done" className="dk-feat-ico" />
               {t.ready}
             </p>
+            {onPreview && session.scope && (
+              <div className="dk-preview">
+                <button type="button" className="dk-preview-btn" onClick={() => onPreview(session.scope!)}>
+                  <Ico name="spark" /> {t.previewFirst}
+                </button>
+                <small>{t.previewHint}</small>
+              </div>
+            )}
             <SbCheckout sessionId={session.id} total={total} picked={launch} care={{ monthly: price.care_monthly_eur, trialMonths: price.care_trial_months ?? 3 }} t={t.checkout} locale={locale} />
           </div>
         )}

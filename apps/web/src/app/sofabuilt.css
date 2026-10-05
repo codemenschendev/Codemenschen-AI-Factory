@@ -1,7 +1,8 @@
 /* Sofabuilt (docs/specs/sofabuilt.md) uses Appmitki's layout and tokens (globals.css, home.css);
    this file only maps its own names onto them and styles what Appmitki has no part for: the desk,
    the licence calculator and the order form. Scoped to body.sb. */
-body.sb {
+/* .sb-vars: the same names on a Sofabuilt part used on an Appmitki page (the app desk). */
+body.sb, .sb-vars {
   --sb-ink: var(--ink);
   --sb-muted: var(--ink-soft);
   --sb-bg: var(--paper);
@@ -214,3 +215,11 @@ body.sb .svc-foot b.svc-go-label { font-size: 16px; font-weight: 600; color: var
 .dk-platform .dk-ico { width: 17px; height: 17px; }
 .dk-platform.is-on { background: #fff; color: var(--accent); box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08); }
 .dk-platform:disabled:not(.is-on) { opacity: 0.45; cursor: default; }
+
+/* Appmitki's app desk: the free preview next to the order, and the server fee line. */
+.dk-hosting { margin: 10px 0 0; }
+.dk-preview { display: grid; gap: 6px; margin: 4px 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.dk-preview-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: var(--radius); border: 1px solid var(--accent); background: #fff; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
+.dk-preview-btn:hover { background: var(--accent-soft); }
+.dk-preview-btn .dk-ico { width: 18px; height: 18px; }
+.dk-preview small { color: var(--ink-soft); font-size: 13px; text-align: center; }
