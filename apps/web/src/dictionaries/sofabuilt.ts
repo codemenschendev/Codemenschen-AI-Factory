@@ -133,6 +133,7 @@ const en = {
     unavailable: "The assistant is not reachable right now. Try again in a minute.",
     bot: "The security check did not work. Reload the page and try again.",
     newChat: "Start a new chat",
+    switchPlatform: "Start a new chat for a {platform}? This chat ends here.",
     mail: "Or write to",
     checkout: {
       title: "Order",
@@ -320,6 +321,7 @@ const de: typeof en = {
     unavailable: "Der Assistent ist gerade nicht erreichbar. Versuch es in einer Minute noch einmal.",
     bot: "Die Sicherheitsprüfung hat nicht geklappt. Lade die Seite neu und versuch es noch einmal.",
     newChat: "Neuen Chat starten",
+    switchPlatform: "Neuen Chat starten: {platform}? Dieser Chat endet hier.",
     mail: "Oder schreib an",
     checkout: {
       title: "Bestellen",

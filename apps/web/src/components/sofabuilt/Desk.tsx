@@ -253,8 +253,19 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                 role="tab"
                 aria-selected={platform === p}
                 className={`dk-platform${platform === p ? " is-on" : ""}`}
-                disabled={!!session}
+                disabled={busy}
                 onClick={() => {
+                  if (p === platform) return;
+                  // A chat belongs to one platform: switching starts a new one.
+                  if (session) {
+                    if (!window.confirm(fill(t.switchPlatform, { platform: t.platforms[p] }))) return;
+                    try {
+                      localStorage.removeItem(STORE);
+                    } catch {}
+                    setSession(null);
+                    setPicked({});
+                    setError(null);
+                  }
                   setPlatform(p);
                   setCatalog([]);
                   setDoor(p === "chrome" ? "idea" : null);
