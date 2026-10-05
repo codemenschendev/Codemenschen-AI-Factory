@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Domain\Ads\Conversions;
 use App\Domain\Analytics\Analytics;
 use App\Domain\Sites\SiteService;
+use App\Domain\Sofabuilt\Platforms;
 use App\Models\Order;
 use App\Models\Project;
 use Illuminate\Support\Facades\DB;
@@ -58,7 +59,7 @@ class OrderFulfillment
                 'name' => $name,
                 'kind' => $site ? 'site' : ($plugin ? 'plugin' : 'app'),
                 'status' => 'PAID',
-                'stack' => $site ? 'site' : ($plugin ? 'wp-plugin' : (($quote->platform ?? 'mobile') === 'web' ? 'nextjs' : 'expo')),
+                'stack' => $site ? 'site' : ($plugin ? Platforms::STACKS[Platforms::of($quote->breakdown['scope'] ?? null)] : (($quote->platform ?? 'mobile') === 'web' ? 'nextjs' : 'expo')),
                 'build_starts_at' => $order->fagg_waiver ? now() : now()->addDays(14),
             ]);
             $project->recordEvent('project.created', [

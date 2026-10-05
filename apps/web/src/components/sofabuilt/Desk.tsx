@@ -7,6 +7,7 @@ import type { SbDict } from "@/dictionaries/sofabuilt";
 import { SbCheckout } from "./SbCheckout";
 
 type Door = "idea" | "premium";
+type Platform = "wordpress" | "chrome";
 type Question = { q: string; options: string[] };
 type Message = { id: number; role: "customer" | "assistant"; body: string; meta?: { questions?: Question[] } | null };
 type Scope = {
@@ -27,7 +28,7 @@ type Price = {
 };
 type Research = { name: string; slug: string; installs: number; rating: number; url: string };
 type Option = { key: string; label: string; eur: number; max: number };
-type Session = { id: string; door: Door; ready: boolean; scope: Scope | null; price: Price | null; research: Research[]; messages: Message[]; module_options?: Option[] };
+type Session = { id: string; door: Door; platform?: Platform; ready: boolean; scope: Scope | null; price: Price | null; research: Research[]; messages: Message[]; module_options?: Option[] };
 type CatalogItem = { id: string; name: string; category: string; price: string; features: string[]; installs: number | null; own_from_eur: number };
 
 const STORE = "sofabuilt.desk";
@@ -102,9 +103,11 @@ function DeskArt() {
  * the assistant's questions on the left as tappable cards, scope, price, launch and similar
  * plugins on the right. The chat id lives in this browser so a reload continues it.
  */
-export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: SbDict["hero"]["doors"]; locale: string; start: Door | null }) {
+export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["desk"]; doors: SbDict["hero"]["doors"]; locale: string; start: Door | null; startPlatform: Platform }) {
   const [session, setSession] = useState<Session | null>(null);
-  const [door, setDoor] = useState<Door | null>(start);
+  const [platform, setPlatform] = useState<Platform>(startPlatform);
+  // A Chrome extension starts from an idea: there is no premium catalogue for it yet.
+  const [door, setDoor] = useState<Door | null>(startPlatform === "chrome" ? "idea" : start);
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [text, setText] = useState("");
   const [picked, setPicked] = useState<Record<number, string>>({});
@@ -128,6 +131,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
       .then((s) => {
         setSession(s);
         setDoor(s.door);
+        if (s.platform) setPlatform(s.platform);
       })
       .catch(() => {
         try {
@@ -137,10 +141,10 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
   }, []);
 
   useEffect(() => {
-    if (door === "premium" && catalog.length === 0) {
+    if (door === "premium" && platform === "wordpress" && catalog.length === 0) {
       api<{ items: CatalogItem[] }>("/desk/catalog").then((r) => setCatalog(r.items)).catch(() => {});
     }
-  }, [door, catalog.length]);
+  }, [door, platform, catalog.length]);
 
   useEffect(() => {
     end.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
@@ -168,7 +172,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
     try {
       let s = session;
       if (!s) {
-        s = await api<Session>("/desk", { method: "POST", body: JSON.stringify({ door: door ?? "idea", locale }) });
+        s = await api<Session>("/desk", { method: "POST", body: JSON.stringify({ door: door ?? "idea", locale, platform }) });
         try {
           localStorage.setItem(STORE, s.id);
         } catch {}
@@ -210,7 +214,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
       localStorage.removeItem(STORE);
     } catch {}
     setSession(null);
-    setDoor(null);
+    setDoor(platform === "chrome" ? "idea" : null);
     setPicked({});
     setError(null);
   }
@@ -232,6 +236,25 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
         </div>
 
         <div className="dk-card dk-body" aria-live="polite">
+          <div className="dk-platforms" role="tablist">
+            {(["wordpress", "chrome"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                role="tab"
+                aria-selected={platform === p}
+                className={`dk-platform${platform === p ? " is-on" : ""}`}
+                disabled={!!session}
+                onClick={() => {
+                  setPlatform(p);
+                  setDoor(p === "chrome" ? "idea" : null);
+                }}
+              >
+                <Ico name={p === "chrome" ? "site" : "store"} />
+                {t.platforms[p]}
+              </button>
+            ))}
+          </div>
           {!door && (
             <>
               <p className="dk-q-title">{t.chooseDoor}</p>
@@ -336,7 +359,7 @@ export function Desk({ t, doors, locale, start }: { t: SbDict["desk"]; doors: Sb
                       if (canSend) sendAnswers();
                     }
                   }}
-                  placeholder={door === "premium" || messages.length ? t.placeholderPremium : t.placeholder}
+                  placeholder={platform === "chrome" && !messages.length ? t.placeholderChrome : door === "premium" || messages.length ? t.placeholderPremium : t.placeholder}
                   rows={3}
                 />
                 <small>

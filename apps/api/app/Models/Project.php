@@ -100,7 +100,8 @@ class Project extends Model
         // A Sofabuilt plugin is tried in WordPress Playground: a WordPress in the browser that
         // installs the built ZIP from our blueprint (PluginPreviewController).
         if ($this->kind === 'plugin') {
-            return $this->builds()->where('platform', 'plugin')->exists()
+            // Playground runs WordPress only; a Chrome extension is tried from its ZIP (the mails say how).
+            return $this->stack === 'wp-plugin' && $this->builds()->where('platform', 'plugin')->exists()
                 ? 'https://playground.wordpress.net/?blueprint-url='.rawurlencode(rtrim(config('app.url'), '/')."/api/plugin/{$this->id}/blueprint.json")
                 : null;
         }

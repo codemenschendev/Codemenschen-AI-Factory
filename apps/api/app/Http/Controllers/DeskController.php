@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Sofabuilt\DeskAgent;
+use App\Domain\Sofabuilt\Platforms;
 use App\Domain\Sofabuilt\Pricing;
 use App\Domain\Sofabuilt\WpOrg;
 use App\Domain\Pricing\Packages;
@@ -29,16 +30,17 @@ class DeskController extends Controller
     private const TURNS_GLOBAL_DAY = 2000;
 
     /** The premium plugins for the "own version" door, with live numbers and a typical price. */
-    public function catalog(WpOrg $wporg): JsonResponse
+    public function catalog(Request $request, WpOrg $wporg): JsonResponse
     {
-        $items = collect(config('sofabuilt.catalog'))->map(function ($p) use ($wporg) {
+        $platform = in_array($request->query('platform'), Platforms::ALL, true) ? $request->query('platform') : 'wordpress';
+        $items = collect(Platforms::catalog($platform))->map(function ($p) use ($wporg, $platform) {
             $live = $p['slug'] ? $wporg->info($p['slug']) : null;
 
             return [
                 'id' => $p['id'], 'name' => $p['name'], 'category' => $p['category'], 'price' => $p['price'],
                 'features' => $p['features'],
                 'installs' => $live['installs'] ?? null,
-                'own_from_eur' => Pricing::quote(['modules' => array_map(fn ($k) => ['key' => $k], $p['modules'])])['build_eur'],
+                'own_from_eur' => Pricing::quote(['platform' => $platform, 'modules' => array_map(fn ($k) => ['key' => $k], $p['modules'])])['build_eur'],
             ];
         })->values();
 
@@ -47,12 +49,13 @@ class DeskController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en']);
+        $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en', 'platform' => 'nullable|in:'.implode(',', Platforms::ALL)]);
         $key = 'desk:sessions:'.$request->ip().':'.now()->toDateString();
         abort_if((int) Cache::get($key, 0) >= self::SESSIONS_PER_IP_DAY, 429, 'Too many chats today.');
         self::bump($key);
         $session = DeskSession::create([
             'door' => $data['door'], 'locale' => $data['locale'] ?? 'en', 'ip' => $request->ip(),
+            'platform' => $data['platform'] ?? 'wordpress',
             'customer_id' => $request->user('sanctum')?->id,
         ]);
 
@@ -89,6 +92,9 @@ class DeskController extends Controller
 
         $session->messages()->create(['role' => 'assistant', 'body' => $out['reply'], 'meta' => ['questions' => $out['questions']]]);
         $scope = $out['scope'] ?? $session->scope;
+        if (is_array($scope)) {
+            $scope['platform'] = $session->platform; // prices and the build follow the chat's platform
+        }
         // Parts the customer picked by hand win over the model: it may only reword the features.
         if ($out['scope'] !== null && ($session->scope['modules_changed'] ?? false)) {
             $scope['modules'] = $session->scope['modules'];
@@ -113,7 +119,7 @@ class DeskController extends Controller
     {
         abort_unless($session->status === 'open' && $session->scope !== null, 409, 'No scope yet.');
         $data = $request->validate(['modules' => 'present|array|max:20', 'modules.*.key' => 'required|string', 'modules.*.qty' => 'nullable|integer|min:1|max:9']);
-        $known = config('sofabuilt.modules');
+        $known = Platforms::modules($session->platform);
         $before = collect($session->scope['modules'] ?? [])->keyBy('key');
         $modules = [];
         foreach ($data['modules'] as $m) {
@@ -172,7 +178,8 @@ class DeskController extends Controller
             'scope' => $session->scope,
             'research' => array_values($session->research ?? []),
             'price' => $session->scope ? Pricing::quote($session->scope, $session->locale) : null,
-            'module_options' => Pricing::options($session->locale),
+            'module_options' => Pricing::options($session->locale, $session->platform),
+            'platform' => $session->platform,
             'messages' => $session->messages()->get(['id', 'role', 'body', 'meta', 'created_at']),
         ];
     }

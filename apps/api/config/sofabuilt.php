@@ -40,6 +40,33 @@ return [
         'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
     ],
 
+    /*
+     * Chrome extensions (2026-10-05, roadmap step 2). Same desk, same pricing rules, its own parts.
+     * No premium catalogue yet: Chrome extensions come in through the "own idea" door.
+     */
+    'chrome' => [
+        'modules' => [
+            'base' => ['eur' => 250, 'en' => 'The extension itself: a small window from the toolbar, a settings page, icons and store texts', 'de' => 'Die Erweiterung selbst: ein kleines Fenster aus der Leiste, eine Einstellungsseite, Icons und Store-Texte'],
+            'page' => ['eur' => 120, 'en' => 'Works on the websites you visit: reads or changes what is on the page', 'de' => 'Arbeitet auf den Websites, die du besuchst: liest oder ändert, was dort steht'],
+            'background' => ['eur' => 80, 'en' => 'Runs in the background, for example reminders or regular checks', 'de' => 'Läuft im Hintergrund, zum Beispiel Erinnerungen oder regelmäßige Prüfungen'],
+            'context_menu' => ['eur' => 50, 'en' => 'Entries in the right-click menu', 'de' => 'Einträge im Rechtsklick-Menü'],
+            'side_panel' => ['eur' => 90, 'en' => 'A side panel next to the page', 'de' => 'Eine Seitenleiste neben der Seite'],
+            'sync' => ['eur' => 50, 'en' => 'Your settings follow you to every computer', 'de' => 'Deine Einstellungen begleiten dich auf jeden Computer'],
+            'notifications' => ['eur' => 50, 'en' => 'Notices on your screen', 'de' => 'Hinweise auf deinem Bildschirm'],
+            'external_api' => ['eur' => 150, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'shortcuts' => ['eur' => 40, 'en' => 'Keyboard shortcuts', 'de' => 'Tastenkürzel'],
+            'export' => ['eur' => 70, 'en' => 'Save or export data, for example to Excel', 'de' => 'Daten speichern oder exportieren, zum Beispiel nach Excel'],
+            'payments' => ['eur' => 200, 'en' => 'Paid features with a licence, one-time or monthly', 'de' => 'Bezahlte Funktionen mit Lizenz, einmalig oder monatlich'],
+        ],
+        'repeatable' => ['external_api' => 4],
+        'launch' => [
+            'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
+            'listing' => ['eur' => 79, 'en' => 'Chrome Web Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Chrome Web Store: Texte, Screenshots, Icon, Einreichung'],
+            'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+        ],
+        'catalog' => [],
+    ],
+
     'care_monthly_eur' => 19,
 
     'delivery_days' => [2, 3],
