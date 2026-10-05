@@ -16,7 +16,7 @@ export interface ChatMessage {
   meta: {
     type?: "card" | "declined" | "limit" | "payment" | "paid" | "started" | "result" | "failed";
     questions?: { q: string; options: string[] }[];
-    card?: { items: { text: string }[]; mode: "free" | "paid" | "care"; round: number; price_eur: number; free_rounds_left: number };
+    card?: { items: { text: string }[]; mode: "free" | "paid" | "care" | "credit"; round: number; price_eur: number; free_rounds_left: number };
     confirmed?: boolean;
     checkout_url?: string | null;
     reason?: string;
@@ -32,7 +32,7 @@ export interface ChatProject {
   id: string;
   status: string;
   preview_url?: string | null;
-  change_request_mode?: "free" | "paid" | "care" | "none";
+  change_request_mode?: "free" | "paid" | "care" | "credit" | "none";
   runs: { stage: string; attempt: number; status: string; started_at: string | null; finished_at: string | null }[];
   change_requests?: { id: number; status: string }[];
 }
@@ -515,6 +515,8 @@ function Message({
             <span className="small muted">
               {card.mode === "care"
                 ? t.cardCare
+                : card.mode === "credit"
+                  ? t.cardCredit
                 : card.mode === "paid"
                   ? t.cardPaid.replace("{price}", eur(card.price_eur, locale))
                   : t.cardFree.replace("{left}", String(Math.max(0, card.free_rounds_left - 1)))}

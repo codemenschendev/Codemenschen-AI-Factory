@@ -7,6 +7,7 @@ use App\Models\ChangeRequest;
 use App\Models\Order;
 use App\Models\Project;
 use App\Services\CareService;
+use App\Services\CreditService;
 use App\Services\OrderFulfillment;
 use App\Services\RevisionService;
 use Illuminate\Http\Request;
@@ -51,6 +52,11 @@ class StripeWebhookController extends Controller
                     return response('ignored', 200);
                 }
                 app(CareService::class)->activate($project, $session->subscription ? (string) $session->subscription : null, $event->toArray());
+
+                return response('ok', 200);
+            }
+            if (str_starts_with($ref, 'credits:')) {
+                app(CreditService::class)->complete((string) $session->id);
 
                 return response('ok', 200);
             }

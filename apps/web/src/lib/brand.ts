@@ -11,6 +11,17 @@ export function brandFromHost(host: string | null | undefined): Brand {
   return h === "sofabuilt.com" || h.startsWith("sofabuilt.") ? "sofabuilt" : "appmitki";
 }
 
+/**
+ * The customer console (console.appmitki.com, console.<anything> in dev): every project of a
+ * customer of either brand, served from its own route group under /console (proxy.ts).
+ */
+export function isConsoleHost(host: string | null | undefined): boolean {
+  return (host ?? "").toLowerCase().startsWith("console.");
+}
+
+/** The path prefix of the console's route group; never shown in an address. */
+export const CONSOLE_PREFIX = "/console";
+
 /** Sofabuilt is English first: its buyers are plugin and shop owners anywhere. */
 export const SOFABUILT_DEFAULT_LOCALE = "en";
 

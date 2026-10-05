@@ -25,7 +25,12 @@ interface Detail {
   revision_rounds?: number;
   max_revision_rounds?: number;
   free_rounds_left?: number;
-  change_request_mode?: "free" | "paid" | "care" | "none";
+  change_request_mode?: "free" | "paid" | "care" | "credit" | "none";
+  /** Changes Care still covers this month; null when Care covers all. */
+  care_edits_left?: number | null;
+  edit_credits?: number;
+  /** Packs of change credits: number of changes => EUR. */
+  credit_packs?: Record<string, number>;
   /** The change chat replaces the form for this customer (feature flag, admins always). */
   change_chat?: boolean;
   revision_price_eur?: number;
@@ -105,6 +110,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
   // Appwerk Care (€/month, unlimited change rounds): own express-start consent, never pre-ticked.
   const [careWaiver, setCareWaiver] = useState(false);
   const [careNotice, setCareNotice] = useState<string | null>(null);
+  const [creditNotice, setCreditNotice] = useState<string | null>(null);
   const [tab, setTab] = useState<TabKey>("app");
 
   const load = useCallback(() => {
@@ -211,6 +217,19 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
       setCrRefineError(e instanceof ApiError && e.status === 429 ? d.project.crRefineLimit : d.project.crRefineUnavailable);
     } finally {
       setCrRefining(false);
+    }
+  };
+
+  const buyCredits = async (edits: number) => {
+    setBusy(true);
+    setCreditNotice(null);
+    try {
+      const res = await api<{ checkout_url: string }>("/me/credits/checkout", { method: "POST", token, body: JSON.stringify({ edits, locale }) });
+      window.location.href = res.checkout_url;
+    } catch (e) {
+      setCreditNotice(e instanceof ApiError && e.status === 503 ? d.checkout.staging : d.project.creditsFailed);
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -375,12 +394,13 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
             <ChangeChat locale={locale} d={d} token={token} project={p} onChanged={load} onApprove={approve} />
           )}
 
-          {canChange && (!p.change_chat || (p.change_request_mode === "paid" && p.care_status !== "active") || p.change_request_mode === "care") && (
+          {canChange && (!p.change_chat || p.change_request_mode === "paid" || p.change_request_mode === "credit" || p.change_request_mode === "care") && (
             <div className="card">
               {!p.change_chat && <h3>{d.project.changesTitle}</h3>}
               {p.change_request_mode === "care" && (
                 <p className="note" style={{ margin: 0, background: "#E8F4EE", color: "var(--valid)" }}>
-                  <strong>{d.project.careTitle}</strong> · {d.project.careActiveHint}
+                  <strong>{d.project.careTitle}</strong> ·{" "}
+                  {p.care_edits_left == null ? d.project.careActiveHint : d.project.careActiveLeft.replace("{n}", String(p.care_edits_left))}
                   {p.care_ends_at && ` ${d.project.careEndsOn.replace("{date}", new Date(p.care_ends_at).toLocaleDateString(locale === "de" ? "de-AT" : "en-GB"))}`}
                 </p>
               )}
@@ -390,6 +410,8 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               <p className="small muted" style={{ margin: 0 }}>
                 {p.change_request_mode === "care"
                   ? d.project.changesCareHint
+                  : p.change_request_mode === "credit"
+                    ? d.project.changesCreditHint.replace("{n}", String(p.edit_credits ?? 0))
                   : p.change_request_mode === "free"
                     ? d.project.changesHint
                         .replace("{left}", String(p.free_rounds_left ?? 0))
@@ -489,6 +511,20 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
                 <p className="small muted" style={{ margin: 0 }}>
                   <a href="#" onClick={(e) => { e.preventDefault(); cancelCare(); }}>{d.project.careCancel}</a>
                 </p>
+              )}
+              {(p.change_request_mode === "paid" || p.change_request_mode === "credit") && p.credit_packs && Object.keys(p.credit_packs).length > 0 && (
+                <div className="card" style={{ gap: 10, padding: 16, background: "var(--paper)" }}>
+                  <span className="cat">{d.project.creditsTitle}</span>
+                  <p style={{ margin: 0 }}>{(p.edit_credits ?? 0) > 0 ? d.project.creditsHave.replace("{n}", String(p.edit_credits)) : d.project.creditsPitch}</p>
+                  <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                    {Object.entries(p.credit_packs).map(([n, price]) => (
+                      <button key={n} type="button" className="btn btn-ghost" disabled={busy} onClick={() => buyCredits(Number(n))}>
+                        {d.project.creditsBuy.replace("{n}", n).replace("{price}", eur(price, locale))}
+                      </button>
+                    ))}
+                  </div>
+                  {creditNotice && <p className="note">{creditNotice}</p>}
+                </div>
               )}
               {p.change_request_mode === "paid" && p.care_status !== "active" && (
                 <div className="card" style={{ gap: 10, padding: 16, background: "var(--paper)" }}>

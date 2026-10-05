@@ -59,10 +59,23 @@ class MailLink
     public static function handOff(Request $request, string $path, string $token): JsonResponse|RedirectResponse
     {
         if ($request->isMethod('post')) {
-            return response()->json(['to' => $path, 'token' => $token]);
+            // The console is another origin: the sign-in page then hands the token over by address.
+            return response()->json(['to' => str_starts_with(self::portal($path), 'http') && config('console.url') ? self::portal($path) : $path, 'token' => $token]);
         }
 
-        return redirect()->away(rtrim((string) config('services.frontend_url'), '/').$path.'#token='.$token);
+        return redirect()->away(self::portal($path).'#token='.$token);
+    }
+
+    /**
+     * Where a customer's own pages live: the console when it is set up (config/console.php),
+     * otherwise the storefront. The admin console always stays on the storefront.
+     */
+    public static function portal(string $path): string
+    {
+        $console = rtrim((string) config('console.url'), '/');
+        $customer = (bool) preg_match('#^/(de|en)/account(/|$)#', $path);
+
+        return ($console !== '' && $customer ? $console : rtrim((string) config('services.frontend_url'), '/')).$path;
     }
 
     private static function root(): string

@@ -11,6 +11,8 @@ use App\Models\ChangeMessage;
 use App\Models\Project;
 use App\Models\Prototype;
 use App\Services\CareService;
+use App\Services\CreditService;
+use App\Domain\Console\Edits;
 use App\Services\ChangeChat;
 use App\Services\ChangeShots;
 use App\Services\Notify;
@@ -51,6 +53,9 @@ class MeController extends Controller
             'care_monthly_eur' => CareService::monthly($project),
             'care_status' => $project->care_status ?? 'none',
             'care_ends_at' => $project->care_ends_at?->toIso8601String(),
+            'care_edits_left' => Edits::careLeft($project),
+            'edit_credits' => Edits::credits($project),
+            'credit_packs' => Edits::packs(),
             'change_requests' => $project->changeRequests()->latest('id')
                 ->get(['id', 'round', 'text', 'items', 'status', 'agent_summary', 'result_items', 'price_eur', 'checkout_url', 'created_at']),
             'change_chat' => ChangeChat::enabledFor($request->user()),
@@ -94,6 +99,19 @@ class MeController extends Controller
 
         $project->recordEvent('care.checkout_requested', ['fagg_waiver_at' => now()->toIso8601String(), 'ip' => $request->ip()], 'customer:'.$request->user()->email);
         $url = $care->createCheckout($project);
+        if (! $url) {
+            return response()->json(['payment' => 'unconfigured', 'message' => 'Stripe is not configured yet (staging).'], 503);
+        }
+
+        return response()->json(['checkout_url' => $url]);
+    }
+
+    /** Buy a pack of change credits (config/console.php): Stripe Checkout, credited by the webhook. */
+    public function buyCredits(Request $request): JsonResponse
+    {
+        $packs = Edits::packs();
+        $data = $request->validate(['edits' => 'required|integer|in:'.implode(',', array_keys($packs)), 'locale' => 'nullable|in:de,en']);
+        $url = app(CreditService::class)->createCheckout($request->user(), (int) $data['edits'], $data['locale'] ?? ($request->user()->locale ?: 'de'));
         if (! $url) {
             return response()->json(['payment' => 'unconfigured', 'message' => 'Stripe is not configured yet (staging).'], 503);
         }
