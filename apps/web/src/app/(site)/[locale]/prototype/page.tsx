@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/LineIcon";
 import { PrototypeForm, type ProtoKind } from "@/components/PrototypeForm";
+import { PriceCalc } from "@/components/PriceCalc";
 import { PrototypeHistory } from "@/components/PrototypeHistory";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { appsOnly, offeredKinds } from "@/lib/offer";
@@ -64,6 +65,7 @@ export default async function PrototypePage({
               ))}
             </ol>
           </div>
+          {kinds.includes("app") && <PriceCalc d={d} locale={locale} />}
           <ul className="pp-trust">
             {trust.map((t) => (
               <li key={t.h}>
