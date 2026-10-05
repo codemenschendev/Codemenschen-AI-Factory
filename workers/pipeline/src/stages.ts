@@ -9,7 +9,7 @@ import { GATEWAY_MODE, GATEWAY_STAGES, RELAY_MODE, REPOS_HOST_PATH, extractJson,
 import { EAS_MODE, easBuildAndroid } from "./eas.ts";
 import { alignExpoDeps, exportWebPreview } from "./web.ts";
 import { currentWordPress, ensureSandbox } from "./wpsandbox.ts";
-import { WP_PLUGIN_PRODUCT, WP_PLUGIN_RULES, zipPlugin } from "./wpplugin.ts";
+import { WP_PLUGIN_PRODUCT, WP_PLUGIN_RULES, WP_PLUGIN_SELL_RULES, zipPlugin } from "./wpplugin.ts";
 
 const exec = promisify(execFile);
 
@@ -72,7 +72,8 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const plugin = job.context.stack === "wp-plugin";
   const wpNow = plugin ? await currentWordPress() : null;
   const wpLine = wpNow ? ` The current WordPress version is ${wpNow}: use it for "Tested up to" in readme.txt.` : "";
-  const stackRules = plugin && isCode ? `\n\n${WP_PLUGIN_RULES}${wpLine}` : plugin && job.stage === "product" ? `\n\n${WP_PLUGIN_PRODUCT}${wpLine}` : "";
+  const sell = plugin && job.context.sell_ready && (isCode || job.stage === "product") ? `\n\n${WP_PLUGIN_SELL_RULES}` : "";
+  const stackRules = (plugin && isCode ? `\n\n${WP_PLUGIN_RULES}${wpLine}` : plugin && job.stage === "product" ? `\n\n${WP_PLUGIN_PRODUCT}${wpLine}` : "") + sell;
   const system = `${STAGE_PROMPTS[job.stage]}${stackRules}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const changeRequest = job.context.change_request

@@ -89,6 +89,11 @@ class OrderFulfillment
         // time on 2026-09-07.
         app(CustomerMail::class)->orderPaid($order->fresh(), $project);
 
+        // Sell-ready: the plugin is built with Freemius; connecting the seller's account is ours to do.
+        if ($project->kind === 'plugin' && ! empty($order->packages['sellReady'])) {
+            app(Notify::class)->note($project, 'bought sell-ready: after approval help the customer create their Freemius product, put its id and public key into includes/sell-config.php and upload the ZIP to Freemius (see SELLING.md in the repo).');
+        }
+
         return $project;
     }
 }

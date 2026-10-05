@@ -24,6 +24,8 @@ export interface StageJob {
     stack: "expo" | "nextjs" | "wp-plugin";
     /** Sofabuilt plugins: the scope agreed on the desk (name, purpose, features, not_included, requires, modules). */
     scope?: Record<string, unknown> | null;
+    /** Sofabuilt sell-ready package: Freemius licensing, updates and checkout built into the plugin. */
+    sell_ready?: boolean;
     idea: string | null;
     listing_slug: string | null;
     audience: string | null;

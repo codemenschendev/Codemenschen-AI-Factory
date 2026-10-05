@@ -24,6 +24,21 @@ export const WP_PLUGIN_RULES =
   "Never use the name, logo or texts of another plugin or company. No hidden files and no Markdown files inside plugin/. " +
   "Tests: npm test runs PHP lint, activation in a WordPress sandbox and Plugin Check; every automated criterion needs test/cases/<key>.mjs using the helpers in test/wp.mjs (needWordPress(), wp([...]), phpEval('...')).";
 
+/**
+ * Added for the sell-ready package: Freemius does licence keys, updates for buyers, the checkout and
+ * EU VAT. The seller creates the product in their own Freemius account later, so the plugin must
+ * run as a free version until its id and public key are filled in.
+ */
+export const WP_PLUGIN_SELL_RULES =
+  "The customer bought the sell-ready package: build the Freemius WordPress SDK in so the plugin can be sold with licence keys and automatic updates. " +
+  "Clone https://github.com/Freemius/wordpress-sdk (latest release tag) into plugin/vendor/freemius (no .git folder) and add plugin/composer.json that names freemius/wordpress-sdk. " +
+  "Create plugin/includes/sell-config.php that defines <PREFIX>_FS_ID, <PREFIX>_FS_PUBLIC_KEY (both empty strings) and <PREFIX>_FS_HAS_PAID_PLANS (true), with a comment that the seller fills them in from their Freemius dashboard. " +
+  "In the main file, right after the ABSPATH guard, add the standard Freemius init function <prefix>_fs() that requires vendor/freemius/start.php and calls fs_dynamic_init with id, slug, type plugin, public_key, is_premium true, has_premium_version true, has_paid_plans, menu slug of the plugin's settings page; " +
+  "but only when the id and the public key are not empty, otherwise <prefix>_fs() returns null and the plugin runs as its free version. " +
+  "Put every paid feature behind a helper that is true only when <prefix>_fs() exists and can_use_premium_code__premium_only() is true, so Freemius can strip it from the free build. Decide with the scope which features are free and which are paid: the free version must be useful on its own. " +
+  "Add a short SELLING.md next to the repository's README (not inside plugin/) that lists the paid features and the three seller steps: create the product in Freemius, paste the id and public key into includes/sell-config.php, upload the ZIP to Freemius for deployment. " +
+  "Add automated criteria for: the plugin runs with empty Freemius keys, and paid features stay off without a licence.";
+
 /** Added to the product prompt for a plugin: what a good spec and testable criteria look like. */
 export const WP_PLUGIN_PRODUCT =
   "This is a WordPress plugin. The context's `scope` is what the customer agreed to and paid for: build exactly its features, nothing from not_included. Its `modules` are the parts the customer paid for and are binding: a feature that would need a part not in `modules` is out of scope. " +
