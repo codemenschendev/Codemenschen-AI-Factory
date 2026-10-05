@@ -314,6 +314,41 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
             </div>
           )}
 
+          {session?.scope && (
+            <div className="dk-scope">
+              <div className="dk-card-head">
+                <h3>{t.scopeTitle}</h3>
+                {session.scope.name && <span className="dk-pill">{session.scope.name}</span>}
+              </div>
+              {session.scope.purpose && <p className="dk-purpose">{session.scope.purpose}</p>}
+              <ul className="dk-features">
+                {session.scope.features.map((f) => (
+                  <li key={f}>
+                    <Ico name="done" className="dk-feat-ico" />
+                    {f}
+                  </li>
+                ))}
+              </ul>
+              {session.scope.not_included.length > 0 && (
+                <div className="dk-out">
+                  <b>{t.notIncluded}</b>
+                  <ul>
+                    {session.scope.not_included.map((f) => (
+                      <li key={f}>
+                        <Ico name="x" className="dk-out-ico" />
+                        {f}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="dk-small">
+                {fill(t.requires, { wp: session.scope.requires.wordpress, php: session.scope.requires.php })}
+                {session.scope.requires.woocommerce ? ` · ${t.requiresWoo}` : ""}
+              </p>
+            </div>
+          )}
+
           {questions.map((q, i) => (
             <div key={q.q} className="dk-q">
               <p className="dk-q-title">
@@ -383,45 +418,14 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
       </section>
 
       <aside className="dk-side">
-        <div className="dk-card dk-scope">
-          <div className="dk-card-head">
-            <h3>{t.scopeTitle}</h3>
-            {session?.scope?.name && <span className="dk-pill">{session.scope.name}</span>}
+        {!(price && session?.scope) && (
+          <div className="dk-card">
+            <div className="dk-card-head">
+              <h3>{t.priceTitle}</h3>
+            </div>
+            <p className="dk-muted">{t.priceEmpty}</p>
           </div>
-          {!session?.scope ? (
-            <p className="dk-muted">{t.scopeEmpty}</p>
-          ) : (
-            <>
-              {session.scope.purpose && <p className="dk-purpose">{session.scope.purpose}</p>}
-              <ul className="dk-features">
-                {session.scope.features.map((f) => (
-                  <li key={f}>
-                    <Ico name="done" className="dk-feat-ico" />
-                    {f}
-                  </li>
-                ))}
-              </ul>
-              {session.scope.not_included.length > 0 && (
-                <div className="dk-out">
-                  <b>{t.notIncluded}</b>
-                  <ul>
-                    {session.scope.not_included.map((f) => (
-                      <li key={f}>
-                        <Ico name="x" className="dk-out-ico" />
-                        {f}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              <p className="dk-small">
-                {fill(t.requires, { wp: session.scope.requires.wordpress, php: session.scope.requires.php })}
-                {session.scope.requires.woocommerce ? ` · ${t.requiresWoo}` : ""}
-              </p>
-            </>
-          )}
-        </div>
-
+        )}
         {price && session?.scope && (
           <div className="dk-card dk-pricecard">
             <div className="dk-card-head">
