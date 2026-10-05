@@ -21,7 +21,7 @@ export interface StageJob {
   change_images?: { mime: string; data: string }[];
   context: {
     name: string;
-    stack: "expo" | "nextjs" | "wp-plugin" | "chrome-ext";
+    stack: "expo" | "nextjs" | "wp-plugin" | "chrome-ext" | "shopify";
     /** Sofabuilt plugins: the scope agreed on the desk (name, purpose, features, not_included, requires, modules). */
     scope?: Record<string, unknown> | null;
     /** Sofabuilt sell-ready package: Freemius licensing, updates and checkout built into the plugin. */

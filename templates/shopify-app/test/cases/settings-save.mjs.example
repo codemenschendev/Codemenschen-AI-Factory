@@ -1,0 +1,15 @@
+// Example case: copy to test/cases/<criterion-key>.mjs and adapt.
+import { fakeAdmin, loadLib } from "../shopify.mjs";
+export const key = "settings-save";
+export async function run() {
+  const { saveSettings, loadSettings } = await loadLib("app/lib/settings.ts");
+  let stored = null;
+  const admin = fakeAdmin({
+    AppInstallationId: () => ({ currentAppInstallation: { id: "gid://shopify/AppInstallation/1" } }),
+    SaveAppSettings: (v) => ((stored = v.metafields[0].value), { metafieldsSet: { userErrors: [] } }),
+    AppSettings: () => ({ currentAppInstallation: { id: "gid://shopify/AppInstallation/1", metafield: stored && { value: stored } } }),
+  });
+  await saveSettings(admin, { colour: "blue" });
+  const s = await loadSettings(admin);
+  if (s.colour !== "blue") throw new Error(`expected blue, got ${s.colour}`);
+}

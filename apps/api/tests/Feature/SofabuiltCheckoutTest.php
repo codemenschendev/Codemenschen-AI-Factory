@@ -108,4 +108,38 @@ class SofabuiltCheckoutTest extends TestCase
         $project->builds()->create(['platform' => 'plugin', 'version' => '0.1.0', 'artifact_path' => 'x.zip', 'status' => 'preview']);
         $this->assertNull($project->previewUrl(), 'Playground is for WordPress only');
     }
+
+    public function test_a_shopify_app_is_priced_with_its_own_parts_and_built_on_its_stack(): void
+    {
+        config(['services.stripe.secret' => null, 'services.worker.token' => 't']);
+        Http::fake(['*/run' => Http::response(['accepted' => true], 202)]);
+        Mail::fake();
+        $session = DeskSession::create(['door' => 'idea', 'locale' => 'en', 'platform' => 'shopify', 'ready' => true, 'scope' => [
+            'platform' => 'shopify', 'name' => 'Size Guide', 'purpose' => 'Size charts on product pages.', 'features' => ['chart'], 'not_included' => [],
+            'requires' => ['woocommerce' => false, 'wordpress' => '', 'php' => ''],
+            'modules' => [['key' => 'storefront', 'qty' => 1], ['key' => 'products', 'qty' => 1], ['key' => 'woo', 'qty' => 1]],
+        ]]);
+
+        $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
+        // Shopify parts only: a WordPress key in the scope is not priced.
+        $this->assertSame(350 + 120 + 90, $res->json('price_eur'));
+        $this->assertSame(['salesPage' => 299, 'listing' => 99, 'ads' => 129], $res->json('packages'));
+
+        $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'shop@example.com', 'fagg_waiver' => true, 'terms' => true]);
+        $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 560, []);
+        $this->assertSame('shopify', $project->stack);
+        $project->builds()->create(['platform' => 'plugin', 'version' => '0.1.0', 'artifact_path' => 'x.zip', 'status' => 'preview']);
+        $this->assertNull($project->previewUrl(), 'Playground is for WordPress only');
+    }
+
+    public function test_the_desk_offers_wordpress_and_shopify_with_their_own_catalogues(): void
+    {
+        $this->postJson('/api/desk', ['door' => 'idea', 'platform' => 'shopify'])->assertCreated()->assertJsonPath('platform', 'shopify');
+        $this->postJson('/api/desk', ['door' => 'idea', 'platform' => 'chrome'])->assertStatus(422);
+
+        $items = $this->getJson('/api/desk/catalog?platform=shopify')->assertOk()->json('items');
+        $reviews = collect($items)->firstWhere('id', 'reviews');
+        $this->assertSame('$180', $reviews['price'], 'a monthly price is shown per year');
+        $this->assertSame(47971, $reviews['reviews']);
+    }
 }

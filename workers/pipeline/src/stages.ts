@@ -11,6 +11,7 @@ import { alignExpoDeps, exportWebPreview } from "./web.ts";
 import { currentWordPress, ensureSandbox } from "./wpsandbox.ts";
 import { WP_PLUGIN_PRODUCT, WP_PLUGIN_RULES, WP_PLUGIN_SELL_RULES, zipPlugin } from "./wpplugin.ts";
 import { CHROME_PRODUCT, CHROME_RULES, zipExtension } from "./chromeext.ts";
+import { SHOPIFY_PRODUCT, SHOPIFY_RULES, zipShopifyApp } from "./shopifyapp.ts";
 
 const exec = promisify(execFile);
 
@@ -75,10 +76,12 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const wpLine = wpNow ? ` The current WordPress version is ${wpNow}: use it for "Tested up to" in readme.txt.` : "";
   const sell = plugin && job.context.sell_ready && (isCode || job.stage === "product") ? `\n\n${WP_PLUGIN_SELL_RULES}` : "";
   const ext = job.context.stack === "chrome-ext";
+  const shop = job.context.stack === "shopify";
   const stackRules =
     (plugin && isCode ? `\n\n${WP_PLUGIN_RULES}${wpLine}` : plugin && job.stage === "product" ? `\n\n${WP_PLUGIN_PRODUCT}${wpLine}` : "") +
     sell +
-    (ext && isCode ? `\n\n${CHROME_RULES}` : ext && job.stage === "product" ? `\n\n${CHROME_PRODUCT}` : "");
+    (ext && isCode ? `\n\n${CHROME_RULES}` : ext && job.stage === "product" ? `\n\n${CHROME_PRODUCT}` : "") +
+    (shop && isCode ? `\n\n${SHOPIFY_RULES}` : shop && job.stage === "product" ? `\n\n${SHOPIFY_PRODUCT}` : "");
   const system = `${STAGE_PROMPTS[job.stage]}${stackRules}\n\n${GATEWAY_SCHEMAS[job.stage]} No prose, no markdown fences.`;
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const changeRequest = job.context.change_request
@@ -246,9 +249,10 @@ async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
  * buildStage: EAS builds are spent only on an approved preview.
  */
 async function releaseStage(job: StageJob, dir: string): Promise<Record<string, unknown>> {
-  if (job.context.stack === "wp-plugin" || job.context.stack === "chrome-ext") {
-    // A plugin's or extension's artifact is its ZIP; for WordPress the API also makes a Playground link.
-    const zip = job.context.stack === "chrome-ext" ? await zipExtension(dir, job.project_id) : await zipPlugin(dir, job.project_id);
+  const stack = job.context.stack;
+  if (stack === "wp-plugin" || stack === "chrome-ext" || stack === "shopify") {
+    // A Sofabuilt product's artifact is its ZIP; for WordPress the API also makes a Playground link.
+    const zip = stack === "chrome-ext" ? await zipExtension(dir, job.project_id) : stack === "shopify" ? await zipShopifyApp(dir, job.project_id) : await zipPlugin(dir, job.project_id);
     const bundle = await archiveRepo(job.project_id, zip.version);
     return {
       builds: [

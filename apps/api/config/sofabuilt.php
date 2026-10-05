@@ -67,6 +67,78 @@ return [
         'catalog' => [],
     ],
 
+    /*
+     * Shopify apps (2026-10-05, Patrick's plan: "a pipeline for stores like Shopify and WordPress").
+     * An embedded app in the Shopify admin on Shopify's own app template; the merchant hosts it.
+     * Catalogue prices are the cheapest paid plan on apps.shopify.com, checked 2026-10-05; the desk
+     * shows them per year.
+     */
+    'shopify' => [
+        'modules' => [
+            'base' => ['eur' => 350, 'en' => 'The app itself: its own page in your Shopify admin, safe install and removal, privacy rules handled', 'de' => 'Die App selbst: eine eigene Seite in deinem Shopify-Admin, sichere Installation und Entfernung, Datenschutz-Regeln erledigt'],
+            'storefront' => ['eur' => 120, 'en' => 'A block on your shop pages that you place in the theme editor', 'de' => 'Ein Baustein auf deinen Shop-Seiten, den du im Theme-Editor platzierst'],
+            'products' => ['eur' => 90, 'en' => 'Works with your products: reads or changes them', 'de' => 'Arbeitet mit deinen Produkten: liest oder ändert sie'],
+            'orders' => ['eur' => 120, 'en' => 'Works with your orders', 'de' => 'Arbeitet mit deinen Bestellungen'],
+            'customers' => ['eur' => 90, 'en' => 'Works with your customers', 'de' => 'Arbeitet mit deinen Kunden'],
+            'discounts' => ['eur' => 150, 'en' => 'Your own discount rules in the cart and at checkout', 'de' => 'Eigene Rabattregeln im Warenkorb und an der Kasse'],
+            'checkout' => ['eur' => 180, 'en' => 'Changes in the checkout or on the thank-you page', 'de' => 'Änderungen an der Kasse oder auf der Danke-Seite'],
+            'data' => ['eur' => 90, 'en' => 'Its own kind of entries you manage in the admin', 'de' => 'Eigene Einträge, die du im Admin verwaltest'],
+            'admin_list' => ['eur' => 90, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
+            'external_api' => ['eur' => 150, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'email' => ['eur' => 60, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
+            'schedule' => ['eur' => 50, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
+            'import_export' => ['eur' => 90, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
+            'billing' => ['eur' => 120, 'en' => 'Monthly plans for the shops that install it, billed by Shopify', 'de' => 'Monatliche Tarife für die Shops, die sie installieren, abgerechnet über Shopify'],
+        ],
+        'repeatable' => ['external_api' => 4],
+        'launch' => [
+            'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
+            'listing' => ['eur' => 99, 'en' => 'Shopify App Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Shopify App Store: Texte, Screenshots, Icon, Einreichung'],
+            'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+        ],
+        'catalog' => [
+            ['id' => 'reviews', 'name' => 'Judge.me Product Reviews', 'category' => 'Reviews', 'price' => '$15/mo', 'reviews' => 47971,
+                'features' => ['stars and reviews on products', 'customers add photos and videos', 'review request after each order', 'reply to reviews', 'bring in old reviews'],
+                'modules' => ['base', 'storefront', 'products', 'orders', 'email', 'data', 'admin_list']],
+            ['id' => 'wishlist', 'name' => 'Swym Wishlist Plus', 'category' => 'Wishlist', 'price' => '$29.99/mo', 'reviews' => 1481,
+                'features' => ['heart button on products', 'save favourites for later', 'share a list with friends', 'mail when price drops', 'see most wanted products'],
+                'modules' => ['base', 'storefront', 'products', 'customers', 'data', 'email']],
+            ['id' => 'back-in-stock', 'name' => 'Amp Back in Stock & Preorder', 'category' => 'Restock alerts', 'price' => '$19/mo', 'reviews' => 954,
+                'features' => ['notify me button', 'mail when item is back', 'low stock badge', 'list of waiting customers', 'see which items people want'],
+                'modules' => ['base', 'storefront', 'products', 'data', 'email']],
+            ['id' => 'product-options', 'name' => 'Infinite Options', 'category' => 'Product options', 'price' => '$12.99/mo', 'reviews' => 2618,
+                'features' => ['text field for engraving', 'dropdowns, checkboxes and swatches', 'extra cost for add-ons', 'show options only when needed', 'choices saved on the order'],
+                'modules' => ['base', 'storefront', 'products', 'orders', 'data']],
+            ['id' => 'size-chart', 'name' => 'Kiwi Size Chart & Recommender', 'category' => 'Size charts', 'price' => '$7.99/mo', 'reviews' => 1226,
+                'features' => ['size chart on product page', 'ready-made chart templates', 'upload charts from a spreadsheet', 'cm and inch switch', 'fewer returns from wrong sizes'],
+                'modules' => ['base', 'storefront', 'products', 'data', 'import_export']],
+            ['id' => 'bundles', 'name' => 'Kaching Bundles', 'category' => 'Bundles', 'price' => '$14.99/mo', 'reviews' => 6158,
+                'features' => ['buy more, pay less', 'product sets at one price', 'free gift with order', 'buy one get one', 'see extra money earned'],
+                'modules' => ['base', 'storefront', 'products', 'discounts', 'data']],
+            ['id' => 'loyalty', 'name' => 'Smile: Loyalty Program Rewards', 'category' => 'Loyalty', 'price' => '$15/mo', 'reviews' => 4616,
+                'features' => ['points for every purchase', 'swap points for discounts', 'reward for inviting friends', 'vip levels for top buyers', 'points balance in customer account'],
+                'modules' => ['base', 'storefront', 'customers', 'orders', 'discounts', 'data', 'email']],
+            ['id' => 'image-seo', 'name' => 'TinySEO: SEO & Image Optimizer', 'category' => 'SEO, Images', 'price' => '$14/mo', 'reviews' => 2527,
+                'features' => ['smaller pictures, same quality', 'pages open faster', 'pictures load only when needed', 'picture descriptions for Google', 'fix broken links'],
+                'modules' => ['base', 'products', 'schedule', 'admin_list']],
+            ['id' => 'cookie-consent', 'name' => 'Pandectes GDPR Compliance', 'category' => 'Cookie consent', 'price' => '$9/mo', 'reviews' => 3091,
+                'features' => ['cookie banner in your design', 'trackers wait for consent', 'record of every consent', 'banner in several languages', 'different rules per country'],
+                'modules' => ['base', 'storefront', 'data', 'admin_list']],
+            ['id' => 'invoices', 'name' => 'Sufio: Invoice You Can Trust', 'category' => 'Invoices', 'price' => '$7/mo', 'reviews' => 466,
+                'features' => ['invoice made for every order', 'invoice sent by mail', 'invoice numbers in order', 'your logo on documents', 'print many invoices at once'],
+                'modules' => ['base', 'orders', 'customers', 'email', 'data']],
+            ['id' => 'countdown', 'name' => 'Hextom: Countdown Timer Bar', 'category' => 'Urgency', 'price' => '$9.99/mo', 'reviews' => 764,
+                'features' => ['countdown bar for sales', 'timer repeats every day', 'plan sales in advance', 'own colours and text', 'show only on chosen pages'],
+                'modules' => ['base', 'storefront', 'data', 'schedule']],
+            ['id' => 'wholesale', 'name' => 'Wholesale Pricing Discount B2B', 'category' => 'Wholesale', 'price' => '$24.99/mo', 'reviews' => 736,
+                'features' => ['special prices for trade customers', 'cheaper when buying more', 'sign-up form for resellers', 'pay later by invoice', 'upload prices from a spreadsheet'],
+                'modules' => ['base', 'storefront', 'products', 'customers', 'discounts', 'data', 'import_export']],
+        ],
+    ],
+
+    // What the desk offers (2026-10-05, owner: "focus only Shopify, WordPress"). Chrome stays built and hidden.
+    'offered' => ['wordpress', 'shopify'],
+
     'care_monthly_eur' => 19,
 
     'delivery_days' => [2, 3],

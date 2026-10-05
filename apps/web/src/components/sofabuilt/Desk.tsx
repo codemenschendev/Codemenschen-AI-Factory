@@ -7,7 +7,9 @@ import type { SbDict } from "@/dictionaries/sofabuilt";
 import { SbCheckout } from "./SbCheckout";
 
 type Door = "idea" | "premium";
-type Platform = "wordpress" | "chrome";
+type Platform = "wordpress" | "shopify" | "chrome";
+// What the desk offers (owner, 2026-10-05: WordPress and Shopify). Chrome stays built, not shown.
+const OFFERED: Platform[] = ["wordpress", "shopify"];
 type Question = { q: string; options: string[] };
 type Message = { id: number; role: "customer" | "assistant"; body: string; meta?: { questions?: Question[] } | null };
 type Scope = {
@@ -29,7 +31,7 @@ type Price = {
 type Research = { name: string; slug: string; installs: number; rating: number; url: string };
 type Option = { key: string; label: string; eur: number; max: number };
 type Session = { id: string; door: Door; platform?: Platform; ready: boolean; scope: Scope | null; price: Price | null; research: Research[]; messages: Message[]; module_options?: Option[] };
-type CatalogItem = { id: string; name: string; category: string; price: string; features: string[]; installs: number | null; own_from_eur: number };
+type CatalogItem = { id: string; name: string; category: string; price: string; features: string[]; installs: number | null; reviews: number | null; own_from_eur: number };
 
 const STORE = "sofabuilt.desk";
 const MAX = 500;
@@ -141,8 +143,8 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
   }, []);
 
   useEffect(() => {
-    if (door === "premium" && platform === "wordpress" && catalog.length === 0) {
-      api<{ items: CatalogItem[] }>("/desk/catalog").then((r) => setCatalog(r.items)).catch(() => {});
+    if (door === "premium" && platform !== "chrome" && catalog.length === 0) {
+      api<{ items: CatalogItem[] }>(`/desk/catalog?platform=${platform}`).then((r) => setCatalog(r.items)).catch(() => {});
     }
   }, [door, platform, catalog.length]);
 
@@ -237,7 +239,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
 
         <div className="dk-card dk-body" aria-live="polite">
           <div className="dk-platforms" role="tablist">
-            {(["wordpress", "chrome"] as const).map((p) => (
+            {OFFERED.map((p) => (
               <button
                 key={p}
                 type="button"
@@ -247,10 +249,11 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                 disabled={!!session}
                 onClick={() => {
                   setPlatform(p);
+                  setCatalog([]);
                   setDoor(p === "chrome" ? "idea" : null);
                 }}
               >
-                <Ico name={p === "chrome" ? "site" : "store"} />
+                <Ico name={p === "chrome" ? "site" : p === "shopify" ? "cart" : "store"} />
                 {t.platforms[p]}
               </button>
             ))}
@@ -274,7 +277,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
 
           {door === "premium" && messages.length === 0 && (
             <div className="dk-cat">
-              <p className="dk-q-title">{t.catalogTitle}</p>
+              <p className="dk-q-title">{platform === "shopify" ? t.catalogTitleShopify : t.catalogTitle}</p>
               <p className="dk-muted">{t.catalogLede}</p>
               <div className="dk-cat-grid">
                 {catalog.map((c) => (
@@ -283,6 +286,7 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                     <b>{c.name}</b>
                     <small>{fill(t.perYear, { price: c.price })}</small>
                     {c.installs ? <small>{fill(t.installs, { n: num(c.installs) })}</small> : null}
+                    {c.reviews ? <small>{fill(t.reviews, { n: num(c.reviews) })}</small> : null}
                     <span className="dk-cat-own">{fill(t.ownFrom, { price: eur(c.own_from_eur) })}</span>
                   </button>
                 ))}
@@ -342,10 +346,12 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                   </ul>
                 </div>
               )}
-              <p className="dk-small">
-                {fill(t.requires, { wp: session.scope.requires.wordpress, php: session.scope.requires.php })}
-                {session.scope.requires.woocommerce ? ` · ${t.requiresWoo}` : ""}
-              </p>
+              {session.scope.requires?.wordpress ? (
+                <p className="dk-small">
+                  {fill(t.requires, { wp: session.scope.requires.wordpress, php: session.scope.requires.php })}
+                  {session.scope.requires.woocommerce ? ` · ${t.requiresWoo}` : ""}
+                </p>
+              ) : null}
             </div>
           )}
 
@@ -394,7 +400,11 @@ export function Desk({ t, doors, locale, start, startPlatform }: { t: SbDict["de
                       if (canSend) sendAnswers();
                     }
                   }}
-                  placeholder={platform === "chrome" && !messages.length ? t.placeholderChrome : door === "premium" || messages.length ? t.placeholderPremium : t.placeholder}
+                  placeholder={
+                    door === "premium" || messages.length
+                      ? platform === "shopify" ? t.placeholderPremiumShopify : t.placeholderPremium
+                      : platform === "chrome" ? t.placeholderChrome : platform === "shopify" ? t.placeholderShopify : t.placeholder
+                  }
                   rows={3}
                 />
                 <small>

@@ -20,10 +20,11 @@ const en: { terms: Doc; withdrawal: Doc } = {
       {
         h: "2. What you get",
         p: [
-          "A WordPress plugin built to the scope shown in the desk when you order: its features, what is not included, and the WordPress, WooCommerce and PHP versions it needs.",
+          "A WordPress plugin or Shopify app built to the scope shown in the desk when you order: its features, what is not included, and the WordPress, WooCommerce and PHP versions it needs.",
           "Before handover you try the plugin live in a WordPress in your browser. One change round within the agreed scope is included. Further rounds or new features are priced before we start them.",
           "You get the plugin as a ZIP file, its source code and a readme. WordPress plugins are licensed under the GPL: you may use, change, pass on and sell it. We keep no share of your revenue.",
           "If you asked for your own version of a paid plugin, you get new code with its own name. It covers the features listed in the scope, not everything the original does.",
+          "A Shopify app is tried on a Shopify development store. You get the app with all its code and may use, change and sell it. It runs on a server you choose; hosting, Shopify's own fees and the App Store review are not part of our price.",
         ],
       },
       {
@@ -113,10 +114,11 @@ const de: typeof en = {
       {
         h: "2. Was du bekommst",
         p: [
-          "Ein WordPress-Plugin nach dem Umfang, der bei der Bestellung im Desk steht: seine Funktionen, was nicht enthalten ist, und die Versionen von WordPress, WooCommerce und PHP, die es braucht.",
+          "Ein WordPress-Plugin oder eine Shopify-App nach dem Umfang, der bei der Bestellung im Desk steht: seine Funktionen, was nicht enthalten ist, und die Versionen von WordPress, WooCommerce und PHP, die es braucht.",
           "Vor der Übergabe probierst du das Plugin live in einem WordPress im Browser aus. Eine Änderungsrunde im vereinbarten Umfang ist inklusive. Weitere Runden oder neue Funktionen bepreisen wir, bevor wir sie starten.",
           "Du bekommst das Plugin als ZIP-Datei, den Quellcode und eine Readme. WordPress-Plugins stehen unter der GPL: du darfst es nutzen, ändern, weitergeben und verkaufen. Wir behalten keinen Anteil an deinen Einnahmen.",
           "Wenn du deine eigene Version eines bezahlten Plugins bestellt hast, bekommst du neuen Code mit eigenem Namen. Er umfasst die Funktionen im Umfang, nicht alles, was das Original kann.",
+          "Eine Shopify-App probierst du in einem Shopify-Entwicklungsshop aus. Du bekommst die App mit dem ganzen Code und darfst sie nutzen, ändern und verkaufen. Sie läuft auf einem Server deiner Wahl; Hosting, Gebühren von Shopify und die Prüfung im App Store sind nicht Teil unseres Preises.",
         ],
       },
       {

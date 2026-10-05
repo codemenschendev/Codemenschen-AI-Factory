@@ -107,7 +107,21 @@ Today brand, logo, metadata, `frontend_url` and mail links are Appmitki only.
 | 0 | Multi-brand foundation, vhost, legal pages, landing page | sofabuilt.codemenschen.at shows its own page, Appmitki unchanged |
 | 1 | Desk chat with research and live price, quote/checkout, wp-plugin pipeline, Playground review, delivery | one real plugin built end to end from a chat |
 | 2 | Launch lane (sales page, listing, ads), Care subscription, Meta campaign for Sofabuilt | first paid order |
-| 3 | Shopify apps | decided after phase 2 numbers |
+| 3 | Shopify apps (owner 2026-10-05: "focus only Shopify, WordPress"; Chrome extensions stay built, hidden from the desk) | one real Shopify app built end to end |
+
+## Shopify apps (2026-10-05)
+
+- Stack `shopify`, template `templates/shopify-app`: Shopify's React Router app template (MIT, see
+  TEMPLATE-LICENSE.md) with the privacy webhooks wired, settings in an app metafield, and a test run
+  that checks `shopify.app.toml`, GraphQL-only Admin API, theme app extension blocks, typecheck and
+  build, then one case per criterion against an Admin API stand-in (`test/shopify.mjs`).
+- Parts, launch options and a catalogue of 12 paid Shopify apps in `config/sofabuilt.php` under
+  `shopify`; catalogue prices are the cheapest paid plan on apps.shopify.com (checked 2026-10-05),
+  shown per year. No live research: the App Store has no public search API.
+- Delivery: the whole app as a ZIP (code, config, Dockerfile). The merchant tries it on a Shopify
+  development store with `shopify app dev`, hosts it on a server of their choice and registers it
+  with `shopify app deploy`. We set it up for them on request.
+- `sofabuilt.offered` decides what the desk shows (`wordpress`, `shopify`).
 
 ## Open decisions (owner)
 

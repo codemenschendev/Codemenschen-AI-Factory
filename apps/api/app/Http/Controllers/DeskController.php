@@ -34,12 +34,13 @@ class DeskController extends Controller
     {
         $platform = in_array($request->query('platform'), Platforms::ALL, true) ? $request->query('platform') : 'wordpress';
         $items = collect(Platforms::catalog($platform))->map(function ($p) use ($wporg, $platform) {
-            $live = $p['slug'] ? $wporg->info($p['slug']) : null;
+            $live = ($p['slug'] ?? null) ? $wporg->info($p['slug']) : null;
 
             return [
-                'id' => $p['id'], 'name' => $p['name'], 'category' => $p['category'], 'price' => $p['price'],
+                'id' => $p['id'], 'name' => $p['name'], 'category' => $p['category'], 'price' => Platforms::yearly($p['price']),
                 'features' => $p['features'],
                 'installs' => $live['installs'] ?? null,
+                'reviews' => $p['reviews'] ?? null,
                 'own_from_eur' => Pricing::quote(['platform' => $platform, 'modules' => array_map(fn ($k) => ['key' => $k], $p['modules'])])['build_eur'],
             ];
         })->values();
@@ -49,7 +50,7 @@ class DeskController extends Controller
 
     public function store(Request $request): JsonResponse
     {
-        $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en', 'platform' => 'nullable|in:'.implode(',', Platforms::ALL)]);
+        $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en', 'platform' => 'nullable|in:'.implode(',', Platforms::offered())]);
         $key = 'desk:sessions:'.$request->ip().':'.now()->toDateString();
         abort_if((int) Cache::get($key, 0) >= self::SESSIONS_PER_IP_DAY, 429, 'Too many chats today.');
         self::bump($key);
@@ -100,7 +101,8 @@ class DeskController extends Controller
             $scope['modules'] = $session->scope['modules'];
         }
         $research = $session->research ?? [];
-        if ($out['search'] !== null) {
+        // Live research is wordpress.org's directory; Shopify's App Store has no public search API.
+        if ($out['search'] !== null && $session->platform === 'wordpress') {
             foreach ($wporg->search($out['search']) as $row) {
                 $research[$row['slug']] = $row;
             }
