@@ -10,6 +10,7 @@ import { ReferencePanel } from "./ReferencePanel";
 import { KeywordsPanel } from "./KeywordsPanel";
 import { AdminSignIn } from "./AdminSignIn";
 import { OpsIcon } from "./OpsIcon";
+import { SofabuiltPanel } from "./SofabuiltPanel";
 import { ClientAdsPanel } from "./ClientAdsPanel";
 import { OwnCampaignsPanel } from "./OwnCampaignsPanel";
 import { ConversionsPanel } from "./ConversionsPanel";
@@ -151,7 +152,7 @@ interface PrototypeRow {
   created_at: string;
 }
 
-type Tab = "overview" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references" | "twoFactor" | "audit";
+type Tab = "overview" | "sofabuilt" | "analytics" | "projects" | "ownAds" | "clientAds" | "conversions" | "ads" | "keywords" | "prototypes" | "customers" | "library" | "references" | "twoFactor" | "audit";
 
 const dt = (s: string, locale: Locale) => new Date(s).toLocaleString(locale);
 
@@ -494,7 +495,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   // The menu in groups, the way an operator thinks about the work rather than in the order the
   // screens were built. Adding a screen is one entry in one group.
   const GROUPS: { label: string; tabs: Tab[] }[] = [
-    { label: a.groupWork, tabs: ["overview", "projects", "customers", "prototypes"] },
+    { label: a.groupWork, tabs: ["overview", "projects", "customers", "prototypes", "sofabuilt"] },
     { label: a.groupAds, tabs: ["ownAds", "clientAds", "keywords", "conversions", "ads"] },
     { label: a.groupInsight, tabs: ["analytics"] },
     { label: a.groupContent, tabs: ["library", "references"] },
@@ -610,6 +611,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
       {tab === "conversions" && token && <ConversionsPanel token={token} locale={locale} d={d} />}
       {tab === "twoFactor" && token && <TwoFactorPanel token={token} d={d} />}
       {tab === "audit" && token && <AuditPanel token={token} locale={locale} d={d} />}
+      {tab === "sofabuilt" && token && <SofabuiltPanel token={token} locale={locale} />}
       {tab === "ownAds" && token && (
         <OwnCampaignsPanel
           token={token}

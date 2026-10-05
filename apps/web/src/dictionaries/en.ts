@@ -1068,6 +1068,7 @@ export const en = {
     backToSite: "Back to the site",
     tabs: {
       twoFactor: "Two-factor",
+      sofabuilt: "Sofabuilt",
       audit: "Audit log",
       conversions: "Conversions",
       ownAds: "Appmitki campaigns",

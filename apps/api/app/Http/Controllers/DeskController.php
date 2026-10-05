@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Sofabuilt\DeskAgent;
 use App\Domain\Sofabuilt\Platforms;
+use App\Domain\Sofabuilt\Settings;
 use App\Domain\Sofabuilt\Pricing;
 use App\Domain\Sofabuilt\WpOrg;
 use App\Domain\Pricing\Packages;
@@ -27,7 +28,12 @@ class DeskController extends Controller
 
     private const TURNS_PER_IP_DAY = 80;
 
-    private const TURNS_GLOBAL_DAY = 2000;
+
+    /** What the desk offers right now (admin switches, Domain\Sofabuilt\Settings). */
+    public function config(): JsonResponse
+    {
+        return response()->json(['offered' => Platforms::offered(), 'open' => (bool) Settings::get('desk_open')]);
+    }
 
     /** The premium plugins for the "own version" door, with live numbers and a typical price. */
     public function catalog(Request $request, WpOrg $wporg): JsonResponse
@@ -50,6 +56,8 @@ class DeskController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        // The admin can close the desk (Settings desk_open): chats already open go on.
+        abort_unless((bool) Settings::get('desk_open'), 503, 'The desk is closed right now.');
         $data = $request->validate(['door' => 'required|in:idea,premium', 'locale' => 'nullable|in:de,en', 'platform' => 'nullable|in:'.implode(',', Platforms::offered())]);
         $key = 'desk:sessions:'.$request->ip().':'.now()->toDateString();
         abort_if((int) Cache::get($key, 0) >= self::SESSIONS_PER_IP_DAY, 429, 'Too many chats today.');
@@ -76,7 +84,7 @@ class DeskController extends Controller
         $ipKey = "desk:turns:{$request->ip()}:$day";
         $globalKey = "desk:turns:global:$day";
         $turns = $session->messages()->where('role', 'customer')->count();
-        if ($turns >= self::TURNS_PER_SESSION || (int) Cache::get($ipKey, 0) >= self::TURNS_PER_IP_DAY || (int) Cache::get($globalKey, 0) >= self::TURNS_GLOBAL_DAY) {
+        if ($turns >= self::TURNS_PER_SESSION || (int) Cache::get($ipKey, 0) >= self::TURNS_PER_IP_DAY || (int) Cache::get($globalKey, 0) >= (int) Settings::get('turns_per_day')) {
             return response()->json(['message' => 'Limit reached.', 'error' => 'limit'], 429);
         }
         self::bump($ipKey);

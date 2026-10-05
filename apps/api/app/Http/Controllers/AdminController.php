@@ -23,6 +23,9 @@ use App\Services\ChangeChat;
 use App\Services\ChangeShots;
 use App\Services\Notify;
 use App\Services\PipelineOrchestrator;
+use App\Domain\Sofabuilt\Settings as SofabuiltSettings;
+use App\Models\DeskSession;
+use App\Models\Quote;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -299,6 +302,36 @@ class AdminController extends Controller
         $notify->system('storefront offers '.implode(', ', $kinds)." (set by {$by})");
 
         return response()->json(['offer_kinds' => PrototypeWriter::offered()]);
+    }
+
+    /** Sofabuilt's own switches and its numbers (Domain\Sofabuilt\Settings). */
+    public function sofabuilt(): JsonResponse
+    {
+        $paid = Order::where('brand', 'sofabuilt')->where('status', 'paid');
+
+        return response()->json([
+            'settings' => SofabuiltSettings::all(),
+            'defaults' => SofabuiltSettings::defaults(),
+            'stats' => [
+                'chats_today' => DeskSession::where('created_at', '>=', now()->startOfDay())->count(),
+                'chats_7d' => DeskSession::where('created_at', '>=', now()->subDays(7))->count(),
+                'quotes_7d' => Quote::where('brand', 'sofabuilt')->where('created_at', '>=', now()->subDays(7))->count(),
+                'paid_orders' => (clone $paid)->where('livemode', true)->count(),
+                'paid_eur' => (int) (clone $paid)->where('livemode', true)->sum('total_one_time_eur'),
+                'test_orders' => (clone $paid)->where(fn ($q) => $q->where('livemode', false)->orWhereNull('livemode'))->count(),
+                'care_active' => Project::where('kind', 'plugin')->where('care_status', 'active')->count(),
+            ],
+        ]);
+    }
+
+    public function sofabuiltSettings(Request $request, Notify $notify): JsonResponse
+    {
+        $data = $request->validate(SofabuiltSettings::RULES);
+        $by = (string) $request->user()->email;
+        SofabuiltSettings::write($data, $by);
+        $notify->system('Sofabuilt settings changed: '.json_encode(array_intersect_key($data, SofabuiltSettings::defaults()))." (by {$by})");
+
+        return response()->json(['settings' => SofabuiltSettings::all()]);
     }
 
     public function layoutsSettings(Request $request, Layouts $layouts, Notify $notify): JsonResponse

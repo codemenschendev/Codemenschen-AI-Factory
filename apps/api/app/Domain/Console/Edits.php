@@ -19,7 +19,7 @@ class Edits
         }
         $used = $project->changeRequests()->where('covered_by', 'care')->where('created_at', '>=', now()->startOfMonth())->count();
 
-        return max(0, (int) config('console.care_edits_per_month') - $used);
+        return max(0, (int) \App\Domain\Sofabuilt\Settings::get('care_edits_per_month') - $used);
     }
 
     public static function credits(Project $project): int

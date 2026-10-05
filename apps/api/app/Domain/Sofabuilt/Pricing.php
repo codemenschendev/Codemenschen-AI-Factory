@@ -46,16 +46,17 @@ class Pricing
         }
         $lines = [];
         foreach ($qty as $key => $n) {
-            $lines[] = ['key' => $key, 'label' => $modules[$key][$lang], 'qty' => $n, 'eur' => $modules[$key]['eur'] * $n];
+            // The admin's price lever (Settings price_pct) scales every part, rounded to whole euros.
+            $lines[] = ['key' => $key, 'label' => $modules[$key][$lang], 'qty' => $n, 'eur' => (int) round($modules[$key]['eur'] * (int) Settings::get('price_pct') / 100) * $n];
         }
         $build = array_sum(array_column($lines, 'eur'));
 
         return [
             'lines' => $lines,
             'build_eur' => $build,
-            'too_big' => $build > (int) config('sofabuilt.max_build_eur'),
+            'too_big' => $build > (int) Settings::get('max_build_eur'),
             'care_monthly_eur' => Platforms::care($platform),
-            'care_trial_months' => (int) config('sofabuilt.care_trial_months'),
+            'care_trial_months' => (int) Settings::get('care_trial_months'),
             'launch' => array_map(fn ($l) => ['label' => $l[$lang], 'eur' => $l['eur']], Platforms::launch($platform)),
             'delivery_days' => config('sofabuilt.delivery_days'),
         ];

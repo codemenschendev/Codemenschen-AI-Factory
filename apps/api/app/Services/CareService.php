@@ -33,7 +33,7 @@ class CareService
 
     public static function trialMonths(): int
     {
-        return (int) config('sofabuilt.care_trial_months', 3);
+        return (int) \App\Domain\Sofabuilt\Settings::get('care_trial_months');
     }
 
     /**
