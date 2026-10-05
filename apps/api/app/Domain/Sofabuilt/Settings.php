@@ -22,6 +22,11 @@ class Settings
             'turns_per_day' => 2000,
             'care_trial_months' => (int) config('sofabuilt.care_trial_months', 3),
             'care_edits_per_month' => (int) config('console.care_edits_per_month', 3),
+            // Hourly rate per platform: the price of a part is its build minutes times this.
+            'rate_wordpress' => (int) config('sofabuilt.rate_eur_hour', 60),
+            'rate_shopify' => (int) config('sofabuilt.shopify.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
+            'rate_chrome' => (int) config('sofabuilt.chrome.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
+            'rate_app' => (int) config('sofabuilt.app.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
         ];
     }
 
@@ -35,6 +40,10 @@ class Settings
         'turns_per_day' => 'integer|min:0|max:20000',
         'care_trial_months' => 'integer|min:0|max:12',
         'care_edits_per_month' => 'integer|min:0|max:50',
+        'rate_wordpress' => 'integer|min:10|max:1000',
+        'rate_shopify' => 'integer|min:10|max:1000',
+        'rate_chrome' => 'integer|min:10|max:1000',
+        'rate_app' => 'integer|min:10|max:1000',
     ];
 
     public static function get(string $key): mixed

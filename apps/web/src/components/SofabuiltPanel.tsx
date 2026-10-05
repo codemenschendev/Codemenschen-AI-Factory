@@ -12,6 +12,10 @@ type Settings = {
   turns_per_day: number;
   care_trial_months: number;
   care_edits_per_month: number;
+  rate_wordpress: number;
+  rate_shopify: number;
+  rate_chrome: number;
+  rate_app: number;
 };
 type Stats = { chats_today: number; chats_7d: number; quotes_7d: number; paid_orders: number; paid_eur: number; test_orders: number; care_active: number };
 
@@ -34,6 +38,9 @@ const T = {
     turnsHint: "Caps what the desk can spend on the model in a day.",
     trial: "Free Care months at checkout",
     edits: "Changes included in Care per month",
+    rates: "Hourly rate per platform (EUR)",
+    ratesHint: "A part costs its build minutes, estimated by the desk for each idea, times this rate. At 60 a minute is a euro.",
+    rateApp: "Apps (Appmitki)",
     save: "Save",
     saved: "Saved.",
     failed: "Not saved. Check the values.",
@@ -54,6 +61,9 @@ const T = {
     turnsHint: "Begrenzt, was der Desk an einem Tag für das Modell ausgeben kann.",
     trial: "Gratis-Monate Wartung im Checkout",
     edits: "Änderungen pro Monat in der Wartung",
+    rates: "Stundensatz pro Plattform (EUR)",
+    ratesHint: "Ein Teil kostet seine Bauminuten, vom Desk für jede Idee geschätzt, mal diesen Satz. Bei 60 ist eine Minute ein Euro.",
+    rateApp: "Apps (Appmitki)",
     save: "Speichern",
     saved: "Gespeichert.",
     failed: "Nicht gespeichert. Prüf die Werte.",
@@ -94,7 +104,7 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
 
   if (!s) return <p className="small muted">{note ?? "…"}</p>;
   const num = (key: keyof Settings, label: string, hint?: string, min = 0, max = 100000) => (
-    <label style={{ display: "grid", gap: 4 }}>
+    <label key={key} style={{ display: "grid", gap: 4 }}>
       <span className="small">{label}</span>
       <input type="number" min={min} max={max} value={s[key] as number} onChange={(e) => setS({ ...s, [key]: Number(e.target.value) })} style={{ maxWidth: 180 }} />
       {hint && <span className="small muted">{hint}</span>}
@@ -144,6 +154,14 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
           </div>
         </div>
 
+        <div style={{ display: "grid", gap: 8 }}>
+          <b className="small">{t.rates}</b>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+            {PLATFORMS.map((p) => num(`rate_${p}`, t.platforms[p], undefined, 10, 1000))}
+            {num("rate_app", t.rateApp, undefined, 10, 1000)}
+          </div>
+          <span className="small muted">{t.ratesHint}</span>
+        </div>
         {num("price_pct", t.price, t.priceHint, 30, 200)}
         {num("max_build_eur", t.max, t.maxHint, 100, 10000)}
         {num("turns_per_day", t.turns, t.turnsHint, 0, 20000)}

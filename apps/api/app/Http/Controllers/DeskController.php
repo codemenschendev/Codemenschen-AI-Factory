@@ -139,9 +139,14 @@ class DeskController extends Controller
                 continue;
             }
             $modules[$m['key']] = ['key' => $m['key'], 'qty' => (int) ($m['qty'] ?? 1),
-                'why' => (string) ($before[$m['key']]['why'] ?? ''), 'by_customer' => ! $before->has($m['key']) ? true : (bool) ($before[$m['key']]['by_customer'] ?? false)];
+                'why' => (string) ($before[$m['key']]['why'] ?? ''), 'by_customer' => ! $before->has($m['key']) ? true : (bool) ($before[$m['key']]['by_customer'] ?? false)]
+                // A kept part keeps its estimated minutes; a new one is priced at its usual time.
+                + (isset($before[$m['key']]['minutes']) ? ['minutes' => (int) $before[$m['key']]['minutes']] : []);
         }
         $scope = $session->scope;
+        if (isset($before['base'])) {
+            $modules = ['base' => $before['base']] + $modules;
+        }
         $scope['modules'] = array_values($modules);
         // The customer changed the parts by hand; the next turn reconciles the feature list with them.
         $scope['modules_changed'] = true;

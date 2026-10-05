@@ -22,8 +22,9 @@ type Scope = {
   modules: { key: string; qty: number; why: string }[];
 };
 type Price = {
-  lines: { key: string; label: string; qty: number; eur: number }[];
+  lines: { key: string; label: string; qty: number; minutes?: number; eur: number }[];
   build_eur: number;
+  build_minutes?: number;
   too_big: boolean;
   care_monthly_eur: number;
   care_trial_months?: number;
@@ -147,6 +148,8 @@ export function Desk({
   const de = locale === "de";
   const eur = (n: number) => (de ? `${n.toLocaleString("de-AT")} €` : `€${n.toLocaleString("en-IE")}`);
   const num = (n: number) => n.toLocaleString(de ? "de-AT" : "en-IE");
+  // Build time of a part: minutes under an hour, hours with one decimal above.
+  const time = (m: number) => (m < 60 ? fill(t.minutes, { n: m }) : fill(t.hours, { n: (Math.round(m / 6) / 10).toLocaleString(de ? "de-AT" : "en-IE") }));
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
   useEffect(() => {
@@ -499,6 +502,7 @@ export function Desk({
                   <span>
                     {l.label}
                     {l.qty > 1 ? ` × ${l.qty}` : ""}
+                    {l.minutes ? <small className="dk-part-time">{time(l.minutes)}</small> : null}
                   </span>
                   <b>{eur(l.eur)}</b>
                 </label>
@@ -518,7 +522,10 @@ export function Desk({
               {more ? t.showLess : `+ ${t.addMore}`}
             </button>
             <div className="dk-subtotal">
-              <span>{t.build}</span>
+              <span>
+                {t.build}
+                {price.build_minutes ? <small className="dk-part-time">{fill(t.buildTime, { time: time(price.build_minutes) })}</small> : null}
+              </span>
               <b>{eur(price.build_eur)}</b>
             </div>
             <p className="dk-sub dk-sub-launch">

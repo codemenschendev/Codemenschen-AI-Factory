@@ -33,7 +33,7 @@ class Platforms
         return in_array($p, [...self::ALL, self::APP], true) ? $p : 'wordpress';
     }
 
-    /** @return array<string, array{eur: int, en: string, de: string}> */
+    /** @return array<string, array{minutes: int, en: string, de: string, server?: bool}> */
     public static function modules(string $platform): array
     {
         return self::get($platform, 'modules', []);
@@ -61,6 +61,12 @@ class Platforms
     public static function care(string $platform): int
     {
         return (int) ($platform === 'wordpress' ? config('sofabuilt.care_monthly_eur') : config("sofabuilt.$platform.care_monthly_eur", config('sofabuilt.care_monthly_eur')));
+    }
+
+    /** Euros per hour of build time on this platform (admin setting rate_<platform>). */
+    public static function rate(string $platform): int
+    {
+        return (int) Settings::get('rate_'.$platform);
     }
 
     /** Monthly server fee: only an app whose parts need our server (`server` in the config). */

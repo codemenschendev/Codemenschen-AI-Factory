@@ -10,20 +10,28 @@
  */
 return [
 
+    /*
+     * Prices by build time (owner, 2026-10-05): every part has the minutes our AI developer usually
+     * needs to build and test it; the desk agent estimates the minutes for the idea at hand, and the
+     * price is minutes times the platform's hourly rate (admin setting rate_<platform>, default
+     * below). At 60 € an hour a minute is a euro, so the old prices carry over unchanged.
+     */
+    'rate_eur_hour' => 60,
+
     'modules' => [
-        'base' => ['eur' => 149, 'en' => 'The plugin itself: a settings page, ready for other languages, removes itself cleanly', 'de' => 'Das Plugin selbst: eine Einstellungsseite, bereit für andere Sprachen, entfernt sich sauber'],
-        'data' => ['eur' => 49, 'en' => 'Its own kind of entries you manage in the admin (for example bookings)', 'de' => 'Eigene Einträge, die du im Admin verwaltest (zum Beispiel Buchungen)'],
-        'block' => ['eur' => 39, 'en' => 'A part you place on any page of your site', 'de' => 'Ein Baustein, den du auf jede Seite setzen kannst'],
-        'form' => ['eur' => 49, 'en' => 'A form for your visitors that checks what they type', 'de' => 'Ein Formular für deine Besucher, das die Eingaben prüft'],
-        'woo' => ['eur' => 79, 'en' => 'Works with your shop: products, cart, checkout or orders', 'de' => 'Arbeitet mit deinem Shop: Produkte, Warenkorb, Kasse oder Bestellungen'],
-        'admin_list' => ['eur' => 49, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
-        'rest' => ['eur' => 29, 'en' => 'Updates on the page without reloading it', 'de' => 'Änderungen auf der Seite ohne neu zu laden'],
-        'external_api' => ['eur' => 79, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
-        'email' => ['eur' => 29, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
-        'schedule' => ['eur' => 29, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
-        'roles' => ['eur' => 29, 'en' => 'Who may see or change what', 'de' => 'Wer was sehen oder ändern darf'],
-        'payments' => ['eur' => 99, 'en' => 'Taking payments', 'de' => 'Zahlungen annehmen'],
-        'import_export' => ['eur' => 49, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
+        'base' => ['minutes' => 149, 'en' => 'The plugin itself: a settings page, ready for other languages, removes itself cleanly', 'de' => 'Das Plugin selbst: eine Einstellungsseite, bereit für andere Sprachen, entfernt sich sauber'],
+        'data' => ['minutes' => 49, 'en' => 'Its own kind of entries you manage in the admin (for example bookings)', 'de' => 'Eigene Einträge, die du im Admin verwaltest (zum Beispiel Buchungen)'],
+        'block' => ['minutes' => 39, 'en' => 'A part you place on any page of your site', 'de' => 'Ein Baustein, den du auf jede Seite setzen kannst'],
+        'form' => ['minutes' => 49, 'en' => 'A form for your visitors that checks what they type', 'de' => 'Ein Formular für deine Besucher, das die Eingaben prüft'],
+        'woo' => ['minutes' => 79, 'en' => 'Works with your shop: products, cart, checkout or orders', 'de' => 'Arbeitet mit deinem Shop: Produkte, Warenkorb, Kasse oder Bestellungen'],
+        'admin_list' => ['minutes' => 49, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
+        'rest' => ['minutes' => 29, 'en' => 'Updates on the page without reloading it', 'de' => 'Änderungen auf der Seite ohne neu zu laden'],
+        'external_api' => ['minutes' => 79, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+        'email' => ['minutes' => 29, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
+        'schedule' => ['minutes' => 29, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
+        'roles' => ['minutes' => 29, 'en' => 'Who may see or change what', 'de' => 'Wer was sehen oder ändern darf'],
+        'payments' => ['minutes' => 99, 'en' => 'Taking payments', 'de' => 'Zahlungen annehmen'],
+        'import_export' => ['minutes' => 49, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
     ],
 
     // Modules that may be ordered more than once (one line per service).
@@ -49,21 +57,21 @@ return [
      */
     'app' => [
         'modules' => [
-            'base' => ['eur' => 15, 'en' => 'Your app for iPhone and Android, released in the App Store and Google Play', 'de' => 'Deine App für iPhone und Android, veröffentlicht im App Store und bei Google Play'],
-            'screen' => ['eur' => 15, 'en' => 'A screen with its own job, for example a list where you tick off tasks', 'de' => 'Ein Bildschirm mit eigener Aufgabe, zum Beispiel eine Liste zum Abhaken'],
-            'local_save' => ['eur' => 5, 'en' => 'Keeps your entries on the phone', 'de' => 'Merkt sich deine Einträge am Handy'],
-            'accounts' => ['eur' => 20, 'en' => 'Accounts and login', 'de' => 'Konten und Login', 'server' => true],
-            'sync' => ['eur' => 25, 'en' => 'Your data on every device, shared with others', 'de' => 'Deine Daten auf jedem Gerät, mit anderen geteilt', 'server' => true],
-            'payments' => ['eur' => 30, 'en' => 'Payments or subscriptions', 'de' => 'Zahlungen oder Abos', 'server' => true],
-            'notifications' => ['eur' => 10, 'en' => 'Reminders and notifications', 'de' => 'Erinnerungen und Benachrichtigungen'],
-            'photos' => ['eur' => 10, 'en' => 'Photos and camera', 'de' => 'Fotos und Kamera'],
-            'maps' => ['eur' => 15, 'en' => 'Maps and location', 'de' => 'Karten und Standort'],
-            'booking' => ['eur' => 20, 'en' => 'Calendar or booking', 'de' => 'Kalender oder Buchungen'],
-            'chat' => ['eur' => 30, 'en' => 'Chat between users', 'de' => 'Chat zwischen Nutzern', 'server' => true],
-            'ai' => ['eur' => 30, 'en' => 'AI features, for example suggestions or texts', 'de' => 'KI-Funktionen, zum Beispiel Vorschläge oder Texte', 'server' => true],
-            'stats' => ['eur' => 20, 'en' => 'Statistics or an admin area', 'de' => 'Statistiken oder ein Verwaltungsbereich'],
-            'external_api' => ['eur' => 20, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
-            'language' => ['eur' => 5, 'en' => 'Another language, per language', 'de' => 'Eine weitere Sprache, pro Sprache'],
+            'base' => ['minutes' => 15, 'en' => 'Your app for iPhone and Android, released in the App Store and Google Play', 'de' => 'Deine App für iPhone und Android, veröffentlicht im App Store und bei Google Play'],
+            'screen' => ['minutes' => 15, 'en' => 'A screen with its own job, for example a list where you tick off tasks', 'de' => 'Ein Bildschirm mit eigener Aufgabe, zum Beispiel eine Liste zum Abhaken'],
+            'local_save' => ['minutes' => 5, 'en' => 'Keeps your entries on the phone', 'de' => 'Merkt sich deine Einträge am Handy'],
+            'accounts' => ['minutes' => 20, 'en' => 'Accounts and login', 'de' => 'Konten und Login', 'server' => true],
+            'sync' => ['minutes' => 25, 'en' => 'Your data on every device, shared with others', 'de' => 'Deine Daten auf jedem Gerät, mit anderen geteilt', 'server' => true],
+            'payments' => ['minutes' => 30, 'en' => 'Payments or subscriptions', 'de' => 'Zahlungen oder Abos', 'server' => true],
+            'notifications' => ['minutes' => 10, 'en' => 'Reminders and notifications', 'de' => 'Erinnerungen und Benachrichtigungen'],
+            'photos' => ['minutes' => 10, 'en' => 'Photos and camera', 'de' => 'Fotos und Kamera'],
+            'maps' => ['minutes' => 15, 'en' => 'Maps and location', 'de' => 'Karten und Standort'],
+            'booking' => ['minutes' => 20, 'en' => 'Calendar or booking', 'de' => 'Kalender oder Buchungen'],
+            'chat' => ['minutes' => 30, 'en' => 'Chat between users', 'de' => 'Chat zwischen Nutzern', 'server' => true],
+            'ai' => ['minutes' => 30, 'en' => 'AI features, for example suggestions or texts', 'de' => 'KI-Funktionen, zum Beispiel Vorschläge oder Texte', 'server' => true],
+            'stats' => ['minutes' => 20, 'en' => 'Statistics or an admin area', 'de' => 'Statistiken oder ein Verwaltungsbereich'],
+            'external_api' => ['minutes' => 20, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'language' => ['minutes' => 5, 'en' => 'Another language, per language', 'de' => 'Eine weitere Sprache, pro Sprache'],
         ],
         'repeatable' => ['screen' => 8, 'external_api' => 3, 'language' => 5],
         // The store release is a part of the app here, so the store package is not sold again.
@@ -83,17 +91,17 @@ return [
      */
     'chrome' => [
         'modules' => [
-            'base' => ['eur' => 250, 'en' => 'The extension itself: a small window from the toolbar, a settings page, icons and store texts', 'de' => 'Die Erweiterung selbst: ein kleines Fenster aus der Leiste, eine Einstellungsseite, Icons und Store-Texte'],
-            'page' => ['eur' => 120, 'en' => 'Works on the websites you visit: reads or changes what is on the page', 'de' => 'Arbeitet auf den Websites, die du besuchst: liest oder ändert, was dort steht'],
-            'background' => ['eur' => 80, 'en' => 'Runs in the background, for example reminders or regular checks', 'de' => 'Läuft im Hintergrund, zum Beispiel Erinnerungen oder regelmäßige Prüfungen'],
-            'context_menu' => ['eur' => 50, 'en' => 'Entries in the right-click menu', 'de' => 'Einträge im Rechtsklick-Menü'],
-            'side_panel' => ['eur' => 90, 'en' => 'A side panel next to the page', 'de' => 'Eine Seitenleiste neben der Seite'],
-            'sync' => ['eur' => 50, 'en' => 'Your settings follow you to every computer', 'de' => 'Deine Einstellungen begleiten dich auf jeden Computer'],
-            'notifications' => ['eur' => 50, 'en' => 'Notices on your screen', 'de' => 'Hinweise auf deinem Bildschirm'],
-            'external_api' => ['eur' => 150, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
-            'shortcuts' => ['eur' => 40, 'en' => 'Keyboard shortcuts', 'de' => 'Tastenkürzel'],
-            'export' => ['eur' => 70, 'en' => 'Save or export data, for example to Excel', 'de' => 'Daten speichern oder exportieren, zum Beispiel nach Excel'],
-            'payments' => ['eur' => 200, 'en' => 'Paid features with a licence, one-time or monthly', 'de' => 'Bezahlte Funktionen mit Lizenz, einmalig oder monatlich'],
+            'base' => ['minutes' => 250, 'en' => 'The extension itself: a small window from the toolbar, a settings page, icons and store texts', 'de' => 'Die Erweiterung selbst: ein kleines Fenster aus der Leiste, eine Einstellungsseite, Icons und Store-Texte'],
+            'page' => ['minutes' => 120, 'en' => 'Works on the websites you visit: reads or changes what is on the page', 'de' => 'Arbeitet auf den Websites, die du besuchst: liest oder ändert, was dort steht'],
+            'background' => ['minutes' => 80, 'en' => 'Runs in the background, for example reminders or regular checks', 'de' => 'Läuft im Hintergrund, zum Beispiel Erinnerungen oder regelmäßige Prüfungen'],
+            'context_menu' => ['minutes' => 50, 'en' => 'Entries in the right-click menu', 'de' => 'Einträge im Rechtsklick-Menü'],
+            'side_panel' => ['minutes' => 90, 'en' => 'A side panel next to the page', 'de' => 'Eine Seitenleiste neben der Seite'],
+            'sync' => ['minutes' => 50, 'en' => 'Your settings follow you to every computer', 'de' => 'Deine Einstellungen begleiten dich auf jeden Computer'],
+            'notifications' => ['minutes' => 50, 'en' => 'Notices on your screen', 'de' => 'Hinweise auf deinem Bildschirm'],
+            'external_api' => ['minutes' => 150, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'shortcuts' => ['minutes' => 40, 'en' => 'Keyboard shortcuts', 'de' => 'Tastenkürzel'],
+            'export' => ['minutes' => 70, 'en' => 'Save or export data, for example to Excel', 'de' => 'Daten speichern oder exportieren, zum Beispiel nach Excel'],
+            'payments' => ['minutes' => 200, 'en' => 'Paid features with a licence, one-time or monthly', 'de' => 'Bezahlte Funktionen mit Lizenz, einmalig oder monatlich'],
         ],
         'repeatable' => ['external_api' => 4],
         'launch' => [
@@ -112,20 +120,20 @@ return [
      */
     'shopify' => [
         'modules' => [
-            'base' => ['eur' => 199, 'en' => 'The app itself: its own page in your Shopify admin, safe install and removal, privacy rules handled', 'de' => 'Die App selbst: eine eigene Seite in deinem Shopify-Admin, sichere Installation und Entfernung, Datenschutz-Regeln erledigt'],
-            'storefront' => ['eur' => 59, 'en' => 'A block on your shop pages that you place in the theme editor', 'de' => 'Ein Baustein auf deinen Shop-Seiten, den du im Theme-Editor platzierst'],
-            'products' => ['eur' => 49, 'en' => 'Works with your products: reads or changes them', 'de' => 'Arbeitet mit deinen Produkten: liest oder ändert sie'],
-            'orders' => ['eur' => 59, 'en' => 'Works with your orders', 'de' => 'Arbeitet mit deinen Bestellungen'],
-            'customers' => ['eur' => 49, 'en' => 'Works with your customers', 'de' => 'Arbeitet mit deinen Kunden'],
-            'discounts' => ['eur' => 79, 'en' => 'Your own discount rules in the cart and at checkout', 'de' => 'Eigene Rabattregeln im Warenkorb und an der Kasse'],
-            'checkout' => ['eur' => 99, 'en' => 'Changes in the checkout or on the thank-you page', 'de' => 'Änderungen an der Kasse oder auf der Danke-Seite'],
-            'data' => ['eur' => 49, 'en' => 'Its own kind of entries you manage in the admin', 'de' => 'Eigene Einträge, die du im Admin verwaltest'],
-            'admin_list' => ['eur' => 49, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
-            'external_api' => ['eur' => 79, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
-            'email' => ['eur' => 29, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
-            'schedule' => ['eur' => 29, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
-            'import_export' => ['eur' => 49, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
-            'billing' => ['eur' => 69, 'en' => 'Monthly plans for the shops that install it, billed by Shopify', 'de' => 'Monatliche Tarife für die Shops, die sie installieren, abgerechnet über Shopify'],
+            'base' => ['minutes' => 199, 'en' => 'The app itself: its own page in your Shopify admin, safe install and removal, privacy rules handled', 'de' => 'Die App selbst: eine eigene Seite in deinem Shopify-Admin, sichere Installation und Entfernung, Datenschutz-Regeln erledigt'],
+            'storefront' => ['minutes' => 59, 'en' => 'A block on your shop pages that you place in the theme editor', 'de' => 'Ein Baustein auf deinen Shop-Seiten, den du im Theme-Editor platzierst'],
+            'products' => ['minutes' => 49, 'en' => 'Works with your products: reads or changes them', 'de' => 'Arbeitet mit deinen Produkten: liest oder ändert sie'],
+            'orders' => ['minutes' => 59, 'en' => 'Works with your orders', 'de' => 'Arbeitet mit deinen Bestellungen'],
+            'customers' => ['minutes' => 49, 'en' => 'Works with your customers', 'de' => 'Arbeitet mit deinen Kunden'],
+            'discounts' => ['minutes' => 79, 'en' => 'Your own discount rules in the cart and at checkout', 'de' => 'Eigene Rabattregeln im Warenkorb und an der Kasse'],
+            'checkout' => ['minutes' => 99, 'en' => 'Changes in the checkout or on the thank-you page', 'de' => 'Änderungen an der Kasse oder auf der Danke-Seite'],
+            'data' => ['minutes' => 49, 'en' => 'Its own kind of entries you manage in the admin', 'de' => 'Eigene Einträge, die du im Admin verwaltest'],
+            'admin_list' => ['minutes' => 49, 'en' => 'An overview in the admin with filters and export to Excel', 'de' => 'Eine Übersicht im Admin mit Filtern und Export nach Excel'],
+            'external_api' => ['minutes' => 79, 'en' => 'Connection to another service you use, per service', 'de' => 'Verbindung zu einem anderen Dienst, den du nutzt, pro Dienst'],
+            'email' => ['minutes' => 29, 'en' => 'E-mails to you or your customers, with texts you can change', 'de' => 'E-Mails an dich oder deine Kunden, mit Texten, die du ändern kannst'],
+            'schedule' => ['minutes' => 29, 'en' => 'Something that runs by itself on a schedule', 'de' => 'Etwas, das von selbst nach Zeitplan läuft'],
+            'import_export' => ['minutes' => 49, 'en' => 'Import and export of data', 'de' => 'Import und Export von Daten'],
+            'billing' => ['minutes' => 69, 'en' => 'Monthly plans for the shops that install it, billed by Shopify', 'de' => 'Monatliche Tarife für die Shops, die sie installieren, abgerechnet über Shopify'],
         ],
         'repeatable' => ['external_api' => 4],
         // Care for a Shopify app includes running it on our server: Shopify needs it hosted.
