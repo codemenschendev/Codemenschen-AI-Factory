@@ -1,0 +1,6 @@
+/* The customer console (app/(console)): the storefront's look without its marketing parts. */
+.console .cs-logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.console .cs-mark { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px; background: var(--accent); color: #fff; font-weight: 800; }
+.console .cs-logo b { display: block; font-size: 17px; line-height: 1.1; }
+.console .cs-logo small { display: block; font-size: 12px; color: var(--ink-soft); }
+.console .footer-small a { color: inherit; }

@@ -93,6 +93,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/me/projects/{project}/messages/confirm', [MeController::class, 'confirmChange'])->middleware('throttle:10,1,confirm');
     Route::post('/me/projects/{project}/care/checkout', [MeController::class, 'startCare']);
     Route::post('/me/projects/{project}/care/cancel', [MeController::class, 'cancelCare']);
+    Route::post('/me/credits/checkout', [MeController::class, 'buyCredits'])->middleware('throttle:10,1,credits');
     Route::post('/me/projects/{project}/publishing/start', [MeController::class, 'startPublishing']);
     Route::post('/me/projects/{project}/publishing/account', [MeController::class, 'attachStoreAccount']);
     Route::post('/me/projects/{project}/marketing/generate', [MeController::class, 'generateMarketing']);

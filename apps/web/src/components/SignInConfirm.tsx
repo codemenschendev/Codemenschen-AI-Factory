@@ -21,7 +21,7 @@ export function SignInConfirm({ link, locale, d }: { link: string; locale: Local
       if (res.status === 403 || res.status === 410) return setState("expired");
       const body = (await res.json()) as { to?: string; token?: string };
       // Only a path of this site, never a URL.
-      if (!res.ok || !body.token || !body.to || !/^\/(de|en)\/[a-z0-9/-]+$/.test(body.to)) return setState("failed");
+      if (!res.ok || !body.token || !body.to || !/^(https:\/\/console\.[a-z0-9.-]+)?\/(de|en)\/[a-z0-9/-]+$/.test(body.to)) return setState("failed");
       window.location.replace(`${body.to}#token=${encodeURIComponent(body.token)}`);
     } catch {
       setState("failed");

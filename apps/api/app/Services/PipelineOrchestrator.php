@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Domain\Console\Edits;
 use App\Domain\Pricing\Estimator;
 use App\Domain\Sites\AppLanding;
 use App\Jobs\DispatchStageJob;
@@ -140,12 +141,15 @@ class PipelineOrchestrator
         $mode = $this->changeRequestMode($project);
         abort_if($mode === 'none', 409, 'Project cannot take change requests right now');
 
-        if ($mode === 'free' || $mode === 'care') {
+        if ($mode === 'credit') {
+            abort_unless(Edits::spend($project->customer), 409, 'No change credits left');
+        }
+        if ($mode === 'free' || $mode === 'care' || $mode === 'credit') {
             $cr = $project->changeRequests()->create([
                 'round' => $project->revision_rounds + 1,
                 'text' => $text,
                 'items' => $items,
-                'covered_by' => $mode === 'care' ? 'care' : null,
+                'covered_by' => $mode === 'free' ? null : $mode,
             ]);
             $this->startRevision($project, $cr, $actor);
 
@@ -237,11 +241,16 @@ class PipelineOrchestrator
         if (! in_array($project->status, self::REVISABLE_STATUSES, true)) {
             return 'none';
         }
-        if ($project->care_status === 'active') {
+        // Care first (within its monthly allowance, Edits::careLeft), then the free rounds of the
+        // first review, then the customer's change credits, then a paid round.
+        if ($project->care_status === 'active' && (Edits::careLeft($project) ?? 1) > 0) {
             return 'care';
         }
+        if ($project->status === 'REVIEW' && $this->freeRoundsLeft($project) > 0) {
+            return 'free';
+        }
 
-        return $project->status === 'REVIEW' && $this->freeRoundsLeft($project) > 0 ? 'free' : 'paid';
+        return Edits::credits($project) > 0 ? 'credit' : 'paid';
     }
 
     public function freeRoundsLeft(Project $project): int

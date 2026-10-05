@@ -7,6 +7,7 @@ use App\Domain\Pricing\Estimator;
 use App\Domain\Sofabuilt\Platforms;
 use App\Models\Project;
 use App\Models\Quote;
+use App\Support\MailLink;
 use Stripe\StripeClient;
 
 /**
@@ -97,8 +98,8 @@ class CareService
             'client_reference_id' => 'care:'.$project->id,
             'subscription_data' => ['metadata' => ['project_id' => $project->id]],
             'locale' => $locale,
-            'success_url' => "$front/$locale/account/{$project->id}?care=started",
-            'cancel_url' => "$front/$locale/account/{$project->id}",
+            'success_url' => MailLink::portal("/$locale/account/{$project->id}").'?care=started',
+            'cancel_url' => MailLink::portal("/$locale/account/{$project->id}"),
         ]);
 
         return $session->url;
