@@ -29,11 +29,13 @@ function landingSource(): Source {
   return source;
 }
 
-export function track(name: string, props: Record<string, string | number | boolean | null> = {}): void {
+/** `path` defaults to the current one; a page_leave sent after a client-side navigation names the page that was left. */
+export function track(name: string, props: Record<string, string | number | boolean | null> = {}, path?: string): void {
   if (typeof window === "undefined") return;
   try {
-    const locale = window.location.pathname.split("/")[1];
-    const body = JSON.stringify({ name, path: window.location.pathname, locale, props, ...landingSource() });
+    const at = path ?? window.location.pathname;
+    const locale = at.split("/")[1];
+    const body = JSON.stringify({ name, path: at, locale, props, ...landingSource() });
     const url = `${API_BASE}/api/t`;
     // text/plain keeps it a simple request: no CORS preflight, and sendBeacon survives a page leave.
     if (!navigator.sendBeacon?.(url, new Blob([body], { type: "text/plain" }))) {

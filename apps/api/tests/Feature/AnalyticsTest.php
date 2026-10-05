@@ -83,6 +83,42 @@ class AnalyticsTest extends TestCase
         $this->assertArrayNotHasKey('nested', AnalyticsEvent::latest('id')->first()->props, 'only flat values are kept');
     }
 
+    public function test_what_an_ad_visitor_did_on_the_page_is_read_apart_from_other_traffic(): void
+    {
+        $ad = ['utm_source' => 'meta', 'utm_campaign' => 'appwerk-6', 'path' => '/de'];
+        $this->beacon(['name' => 'page_view'] + $ad);
+        $this->beacon(['name' => 'scroll_depth', 'props' => ['pct' => 25]] + $ad);
+        $this->beacon(['name' => 'scroll_depth', 'props' => ['pct' => 50]] + $ad);
+        $this->beacon(['name' => 'section_view', 'props' => ['section' => 'prices']] + $ad);
+        $this->beacon(['name' => 'faq_open', 'props' => ['q' => 'Wem gehört der Code?', 'section' => 'faq']] + $ad);
+        $this->beacon(['name' => 'ui_click', 'props' => ['label' => 'Kostenlose Vorschau starten', 'href' => '/de/create', 'section' => 'hero']] + $ad);
+        $this->beacon(['name' => 'page_leave', 'props' => ['seconds' => 42, 'max_scroll' => 55, 'sections' => 1]] + $ad);
+        // Someone else, not from the ad.
+        $this->beacon(['name' => 'page_view', 'path' => '/de'], 'Mozilla/5.0 (Macintosh) Firefox/130.0');
+        $this->beacon(['name' => 'ui_click', 'path' => '/de', 'props' => ['label' => 'Preise', 'section' => 'nav']], 'Mozilla/5.0 (Macintosh) Firefox/130.0');
+
+        $all = app(AnalyticsReport::class)->summary(1);
+        $this->assertSame(2, $all['totals']['visitors']);
+
+        $meta = app(AnalyticsReport::class)->summary(1, 'meta');
+        $this->assertSame('meta', $meta['source']);
+        $this->assertSame(1, $meta['totals']['visitors'], 'only the visitor from the ad');
+        $this->assertSame([1, 1, 0, 0], array_column($meta['engagement']['scroll'], 'visitors'));
+        $this->assertSame([['key' => 'Kostenlose Vorschau starten', 'visitors' => 1]], $meta['engagement']['clicks']);
+        $this->assertSame('Wem gehört der Code?', $meta['engagement']['faq'][0]['key']);
+        $this->assertSame(42, $meta['engagement']['median_seconds']);
+        $this->assertSame(1, collect($meta['engagement']['time'])->firstWhere('key', '30-60s')['visitors']);
+
+        $j = $meta['journeys'];
+        $this->assertCount(1, $j);
+        $this->assertSame('meta', $j[0]['source']);
+        $this->assertSame('appwerk-6', $j[0]['campaign']);
+        $this->assertSame(['mobile', 42, 50, 1], [$j[0]['device'], $j[0]['seconds'], $j[0]['max_scroll'], $j[0]['sections']]);
+        $this->assertSame(['view /de', 'faq "Wem gehört der Code?"', 'click "Kostenlose Vorschau starten"'], $j[0]['steps']);
+
+        $this->assertNull(app(AnalyticsReport::class)->summary(1, 'tiktok')['source'], 'an unknown source means all traffic');
+    }
+
     public function test_only_admins_read_the_report(): void
     {
         $customer = Customer::create(['email' => 'c@example.com', 'locale' => 'de']);

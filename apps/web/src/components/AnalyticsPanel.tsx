@@ -20,9 +20,32 @@ interface Report {
   campaigns: Row[];
   devices: Row[];
   paid_sources: { key: string; orders: number }[];
+  engagement: {
+    scroll: Row[];
+    time: Row[];
+    median_seconds: number | null;
+    sections: Row[];
+    clicks: Row[];
+    faq: Row[];
+    tools: Row[];
+  };
+  journeys: Journey[];
+}
+
+interface Journey {
+  visitor: string;
+  at: string | null;
+  device: string | null;
+  source: string;
+  campaign: string | null;
+  seconds: number;
+  max_scroll: number;
+  sections: number;
+  steps: string[];
 }
 
 const RANGES = [1, 7, 30, 90] as const;
+const SOURCES = ["", "meta", "google"] as const;
 
 /**
  * Traffic and funnel from the first-party analytics (GET /admin/analytics). A visitor is counted
@@ -31,12 +54,13 @@ const RANGES = [1, 7, 30, 90] as const;
 export function AnalyticsPanel({ token, locale, d }: { token: string; locale: Locale; d: Dict }) {
   const t = d.admin.analytics;
   const [days, setDays] = useState<(typeof RANGES)[number]>(30);
+  const [source, setSource] = useState<(typeof SOURCES)[number]>("");
   const [report, setReport] = useState<Report | null>(null);
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    api<Report>(`/admin/analytics?days=${days}`, { token })
+    api<Report>(`/admin/analytics?days=${days}${source ? `&source=${source}` : ""}`, { token })
       .then((r) => {
         if (alive) {
           setReport(r);
@@ -49,7 +73,7 @@ export function AnalyticsPanel({ token, locale, d }: { token: string; locale: Lo
     return () => {
       alive = false;
     };
-  }, [days, token]);
+  }, [days, source, token]);
 
   if (failed) return <p className="note">{t.failed}</p>;
   if (!report) return <p className="est-empty">{d.admin.loading}</p>;
@@ -64,6 +88,13 @@ export function AnalyticsPanel({ token, locale, d }: { token: string; locale: Lo
         {RANGES.map((r) => (
           <button key={r} className="tab" role="tab" aria-selected={days === r} onClick={() => setDays(r)}>
             {r === 1 ? t.day1 : t.days.replace("{n}", String(r))}
+          </button>
+        ))}
+      </div>
+      <div className="tabs" role="tablist" aria-label={t.source}>
+        {SOURCES.map((s) => (
+          <button key={s || "all"} className="tab" role="tab" aria-selected={source === s} onClick={() => setSource(s)}>
+            {s === "" ? t.sourceAll : s === "meta" ? t.sourceMeta : t.sourceGoogle}
           </button>
         ))}
       </div>
@@ -129,6 +160,42 @@ export function AnalyticsPanel({ token, locale, d }: { token: string; locale: Lo
         <List title={t.campaigns} rows={report.campaigns} empty={t.empty} />
         <List title={t.pages} rows={report.pages} empty={t.empty} />
         <List title={t.devices} rows={report.devices} empty={t.empty} />
+      </div>
+
+      <div className="card">
+        <span className="cat">{t.engagement}</span>
+        <p className="small muted" style={{ margin: "6px 0 0" }}>{t.engagementNote}</p>
+      </div>
+      <div className="grid">
+        <List title={t.scroll} rows={report.engagement.scroll} empty={t.empty} />
+        <List
+          title={report.engagement.median_seconds === null ? t.time : `${t.time} · ${t.median.replace("{s}", String(report.engagement.median_seconds))}`}
+          rows={report.engagement.time}
+          empty={t.empty}
+        />
+        <List title={t.sections} rows={report.engagement.sections} empty={t.empty} />
+        <List title={t.clicks} rows={report.engagement.clicks} empty={t.empty} />
+        <List title={t.faq} rows={report.engagement.faq} empty={t.empty} />
+        <List title={t.tools} rows={report.engagement.tools} empty={t.empty} />
+      </div>
+
+      <div className="card">
+        <span className="cat">{t.journeys}</span>
+        <div className="small" style={{ display: "grid", gap: 10, marginTop: 10 }}>
+          {report.journeys.length === 0 && <span className="muted">{t.empty}</span>}
+          {report.journeys.map((j) => (
+            <div key={`${j.visitor}-${j.at}`} style={{ borderTop: "1px solid var(--border)", paddingTop: 8 }}>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "4px 12px" }}>
+                <strong className="num">{j.at ? new Date(j.at).toLocaleString(locale, { dateStyle: "short", timeStyle: "short" }) : "?"}</strong>
+                <span>{j.device ?? "?"}</span>
+                <span>{j.campaign ? `${j.source} · ${j.campaign}` : j.source}</span>
+                <span className="num">{j.seconds}s</span>
+                <span className="num">{t.scrolled.replace("{n}", String(j.max_scroll))}</span>
+              </div>
+              <div className="muted" style={{ marginTop: 4, overflowWrap: "anywhere" }}>{j.steps.join(" → ")}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
