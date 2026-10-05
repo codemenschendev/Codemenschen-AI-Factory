@@ -14,6 +14,9 @@ interface Detail {
   name: string;
   /** app, or site: a bought website, shown by SiteDetail instead of the pipeline screens. */
   kind?: "app" | "site" | "plugin";
+  brand?: "appmitki" | "sofabuilt";
+  /** Sofabuilt: wordpress, shopify or chrome. */
+  platform?: string | null;
   site?: SiteInfo | null;
   status: string;
   failed_reason: string | null;
@@ -282,8 +285,23 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
   const showMarketing = released && !!p.packages?.marketingLaunch;
   const canChange = (p.change_request_mode ?? "none") !== "none";
   const passed = p.criteria.filter((c) => c.status === "passed").length;
+  // A Sofabuilt plugin speaks of "your plugin" (or app, extension) and of improving it, not of
+  // an app and its Android build: the dictionary's plugin block replaces those texts.
+  const plug = p.kind === "plugin" ? d.project.plugin : null;
+  const product = plug ? (plug.product[p.platform ?? "wordpress"] ?? plug.product.wordpress) : "";
+  const fillP = (s: string) => s.replace(/\{product\}/g, product);
+  const dp: Dict["project"] = plug
+    ? {
+        ...d.project,
+        approve: fillP(plug.approve),
+        approveHint: fillP(plug.approveHint),
+        changesTitle: fillP(plug.chatTitle),
+        platformNames: { ...d.project.platformNames, plugin: plug.zip[p.platform ?? "wordpress"] ?? d.project.platformNames.plugin },
+        chat: { ...d.project.chat, title: fillP(plug.chatTitle), intro: fillP(plug.chatIntro), placeholder: plug.chatPlaceholder, assistant: plug.assistant, thinking: plug.thinking },
+      }
+    : d.project;
   const tabs: { key: TabKey; label: string }[] = [
-    { key: "app", label: d.project.tabs.app },
+    { key: "app", label: plug ? fillP(plug.tab) : d.project.tabs.app },
     ...(showStore ? [{ key: "store" as const, label: d.project.tabs.store }] : []),
     ...(showMarketing ? [{ key: "marketing" as const, label: d.project.tabs.marketing }] : []),
     { key: "activity", label: d.project.tabs.activity },
@@ -362,7 +380,7 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
               .map((b) => (
                 <div className="row" key={b.id}>
                   <span className="muted">
-                    {d.project.platformNames[b.platform] ?? b.platform} v{b.version}
+                    {dp.platformNames[b.platform] ?? b.platform} v{b.version}
                   </span>
                   <button className="lang-toggle" disabled={busy} onClick={() => download(b.id, b.platform)}>
                     {d.project.download}
@@ -382,21 +400,21 @@ export function ProjectDetail({ locale, d, projectId }: { locale: Locale; d: Dic
 
           {p.status === "REVIEW" && (
             <div className="card">
-              <h3>{d.project.approveTitle}</h3>
-              <p className="small muted" style={{ margin: 0 }}>{d.project.approveHint}</p>
+              <h3>{dp.approveTitle}</h3>
+              <p className="small muted" style={{ margin: 0 }}>{dp.approveHint}</p>
               <button className="btn btn-primary btn-block" disabled={busy} onClick={approve}>
-                {d.project.approve}
+                {dp.approve}
               </button>
             </div>
           )}
 
           {p.change_chat && token && (
-            <ChangeChat locale={locale} d={d} token={token} project={p} onChanged={load} onApprove={approve} />
+            <ChangeChat locale={locale} d={plug ? { ...d, project: dp } : d} token={token} project={p} onChanged={load} onApprove={approve} />
           )}
 
           {canChange && (!p.change_chat || p.change_request_mode === "paid" || p.change_request_mode === "credit" || p.change_request_mode === "care") && (
             <div className="card">
-              {!p.change_chat && <h3>{d.project.changesTitle}</h3>}
+              {!p.change_chat && <h3>{dp.changesTitle}</h3>}
               {p.change_request_mode === "care" && (
                 <p className="note" style={{ margin: 0, background: "#E8F4EE", color: "var(--valid)" }}>
                   <strong>{d.project.careTitle}</strong> ·{" "}

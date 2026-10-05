@@ -57,6 +57,8 @@ class DispatchStageJob implements ShouldQueue
                 'change_request' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->value('text'),
                 // The confirmed checklist from the change chat; the revise agent reports on each item.
                 'change_items' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->first()?->items,
+                // A paid new feature (Sofabuilt) is in scope for the revise agent, a change is not.
+                'change_kind' => $project->changeRequests()->where('status', 'in_progress')->latest('id')->value('kind') ?? 'change',
                 'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status'])->toArray(),
                 'last_test_report' => $project->testReports()->latest()->first()?->report,
                 // Sofabuilt: the scope the customer agreed to on the desk; the plugin is built to it.

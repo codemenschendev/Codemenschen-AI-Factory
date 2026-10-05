@@ -26,6 +26,36 @@ class Pricing
     }
 
     /**
+     * A new feature for a plugin that is already built (the console's change chat): the parts it
+     * needs from the platform's price list, without the base, at the admin's price level, less the
+     * Care discount while Care is active. Never below the price of a single change round.
+     *
+     * @param  list<array{key: string, qty?: int}>  $modules
+     * @return array{eur: int, modules: list<array{key: string, qty: int}>, discount_pct: int}
+     */
+    public static function feature(string $platform, array $modules, bool $care): array
+    {
+        $known = Platforms::modules($platform);
+        $repeatable = Platforms::repeatable($platform);
+        $picked = [];
+        foreach ($modules as $m) {
+            $key = (string) ($m['key'] ?? '');
+            if ($key === 'base' || ! isset($known[$key])) {
+                continue;
+            }
+            $picked[$key] = min($repeatable[$key] ?? 1, max($picked[$key] ?? 0, (int) ($m['qty'] ?? 1)));
+        }
+        $sum = 0;
+        foreach ($picked as $key => $n) {
+            $sum += (int) round($known[$key]['eur'] * (int) Settings::get('price_pct') / 100) * $n;
+        }
+        $pct = $care ? (int) config('sofabuilt.care_feature_discount_pct', 20) : 0;
+        $eur = max(\App\Domain\Pricing\Estimator::REVISION_PRICE_EUR, (int) round($sum * (100 - $pct) / 100));
+
+        return ['eur' => $eur, 'modules' => array_map(fn ($k, $n) => ['key' => $k, 'qty' => $n], array_keys($picked), $picked), 'discount_pct' => $pct];
+    }
+
+    /**
      * @param  array{modules?: list<array{key?: string, qty?: int}>}|null  $scope
      * @return array{lines: list<array{key: string, label: string, qty: int, eur: int}>, build_eur: int, too_big: bool, care_monthly_eur: int, launch: array<string, array{label: string, eur: int}>, delivery_days: array{0: int, 1: int}}
      */

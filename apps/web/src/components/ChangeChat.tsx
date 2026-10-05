@@ -16,7 +16,7 @@ export interface ChatMessage {
   meta: {
     type?: "card" | "declined" | "limit" | "payment" | "paid" | "started" | "result" | "failed";
     questions?: { q: string; options: string[] }[];
-    card?: { items: { text: string }[]; mode: "free" | "paid" | "care" | "credit"; round: number; price_eur: number; free_rounds_left: number };
+    card?: { items: { text: string }[]; mode: "free" | "paid" | "care" | "credit" | "feature"; round: number; price_eur: number; discount_pct?: number; free_rounds_left: number };
     confirmed?: boolean;
     checkout_url?: string | null;
     reason?: string;
@@ -517,6 +517,8 @@ function Message({
                 ? t.cardCare
                 : card.mode === "credit"
                   ? t.cardCredit
+                : card.mode === "feature"
+                  ? (card.discount_pct ? t.cardFeatureCare.replace("{pct}", String(card.discount_pct)) : t.cardFeature).replace("{price}", eur(card.price_eur, locale))
                 : card.mode === "paid"
                   ? t.cardPaid.replace("{price}", eur(card.price_eur, locale))
                   : t.cardFree.replace("{left}", String(Math.max(0, card.free_rounds_left - 1)))}
@@ -528,7 +530,7 @@ function Message({
               <span className="small" style={{ color: "var(--valid)" }}>✓ {t.confirmed}</span>
             ) : open ? (
               <>
-                {card.mode === "paid" && (
+                {(card.mode === "paid" || card.mode === "feature") && (
                   <label className="choice" style={{ alignItems: "flex-start" }}>
                     <input type="checkbox" checked={waiver} onChange={(e) => setWaiver(e.target.checked)} style={{ marginTop: 4 }} />
                     <span className="small">{d.checkout.waiverLabel}</span>
@@ -538,10 +540,10 @@ function Message({
                   <button
                     type="button"
                     className="btn btn-primary"
-                    disabled={confirming || (card.mode === "paid" && !waiver)}
+                    disabled={confirming || ((card.mode === "paid" || card.mode === "feature") && !waiver)}
                     onClick={onConfirm}
                   >
-                    {card.mode === "paid" ? t.confirmPaid : t.confirm}
+                    {card.mode === "paid" || card.mode === "feature" ? t.confirmPaid : t.confirm}
                   </button>
                   <button type="button" className="btn btn-ghost" onClick={onChangeSomething}>{t.changeSomething}</button>
                 </div>

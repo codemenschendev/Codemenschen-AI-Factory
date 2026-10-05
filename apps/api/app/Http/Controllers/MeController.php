@@ -42,6 +42,9 @@ class MeController extends Controller
             'id' => $project->id,
             'name' => $project->name,
             'kind' => $project->kind,
+            'brand' => $project->order?->brand ?? 'appmitki',
+            // Sofabuilt: which platform the plugin is for (wordpress, shopify, chrome).
+            'platform' => $project->kind === 'plugin' ? \App\Domain\Sofabuilt\Platforms::of($project->order?->quote?->breakdown['scope'] ?? null) : null,
             'site' => self::hasSite($project) ? self::site($project) : null,
             'status' => $project->status,
             'fix_attempts' => $project->fix_attempts,
@@ -58,7 +61,7 @@ class MeController extends Controller
             'credit_packs' => Edits::packs(),
             'change_requests' => $project->changeRequests()->latest('id')
                 ->get(['id', 'round', 'text', 'items', 'status', 'agent_summary', 'result_items', 'price_eur', 'checkout_url', 'created_at']),
-            'change_chat' => ChangeChat::enabledFor($request->user()),
+            'change_chat' => ChangeChat::enabledFor($request->user(), $project),
             'failed_reason' => $project->failed_reason,
             'build_starts_at' => $project->build_starts_at?->toIso8601String(),
             'criteria' => $project->criteria()->get(['key', 'criterion', 'kind', 'status']),
@@ -170,7 +173,7 @@ class MeController extends Controller
     public function changeMessages(Request $request, Project $project, ChangeChat $chat): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
-        abort_unless(ChangeChat::enabledFor($request->user()), 404);
+        abort_unless(ChangeChat::enabledFor($request->user(), $project), 404);
         ChangeChat::seen($project);
 
         return response()->json(['messages' => $chat->thread($project, (int) $request->query('after', 0))]);
@@ -189,7 +192,7 @@ class MeController extends Controller
     public function sendChangeMessage(Request $request, Project $project, ChangeChat $chat): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
-        abort_unless(ChangeChat::enabledFor($request->user()), 404);
+        abort_unless(ChangeChat::enabledFor($request->user(), $project), 404);
         $data = $request->validate([
             'body' => 'nullable|string|max:2000|required_without:images',
             'images' => 'nullable|array|max:'.ChangeShots::MAX_PER_MESSAGE,
@@ -211,7 +214,7 @@ class MeController extends Controller
     public function confirmChange(Request $request, Project $project, ChangeChat $chat): JsonResponse
     {
         abort_unless($project->customer_id === $request->user()->id, 404);
-        abort_unless(ChangeChat::enabledFor($request->user()), 404);
+        abort_unless(ChangeChat::enabledFor($request->user(), $project), 404);
         $data = $request->validate(['fagg_waiver' => 'nullable|boolean']);
 
         $cr = $chat->confirm($project, $request->user(), (bool) ($data['fagg_waiver'] ?? false), $request->ip());

@@ -22,8 +22,10 @@ export interface ChangeChatOutput {
   reply: string;
   questions: { q: string; options: string[] }[];
   items: { text: string }[];
-  scope: "in" | "borderline" | "out";
+  scope: "in" | "borderline" | "out" | "feature";
   reason: string;
+  /** scope "feature" (Sofabuilt): the price-list parts the new feature needs; the API prices them. */
+  modules: { key: string; qty: number }[];
 }
 
 const ROLE_LABEL: Record<string, string> = {
@@ -78,7 +80,12 @@ export async function changeChat(input: ChangeChatInput): Promise<ChangeChatOutp
     const text = typeof item === "string" ? item : (item as { text?: unknown })?.text;
     return typeof text === "string" && text.trim() ? [{ text: text.trim().slice(0, 300) }] : [];
   });
-  const scope = raw.scope === "out" || raw.scope === "borderline" ? raw.scope : "in";
+  const scope = raw.scope === "out" || raw.scope === "borderline" || raw.scope === "feature" ? raw.scope : "in";
+  const modules = (Array.isArray(raw.modules) ? raw.modules : []).slice(0, 8).flatMap((m) => {
+    const key = typeof m === "string" ? m : (m as { key?: unknown })?.key;
+    const qty = Number((m as { qty?: unknown })?.qty ?? 1);
+    return typeof key === "string" && /^[a-z_]{2,30}$/.test(key) ? [{ key, qty: Number.isFinite(qty) ? Math.max(1, Math.min(4, Math.round(qty))) : 1 }] : [];
+  });
 
   return {
     reply: raw.reply.trim().slice(0, 2000),
@@ -86,5 +93,6 @@ export async function changeChat(input: ChangeChatInput): Promise<ChangeChatOutp
     items,
     scope,
     reason: typeof raw.reason === "string" ? raw.reason.trim().slice(0, 400) : "",
+    modules,
   };
 }

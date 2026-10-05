@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Domain\Payments\StripeKeys;
 use App\Models\ChangeRequest;
+use App\Support\MailLink;
 use Stripe\StripeClient;
 
 /**
@@ -22,7 +23,6 @@ class RevisionService
         }
         $project = $cr->project;
         $locale = $project->order->locale ?: 'de';
-        $front = rtrim(config('services.frontend_url'), '/');
 
         $session = (new StripeClient($secret))->checkout->sessions->create([
             'mode' => 'payment',
@@ -31,15 +31,17 @@ class RevisionService
                 'price_data' => [
                     'currency' => 'eur',
                     'unit_amount' => $cr->price_eur * 100,
-                    'product_data' => ['name' => $project->name.', '.(ChangeChat::locale($project) === 'en' ? 'change round ' : 'Änderungsrunde ').$cr->round],
+                    'product_data' => ['name' => $project->name.', '.(ChangeChat::locale($project) === 'en'
+                        ? ($cr->kind === 'feature' ? 'new feature' : 'change round '.$cr->round)
+                        : ($cr->kind === 'feature' ? 'neue Funktion' : 'Änderungsrunde '.$cr->round))],
                 ],
             ]],
             'customer_email' => $project->customer->email,
             'client_reference_id' => 'cr:'.$cr->id,
             'locale' => $locale,
             'invoice_creation' => ['enabled' => true],
-            'success_url' => "$front/$locale/account/{$project->id}?revision=paid",
-            'cancel_url' => "$front/$locale/account/{$project->id}",
+            'success_url' => MailLink::portal("/$locale/account/{$project->id}").'?revision=paid',
+            'cancel_url' => MailLink::portal("/$locale/account/{$project->id}"),
         ]);
         $cr->update(['stripe_checkout_session_id' => $session->id, 'checkout_url' => $session->url]);
     }
