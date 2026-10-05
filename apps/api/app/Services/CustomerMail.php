@@ -328,36 +328,51 @@ class CustomerMail
         $try = $project->previewUrl();
         $zip = rtrim(config('app.url'), '/')."/api/plugin/{$project->id}/plugin.zip";
         $sell = ! empty($project->order?->packages['sellReady']);
+        $chrome = $project->stack === 'chrome-ext';
         [$subject, $lines] = match (true) {
             $to === 'REVIEW' => $de
-                ? ["Dein Plugin ist bereit zum Ausprobieren: {$name}", [
+                ? [($chrome ? "Deine Erweiterung ist bereit zum Ausprobieren: " : "Dein Plugin ist bereit zum Ausprobieren: ").$name, [
                     $project->revision_rounds > 0 ? 'die Änderungen sind umgesetzt und getestet.' : 'dein Plugin ist gebaut und getestet.',
                     '',
-                    'Probier es live aus. Ein WordPress startet im Browser, dein Plugin ist installiert und du bist angemeldet:',
-                    (string) $try,
+                    ...($chrome ? [
+                        'Probier sie in Chrome aus: lade die ZIP herunter und entpacke sie, öffne chrome://extensions, schalte oben rechts den Entwicklermodus ein und klicke auf "Entpackte Erweiterung laden". Wähle den entpackten Ordner.',
+                        $zip,
+                    ] : [
+                        'Probier es live aus. Ein WordPress startet im Browser, dein Plugin ist installiert und du bist angemeldet:',
+                        (string) $try,
+                    ]),
                     '',
                     'Dann gib es in deinem Projekt frei oder wünsch dir Änderungen (Link 24 Stunden gültig):',
                     $link,
                 ]]
-                : ["Your plugin is ready to try: {$name}", [
+                : [($chrome ? "Your extension is ready to try: " : "Your plugin is ready to try: ").$name, [
                     $project->revision_rounds > 0 ? 'the changes are done and tested.' : 'your plugin is built and tested.',
                     '',
-                    'Try it live. A WordPress starts in your browser with your plugin installed and you logged in:',
-                    (string) $try,
+                    ...($chrome ? [
+                        'Try it in Chrome: download the ZIP and unzip it, open chrome://extensions, switch on Developer mode at the top right and click "Load unpacked". Pick the unzipped folder.',
+                        $zip,
+                    ] : [
+                        'Try it live. A WordPress starts in your browser with your plugin installed and you logged in:',
+                        (string) $try,
+                    ]),
                     '',
                     'Then approve it in your project or ask for changes (link valid for 24 hours):',
                     $link,
                 ]],
             $to === 'READY' => $de
-                ? ["Dein Plugin gehört dir: {$name}", array_merge([
-                    'danke für die Freigabe. Hier ist dein Plugin als ZIP, bereit zum Hochladen unter Plugins > Installieren:',
+                ? [($chrome ? "Deine Erweiterung gehört dir: " : "Dein Plugin gehört dir: ").$name, array_merge([
+                    $chrome
+                        ? 'danke für die Freigabe. Hier ist deine Erweiterung als ZIP, bereit für den Chrome Web Store oder zum Laden in Chrome:'
+                        : 'danke für die Freigabe. Hier ist dein Plugin als ZIP, bereit zum Hochladen unter Plugins > Installieren:',
                     $zip,
                     '',
                     'Den Quellcode findest du in deinem Projekt. Mach vor der Installation ein Backup deiner Website.',
                     $link,
                 ], $sell ? ['', 'Bereit zum Verkauf: Lizenzschlüssel, Updates und Checkout sind eingebaut (über Freemius). Lege dir ein kostenloses Konto auf freemius.com an und schick uns eine kurze Antwort. Wir verbinden dein Plugin damit und laden es für den Verkauf hoch.'] : [])]
-                : ["Your plugin is yours: {$name}", array_merge([
-                    'thank you for approving. Here is your plugin as a ZIP, ready to upload under Plugins > Add New:',
+                : [($chrome ? "Your extension is yours: " : "Your plugin is yours: ").$name, array_merge([
+                    $chrome
+                        ? 'thank you for approving. Here is your extension as a ZIP, ready for the Chrome Web Store or to load in Chrome:'
+                        : 'thank you for approving. Here is your plugin as a ZIP, ready to upload under Plugins > Add New:',
                     $zip,
                     '',
                     'The source code is in your project. Back up your site before you install it.',
@@ -390,7 +405,9 @@ class CustomerMail
                 ? 'Start: '.$later->format('d.m.Y').', nach Ablauf der 14-tägigen Widerrufsfrist.'
                 : "Start: sofort. Rechne mit {$days[0]} bis {$days[1]} Werktagen.",
             '',
-            'Was jetzt passiert: wir bauen das Plugin nach dem vereinbarten Umfang und testen es. Dann bekommst du einen Link, unter dem du es live in einem WordPress im Browser ausprobierst. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du das Plugin als ZIP und den Code.',
+            $project->stack === 'chrome-ext'
+                ? 'Was jetzt passiert: wir bauen die Erweiterung nach dem vereinbarten Umfang und testen sie. Dann bekommst du sie zum Ausprobieren in Chrome, mit einer kurzen Anleitung. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du die ZIP für den Chrome Web Store und den Code.'
+                : 'Was jetzt passiert: wir bauen das Plugin nach dem vereinbarten Umfang und testen es. Dann bekommst du einen Link, unter dem du es live in einem WordPress im Browser ausprobierst. Du gibst frei oder wünschst Änderungen, eine Runde ist inklusive. Danach bekommst du das Plugin als ZIP und den Code.',
             '',
             'Fragen jederzeit: einfach auf diese E-Mail antworten.',
             '',
@@ -406,7 +423,9 @@ class CustomerMail
                 ? 'Start: '.$later->format('d M Y').', after the 14-day withdrawal period.'
                 : "Start: now. Expect {$days[0]} to {$days[1]} working days.",
             '',
-            'What happens now: we build the plugin to the agreed scope and test it. Then you get a link where you try it live in a WordPress in your browser. You approve it or ask for changes, one round is included. After that you get the plugin as a ZIP and the code.',
+            $project->stack === 'chrome-ext'
+                ? 'What happens now: we build the extension to the agreed scope and test it. Then you get it to try in Chrome, with short steps. You approve it or ask for changes, one round is included. After that you get the ZIP for the Chrome Web Store and the code.'
+                : 'What happens now: we build the plugin to the agreed scope and test it. Then you get a link where you try it live in a WordPress in your browser. You approve it or ask for changes, one round is included. After that you get the plugin as a ZIP and the code.',
             '',
             'Questions at any time: just reply to this e-mail.',
             '',

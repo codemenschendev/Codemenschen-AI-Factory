@@ -11,7 +11,7 @@ const en = {
   },
   nav: { how: "How it works", what: "What you get", prices: "Prices", faq: "FAQ", cta: "Start with an idea" },
   hero: {
-    eyebrow: "WordPress plugins, built for you",
+    eyebrow: "WordPress plugins and Chrome extensions, built for you",
     title: ["Your idea.", "We build it.", "You relax."],
     lede:
       "Tell us what your plugin should do. We research the market, scope it, give you a fixed price and build it. You test it live before you take it. Then use it on your own sites or sell it.",
@@ -79,7 +79,7 @@ const en = {
       { q: "Is it legal to build a version of a premium plugin?", a: "Yes, when it is new code with its own name. We never copy another plugin's name, logo or texts. The scope says which features are included." },
       { q: "Will it sell?", a: "We cannot promise that. Most plugins sell little, some sell a lot. We help with the sales page, the listing and ads, and we show you an honest calculation before you start." },
       { q: "How do I sell my plugin?", a: "With the ready-to-sell option we build licence keys, automatic updates for your buyers and a checkout into your plugin, through Freemius. Freemius takes the payments, handles EU VAT and keeps a share of each sale. You open your own seller account there, we connect your plugin to it." },
-      { q: "Which platforms?", a: "WordPress and WooCommerce today. Shopify apps come later." },
+      { q: "Which platforms?", a: "WordPress and WooCommerce plugins, and Chrome extensions (they also run in Edge and Brave). Shopware and Shopify come later." },
       { q: "What if I do not like the result?", a: "You try it live before delivery and get one change round. More changes are possible at a fixed price per round." },
     ],
   },
@@ -89,6 +89,8 @@ const en = {
     title: "Tell us your idea",
     lede: "Describe your plugin. We define the scope together and show you the price on the right.",
     sendIdea: "Send my idea",
+    platforms: { wordpress: "WordPress plugin", chrome: "Chrome extension" },
+    placeholderChrome: "For example: an extension that keeps notes for each website I visit",
     optional: "optional",
     exchanges: "Earlier in this chat",
     chooseDoor: "How do you want to start?",
@@ -192,7 +194,7 @@ const de: typeof en = {
   },
   nav: { how: "So geht's", what: "Was du bekommst", prices: "Preise", faq: "Fragen", cta: "Mit einer Idee starten" },
   hero: {
-    eyebrow: "WordPress-Plugins, für dich gebaut",
+    eyebrow: "WordPress-Plugins und Chrome-Erweiterungen, für dich gebaut",
     title: ["Deine Idee.", "Wir bauen sie.", "Du lehnst dich zurück."],
     lede:
       "Sag uns, was dein Plugin können soll. Wir schauen uns den Markt an, legen den Umfang fest, nennen dir einen Festpreis und bauen es. Du testest es live, bevor du es übernimmst. Dann nutzt du es auf deinen Seiten oder verkaufst es.",
@@ -260,7 +262,7 @@ const de: typeof en = {
       { q: "Darf man eine Version eines Premium-Plugins bauen?", a: "Ja, wenn es neuer Code mit eigenem Namen ist. Wir übernehmen nie Namen, Logo oder Texte eines anderen Plugins. Im Umfang steht, welche Funktionen dabei sind." },
       { q: "Verkauft es sich?", a: "Das können wir nicht versprechen. Die meisten Plugins verkaufen sich wenig, manche sehr gut. Wir helfen mit Verkaufsseite, Store-Eintrag und Anzeigen und zeigen dir vorher eine ehrliche Rechnung." },
       { q: "Wie verkaufe ich mein Plugin?", a: "Mit der Option Bereit zum Verkauf bauen wir Lizenzschlüssel, automatische Updates für deine Käufer und einen Checkout in dein Plugin ein, über Freemius. Freemius nimmt die Zahlungen an, kümmert sich um die Mehrwertsteuer in der EU und behält einen Anteil pro Verkauf. Du eröffnest dort dein eigenes Verkäuferkonto, wir verbinden dein Plugin damit." },
-      { q: "Für welche Plattformen?", a: "Heute WordPress und WooCommerce. Shopify-Apps kommen später." },
+      { q: "Für welche Plattformen?", a: "Plugins für WordPress und WooCommerce sowie Chrome-Erweiterungen (sie laufen auch in Edge und Brave). Shopware und Shopify kommen später." },
       { q: "Und wenn mir das Ergebnis nicht gefällt?", a: "Du probierst es vor der Übergabe live aus und hast eine Änderungsrunde. Weitere Änderungen gibt es zum Festpreis pro Runde." },
     ],
   },
@@ -270,6 +272,8 @@ const de: typeof en = {
     title: "Erzähl uns deine Idee",
     lede: "Beschreib dein Plugin. Wir legen den Umfang gemeinsam fest und zeigen dir rechts den Preis.",
     sendIdea: "Idee senden",
+    platforms: { wordpress: "WordPress-Plugin", chrome: "Chrome-Erweiterung" },
+    placeholderChrome: "Zum Beispiel: eine Erweiterung, die zu jeder Website, die ich besuche, Notizen speichert",
     optional: "optional",
     exchanges: "Vorher in diesem Chat",
     chooseDoor: "Wie willst du starten?",

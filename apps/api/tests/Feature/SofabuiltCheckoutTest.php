@@ -85,4 +85,27 @@ class SofabuiltCheckoutTest extends TestCase
         $this->assertStringEndsWith("/api/plugin/{$project->id}/plugin.zip", $steps[1]['pluginData']['url']);
         $this->get("/api/plugin/{$project->id}/plugin.zip")->assertOk();
     }
+
+    public function test_a_chrome_extension_is_priced_with_its_own_parts_and_built_on_its_stack(): void
+    {
+        config(['services.stripe.secret' => null, 'services.worker.token' => 't']);
+        Http::fake(['*/run' => Http::response(['accepted' => true], 202)]);
+        Mail::fake();
+        $session = DeskSession::create(['door' => 'idea', 'locale' => 'en', 'platform' => 'chrome', 'ready' => true, 'scope' => [
+            'platform' => 'chrome', 'name' => 'Tab Notes', 'purpose' => 'Notes per website.', 'features' => ['notes'], 'not_included' => [],
+            'requires' => ['woocommerce' => false, 'wordpress' => '', 'php' => ''],
+            'modules' => [['key' => 'page', 'qty' => 1], ['key' => 'sync', 'qty' => 1], ['key' => 'woo', 'qty' => 1]],
+        ]]);
+
+        $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
+        // Chrome parts only: a WordPress key in the scope is not priced.
+        $this->assertSame(250 + 120 + 50, $res->json('price_eur'));
+        $this->assertSame(['salesPage' => 299, 'listing' => 79, 'ads' => 129], $res->json('packages'));
+
+        $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'ext@example.com', 'fagg_waiver' => true, 'terms' => true]);
+        $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 420, []);
+        $this->assertSame('chrome-ext', $project->stack);
+        $project->builds()->create(['platform' => 'plugin', 'version' => '0.1.0', 'artifact_path' => 'x.zip', 'status' => 'preview']);
+        $this->assertNull($project->previewUrl(), 'Playground is for WordPress only');
+    }
 }

@@ -9,17 +9,17 @@ export default async function DeskPage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ start?: string }>;
+  searchParams: Promise<{ start?: string; platform?: string }>;
 }) {
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
-  const { start } = await searchParams;
+  const { start, platform } = await searchParams;
   const d = sbDict(locale);
 
   return (
     <main className="sb-desk-page">
       <div className="wrap">
-        <Desk t={d.desk} doors={d.hero.doors} locale={locale} start={start === "idea" || start === "premium" ? start : null} />
+        <Desk t={d.desk} doors={d.hero.doors} locale={locale} start={start === "idea" || start === "premium" ? start : null} startPlatform={platform === "chrome" ? "chrome" : "wordpress"} />
       </div>
     </main>
   );

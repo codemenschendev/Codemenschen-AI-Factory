@@ -50,8 +50,9 @@ class DeskAgent
 
     public function prompt(DeskSession $session): string
     {
-        $modules = collect(config('sofabuilt.modules'))->map(fn ($m, $k) => "  - {$k}: {$m['en']}")->implode("\n");
-        $catalog = collect(config('sofabuilt.catalog'))->map(function ($p) {
+        $chrome = $session->platform === 'chrome';
+        $modules = collect(Platforms::modules($session->platform))->map(fn ($m, $k) => "  - {$k}: {$m['en']}")->implode("\n");
+        $catalog = collect(Platforms::catalog($session->platform))->map(function ($p) {
             $live = $p['slug'] ? $this->wporg->info($p['slug']) : null;
             $stats = $live ? sprintf(', free version on wordpress.org: %s installs, rating %d/100', number_format($live['installs']), $live['rating']) : '';
 
@@ -63,12 +64,16 @@ class DeskAgent
             ->map(fn ($m) => ($m->role === 'customer' ? 'Customer' : 'You').': '.mb_substr($m->body, 0, 2000))->implode("\n\n");
 
         return Prompts::get('sofabuilt/desk', [
+            'product' => $chrome ? 'Chrome browser extension' : 'WordPress or WooCommerce plugin',
+            'platform_rule' => $chrome
+                ? 'Chrome extensions only in this chat (they also run in Edge and Brave). WordPress plugins: the customer can start a WordPress chat. Firefox, Safari, Shopify or standalone apps: say they come later. Keep `requires` as {"woocommerce": false, "wordpress": "", "php": ""}.'
+                : 'WordPress and WooCommerce only in this chat. Chrome extensions: the customer can start a Chrome chat. Shopify, Joomla or standalone apps: say they come later.',
             'language' => $session->locale === 'de' ? 'German' : 'English',
             'door' => $session->door === 'premium'
                 ? 'own version of a premium plugin (help them pick one from the list below, or the one they name)'
                 : 'own idea (help them make it clear)',
             'modules' => $modules,
-            'catalog' => $catalog,
+            'catalog' => $catalog !== '' ? $catalog : '  (none for this platform)',
             'research' => $research !== '' ? $research : '  (nothing yet)',
             'scope' => $session->scope ? json_encode($session->scope, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : 'null',
             'conversation' => $conversation !== '' ? $conversation : '(the customer has not written yet)',
@@ -101,7 +106,7 @@ class DeskAgent
         $scope = null;
         if (is_array($data['scope'] ?? null)) {
             $s = $data['scope'];
-            $known = config('sofabuilt.modules');
+            $known = array_merge(Platforms::modules('wordpress'), Platforms::modules('chrome'));
             $modules = [];
             foreach (is_array($s['modules'] ?? null) ? $s['modules'] : [] as $m) {
                 $key = is_array($m) ? ($m['key'] ?? null) : $m;

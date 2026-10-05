@@ -1,0 +1,10 @@
+// Example case: copy to test/cases/<criterion-key>.mjs and adapt.
+import { chrome, loadLib } from "../chrome.mjs";
+export const key = "settings-load";
+export async function run() {
+  const { loadSettings, saveSettings } = await loadLib("lib/settings.js");
+  await saveSettings({ colour: "blue" });
+  const s = await loadSettings();
+  if (s.colour !== "blue") throw new Error(`expected blue, got ${s.colour}`);
+  if ((await chrome.storage.sync.get("colour")).colour !== "blue") throw new Error("not stored in sync");
+}

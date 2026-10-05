@@ -13,12 +13,12 @@ class Pricing
      *
      * @return list<array{key: string, label: string, eur: int, max: int}>
      */
-    public static function options(string $locale = 'en'): array
+    public static function options(string $locale = 'en', string $platform = 'wordpress'): array
     {
         $lang = $locale === 'de' ? 'de' : 'en';
-        $repeatable = config('sofabuilt.repeatable', []);
+        $repeatable = Platforms::repeatable($platform);
         $out = [];
-        foreach (config('sofabuilt.modules') as $key => $m) {
+        foreach (Platforms::modules($platform) as $key => $m) {
             $out[] = ['key' => $key, 'label' => $m[$lang], 'eur' => (int) $m['eur'], 'max' => (int) ($repeatable[$key] ?? 1)];
         }
 
@@ -31,8 +31,9 @@ class Pricing
      */
     public static function quote(?array $scope, string $locale = 'en'): array
     {
-        $modules = config('sofabuilt.modules');
-        $repeatable = config('sofabuilt.repeatable', []);
+        $platform = Platforms::of($scope);
+        $modules = Platforms::modules($platform);
+        $repeatable = Platforms::repeatable($platform);
         $lang = $locale === 'de' ? 'de' : 'en';
         $qty = ['base' => 1];
         foreach ((array) ($scope['modules'] ?? []) as $m) {
@@ -54,7 +55,7 @@ class Pricing
             'build_eur' => $build,
             'too_big' => $build > (int) config('sofabuilt.max_build_eur'),
             'care_monthly_eur' => (int) config('sofabuilt.care_monthly_eur'),
-            'launch' => array_map(fn ($l) => ['label' => $l[$lang], 'eur' => $l['eur']], config('sofabuilt.launch')),
+            'launch' => array_map(fn ($l) => ['label' => $l[$lang], 'eur' => $l['eur']], Platforms::launch($platform)),
             'delivery_days' => config('sofabuilt.delivery_days'),
         ];
     }

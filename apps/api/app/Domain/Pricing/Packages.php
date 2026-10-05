@@ -2,6 +2,7 @@
 
 namespace App\Domain\Pricing;
 
+use App\Domain\Sofabuilt\Platforms;
 use App\Models\Quote;
 
 /** The add-ons a quote can be bought with, and their prices: one place for checkout and totals. */
@@ -12,7 +13,7 @@ class Packages
     {
         return match ($quote->kind) {
             // Sofabuilt's launch options (config/sofabuilt.php).
-            'plugin' => array_map(fn ($l) => (int) $l['eur'], config('sofabuilt.launch')),
+            'plugin' => array_map(fn ($l) => (int) $l['eur'], Platforms::launch(Platforms::of($quote->breakdown['scope'] ?? null))),
             // A website has no store and no developer account; the ads are what it can add.
             'site' => array_intersect_key(Estimator::PACKAGE_PRICES, ['marketingLaunch' => 1]),
             default => Estimator::PACKAGE_PRICES,
@@ -23,7 +24,7 @@ class Packages
     public static function label(Quote $quote, string $key): string
     {
         if ($quote->kind === 'plugin') {
-            return (string) (config("sofabuilt.launch.$key.en") ?? $key);
+            return (string) (Platforms::launch(Platforms::of($quote->breakdown['scope'] ?? null))[$key]['en'] ?? $key);
         }
 
         return ucfirst((string) preg_replace('/(?<!^)[A-Z]/', ' $0', $key));

@@ -206,3 +206,10 @@ body.sb {
 
 /* The service cards end in what to do next instead of a price. */
 body.sb .svc-foot b.svc-go-label { font-size: 16px; font-weight: 600; color: var(--accent); }
+
+/* Desk: what is being built (WordPress plugin or Chrome extension), chosen before the chat starts. */
+.dk-platforms { display: inline-flex; gap: 4px; padding: 4px; border-radius: 12px; background: var(--tint); align-self: flex-start; }
+.dk-platform { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border: 0; border-radius: 9px; background: transparent; color: var(--ink-soft); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.dk-platform .dk-ico { width: 17px; height: 17px; }
+.dk-platform.is-on { background: #fff; color: var(--accent); box-shadow: 0 1px 4px rgba(15, 23, 42, 0.08); }
+.dk-platform:disabled:not(.is-on) { opacity: 0.45; cursor: default; }
