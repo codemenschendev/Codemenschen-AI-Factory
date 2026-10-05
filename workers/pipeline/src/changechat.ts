@@ -22,7 +22,7 @@ export interface ChangeChatOutput {
   reply: string;
   questions: { q: string; options: string[] }[];
   items: { text: string }[];
-  scope: "in" | "borderline" | "out" | "feature";
+  scope: "in" | "borderline" | "out" | "feature" | "bug";
   reason: string;
   /** scope "feature" (Sofabuilt): the price-list parts the new feature needs; the API prices them. */
   modules: { key: string; qty: number }[];
@@ -80,7 +80,7 @@ export async function changeChat(input: ChangeChatInput): Promise<ChangeChatOutp
     const text = typeof item === "string" ? item : (item as { text?: unknown })?.text;
     return typeof text === "string" && text.trim() ? [{ text: text.trim().slice(0, 300) }] : [];
   });
-  const scope = raw.scope === "out" || raw.scope === "borderline" || raw.scope === "feature" ? raw.scope : "in";
+  const scope = raw.scope === "out" || raw.scope === "borderline" || raw.scope === "feature" || raw.scope === "bug" ? raw.scope : "in";
   const modules = (Array.isArray(raw.modules) ? raw.modules : []).slice(0, 8).flatMap((m) => {
     const key = typeof m === "string" ? m : (m as { key?: unknown })?.key;
     const qty = Number((m as { qty?: unknown })?.qty ?? 1);

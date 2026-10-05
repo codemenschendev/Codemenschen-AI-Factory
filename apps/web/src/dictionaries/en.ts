@@ -552,6 +552,7 @@ export const en = {
       cardFree: "free, {left} included left",
       cardCare: "included with Care",
       cardCredit: "uses one of your change credits",
+      cardWarranty: "free, fixing a fault is covered by the warranty",
       cardFeature: "new feature, {price}",
       cardFeatureCare: "new feature, {price} with your Care discount of {pct}%",
       cardPaid: "{price}",

@@ -16,7 +16,7 @@ export interface ChatMessage {
   meta: {
     type?: "card" | "declined" | "limit" | "payment" | "paid" | "started" | "result" | "failed";
     questions?: { q: string; options: string[] }[];
-    card?: { items: { text: string }[]; mode: "free" | "paid" | "care" | "credit" | "feature"; round: number; price_eur: number; discount_pct?: number; free_rounds_left: number };
+    card?: { items: { text: string }[]; mode: "free" | "paid" | "care" | "credit" | "feature" | "warranty"; round: number; price_eur: number; discount_pct?: number; free_rounds_left: number };
     confirmed?: boolean;
     checkout_url?: string | null;
     reason?: string;
@@ -517,6 +517,8 @@ function Message({
                 ? t.cardCare
                 : card.mode === "credit"
                   ? t.cardCredit
+                : card.mode === "warranty"
+                  ? t.cardWarranty
                 : card.mode === "feature"
                   ? (card.discount_pct ? t.cardFeatureCare.replace("{pct}", String(card.discount_pct)) : t.cardFeature).replace("{price}", eur(card.price_eur, locale))
                 : card.mode === "paid"

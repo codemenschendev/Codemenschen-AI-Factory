@@ -552,6 +552,7 @@ export const de = {
       cardFree: "kostenlos, noch {left} inklusive",
       cardCare: "inklusive mit Care",
       cardCredit: "nutzt eines deiner Änderungs-Guthaben",
+      cardWarranty: "kostenlos, die Behebung eines Fehlers fällt unter die Gewährleistung",
       cardFeature: "neue Funktion, {price}",
       cardFeatureCare: "neue Funktion, {price} mit deinem Wartungs-Rabatt von {pct} %",
       cardPaid: "{price}",

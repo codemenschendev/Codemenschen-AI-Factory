@@ -136,15 +136,17 @@ class PipelineOrchestrator
      * agent implements it inside the paid scope, then the normal test → release
      * chain produces a fresh preview and the project returns to REVIEW.
      */
-    public function requestChanges(Project $project, string $text, string $actor, bool $faggWaiver = false, ?string $ip = null, ?array $items = null): ChangeRequest
+    public function requestChanges(Project $project, string $text, string $actor, bool $faggWaiver = false, ?string $ip = null, ?array $items = null, bool $warranty = false): ChangeRequest
     {
-        $mode = $this->changeRequestMode($project);
+        // A reported fault is fixed free (statutory warranty); it never uses a round, Care or credits.
+        $mode = $warranty && $this->underWarranty($project) ? 'warranty' : $this->changeRequestMode($project);
+        abort_if($mode === 'warranty' && ! in_array($project->status, self::REVISABLE_STATUSES, true), 409, 'Project cannot take change requests right now');
         abort_if($mode === 'none', 409, 'Project cannot take change requests right now');
 
         if ($mode === 'credit') {
             abort_unless(Edits::spend($project->customer), 409, 'No change credits left');
         }
-        if ($mode === 'free' || $mode === 'care' || $mode === 'credit') {
+        if ($mode === 'free' || $mode === 'care' || $mode === 'credit' || $mode === 'warranty') {
             $cr = $project->changeRequests()->create([
                 'round' => $project->revision_rounds + 1,
                 'text' => $text,
@@ -280,6 +282,14 @@ class PipelineOrchestrator
         }
 
         return Edits::credits($project) > 0 ? 'credit' : 'paid';
+    }
+
+    /** Faults are fixed free for the statutory warranty period after the order (config console.warranty_months). */
+    public function underWarranty(Project $project): bool
+    {
+        return in_array($project->status, self::REVISABLE_STATUSES, true)
+            && $project->created_at !== null
+            && $project->created_at->gt(now()->subMonths((int) config('console.warranty_months', 24)));
     }
 
     public function freeRoundsLeft(Project $project): int
