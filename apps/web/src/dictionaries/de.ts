@@ -1465,6 +1465,17 @@ export const de = {
     daysLeft: "noch {n} Tage",
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
+    calc: {
+      title: "Was kostet das?",
+      once: "Deine App, einmalig",
+      monthly: "Server",
+      perMonth: "{price} im Monat",
+      noMonthly: "nicht nötig",
+      delivery: "Fertig in",
+      days: "{lo} bis {hi} Werktagen",
+      note: "Ein Beispielpreis für diesen Umfang. Mit deinem Prototyp bekommst du den Fixpreis, bevor du etwas zahlst.",
+      noteServer: "Logins, Zahlungen und Sync brauchen einen Server, deshalb kommt eine kleine Monatsgebühr dazu. Mit deinem Prototyp bekommst du den Fixpreis, bevor du etwas zahlst.",
+    },
     page: {
       pill: "1 kostenloser Prototyp pro Konto · ohne Kreditkarte",
       asideTitle: "So geht es weiter",

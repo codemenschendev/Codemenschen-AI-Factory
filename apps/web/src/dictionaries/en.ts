@@ -1463,6 +1463,17 @@ export const en = {
     daysLeft: "{n} days left",
     oneDayLeft: "1 day left",
     forget: "Remove",
+    calc: {
+      title: "What will it cost?",
+      once: "Your app, once",
+      monthly: "Server",
+      perMonth: "{price} a month",
+      noMonthly: "not needed",
+      delivery: "Ready in",
+      days: "{lo} to {hi} working days",
+      note: "An example price for this scope. With your preview you get the fixed price, before you pay anything.",
+      noteServer: "Logins, payments and sync need a server, so the app has a small monthly fee. With your preview you get the fixed price, before you pay anything.",
+    },
     page: {
       pill: "1 free prototype per account · no credit card",
       asideTitle: "What happens next",
