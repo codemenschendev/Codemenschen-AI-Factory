@@ -378,15 +378,21 @@ console.log(JSON.stringify({ passed: auto.length, failed: 0, criteria_results: O
           ? ["node", ["test.mjs"]]
           : ["npm", ["test", "--silent"]];
       let stdout = "";
+      let summary = "";
       let failedRun = false;
       try {
         ({ stdout } = await exec(entry[0] as string, entry[1] as string[], { cwd: dir, maxBuffer: 8 * 1024 * 1024 }));
+        summary = stdout;
       } catch (e) {
         const err = e as { stdout?: string; stderr?: string; message?: string };
+        // The summary line is the runner's last stdout line. Searched in stdout alone: appended
+        // stderr repeated every FAIL line after it and pushed it out of reach, so a failing run
+        // reached the fix agent as "0 passed" with no details (2026-10-05).
+        summary = err.stdout ?? "";
         stdout = `${err.stdout ?? ""}\n${err.stderr ?? ""}\n${err.message ?? ""}`;
         failedRun = true;
       }
-      const lines = stdout.trim().split("\n").filter(Boolean);
+      const lines = summary.trim().split("\n").filter(Boolean);
       let report: { passed: number; failed: number; criteria_results?: Record<string, string>; output?: string } | null = null;
       for (let i = lines.length - 1; i >= 0 && i >= lines.length - 5; i--) {
         try {
