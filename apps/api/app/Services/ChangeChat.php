@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Domain\Sofabuilt\Pricing;
+use App\Domain\Sofabuilt\Platforms;
 use App\Domain\Ai\Prompts;
 use App\Domain\Pricing\Estimator;
 use App\Jobs\MailOperatorReply;
@@ -42,9 +44,11 @@ class ChangeChat
 
     public function __construct(private PipelineOrchestrator $orchestrator, private Notify $notify, private ChangeShots $shots) {}
 
-    public static function enabledFor(?Customer $customer): bool
+    public static function enabledFor(?Customer $customer, ?Project $project = null): bool
     {
-        return (bool) config('services.change_chat.enabled')
+        // A Sofabuilt plugin is improved through this chat (new features are priced only here).
+        return $project?->kind === 'plugin'
+            || (bool) config('services.change_chat.enabled')
             || (bool) $customer?->is_admin
             || ($customer !== null && in_array(strtolower((string) $customer->email), (array) config('services.change_chat.customers'), true));
     }
@@ -119,6 +123,18 @@ class ChangeChat
         if ($out['scope'] === 'out') {
             $meta['type'] = 'declined';
             $this->notify->alert($project, 'change chat: out of scope before a round: '.mb_substr($out['reason'] ?: $body, 0, 200));
+        } elseif ($out['scope'] === 'feature' && $out['items'] && $mode !== 'none') {
+            $price = Pricing::feature(Platforms::of($project->order?->quote?->breakdown['scope'] ?? null), $out['modules'], $project->care_status === 'active');
+            $meta['type'] = 'card';
+            $meta['card'] = [
+                'items' => $out['items'],
+                'mode' => 'feature',
+                'round' => $project->revision_rounds + 1,
+                'price_eur' => $price['eur'],
+                'discount_pct' => $price['discount_pct'],
+                'modules' => $price['modules'],
+                'free_rounds_left' => $this->orchestrator->freeRoundsLeft($project),
+            ];
         } elseif ($out['items'] && $mode !== 'none') {
             $meta['type'] = 'card';
             $meta['card'] = [
@@ -142,6 +158,24 @@ class ChangeChat
     }
 
     /**
+     * What the prompt calls the product and its maker, and whether a new feature can be priced:
+     * Sofabuilt plugins take paid new features (priced from the parts list), Appmitki apps do not.
+     *
+     * @return array<string, string>
+     */
+    public static function productTexts(Project $project): array
+    {
+        if ($project->kind !== 'plugin') {
+            return ['brand' => 'Appmitki', 'product' => 'app', 'feature_rule' => 'If the request is a new feature or outside the specification, set scope to "out", explain in one or two sentences why, and name the closest thing that would fit a change round if there is one. No checklist.'];
+        }
+        $platform = Platforms::of($project->order?->quote?->breakdown['scope'] ?? null);
+        $product = ['wordpress' => 'WordPress plugin', 'shopify' => 'Shopify app', 'chrome' => 'Chrome extension'][$platform] ?? 'plugin';
+        $parts = collect(Platforms::modules($platform))->except('base')->map(fn ($m, $k) => "  - {$k}: {$m['en']}")->implode("\n");
+
+        return ['brand' => 'Sofabuilt', 'product' => $product, 'feature_rule' => "If the request is a NEW feature (something the specification does not describe yet), it can be built as a paid feature round. Clarify it like a change, then write the checklist of the new feature (1 to 8 testable items), set scope to \"feature\", and add \"modules\": the parts it needs from this price list, as [{\"key\": \"...\", \"qty\": 1}]; pick the fewest that cover it. Never write a price yourself, the system computes it and shows it on the card. Say in your reply that the summary shows the price.\n{$parts}\nIf it is illegal or abusive, or not something a {$product} can do, set scope to \"out\" and explain why. No checklist."];
+    }
+
+    /**
      * The customer pressed "Umsetzen" on the newest summary card. Creates the change request with
      * the card's items as its text, verbatim, and ties the draft to it.
      */
@@ -155,7 +189,12 @@ class ChangeChat
 
         $items = array_values(array_map(fn ($i) => ['text' => (string) $i['text']], $card->meta['card']['items']));
         $text = self::briefText($items);
-        $cr = $this->orchestrator->requestChanges($project, $text, 'customer:'.$customer->email, $faggWaiver, $ip, $items);
+        $card_ = $card->meta['card'];
+        $cr = ($card_['mode'] ?? null) === 'feature'
+            // The price on the card is the price paid: recomputed only to drop anything unknown.
+            ? $this->orchestrator->requestFeature($project, $text, 'customer:'.$customer->email, $faggWaiver, $ip, $items,
+                ['eur' => (int) $card_['price_eur'], 'modules' => (array) ($card_['modules'] ?? []), 'discount_pct' => (int) ($card_['discount_pct'] ?? 0)])
+            : $this->orchestrator->requestChanges($project, $text, 'customer:'.$customer->email, $faggWaiver, $ip, $items);
 
         $project->changeMessages()->whereNull('change_request_id')->where('id', '<=', $card->id)
             ->update(['change_request_id' => $cr->id]);
@@ -274,7 +313,7 @@ class ChangeChat
             $res = Http::timeout(90)
                 ->withToken(config('services.worker.token'))
                 ->post(rtrim(config('services.worker.url'), '/').'/change-chat', [
-                    'system' => Prompts::get('change/assistant', [
+                    'system' => Prompts::get('change/assistant', self::productTexts($project) + [
                         'language' => self::locale($project) === 'en' ? 'English' : 'German',
                         'status' => $project->status,
                         'mode' => $mode,
@@ -314,7 +353,11 @@ class ChangeChat
                 $items[] = ['text' => mb_substr($text, 0, 300)];
             }
         }
-        $scope = in_array($res->json('scope'), ['in', 'borderline', 'out'], true) ? $res->json('scope') : 'in';
+        $scope = in_array($res->json('scope'), ['in', 'borderline', 'out', 'feature'], true) ? $res->json('scope') : 'in';
+        // A new feature is only something we price for a Sofabuilt plugin; elsewhere it stays "out".
+        if ($scope === 'feature' && $project->kind !== 'plugin') {
+            $scope = 'out';
+        }
 
         return [
             'reply' => mb_substr($reply, 0, 2000),
@@ -323,6 +366,7 @@ class ChangeChat
             'items' => $questions || $scope === 'out' ? [] : $items,
             'scope' => $scope,
             'reason' => self::undash(trim((string) $res->json('reason', ''))),
+            'modules' => array_values(array_filter((array) $res->json('modules', []), 'is_array')),
         ];
     }
 

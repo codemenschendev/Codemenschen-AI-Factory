@@ -21,6 +21,8 @@ export interface StageJob {
   change_images?: { mime: string; data: string }[];
   context: {
     name: string;
+    /** revise only: "feature" when the round is a paid new feature (Sofabuilt), else a change. */
+    change_kind?: "change" | "feature";
     stack: "expo" | "nextjs" | "wp-plugin" | "chrome-ext" | "shopify";
     /** Sofabuilt plugins: the scope agreed on the desk (name, purpose, features, not_included, requires, modules). */
     scope?: Record<string, unknown> | null;

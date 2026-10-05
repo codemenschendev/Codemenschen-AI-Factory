@@ -86,6 +86,9 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   const lastReport = job.context.last_test_report ? `\n\nLast test report:\n${JSON.stringify(job.context.last_test_report)}` : "";
   const changeRequest = job.context.change_request
     ? `\n\nCustomer change request (round ${job.context.revision_round}):\n${job.context.change_request}` +
+      (job.context.change_kind === "feature"
+        ? "\n\nThis round is a NEW FEATURE the customer ordered and paid for, so it is in scope even though it is not in SPEC.md yet: implement it completely, add it to SPEC.md, and add a test/cases/<key>.mjs case for each checklist item that can be tested."
+        : "") +
       (job.context.change_items?.length
         ? `\n\nThe customer confirmed this as a checklist. Report on EVERY item in "items", in the same order and wording: done true only if it is really implemented, otherwise done false with a short note why. Notes and summary are read by the customer: plain short sentences in the customer's language, no dashes as sentence breaks.`
         : "")

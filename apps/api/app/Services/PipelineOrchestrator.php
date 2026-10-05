@@ -174,6 +174,35 @@ class PipelineOrchestrator
         return $cr->fresh();
     }
 
+    /**
+     * A paid new feature for a Sofabuilt plugin (the console's change chat). Priced from the parts it
+     * needs (Sofabuilt\Pricing::feature); work starts after payment like a paid round.
+     *
+     * @param  list<array{text: string}>  $items
+     * @param  array{eur: int, modules: list<array{key: string, qty: int}>, discount_pct: int}  $price
+     */
+    public function requestFeature(Project $project, string $text, string $actor, bool $faggWaiver, ?string $ip, array $items, array $price): ChangeRequest
+    {
+        abort_unless($project->kind === 'plugin', 409, 'New features are priced on the desk for this project.');
+        abort_unless(in_array($project->status, self::REVISABLE_STATUSES, true), 409, 'Project cannot take change requests right now');
+        abort_unless($faggWaiver, 422, 'Express start consent (FAGG § 18) is required for a paid feature');
+        $cr = $project->changeRequests()->create([
+            'round' => $project->revision_rounds + 1,
+            'kind' => 'feature',
+            'text' => $text,
+            'items' => $items,
+            'modules' => $price['modules'],
+            'status' => 'awaiting_payment',
+            'price_eur' => $price['eur'],
+            'fagg_waiver_at' => now(),
+            'fagg_waiver_ip' => $ip,
+        ]);
+        $project->recordEvent('feature.quoted', ['change_request_id' => $cr->id, 'price_eur' => $cr->price_eur, 'modules' => $price['modules']], $actor);
+        $this->revisions->createCheckout($cr);
+
+        return $cr->fresh();
+    }
+
     /** Stripe confirmed a paid change request. */
     public function onRevisionPaid(ChangeRequest $cr): void
     {
