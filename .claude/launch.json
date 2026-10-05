@@ -70,6 +70,20 @@
         "/private/tmp/claude-502/-Volumes-CodemenschenSSD-Workspace-Codemenschen-AI-Factory/19e39b0b-e2de-4a79-8c8e-9b4f65dfab27/scratchpad/qa"
       ],
       "port": 4603
+    },
+    {
+      "name": "web-tracking",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "/Volumes/CodemenschenSSD/Workspace/ai-factory-tracking/apps/web",
+        "--",
+        "--port",
+        "3010"
+      ],
+      "port": 3010
     }
   ]
 }

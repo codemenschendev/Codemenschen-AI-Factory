@@ -12,6 +12,7 @@ export function SbCheckout({
   sessionId,
   total,
   picked,
+  care,
   t,
   locale,
 }: {
@@ -19,12 +20,16 @@ export function SbCheckout({
   /** Build plus the launch options ticked in the desk's launch card. */
   total: number;
   picked: Record<string, boolean>;
+  /** Care per month and its free months, from the quote. */
+  care: { monthly: number; trialMonths: number };
   t: SbDict["desk"]["checkout"];
   locale: string;
 }) {
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [startNow, setStartNow] = useState(false);
+  // Never ticked by default: the buyer chooses Care themselves.
+  const [careTrial, setCareTrial] = useState(false);
   const [terms, setTerms] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -41,7 +46,7 @@ export function SbCheckout({
       const q = await api<{ quote_id: string }>(`/desk/${sessionId}/quote`, { method: "POST", body: "{}" });
       const r = await api<{ checkout_url?: string }>("/checkout", {
         method: "POST",
-        body: JSON.stringify({ quote_id: q.quote_id, email, name: name || null, packages: picked, fagg_waiver: startNow, terms: true, locale }),
+        body: JSON.stringify({ quote_id: q.quote_id, email, name: name || null, packages: picked, fagg_waiver: startNow, terms: true, care_trial: careTrial, locale }),
       });
       if (!r.checkout_url) throw new Error("no checkout url");
       window.location.href = r.checkout_url;
@@ -63,6 +68,10 @@ export function SbCheckout({
         <input type="checkbox" checked={startNow} onChange={(e) => setStartNow(e.target.checked)} />
         <span>{t.startNow}</span>
       </label>
+      <label className="sb-check sb-check-text sb-check-care">
+        <input type="checkbox" checked={careTrial} onChange={(e) => setCareTrial(e.target.checked)} />
+        <span>{t.careTrial.replace("{months}", String(care.trialMonths)).replace("{price}", eur(care.monthly))}</span>
+      </label>
       <label className="sb-check sb-check-text">
         <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} required />
         <span>
@@ -77,7 +86,6 @@ export function SbCheckout({
       <button type="submit" className="sb-btn" disabled={busy || !terms || !email}>
         {busy ? t.paying : t.pay.replace("{price}", eur(total))}
       </button>
-      <p className="sb-small">{t.careLater}</p>
     </form>
   );
 }

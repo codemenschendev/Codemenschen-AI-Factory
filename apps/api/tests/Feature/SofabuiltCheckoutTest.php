@@ -29,7 +29,7 @@ class SofabuiltCheckoutTest extends TestCase
     {
         $session = $this->readySession();
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
-        $this->assertSame(290 + 150 + 90, $res->json('price_eur'));
+        $this->assertSame(149 + 79 + 49, $res->json('price_eur'));
         $this->assertSame(['salesPage' => 299, 'listing' => 79, 'sellReady' => 199, 'ads' => 129], $res->json('packages'));
         $this->assertSame($res->json('quote_id'), $session->fresh()->quote_id);
 
@@ -50,7 +50,7 @@ class SofabuiltCheckoutTest extends TestCase
         $order = Order::firstOrFail();
         $this->assertSame('sofabuilt', $order->brand);
         $this->assertSame(['listing' => true, 'sellReady' => true], $order->packages);
-        $this->assertSame(530 + 79 + 199, $order->total_one_time_eur);
+        $this->assertSame(277 + 79 + 199, $order->total_one_time_eur);
 
         $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 609, []);
 
@@ -122,7 +122,7 @@ class SofabuiltCheckoutTest extends TestCase
 
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         // Shopify parts only: a WordPress key in the scope is not priced.
-        $this->assertSame(350 + 120 + 90, $res->json('price_eur'));
+        $this->assertSame(199 + 59 + 49, $res->json('price_eur'));
         $this->assertSame(['salesPage' => 299, 'listing' => 99, 'ads' => 129], $res->json('packages'));
 
         $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'shop@example.com', 'fagg_waiver' => true, 'terms' => true]);
@@ -141,5 +141,27 @@ class SofabuiltCheckoutTest extends TestCase
         $reviews = collect($items)->firstWhere('id', 'reviews');
         $this->assertSame('$180', $reviews['price'], 'a monthly price is shown per year');
         $this->assertSame(47971, $reviews['reviews']);
+    }
+
+    public function test_care_with_free_months_is_the_buyers_choice_and_starts_with_the_build(): void
+    {
+        config(['services.stripe.secret' => null, 'services.worker.token' => 't']);
+        Http::fake(['*/run' => Http::response(['accepted' => true], 202)]);
+        Mail::fake();
+        $quote = $this->postJson('/api/desk/'.$this->readySession()->id.'/quote')->json('quote_id');
+        $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'care@example.com', 'fagg_waiver' => true, 'terms' => true, 'care_trial' => true]);
+        $order = Order::firstOrFail();
+        $this->assertTrue($order->care_trial);
+
+        $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 277, []);
+        app(\App\Services\CareService::class)->startTrial($project, '', '');
+        $this->assertSame('active', $project->fresh()->care_status);
+        $this->assertSame(19, \App\Services\CareService::monthly($project));
+    }
+
+    public function test_care_for_a_shopify_app_costs_more_because_it_includes_hosting(): void
+    {
+        $this->assertSame(29, \App\Domain\Sofabuilt\Pricing::quote(['platform' => 'shopify'])['care_monthly_eur']);
+        $this->assertSame(19, \App\Domain\Sofabuilt\Pricing::quote(['platform' => 'wordpress'])['care_monthly_eur']);
     }
 }
