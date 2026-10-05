@@ -26,6 +26,8 @@ class Analytics
     /** Events the portal may send. Anything else is dropped. */
     public const CLIENT_EVENTS = [
         'page_view', 'cta_click', 'wizard_step', 'prototype_view',
+        // What a visitor did on a page (components/PageViews.tsx), once per page each.
+        'scroll_depth', 'section_view', 'ui_click', 'faq_open', 'tool_use', 'page_leave',
     ];
 
     /** Events only the API records. */
