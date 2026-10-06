@@ -20,6 +20,8 @@ return [
      * time_buffer_pct and token_pct; defaults here.
      */
     'rate_eur_hour' => 300,
+    'launch_rate_eur_hour' => 60,
+    // The risk cost (owner, 2026-10-06): +20 % on every estimate, time, tokens and pictures alike.
     'time_buffer_pct' => 20,
     'token_pct' => 1000,
 
@@ -37,6 +39,18 @@ return [
         'per_minute_k' => 160,
         'mix' => ['cache_read' => 0.91, 'cache_write' => 0.06, 'in' => 0.01, 'out' => 0.02],
         'usd_eur' => 0.92,
+    ],
+
+    /*
+     * Pictures (sales and landing pages, store banners and screenshots, ad creatives) are rendered by
+     * Codex now and by the OpenAI image API later (owner, 2026-10-06), so they are priced at the
+     * API's list price: gpt-image-1 output at $40 per million tokens, the tokens per 1024px picture
+     * by quality (OpenAI's image guide). Production renders at `low` (services.ai_image.quality).
+     */
+    'images' => [
+        'model' => 'gpt-image-1',
+        'usd_per_mtok_out' => 40.0,
+        'tokens_per_image' => ['low' => 272, 'medium' => 1056, 'high' => 4160],
     ],
 
     'modules' => [
@@ -61,13 +75,17 @@ return [
     // A scope above this is too big for one fixed-price build: the desk suggests splitting it.
     'max_build_eur' => 990,
 
+    // Launch options (owner, 2026-10-06): a person and the AI work on them together, so they are
+    // priced at the launch rate (admin setting rate_launch, 60 an hour): `minutes` is the whole time,
+    // person and AI, plus the buffer; the tokens follow `ai_minutes`; `images` are renders on the
+    // OpenAI image API (see `images` below). Tokens and images take the admin's token_pct.
     'launch' => [
-        'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
-        'listing' => ['eur' => 79, 'en' => 'Store listing: texts, banner, icon, submission', 'de' => 'Store-Eintrag: Texte, Banner, Icon, Einreichung'],
+        'salesPage' => ['minutes' => 45, 'ai_minutes' => 8, 'images' => 4, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
+        'listing' => ['minutes' => 30, 'ai_minutes' => 3, 'images' => 3, 'en' => 'Store listing: texts, banner, icon, submission', 'de' => 'Store-Eintrag: Texte, Banner, Icon, Einreichung'],
         // Sell-ready (2026-10-05): licence keys, automatic updates for buyers and a checkout that also
         // handles EU VAT, through Freemius. We build it in; the seller's Freemius account is theirs.
-        'sellReady' => ['eur' => 199, 'en' => 'Ready to sell: licence keys, automatic updates and checkout with VAT handled', 'de' => 'Bereit zum Verkauf: Lizenzschlüssel, automatische Updates und Checkout inklusive Mehrwertsteuer'],
-        'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+        'sellReady' => ['minutes' => 45, 'ai_minutes' => 6, 'images' => 0, 'en' => 'Ready to sell: licence keys, automatic updates and checkout with VAT handled', 'de' => 'Bereit zum Verkauf: Lizenzschlüssel, automatische Updates und Checkout inklusive Mehrwertsteuer'],
+        'ads' => ['minutes' => 45, 'ai_minutes' => 4, 'images' => 6, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
     ],
 
     /*
@@ -97,9 +115,9 @@ return [
         'repeatable' => ['screen' => 8, 'external_api' => 3, 'language' => 5],
         // The store release is a part of the app here, so the store package is not sold again.
         'launch' => [
-            'landingPage' => ['eur' => 299, 'en' => 'Landing page for your app', 'de' => 'Landingpage für deine App'],
-            'marketingLaunch' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
-            'transferAssist' => ['eur' => 49, 'en' => 'Help moving the app to your own store accounts', 'de' => 'Hilfe beim Umzug der App auf deine eigenen Store-Konten'],
+            'landingPage' => ['minutes' => 45, 'ai_minutes' => 8, 'images' => 4, 'en' => 'Landing page for your app', 'de' => 'Landingpage für deine App'],
+            'marketingLaunch' => ['minutes' => 45, 'ai_minutes' => 4, 'images' => 6, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+            'transferAssist' => ['minutes' => 30, 'ai_minutes' => 0, 'images' => 0, 'en' => 'Help moving the app to your own store accounts', 'de' => 'Hilfe beim Umzug der App auf deine eigenen Store-Konten'],
         ],
         'care_monthly_eur' => 9,
         'rate_eur_hour' => 600,
@@ -128,9 +146,9 @@ return [
         ],
         'repeatable' => ['external_api' => 4],
         'launch' => [
-            'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
-            'listing' => ['eur' => 79, 'en' => 'Chrome Web Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Chrome Web Store: Texte, Screenshots, Icon, Einreichung'],
-            'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+            'salesPage' => ['minutes' => 45, 'ai_minutes' => 8, 'images' => 4, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
+            'listing' => ['minutes' => 40, 'ai_minutes' => 3, 'images' => 5, 'en' => 'Chrome Web Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Chrome Web Store: Texte, Screenshots, Icon, Einreichung'],
+            'ads' => ['minutes' => 45, 'ai_minutes' => 4, 'images' => 6, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
         ],
         'catalog' => [],
     ],
@@ -162,9 +180,9 @@ return [
         // Care for a Shopify app includes running it on our server: Shopify needs it hosted.
         'care_monthly_eur' => 29,
         'launch' => [
-            'salesPage' => ['eur' => 299, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
-            'listing' => ['eur' => 99, 'en' => 'Shopify App Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Shopify App Store: Texte, Screenshots, Icon, Einreichung'],
-            'ads' => ['eur' => 129, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
+            'salesPage' => ['minutes' => 45, 'ai_minutes' => 8, 'images' => 4, 'en' => 'Sales page with sign-up form', 'de' => 'Verkaufsseite mit Anmeldeformular'],
+            'listing' => ['minutes' => 40, 'ai_minutes' => 3, 'images' => 5, 'en' => 'Shopify App Store listing: texts, screenshots, icon, submission', 'de' => 'Eintrag im Shopify App Store: Texte, Screenshots, Icon, Einreichung'],
+            'ads' => ['minutes' => 45, 'ai_minutes' => 4, 'images' => 6, 'en' => 'Ads for Google and Meta, plus AI search visibility', 'de' => 'Anzeigen für Google und Meta, dazu Sichtbarkeit in KI-Suchen'],
         ],
         'catalog' => [
             ['id' => 'reviews', 'name' => 'Judge.me Product Reviews', 'category' => 'Reviews', 'price' => '$15/mo', 'reviews' => 47971,

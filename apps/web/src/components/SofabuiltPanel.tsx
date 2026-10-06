@@ -18,6 +18,7 @@ type Settings = {
   rate_app: number;
   token_pct: number;
   time_buffer_pct: number;
+  rate_launch: number;
 };
 type Stats = { chats_today: number; chats_7d: number; quotes_7d: number; paid_orders: number; paid_eur: number; test_orders: number; care_active: number };
 
@@ -46,8 +47,10 @@ const T = {
     rates: "Hourly rate per platform (EUR)",
     ratesHint: "A part costs its estimated minutes plus the buffer below at this rate, plus its tokens. Apps 600, everything else 300 (ten times 60 and 30).",
     rateApp: "Apps (Appmitki)",
-    buffer: "Time buffer on the estimate (%)",
-    bufferHint: "Added to the estimated time against estimating too low. 20 means estimate plus 20 %.",
+    launchRate: "Launch options, per hour (EUR)",
+    launchRateHint: "Sales page, listing, ads and the rest: a person and the AI together. Time at this rate, plus the AI's tokens and the pictures at the OpenAI image API price.",
+    buffer: "Risk buffer on every estimate (%)",
+    bufferHint: "The risk cost: added to every estimate, time, tokens and pictures alike, so a low estimate never costs us. 20 means plus 20 %.",
     tokens: "AI token cost in the price (%)",
     tokensHint: "The tokens the desk estimates per part, at the list price of Claude Opus 5.5 ($4 in, $20 out, $0.20 cache read per million). 100 is at cost, 1000 ten times, 0 leaves it out.",
     builds: "Real builds against the estimate",
@@ -78,8 +81,10 @@ const T = {
     rates: "Stundensatz pro Plattform (EUR)",
     ratesHint: "Ein Teil kostet seine geschätzten Minuten plus den Puffer zu diesem Satz, dazu seine Tokens. Apps 600, alles andere 300 (zehnmal 60 und 30).",
     rateApp: "Apps (Appmitki)",
-    buffer: "Zeitpuffer auf die Schätzung (%)",
-    bufferHint: "Kommt auf die geschätzte Zeit, damit zu knappe Schätzungen nichts kosten. 20 heißt Schätzung plus 20 %.",
+    launchRate: "Launch-Optionen, pro Stunde (EUR)",
+    launchRateHint: "Verkaufsseite, Store-Eintrag, Anzeigen und der Rest: ein Mensch und die KI zusammen. Zeit zu diesem Satz, dazu die Tokens der KI und die Bilder zum Preis der OpenAI-Bild-API.",
+    buffer: "Risikopuffer auf jede Schätzung (%)",
+    bufferHint: "Die Risikokosten: kommen auf jede Schätzung, Zeit, Tokens und Bilder, damit eine zu knappe Schätzung uns nichts kostet. 20 heißt plus 20 %.",
     tokens: "KI-Tokenkosten im Preis (%)",
     tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Opus 5.5 (4 $ rein, 20 $ raus, 0,20 $ Cache-Lesen pro Million). 100 ist zum Selbstkostenpreis, 1000 das Zehnfache, 0 lässt sie weg.",
     builds: "Echte Builds gegen die Schätzung",
@@ -223,6 +228,7 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
           </div>
           <span className="small muted">{t.ratesHint}</span>
         </div>
+        {num("rate_launch", t.launchRate, t.launchRateHint, 10, 10000)}
         {num("time_buffer_pct", t.buffer, t.bufferHint, 0, 200)}
         {num("token_pct", t.tokens, t.tokensHint, 0, 5000)}
         {num("price_pct", t.price, t.priceHint, 30, 200)}

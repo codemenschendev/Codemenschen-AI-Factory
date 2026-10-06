@@ -117,12 +117,26 @@ class AppDeskTest extends TestCase
         Settings::write(['token_pct' => 100, 'time_buffer_pct' => 20], 'test');
         $id = $this->chat([['key' => 'screen'], ['key' => 'local_save']]);
 
-        // 13 min plus 20 % at 60 an hour, plus the tokens: base 9.6 + 1.09, screen 4.8 + 0.54, local 1.2 + 0.14.
+        // 13 min plus 20 % at 60 an hour, plus the tokens plus 20 %: base 9.6 + 1.30, screen 4.8 + 0.65, local 1.2 + 0.16.
         $res = $this->getJson("/api/desk/$id")->assertJsonPath('price.time_buffer_pct', 20)->assertJsonPath('price.rate_eur_hour', 60);
         $this->assertSame(11 + 5 + 1, $res->json('price.build_eur'));
         // The defaults: ten times 60 for apps and 30 for the rest, tokens ten times their price.
         Settings::write(['rate_app' => 600], 'test');
         $this->assertSame([600, 300, 300, 300], array_map(fn ($p) => \App\Domain\Sofabuilt\Platforms::rate($p), ['app', 'wordpress', 'shopify', 'chrome']));
         $this->assertSame(1000, \App\Domain\Sofabuilt\Settings::defaults()['token_pct']);
+    }
+
+    public function test_launch_options_are_a_persons_and_the_ais_time_at_60_plus_tokens_and_pictures(): void
+    {
+        Settings::write(['token_pct' => 1000, 'time_buffer_pct' => 20], 'test');
+        config(['services.ai_image.quality' => 'low']);
+        $launch = \App\Domain\Sofabuilt\Platforms::launch('app');
+
+        // Landing page, everything plus the 20 % risk: 45 min at 60 = 54, 8 AI minutes of tokens (1280k at
+        // Opus, x10) = 13.03, 4 pictures at gpt-image-1 low (272 tokens at $40 per million, x10) = 0.48.
+        $this->assertSame(68, $launch['landingPage']['eur']);
+        // Moving the app is a person's work only: 30 min plus 20 % at 60.
+        $this->assertSame(36, $launch['transferAssist']['eur']);
+        $this->assertEqualsWithDelta(0.48, \App\Domain\Sofabuilt\Pricing::imageEur(4), 0.01);
     }
 }

@@ -31,6 +31,8 @@ class Settings
             'token_pct' => (int) config('sofabuilt.token_pct', 100),
             // A buffer on the estimated time against estimating too low (owner, 2026-10-06: 20 %).
             'time_buffer_pct' => (int) config('sofabuilt.time_buffer_pct', 20),
+            // Launch options are a person's and the AI's work together: their own hourly rate.
+            'rate_launch' => (int) config('sofabuilt.launch_rate_eur_hour', 60),
         ];
     }
 
@@ -50,6 +52,7 @@ class Settings
         'rate_app' => 'integer|min:10|max:10000',
         'token_pct' => 'integer|min:0|max:5000',
         'time_buffer_pct' => 'integer|min:0|max:200',
+        'rate_launch' => 'integer|min:10|max:10000',
     ];
 
     public static function get(string $key): mixed

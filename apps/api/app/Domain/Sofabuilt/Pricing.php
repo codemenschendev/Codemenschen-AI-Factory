@@ -137,7 +137,25 @@ class Pricing
 
     public static function eurRaw(string $platform, int $minutes): float
     {
-        return $minutes * (100 + (int) Settings::get('time_buffer_pct')) / 100 * Platforms::rate($platform) / 60 * (int) Settings::get('price_pct') / 100;
+        return $minutes * self::risk() * Platforms::rate($platform) / 60 * (int) Settings::get('price_pct') / 100;
+    }
+
+    /** @param array{minutes: int, ai_minutes?: int, images?: int} $option a launch option */
+    public static function launchEur(array $option): int
+    {
+        $time = (int) $option['minutes'] * self::risk() * (int) Settings::get('rate_launch') / 60;
+
+        return (int) round($time + self::tokenEur(self::usualTokensK((int) ($option['ai_minutes'] ?? 0))) + self::imageEur((int) ($option['images'] ?? 0)));
+    }
+
+    /** Pictures at the OpenAI image API's list price, at the quality production renders at, times token_pct. */
+    public static function imageEur(int $images): float
+    {
+        $c = (array) config('sofabuilt.images');
+        $tokens = (int) ($c['tokens_per_image'][config('services.ai_image.quality', 'low')] ?? 272);
+        $usd = $images * $tokens * (float) ($c['usd_per_mtok_out'] ?? 40) / 1_000_000;
+
+        return $usd * (float) config('sofabuilt.tokens.usd_eur', 0.92) * (int) Settings::get('token_pct') / 100 * self::risk();
     }
 
     /** Thousands of tokens a part usually takes, from its usual minutes. */
@@ -165,6 +183,12 @@ class Pricing
             $usd += $tokensK * (float) $share * (float) ($t['usd_per_mtok'][$kind] ?? 0) / 1000;
         }
 
-        return $usd * (float) ($t['usd_eur'] ?? 0.92) * (int) Settings::get('token_pct') / 100;
+        return $usd * (float) ($t['usd_eur'] ?? 0.92) * (int) Settings::get('token_pct') / 100 * self::risk();
+    }
+
+    /** The risk buffer on every estimate, time, tokens and pictures alike (owner, 2026-10-06: +20 %). */
+    public static function risk(): float
+    {
+        return (100 + (int) Settings::get('time_buffer_pct')) / 100;
     }
 }
