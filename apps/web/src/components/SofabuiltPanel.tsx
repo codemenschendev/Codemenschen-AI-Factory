@@ -47,10 +47,10 @@ const T = {
     trial: "Free Care months at checkout",
     edits: "Changes included in Care per month",
     rates: "Hourly rate per platform (EUR)",
-    ratesHint: "A part costs its build minutes, estimated by the desk for each idea, times this rate. At 60 a minute is a euro.",
+    ratesHint: "A part costs its build minutes, estimated by the desk for each idea, times this rate, plus its tokens, all times the factor below.",
     rateApp: "Apps (Appmitki)",
     mults: "Factor on build time plus tokens",
-    multsHint: "1 is the plain calculation. Apps sell at 10: a todo app is about 400 EUR.",
+    multsHint: "The minutes are the AI's real working time, so the factor sets the price level. Apps at 28: a todo app is about 400 EUR.",
     tokens: "AI token cost in the price (%)",
     tokensHint: "The tokens the desk estimates per part, at the list price of Claude Sonnet 5.5 ($2 in, $10 out per million). 100 is at cost, 0 leaves it out.",
     builds: "Real builds against the estimate",
@@ -82,7 +82,7 @@ const T = {
     ratesHint: "Ein Teil kostet seine Bauminuten, vom Desk für jede Idee geschätzt, mal diesen Satz. Bei 60 ist eine Minute ein Euro.",
     rateApp: "Apps (Appmitki)",
     mults: "Faktor auf Bauzeit plus Tokens",
-    multsHint: "1 ist die reine Rechnung. Apps verkaufen mit 10: eine To-do-App kostet etwa 400 EUR.",
+    multsHint: "Die Minuten sind die echte Arbeitszeit der KI, der Faktor setzt das Preisniveau. Apps mit 28: eine To-do-App kostet etwa 400 EUR.",
     tokens: "KI-Tokenkosten im Preis (%)",
     tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Sonnet 5.5 (2 $ rein, 10 $ raus pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
     builds: "Echte Builds gegen die Schätzung",
@@ -229,8 +229,8 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
         <div style={{ display: "grid", gap: 8 }}>
           <b className="small">{t.mults}</b>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {PLATFORMS.map((p) => num(`mult_${p}`, t.platforms[p], undefined, 1, 20))}
-            {num("mult_app", t.rateApp, undefined, 1, 20)}
+            {PLATFORMS.map((p) => num(`mult_${p}`, t.platforms[p], undefined, 1, 200))}
+            {num("mult_app", t.rateApp, undefined, 1, 200)}
           </div>
           <span className="small muted">{t.multsHint}</span>
         </div>

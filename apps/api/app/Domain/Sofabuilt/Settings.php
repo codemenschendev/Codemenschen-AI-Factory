@@ -30,9 +30,9 @@ class Settings
             // The AI's token cost in the price: 100 is at cost, 0 leaves it out, 150 adds half.
             'token_pct' => 100,
             // A factor on build time plus tokens, per platform (apps: 10).
-            'mult_wordpress' => 1,
-            'mult_shopify' => 1,
-            'mult_chrome' => 1,
+            'mult_wordpress' => (int) config('sofabuilt.multiplier', 1),
+            'mult_shopify' => (int) config('sofabuilt.shopify.multiplier', 1),
+            'mult_chrome' => (int) config('sofabuilt.chrome.multiplier', 1),
             'mult_app' => (int) config('sofabuilt.app.multiplier', 1),
         ];
     }
@@ -52,10 +52,10 @@ class Settings
         'rate_chrome' => 'integer|min:10|max:1000',
         'rate_app' => 'integer|min:10|max:1000',
         'token_pct' => 'integer|min:0|max:500',
-        'mult_wordpress' => 'integer|min:1|max:20',
-        'mult_shopify' => 'integer|min:1|max:20',
-        'mult_chrome' => 'integer|min:1|max:20',
-        'mult_app' => 'integer|min:1|max:20',
+        'mult_wordpress' => 'integer|min:1|max:200',
+        'mult_shopify' => 'integer|min:1|max:200',
+        'mult_chrome' => 'integer|min:1|max:200',
+        'mult_app' => 'integer|min:1|max:200',
     ];
 
     public static function get(string $key): mixed

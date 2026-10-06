@@ -145,7 +145,7 @@ class Pricing
     /** Thousands of tokens a part usually takes, from its usual minutes. */
     public static function usualTokensK(int $minutes): int
     {
-        return (int) round($minutes * (float) config('sofabuilt.tokens.per_minute_k', 62.5));
+        return (int) round($minutes * (float) config('sofabuilt.tokens.per_minute_k', 160));
     }
 
     /** The model's token estimate for one unit, held near the usual tokens. */
@@ -158,12 +158,14 @@ class Pricing
         return max(max(1, intdiv($usual, 2)), min($usual * 3, $estimate));
     }
 
-    /** Thousands of tokens into euros: the model's list price, read and written, times token_pct. */
+    /** Thousands of tokens into euros at the model's list price, in the usual mix of an agent's tokens, times token_pct. */
     public static function tokenEur(int $tokensK): float
     {
         $t = (array) config('sofabuilt.tokens');
-        $out = $tokensK * (float) ($t['out_share'] ?? 0.04);
-        $usd = (($tokensK - $out) * (float) ($t['usd_per_mtok']['in'] ?? 2) + $out * (float) ($t['usd_per_mtok']['out'] ?? 10)) / 1000;
+        $usd = 0.0;
+        foreach ((array) ($t['mix'] ?? []) as $kind => $share) {
+            $usd += $tokensK * (float) $share * (float) ($t['usd_per_mtok'][$kind] ?? 0) / 1000;
+        }
 
         return $usd * (float) ($t['usd_eur'] ?? 0.92) * (int) Settings::get('token_pct') / 100;
     }
