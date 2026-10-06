@@ -36,7 +36,7 @@ class SofabuiltCheckoutTest extends TestCase
     {
         $session = $this->readySession();
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
-        $this->assertSame(149 + 79 + 49, $res->json('price_eur'));
+        $this->assertSame(41 * (3 + 3 + 2), $res->json('price_eur'));
         $this->assertSame(['salesPage' => 299, 'listing' => 79, 'sellReady' => 199, 'ads' => 129], $res->json('packages'));
         $this->assertSame($res->json('quote_id'), $session->fresh()->quote_id);
 
@@ -57,7 +57,7 @@ class SofabuiltCheckoutTest extends TestCase
         $order = Order::firstOrFail();
         $this->assertSame('sofabuilt', $order->brand);
         $this->assertSame(['listing' => true, 'sellReady' => true], $order->packages);
-        $this->assertSame(277 + 79 + 199, $order->total_one_time_eur);
+        $this->assertSame(328 + 79 + 199, $order->total_one_time_eur);
 
         $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 609, []);
 
@@ -106,11 +106,11 @@ class SofabuiltCheckoutTest extends TestCase
 
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         // Chrome parts only: a WordPress key in the scope is not priced.
-        $this->assertSame(250 + 120 + 50, $res->json('price_eur'));
+        $this->assertSame(65 * (4 + 3 + 1), $res->json('price_eur'));
         $this->assertSame(['salesPage' => 299, 'listing' => 79, 'ads' => 129], $res->json('packages'));
 
         $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'ext@example.com', 'fagg_waiver' => true, 'terms' => true]);
-        $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 420, []);
+        $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 520, []);
         $this->assertSame('chrome-ext', $project->stack);
         $project->builds()->create(['platform' => 'plugin', 'version' => '0.1.0', 'artifact_path' => 'x.zip', 'status' => 'preview']);
         $this->assertNull($project->previewUrl(), 'Playground is for WordPress only');
@@ -129,7 +129,7 @@ class SofabuiltCheckoutTest extends TestCase
 
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         // Shopify parts only: a WordPress key in the scope is not priced.
-        $this->assertSame(199 + 59 + 49, $res->json('price_eur'));
+        $this->assertSame(35 * (6 + 2 + 2), $res->json('price_eur'));
         $this->assertSame(['salesPage' => 299, 'listing' => 99, 'ads' => 129], $res->json('packages'));
 
         $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'shop@example.com', 'fagg_waiver' => true, 'terms' => true]);
@@ -160,7 +160,7 @@ class SofabuiltCheckoutTest extends TestCase
         $order = Order::firstOrFail();
         $this->assertTrue($order->care_trial);
 
-        $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 277, []);
+        $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 328, []);
         app(\App\Services\CareService::class)->startTrial($project, '', '');
         $this->assertSame('active', $project->fresh()->care_status);
         $this->assertSame(19, \App\Services\CareService::monthly($project));

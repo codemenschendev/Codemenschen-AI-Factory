@@ -21,11 +21,11 @@ class BuildStatsTest extends PluginFeatureTest
 
         $stats = BuildStats::recent();
         $row = $stats['rows'][0];
-        $this->assertSame([4.0, 188, 854], [$row['real_minutes'], $row['estimated_minutes'], $row['real_tokens_k']]);
+        $this->assertSame([4.0, 4, 854], [$row['real_minutes'], $row['estimated_minutes'], $row['real_tokens_k']]);
         // 3004 in x 2 + 11000 out x 10 + 800k cache read x 0.2 + 40k cache write x 2.5 = $0.376, in EUR.
         $this->assertEqualsWithDelta(0.35, $row['real_token_eur'], 0.001);
         $this->assertTrue($row['tokens_measured']);
-        $this->assertSame(['wp-plugin' => 0.021], $stats['ratios']);
+        $this->assertSame(['wp-plugin' => 1.0], $stats['ratios']);
     }
 
     public function test_the_worker_reports_cache_tokens(): void

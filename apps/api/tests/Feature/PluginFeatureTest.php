@@ -47,7 +47,7 @@ class PluginFeatureTest extends TestCase
         ]]);
         $quote = $this->postJson("/api/desk/{$session->id}/quote")->json('quote_id');
         $this->postJson('/api/checkout', ['quote_id' => $quote, 'email' => 'p@example.com', 'fagg_waiver' => true, 'terms' => true]);
-        $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 188, [])->fresh();
+        $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 164, [])->fresh();
         $project->update(['status' => 'READY']);
         $project->builds()->create(['platform' => 'plugin', 'version' => '1.0.0', 'artifact_path' => 'x.zip']);
 
@@ -74,13 +74,13 @@ class PluginFeatureTest extends TestCase
         $this->assertStringContainsString('"feature"', $this->asked[0]['system']);
         $card = $res->json('messages.1.meta.card');
         $this->assertSame('feature', $card['mode']);
-        $this->assertSame(49 + 29, $card['price_eur'], 'form + email, never the base');
+        $this->assertSame(41 * (2 + 1), $card['price_eur'], 'form + email, never the base');
 
         $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages/confirm", ['fagg_waiver' => true]);
         $cr = $project->changeRequests()->firstOrFail();
         $this->assertSame('feature', $cr->kind);
         $this->assertSame('awaiting_payment', $cr->status);
-        $this->assertSame(78, $cr->price_eur);
+        $this->assertSame(123, $cr->price_eur);
     }
 
     public function test_care_takes_its_discount_off_a_new_feature(): void
@@ -89,7 +89,7 @@ class PluginFeatureTest extends TestCase
         app(CareService::class)->activate($project, 'sub', ['id' => 'e']);
         $this->replies = [['reply' => 'ok', 'scope' => 'feature', 'items' => [['text' => 'Import FAQs from a spreadsheet']], 'modules' => [['key' => 'import_export'], ['key' => 'data']]]];
         $res = $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Import from Excel'])->assertCreated();
-        $this->assertSame((int) round((49 + 49) * 0.8), $res->json('messages.1.meta.card.price_eur'));
+        $this->assertSame((int) round(41 * (2 + 2) * 0.8), $res->json('messages.1.meta.card.price_eur'));
         $this->assertSame(20, $res->json('messages.1.meta.card.discount_pct'));
     }
 }
