@@ -151,10 +151,6 @@ export function Desk({
   const de = locale === "de";
   const eur = (n: number) => (de ? `${n.toLocaleString("de-AT")} €` : `€${n.toLocaleString("en-IE")}`);
   const num = (n: number) => n.toLocaleString(de ? "de-AT" : "en-IE");
-  // Build time of a part: minutes under an hour, hours with one decimal above.
-  // Tokens the AI reads and writes: thousands as "k", millions with one decimal.
-  const tokens = (k: number) => (k < 1000 ? `${num(k)}k` : `${(Math.round(k / 100) / 10).toLocaleString(de ? "de-AT" : "en-IE")}M`);
-  const time = (m: number) => (m < 60 ? fill(t.minutes, { n: m }) : fill(t.hours, { n: (Math.round(m / 6) / 10).toLocaleString(de ? "de-AT" : "en-IE") }));
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
   useEffect(() => {
@@ -507,12 +503,6 @@ export function Desk({
                   <span>
                     {l.label}
                     {l.qty > 1 ? ` × ${l.qty}` : ""}
-                    {l.minutes ? (
-                      <small className="dk-part-time">
-                        {time(l.minutes)}
-                        {l.tokens_k ? ` · ${fill(t.tokens, { n: tokens(l.tokens_k) })}` : ""}
-                      </small>
-                    ) : null}
                   </span>
                   <b>{eur(l.eur)}</b>
                 </label>
@@ -532,17 +522,9 @@ export function Desk({
               {more ? t.showLess : `+ ${t.addMore}`}
             </button>
             <div className="dk-subtotal">
-              <span>
-                {t.build}
-                {price.build_minutes ? <small className="dk-part-time">{fill(t.buildTime, { time: time(price.build_minutes) })}</small> : null}
-              </span>
+              <span>{t.build}</span>
               <b>{eur(price.build_eur)}</b>
             </div>
-            {price.token_eur ? (
-              <p className="dk-hint dk-split">
-                {fill(t.split, { time: eur(price.time_eur ?? 0), tokens: eur(Math.round(price.token_eur)), n: tokens(price.build_tokens_k ?? 0) })}
-              </p>
-            ) : null}
             <p className="dk-sub dk-sub-launch">
               <Ico name="rocket" className="dk-launch-ico" />
               {t.launchTitle}

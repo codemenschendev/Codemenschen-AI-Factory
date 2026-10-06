@@ -223,5 +223,3 @@ body.sb .svc-foot b.svc-go-label { font-size: 16px; font-weight: 600; color: var
 .dk-preview-btn:hover { background: var(--accent-soft); }
 .dk-preview-btn .dk-ico { width: 18px; height: 18px; }
 .dk-preview small { color: var(--ink-soft); font-size: 13px; text-align: center; }
-.dk-part-time { display: block; margin-top: 2px; color: var(--ink-soft); font-size: 12px; font-weight: 400; }
-.dk-split { margin: 6px 0 0; }
