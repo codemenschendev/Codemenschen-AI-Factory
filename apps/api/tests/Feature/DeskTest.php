@@ -15,7 +15,8 @@ class DeskTest extends TestCase
     {
         parent::setUp();
         // Prices here are build time only; the token cost has its own test (AppDeskTest).
-        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
+        // At 1,200 an hour a minute is 20 EUR, so the prices stay readable; no buffer, no tokens.
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0, 'time_buffer_pct' => 0, 'rate_wordpress' => 1200, 'rate_shopify' => 1200, 'rate_chrome' => 1200], 'test');
         config(['services.ai_image.base_url' => 'http://model.test', 'services.ai_image.token' => 't', 'services.turnstile.secret' => null]);
     }
 
@@ -53,8 +54,8 @@ class DeskTest extends TestCase
         $this->assertStringNotContainsString('—', $res->json('messages.1.body'));
         // Unknown keys never reach the price; a repeatable module is capped.
         $this->assertSame(['woo', 'email', 'external_api'], array_column($res->json('scope.modules'), 'key'));
-        // Minutes times the WordPress factor (41), at 60 an hour and without tokens.
-        $this->assertSame(41 * (3 + 3 + 1 + 3 * 4), $res->json('price.build_eur'));
+        // 20 EUR a minute (setUp), without tokens.
+        $this->assertSame(20 * (3 + 3 + 1 + 3 * 4), $res->json('price.build_eur'));
     }
 
     public function test_a_turn_without_a_new_scope_keeps_the_old_one(): void
@@ -70,7 +71,7 @@ class DeskTest extends TestCase
         $this->postJson("/api/desk/$id/messages", ['text' => 'hello there'])->assertOk();
 
         $this->postJson("/api/desk/$id/messages", ['text' => 'and more'])->assertOk()
-            ->assertJsonPath('scope.name', 'A')->assertJsonPath('ready', true)->assertJsonPath('price.build_eur', 41 * (3 + 1));
+            ->assertJsonPath('scope.name', 'A')->assertJsonPath('ready', true)->assertJsonPath('price.build_eur', 20 * (3 + 1));
     }
 
     public function test_a_model_failure_keeps_the_question_and_says_so(): void
@@ -97,13 +98,13 @@ class DeskTest extends TestCase
         $this->fakeModel(['reply' => 'x']);
         $items = $this->getJson('/api/desk/catalog')->assertOk()->json('items');
         $this->assertNotEmpty($items);
-        $this->assertGreaterThanOrEqual(41 * 3, $items[0]['own_from_eur']);
+        $this->assertGreaterThanOrEqual(20 * 3, $items[0]['own_from_eur']);
     }
 
     public function test_base_is_always_priced_once(): void
     {
         $q = Pricing::quote(['modules' => [['key' => 'base'], ['key' => 'base']]]);
-        $this->assertSame(41 * 3, $q['build_eur']);
+        $this->assertSame(20 * 3, $q['build_eur']);
         $this->assertFalse($q['too_big']);
     }
 
@@ -117,13 +118,13 @@ class DeskTest extends TestCase
         $res = $this->postJson("/api/desk/{$session->id}/modules", ['modules' => [['key' => 'woo'], ['key' => 'block'], ['key' => 'nope'], ['key' => 'base']]])
             ->assertOk();
         $this->assertSame(['woo', 'block'], array_column($res->json('scope.modules'), 'key'));
-        $this->assertSame(41 * (3 + 3 + 1), $res->json('price.build_eur'));
+        $this->assertSame(20 * (3 + 3 + 1), $res->json('price.build_eur'));
         $this->assertNotEmpty($res->json('module_options'));
 
         // The next turn may reword features but not bring e-mails back.
         $this->fakeModel(['reply' => 'Updated.', 'scope' => ['name' => 'A', 'features' => ['y'], 'modules' => [['key' => 'woo'], ['key' => 'email']]], 'ready' => true]);
         $this->postJson("/api/desk/{$session->id}/messages", ['text' => 'ok then'])->assertOk()
             ->assertJsonPath('scope.features.0', 'y')
-            ->assertJsonPath('price.build_eur', 41 * (3 + 3 + 1));
+            ->assertJsonPath('price.build_eur', 20 * (3 + 3 + 1));
     }
 }

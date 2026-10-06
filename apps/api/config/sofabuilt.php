@@ -11,26 +11,26 @@
 return [
 
     /*
-     * Prices by build time (owner, 2026-10-05): every part has the minutes our AI developer usually
-     * needs to build and test it; the desk agent estimates the minutes for the idea at hand, and the
-     * price is (minutes at the platform's hourly rate plus the tokens) times the platform's factor
-     * (admin settings rate_<platform> and mult_<platform>, defaults here).
-     * Minutes are the AI's real working time, estimated from the builds so far (2026-10-06: a whole
-     * plugin about 5 minutes, an app 15 to 35); the factor sets the price level.
+     * The price of a part (owner, 2026-10-06): the AI's estimated working time plus a buffer of
+     * time_buffer_pct against estimating too low, at the platform's hourly rate (apps 60, all other
+     * platforms 30), plus the AI's tokens. No other factor. The usual minutes are the AI's real
+     * working time from the builds so far (a whole plugin about 5 minutes, an app 15 to 35); the
+     * desk agent estimates the minutes for the idea at hand. Admin settings rate_<platform>,
+     * time_buffer_pct and token_pct; defaults here.
      */
-    'rate_eur_hour' => 60,
-    'multiplier' => 41,
+    'rate_eur_hour' => 30,
+    'time_buffer_pct' => 20,
 
     /*
      * The AI's token cost on top of the build time (owner, 2026-10-06). Each part's usual tokens
      * follow from its minutes; the desk agent estimates the tokens of each part for the idea and
-     * they are held between half and three times the usual. Priced at the API list price of the
-     * model that builds (Claude Sonnet 5.5, USD per million tokens), in euros, times the admin's
-     * token_pct (100 = at cost).
+     * they are held between half and three times the usual. Priced at the list price of the model
+     * named below, in euros, times the admin's token_pct (100 = at cost).
      */
     'tokens' => [
-        'model' => 'Claude Sonnet 5.5',
-        'usd_per_mtok' => ['in' => 2.0, 'out' => 10.0, 'cache_read' => 0.2, 'cache_write' => 2.5],
+        // Priced at Claude Opus 5.5's list price (owner, 2026-10-06), USD per million tokens.
+        'model' => 'Claude Opus 5.5',
+        'usd_per_mtok' => ['in' => 4.0, 'out' => 20.0, 'cache_read' => 0.2, 'cache_write' => 5.0],
         // An agent writing code and tests: about 160k tokens a minute, most of them read from the cache.
         'per_minute_k' => 160,
         'mix' => ['cache_read' => 0.91, 'cache_write' => 0.06, 'in' => 0.01, 'out' => 0.02],
@@ -100,9 +100,7 @@ return [
             'transferAssist' => ['eur' => 49, 'en' => 'Help moving the app to your own store accounts', 'de' => 'Hilfe beim Umzug der App auf deine eigenen Store-Konten'],
         ],
         'care_monthly_eur' => 9,
-        // Apps: a todo app about 400 EUR (owner, 2026-10-06: ten times the first calculation).
-        'multiplier' => 28,
-        // At x10 a bigger app is a normal order, so apps have their own limit for one build.
+        'rate_eur_hour' => 60,
         'max_build_eur' => 5000,
         'hosting_monthly_eur' => 19,
         'delivery_days' => [1, 2],
@@ -113,7 +111,6 @@ return [
      * No premium catalogue yet: Chrome extensions come in through the "own idea" door.
      */
     'chrome' => [
-        'multiplier' => 65,
         'modules' => [
             'base' => ['minutes' => 4, 'en' => 'The extension itself: a small window from the toolbar, a settings page, icons and store texts', 'de' => 'Die Erweiterung selbst: ein kleines Fenster aus der Leiste, eine Einstellungsseite, Icons und Store-Texte'],
             'page' => ['minutes' => 3, 'en' => 'Works on the websites you visit: reads or changes what is on the page', 'de' => 'Arbeitet auf den Websites, die du besuchst: liest oder ändert, was dort steht'],
@@ -143,7 +140,6 @@ return [
      * shows them per year.
      */
     'shopify' => [
-        'multiplier' => 35,
         'modules' => [
             'base' => ['minutes' => 6, 'en' => 'The app itself: its own page in your Shopify admin, safe install and removal, privacy rules handled', 'de' => 'Die App selbst: eine eigene Seite in deinem Shopify-Admin, sichere Installation und Entfernung, Datenschutz-Regeln erledigt'],
             'storefront' => ['minutes' => 2, 'en' => 'A block on your shop pages that you place in the theme editor', 'de' => 'Ein Baustein auf deinen Shop-Seiten, den du im Theme-Editor platzierst'],
