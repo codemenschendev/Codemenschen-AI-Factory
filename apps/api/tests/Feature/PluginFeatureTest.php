@@ -25,7 +25,8 @@ class PluginFeatureTest extends TestCase
     {
         parent::setUp();
         // Prices here are build time only; the token cost has its own test (AppDeskTest).
-        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
+        // At 1,200 an hour a minute is 20 EUR, so the prices stay readable; no buffer, no tokens.
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0, 'time_buffer_pct' => 0, 'rate_wordpress' => 1200, 'rate_shopify' => 1200, 'rate_chrome' => 1200], 'test');
         config(['services.stripe.secret' => null, 'services.worker.token' => 't', 'queue.default' => 'sync', 'services.change_chat.enabled' => false,
             'services.buzz.alert_dir' => null, 'services.openclaw.hook_url' => null]);
         Mail::fake();
@@ -74,13 +75,13 @@ class PluginFeatureTest extends TestCase
         $this->assertStringContainsString('"feature"', $this->asked[0]['system']);
         $card = $res->json('messages.1.meta.card');
         $this->assertSame('feature', $card['mode']);
-        $this->assertSame(41 * (2 + 1), $card['price_eur'], 'form + email, never the base');
+        $this->assertSame(20 * (2 + 1), $card['price_eur'], 'form + email, never the base');
 
         $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages/confirm", ['fagg_waiver' => true]);
         $cr = $project->changeRequests()->firstOrFail();
         $this->assertSame('feature', $cr->kind);
         $this->assertSame('awaiting_payment', $cr->status);
-        $this->assertSame(123, $cr->price_eur);
+        $this->assertSame(60, $cr->price_eur);
     }
 
     public function test_care_takes_its_discount_off_a_new_feature(): void
@@ -89,7 +90,7 @@ class PluginFeatureTest extends TestCase
         app(CareService::class)->activate($project, 'sub', ['id' => 'e']);
         $this->replies = [['reply' => 'ok', 'scope' => 'feature', 'items' => [['text' => 'Import FAQs from a spreadsheet']], 'modules' => [['key' => 'import_export'], ['key' => 'data']]]];
         $res = $this->withHeaders($this->as($project))->postJson("/api/me/projects/{$project->id}/messages", ['body' => 'Import from Excel'])->assertCreated();
-        $this->assertSame((int) round(41 * (2 + 2) * 0.8), $res->json('messages.1.meta.card.price_eur'));
+        $this->assertSame((int) round(20 * (2 + 2) * 0.8), $res->json('messages.1.meta.card.price_eur'));
         $this->assertSame(20, $res->json('messages.1.meta.card.discount_pct'));
     }
 }

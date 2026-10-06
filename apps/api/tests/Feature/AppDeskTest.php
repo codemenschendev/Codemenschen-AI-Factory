@@ -17,7 +17,7 @@ class AppDeskTest extends TestCase
     {
         parent::setUp();
         // Prices here are build time only; the token cost has its own test (AppDeskTest).
-        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0, 'mult_app' => 1], 'test');
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0, 'time_buffer_pct' => 0], 'test');
         config(['services.ai_image.base_url' => 'http://model.test', 'services.ai_image.token' => 't', 'services.turnstile.secret' => null]);
     }
 
@@ -81,7 +81,7 @@ class AppDeskTest extends TestCase
         // The admin's hourly rate for apps; WordPress keeps its own.
         Settings::write(['rate_app' => 30], 'test');
         $this->getJson("/api/desk/$id")->assertJsonPath('price.build_eur', 12 + 5 + 1);
-        $this->assertSame(60, \App\Domain\Sofabuilt\Platforms::rate('wordpress'));
+        $this->assertSame(30, \App\Domain\Sofabuilt\Platforms::rate('wordpress'));
     }
 
     public function test_parts_ticked_by_hand_keep_the_estimate_of_the_parts_kept(): void
@@ -101,29 +101,25 @@ class AppDeskTest extends TestCase
         $res = $this->getJson("/api/desk/$id")->assertOk();
         $lines = collect($res->json('price.lines'))->keyBy('key');
         $this->assertSame(1920, $lines['screen']['tokens_k']);
-        // 1920k in the usual mix (91 % cache read at $0.20, 6 % cache write at $2.50, 1 % input at $2,
-        // 2 % output at $10) = $0.552 per million, $1.06, at 0.92 = 0.98 EUR.
-        $this->assertEqualsWithDelta(0.975, $lines['screen']['token_eur'], 0.01);
-        $this->assertSame(4 + 1, $lines['screen']['eur']);
-        $res->assertJsonPath('price.token_model', 'Claude Sonnet 5.5')->assertJsonPath('price.time_eur', 13);
+        // 1920k at Opus 5.5 in the usual mix (91 % cache read at $0.20, 6 % cache write at $5, 1 % input
+        // at $4, 2 % output at $20) = $0.922 per million, $1.77, at 0.92 = 1.63 EUR.
+        $this->assertEqualsWithDelta(1.63, $lines['screen']['token_eur'], 0.01);
+        $this->assertSame(4 + 2, $lines['screen']['eur']);
+        $res->assertJsonPath('price.token_model', 'Claude Opus 5.5')->assertJsonPath('price.time_eur', 13);
 
         // The admin can leave the token cost out.
         Settings::write(['token_pct' => 0], 'test');
         $this->getJson("/api/desk/$id")->assertJsonPath('price.build_eur', 13);
     }
 
-    public function test_apps_sell_at_their_factor_on_time_and_tokens(): void
+    public function test_the_estimate_gets_a_time_buffer_and_apps_cost_twice_the_hour_of_plugins(): void
     {
-        Settings::write(['token_pct' => 100, 'mult_app' => (int) config('sofabuilt.app.multiplier')], 'test');
+        Settings::write(['token_pct' => 100, 'time_buffer_pct' => 20], 'test');
         $id = $this->chat([['key' => 'screen'], ['key' => 'local_save']]);
 
-        // 13 min and 2080k tokens at x28: a todo app about 400 EUR.
-        $res = $this->getJson("/api/desk/$id")->assertJsonPath('price.multiplier', 28)->assertJsonPath('price.time_eur', 364);
-        $this->assertSame(242 + 121 + 30, $res->json('price.build_eur'));
-        $this->assertSame(41, \App\Domain\Sofabuilt\Platforms::multiplier('wordpress'));
-
-        // A salon app around 1,750 EUR is not "too big" for apps.
-        $id = $this->chat([['key' => 'screen', 'qty' => 2], ['key' => 'accounts'], ['key' => 'booking'], ['key' => 'sync'], ['key' => 'notifications'], ['key' => 'payments']]);
-        $this->getJson("/api/desk/$id")->assertJsonPath('price.too_big', false);
+        // 13 min plus 20 % at 60 an hour, plus the tokens: base 9.6 + 1.09, screen 4.8 + 0.54, local 1.2 + 0.14.
+        $res = $this->getJson("/api/desk/$id")->assertJsonPath('price.time_buffer_pct', 20)->assertJsonPath('price.rate_eur_hour', 60);
+        $this->assertSame(11 + 5 + 1, $res->json('price.build_eur'));
+        $this->assertSame([60, 30, 30, 30], array_map(fn ($p) => \App\Domain\Sofabuilt\Platforms::rate($p), ['app', 'wordpress', 'shopify', 'chrome']));
     }
 }

@@ -17,10 +17,7 @@ type Settings = {
   rate_chrome: number;
   rate_app: number;
   token_pct: number;
-  mult_wordpress: number;
-  mult_shopify: number;
-  mult_chrome: number;
-  mult_app: number;
+  time_buffer_pct: number;
 };
 type Stats = { chats_today: number; chats_7d: number; quotes_7d: number; paid_orders: number; paid_eur: number; test_orders: number; care_active: number };
 
@@ -47,12 +44,12 @@ const T = {
     trial: "Free Care months at checkout",
     edits: "Changes included in Care per month",
     rates: "Hourly rate per platform (EUR)",
-    ratesHint: "A part costs its build minutes, estimated by the desk for each idea, times this rate, plus its tokens, all times the factor below.",
+    ratesHint: "A part costs its estimated minutes plus the buffer below at this rate, plus its tokens. Apps 60, everything else 30.",
     rateApp: "Apps (Appmitki)",
-    mults: "Factor on build time plus tokens",
-    multsHint: "The minutes are the AI's real working time, so the factor sets the price level. Apps at 28: a todo app is about 400 EUR.",
+    buffer: "Time buffer on the estimate (%)",
+    bufferHint: "Added to the estimated time against estimating too low. 20 means estimate plus 20 %.",
     tokens: "AI token cost in the price (%)",
-    tokensHint: "The tokens the desk estimates per part, at the list price of Claude Sonnet 5.5 ($2 in, $10 out per million). 100 is at cost, 0 leaves it out.",
+    tokensHint: "The tokens the desk estimates per part, at the list price of Claude Opus 5.5 ($4 in, $20 out, $0.20 cache read per million). 100 is at cost, 0 leaves it out.",
     builds: "Real builds against the estimate",
     buildsHint: "The minutes the AI really worked in the build stages (spec, design, code, tests, fixes) and every token it used, cache included, at the list price. Tokens are counted in full from 6 October 2026; older builds show only part of them.",
     cols: ["Project", "Stack", "Real min", "Estimated min", "Real tokens", "Estimated tokens", "Token cost"],
@@ -79,12 +76,12 @@ const T = {
     trial: "Gratis-Monate Wartung im Checkout",
     edits: "Änderungen pro Monat in der Wartung",
     rates: "Stundensatz pro Plattform (EUR)",
-    ratesHint: "Ein Teil kostet seine Bauminuten, vom Desk für jede Idee geschätzt, mal diesen Satz. Bei 60 ist eine Minute ein Euro.",
+    ratesHint: "Ein Teil kostet seine geschätzten Minuten plus den Puffer zu diesem Satz, dazu seine Tokens. Apps 60, alles andere 30.",
     rateApp: "Apps (Appmitki)",
-    mults: "Faktor auf Bauzeit plus Tokens",
-    multsHint: "Die Minuten sind die echte Arbeitszeit der KI, der Faktor setzt das Preisniveau. Apps mit 28: eine To-do-App kostet etwa 400 EUR.",
+    buffer: "Zeitpuffer auf die Schätzung (%)",
+    bufferHint: "Kommt auf die geschätzte Zeit, damit zu knappe Schätzungen nichts kosten. 20 heißt Schätzung plus 20 %.",
     tokens: "KI-Tokenkosten im Preis (%)",
-    tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Sonnet 5.5 (2 $ rein, 10 $ raus pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
+    tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Opus 5.5 (4 $ rein, 20 $ raus, 0,20 $ Cache-Lesen pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
     builds: "Echte Builds gegen die Schätzung",
     buildsHint: "Die Minuten, die die KI in den Build-Schritten (Spezifikation, Design, Code, Tests, Korrekturen) wirklich gearbeitet hat, und alle Tokens samt Cache zum Listenpreis. Tokens werden ab 6. Oktober 2026 vollständig gezählt; ältere Builds zeigen nur einen Teil.",
     cols: ["Projekt", "Stack", "Echt Min.", "Geschätzt Min.", "Echte Tokens", "Geschätzte Tokens", "Tokenkosten"],
@@ -226,14 +223,7 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
           </div>
           <span className="small muted">{t.ratesHint}</span>
         </div>
-        <div style={{ display: "grid", gap: 8 }}>
-          <b className="small">{t.mults}</b>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {PLATFORMS.map((p) => num(`mult_${p}`, t.platforms[p], undefined, 1, 200))}
-            {num("mult_app", t.rateApp, undefined, 1, 200)}
-          </div>
-          <span className="small muted">{t.multsHint}</span>
-        </div>
+        {num("time_buffer_pct", t.buffer, t.bufferHint, 0, 200)}
         {num("token_pct", t.tokens, t.tokensHint, 0, 500)}
         {num("price_pct", t.price, t.priceHint, 30, 200)}
         {num("max_build_eur", t.max, t.maxHint, 100, 10000)}

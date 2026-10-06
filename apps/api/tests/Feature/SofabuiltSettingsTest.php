@@ -19,7 +19,8 @@ class SofabuiltSettingsTest extends TestCase
     {
         parent::setUp();
         // Prices here are build time only; the token cost has its own test (AppDeskTest).
-        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
+        // At 1,200 an hour a minute is 20 EUR, so the prices stay readable; no buffer, no tokens.
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0, 'time_buffer_pct' => 0, 'rate_wordpress' => 1200, 'rate_shopify' => 1200, 'rate_chrome' => 1200], 'test');
         $admin = Customer::create(['email' => 'admin@example.com', 'locale' => 'de', 'is_admin' => true]);
         $this->admin = ['Authorization' => 'Bearer '.$this->consoleToken($admin)];
     }

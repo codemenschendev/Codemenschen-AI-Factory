@@ -23,17 +23,14 @@ class Settings
             'care_trial_months' => (int) config('sofabuilt.care_trial_months', 3),
             'care_edits_per_month' => (int) config('console.care_edits_per_month', 3),
             // Hourly rate per platform: the price of a part is its build minutes times this.
-            'rate_wordpress' => (int) config('sofabuilt.rate_eur_hour', 60),
-            'rate_shopify' => (int) config('sofabuilt.shopify.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
-            'rate_chrome' => (int) config('sofabuilt.chrome.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
-            'rate_app' => (int) config('sofabuilt.app.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
+            'rate_wordpress' => (int) config('sofabuilt.rate_eur_hour', 30),
+            'rate_shopify' => (int) config('sofabuilt.shopify.rate_eur_hour', config('sofabuilt.rate_eur_hour', 30)),
+            'rate_chrome' => (int) config('sofabuilt.chrome.rate_eur_hour', config('sofabuilt.rate_eur_hour', 30)),
+            'rate_app' => (int) config('sofabuilt.app.rate_eur_hour', 60),
             // The AI's token cost in the price: 100 is at cost, 0 leaves it out, 150 adds half.
             'token_pct' => 100,
-            // A factor on build time plus tokens, per platform (apps: 10).
-            'mult_wordpress' => (int) config('sofabuilt.multiplier', 1),
-            'mult_shopify' => (int) config('sofabuilt.shopify.multiplier', 1),
-            'mult_chrome' => (int) config('sofabuilt.chrome.multiplier', 1),
-            'mult_app' => (int) config('sofabuilt.app.multiplier', 1),
+            // A buffer on the estimated time against estimating too low (owner, 2026-10-06: 20 %).
+            'time_buffer_pct' => (int) config('sofabuilt.time_buffer_pct', 20),
         ];
     }
 
@@ -52,10 +49,7 @@ class Settings
         'rate_chrome' => 'integer|min:10|max:1000',
         'rate_app' => 'integer|min:10|max:1000',
         'token_pct' => 'integer|min:0|max:500',
-        'mult_wordpress' => 'integer|min:1|max:200',
-        'mult_shopify' => 'integer|min:1|max:200',
-        'mult_chrome' => 'integer|min:1|max:200',
-        'mult_app' => 'integer|min:1|max:200',
+        'time_buffer_pct' => 'integer|min:0|max:200',
     ];
 
     public static function get(string $key): mixed
