@@ -14,6 +14,8 @@ class DeskTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Prices here are build time only; the token cost has its own test (AppDeskTest).
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
         config(['services.ai_image.base_url' => 'http://model.test', 'services.ai_image.token' => 't', 'services.turnstile.secret' => null]);
     }
 

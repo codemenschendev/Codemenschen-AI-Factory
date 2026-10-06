@@ -18,6 +18,22 @@ return [
      */
     'rate_eur_hour' => 60,
 
+    /*
+     * The AI's token cost on top of the build time (owner, 2026-10-06). Each part's usual tokens
+     * follow from its minutes; the desk agent estimates the tokens of each part for the idea and
+     * they are held between half and three times the usual. Priced at the API list price of the
+     * model that builds (Claude Sonnet 5.5, USD per million tokens), in euros, times the admin's
+     * token_pct (100 = at cost).
+     */
+    'tokens' => [
+        'model' => 'Claude Sonnet 5.5',
+        'usd_per_mtok' => ['in' => 2.0, 'out' => 10.0],
+        // About 60k tokens read and 2.5k written per minute of an agent writing code and tests.
+        'per_minute_k' => 62.5,
+        'out_share' => 0.04,
+        'usd_eur' => 0.92,
+    ],
+
     'modules' => [
         'base' => ['minutes' => 149, 'en' => 'The plugin itself: a settings page, ready for other languages, removes itself cleanly', 'de' => 'Das Plugin selbst: eine Einstellungsseite, bereit für andere Sprachen, entfernt sich sauber'],
         'data' => ['minutes' => 49, 'en' => 'Its own kind of entries you manage in the admin (for example bookings)', 'de' => 'Eigene Einträge, die du im Admin verwaltest (zum Beispiel Buchungen)'],

@@ -141,7 +141,8 @@ class DeskController extends Controller
             $modules[$m['key']] = ['key' => $m['key'], 'qty' => (int) ($m['qty'] ?? 1),
                 'why' => (string) ($before[$m['key']]['why'] ?? ''), 'by_customer' => ! $before->has($m['key']) ? true : (bool) ($before[$m['key']]['by_customer'] ?? false)]
                 // A kept part keeps its estimated minutes; a new one is priced at its usual time.
-                + (isset($before[$m['key']]['minutes']) ? ['minutes' => (int) $before[$m['key']]['minutes']] : []);
+                + (isset($before[$m['key']]['minutes']) ? ['minutes' => (int) $before[$m['key']]['minutes']] : [])
+                + (isset($before[$m['key']]['tokens_k']) ? ['tokens_k' => (int) $before[$m['key']]['tokens_k']] : []);
         }
         $scope = $session->scope;
         if (isset($before['base'])) {

@@ -18,6 +18,8 @@ class SofabuiltSettingsTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Prices here are build time only; the token cost has its own test (AppDeskTest).
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
         $admin = Customer::create(['email' => 'admin@example.com', 'locale' => 'de', 'is_admin' => true]);
         $this->admin = ['Authorization' => 'Bearer '.$this->consoleToken($admin)];
     }

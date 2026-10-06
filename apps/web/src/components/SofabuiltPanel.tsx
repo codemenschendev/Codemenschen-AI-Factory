@@ -16,6 +16,7 @@ type Settings = {
   rate_shopify: number;
   rate_chrome: number;
   rate_app: number;
+  token_pct: number;
 };
 type Stats = { chats_today: number; chats_7d: number; quotes_7d: number; paid_orders: number; paid_eur: number; test_orders: number; care_active: number };
 
@@ -41,6 +42,8 @@ const T = {
     rates: "Hourly rate per platform (EUR)",
     ratesHint: "A part costs its build minutes, estimated by the desk for each idea, times this rate. At 60 a minute is a euro.",
     rateApp: "Apps (Appmitki)",
+    tokens: "AI token cost in the price (%)",
+    tokensHint: "The tokens the desk estimates per part, at the list price of Claude Sonnet 5.5 ($2 in, $10 out per million). 100 is at cost, 0 leaves it out.",
     save: "Save",
     saved: "Saved.",
     failed: "Not saved. Check the values.",
@@ -64,6 +67,8 @@ const T = {
     rates: "Stundensatz pro Plattform (EUR)",
     ratesHint: "Ein Teil kostet seine Bauminuten, vom Desk für jede Idee geschätzt, mal diesen Satz. Bei 60 ist eine Minute ein Euro.",
     rateApp: "Apps (Appmitki)",
+    tokens: "KI-Tokenkosten im Preis (%)",
+    tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Sonnet 5.5 (2 $ rein, 10 $ raus pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
     save: "Speichern",
     saved: "Gespeichert.",
     failed: "Nicht gespeichert. Prüf die Werte.",
@@ -162,6 +167,7 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
           </div>
           <span className="small muted">{t.ratesHint}</span>
         </div>
+        {num("token_pct", t.tokens, t.tokensHint, 0, 500)}
         {num("price_pct", t.price, t.priceHint, 30, 200)}
         {num("max_build_eur", t.max, t.maxHint, 100, 10000)}
         {num("turns_per_day", t.turns, t.turnsHint, 0, 20000)}

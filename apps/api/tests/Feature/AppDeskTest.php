@@ -16,6 +16,8 @@ class AppDeskTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Prices here are build time only; the token cost has its own test (AppDeskTest).
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
         config(['services.ai_image.base_url' => 'http://model.test', 'services.ai_image.token' => 't', 'services.turnstile.secret' => null]);
     }
 
@@ -88,5 +90,24 @@ class AppDeskTest extends TestCase
 
         $this->postJson("/api/desk/$id/modules", ['modules' => [['key' => 'screen'], ['key' => 'photos']]])->assertOk()
             ->assertJsonPath('price.build_eur', 20 + 30 + 10);
+    }
+
+    public function test_the_ai_token_cost_is_added_to_each_part(): void
+    {
+        Settings::write(['token_pct' => 100], 'test');
+        // Screen: 15 min and 3 x its usual tokens asked for 5000k, cut to 3 x 938k.
+        $id = $this->chat([['key' => 'screen', 'minutes' => 15, 'tokens_k' => 5000], ['key' => 'local_save']]);
+
+        $res = $this->getJson("/api/desk/$id")->assertOk();
+        $lines = collect($res->json('price.lines'))->keyBy('key');
+        $this->assertSame(2814, $lines['screen']['tokens_k']);
+        // 2814k tokens: 96 % read at $2, 4 % written at $10 per million = $6.53, at 0.92 = 6.01 EUR.
+        $this->assertEqualsWithDelta(6.01, $lines['screen']['token_eur'], 0.01);
+        $this->assertSame(15 + 6, $lines['screen']['eur']);
+        $res->assertJsonPath('price.token_model', 'Claude Sonnet 5.5')->assertJsonPath('price.time_eur', 35);
+
+        // The admin can leave the token cost out.
+        Settings::write(['token_pct' => 0], 'test');
+        $this->getJson("/api/desk/$id")->assertJsonPath('price.build_eur', 35);
     }
 }
