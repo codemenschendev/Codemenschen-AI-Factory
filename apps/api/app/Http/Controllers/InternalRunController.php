@@ -29,6 +29,8 @@ class InternalRunController extends Controller
             'error' => 'nullable|string',
             'tokens_in' => 'nullable|integer|min:0',
             'tokens_out' => 'nullable|integer|min:0',
+            'tokens_cache_read' => 'nullable|integer|min:0',
+            'tokens_cache_write' => 'nullable|integer|min:0',
         ]);
 
         $run->update([
@@ -37,6 +39,8 @@ class InternalRunController extends Controller
             'error' => $data['error'] ?? null,
             'tokens_in' => $data['tokens_in'] ?? 0,
             'tokens_out' => $data['tokens_out'] ?? 0,
+            'tokens_cache_read' => $data['tokens_cache_read'] ?? 0,
+            'tokens_cache_write' => $data['tokens_cache_write'] ?? 0,
             'finished_at' => now(),
         ]);
 

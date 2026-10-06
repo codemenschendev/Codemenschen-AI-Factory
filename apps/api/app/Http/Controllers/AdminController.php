@@ -321,6 +321,7 @@ class AdminController extends Controller
                 'test_orders' => (clone $paid)->where(fn ($q) => $q->where('livemode', false)->orWhereNull('livemode'))->count(),
                 'care_active' => Project::where('kind', 'plugin')->where('care_status', 'active')->count(),
             ],
+            'builds' => \App\Domain\Sofabuilt\BuildStats::recent(),
         ]);
     }
 

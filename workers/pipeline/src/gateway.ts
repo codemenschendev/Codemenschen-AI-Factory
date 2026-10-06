@@ -25,6 +25,8 @@ export interface GatewayResult {
   text: string;
   tokens_in: number;
   tokens_out: number;
+  tokens_cache_read?: number;
+  tokens_cache_write?: number;
 }
 
 /** Replies the gateway sends when the agent produced nothing — worth a retry, not a failure. */
@@ -121,8 +123,12 @@ export const RELAY_MODE = !!(RELAY_URL && RELAY_TOKEN);
 export interface RelayResult {
   text: string;
   status: string;
+  /** Uncached input only: an agent reads most of its context from the cache (2026-10-06: a
+   *  whole coding stage reported 4 input tokens). The cache counts are what it really read. */
   tokens_in: number;
   tokens_out: number;
+  tokens_cache_read: number;
+  tokens_cache_write: number;
 }
 
 /** Full OpenClaw agent turn (coding tool profile) via the host relay. */
@@ -136,7 +142,7 @@ export async function relayAgent(message: string, sessionKey: string, timeoutS =
   }, { message, session_key: sessionKey, timeout_s: timeoutS }, (timeoutS + 60) * 1000);
   let data: {
     text?: string; status?: string; error?: string;
-    usage?: { input?: number; output?: number; inputTokens?: number; outputTokens?: number };
+    usage?: { input?: number; output?: number; inputTokens?: number; outputTokens?: number; cacheRead?: number; cacheWrite?: number; cacheReadTokens?: number; cacheWriteTokens?: number };
   } = {};
   try { data = JSON.parse(body); } catch { /* keep {} */ }
   if (status < 200 || status >= 300) throw new Error(`relay HTTP ${status}: ${data.error ?? body.slice(0, 200)}`);
@@ -145,6 +151,8 @@ export async function relayAgent(message: string, sessionKey: string, timeoutS =
     status: data.status ?? "unknown",
     tokens_in: data.usage?.input ?? data.usage?.inputTokens ?? 0,
     tokens_out: data.usage?.output ?? data.usage?.outputTokens ?? 0,
+    tokens_cache_read: data.usage?.cacheRead ?? data.usage?.cacheReadTokens ?? 0,
+    tokens_cache_write: data.usage?.cacheWrite ?? data.usage?.cacheWriteTokens ?? 0,
   };
 }
 
