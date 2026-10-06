@@ -69,6 +69,12 @@ class Platforms
         return (int) Settings::get('rate_'.$platform);
     }
 
+    /** The platform's factor on build time plus tokens (admin setting mult_<platform>). */
+    public static function multiplier(string $platform): int
+    {
+        return max(1, (int) Settings::get('mult_'.$platform));
+    }
+
     /** Monthly server fee: only an app whose parts need our server (`server` in the config). */
     public static function hosting(string $platform, array $keys): int
     {
