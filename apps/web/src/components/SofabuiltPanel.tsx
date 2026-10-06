@@ -44,12 +44,12 @@ const T = {
     trial: "Free Care months at checkout",
     edits: "Changes included in Care per month",
     rates: "Hourly rate per platform (EUR)",
-    ratesHint: "A part costs its estimated minutes plus the buffer below at this rate, plus its tokens. Apps 60, everything else 30.",
+    ratesHint: "A part costs its estimated minutes plus the buffer below at this rate, plus its tokens. Apps 600, everything else 300 (ten times 60 and 30).",
     rateApp: "Apps (Appmitki)",
     buffer: "Time buffer on the estimate (%)",
     bufferHint: "Added to the estimated time against estimating too low. 20 means estimate plus 20 %.",
     tokens: "AI token cost in the price (%)",
-    tokensHint: "The tokens the desk estimates per part, at the list price of Claude Opus 5.5 ($4 in, $20 out, $0.20 cache read per million). 100 is at cost, 0 leaves it out.",
+    tokensHint: "The tokens the desk estimates per part, at the list price of Claude Opus 5.5 ($4 in, $20 out, $0.20 cache read per million). 100 is at cost, 1000 ten times, 0 leaves it out.",
     builds: "Real builds against the estimate",
     buildsHint: "The minutes the AI really worked in the build stages (spec, design, code, tests, fixes) and every token it used, cache included, at the list price. Tokens are counted in full from 6 October 2026; older builds show only part of them.",
     cols: ["Project", "Stack", "Real min", "Estimated min", "Real tokens", "Estimated tokens", "Token cost"],
@@ -76,12 +76,12 @@ const T = {
     trial: "Gratis-Monate Wartung im Checkout",
     edits: "Änderungen pro Monat in der Wartung",
     rates: "Stundensatz pro Plattform (EUR)",
-    ratesHint: "Ein Teil kostet seine geschätzten Minuten plus den Puffer zu diesem Satz, dazu seine Tokens. Apps 60, alles andere 30.",
+    ratesHint: "Ein Teil kostet seine geschätzten Minuten plus den Puffer zu diesem Satz, dazu seine Tokens. Apps 600, alles andere 300 (zehnmal 60 und 30).",
     rateApp: "Apps (Appmitki)",
     buffer: "Zeitpuffer auf die Schätzung (%)",
     bufferHint: "Kommt auf die geschätzte Zeit, damit zu knappe Schätzungen nichts kosten. 20 heißt Schätzung plus 20 %.",
     tokens: "KI-Tokenkosten im Preis (%)",
-    tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Opus 5.5 (4 $ rein, 20 $ raus, 0,20 $ Cache-Lesen pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
+    tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Opus 5.5 (4 $ rein, 20 $ raus, 0,20 $ Cache-Lesen pro Million). 100 ist zum Selbstkostenpreis, 1000 das Zehnfache, 0 lässt sie weg.",
     builds: "Echte Builds gegen die Schätzung",
     buildsHint: "Die Minuten, die die KI in den Build-Schritten (Spezifikation, Design, Code, Tests, Korrekturen) wirklich gearbeitet hat, und alle Tokens samt Cache zum Listenpreis. Tokens werden ab 6. Oktober 2026 vollständig gezählt; ältere Builds zeigen nur einen Teil.",
     cols: ["Projekt", "Stack", "Echt Min.", "Geschätzt Min.", "Echte Tokens", "Geschätzte Tokens", "Tokenkosten"],
@@ -218,13 +218,13 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
         <div style={{ display: "grid", gap: 8 }}>
           <b className="small">{t.rates}</b>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {PLATFORMS.map((p) => num(`rate_${p}`, t.platforms[p], undefined, 10, 1000))}
-            {num("rate_app", t.rateApp, undefined, 10, 1000)}
+            {PLATFORMS.map((p) => num(`rate_${p}`, t.platforms[p], undefined, 10, 10000))}
+            {num("rate_app", t.rateApp, undefined, 10, 10000)}
           </div>
           <span className="small muted">{t.ratesHint}</span>
         </div>
         {num("time_buffer_pct", t.buffer, t.bufferHint, 0, 200)}
-        {num("token_pct", t.tokens, t.tokensHint, 0, 500)}
+        {num("token_pct", t.tokens, t.tokensHint, 0, 5000)}
         {num("price_pct", t.price, t.priceHint, 30, 200)}
         {num("max_build_eur", t.max, t.maxHint, 100, 10000)}
         {num("turns_per_day", t.turns, t.turnsHint, 0, 20000)}

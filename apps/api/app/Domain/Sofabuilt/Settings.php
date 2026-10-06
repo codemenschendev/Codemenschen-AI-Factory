@@ -23,12 +23,12 @@ class Settings
             'care_trial_months' => (int) config('sofabuilt.care_trial_months', 3),
             'care_edits_per_month' => (int) config('console.care_edits_per_month', 3),
             // Hourly rate per platform: the price of a part is its build minutes times this.
-            'rate_wordpress' => (int) config('sofabuilt.rate_eur_hour', 30),
-            'rate_shopify' => (int) config('sofabuilt.shopify.rate_eur_hour', config('sofabuilt.rate_eur_hour', 30)),
-            'rate_chrome' => (int) config('sofabuilt.chrome.rate_eur_hour', config('sofabuilt.rate_eur_hour', 30)),
-            'rate_app' => (int) config('sofabuilt.app.rate_eur_hour', 60),
-            // The AI's token cost in the price: 100 is at cost, 0 leaves it out, 150 adds half.
-            'token_pct' => 100,
+            'rate_wordpress' => (int) config('sofabuilt.rate_eur_hour', 300),
+            'rate_shopify' => (int) config('sofabuilt.shopify.rate_eur_hour', config('sofabuilt.rate_eur_hour', 300)),
+            'rate_chrome' => (int) config('sofabuilt.chrome.rate_eur_hour', config('sofabuilt.rate_eur_hour', 300)),
+            'rate_app' => (int) config('sofabuilt.app.rate_eur_hour', 600),
+            // The AI's token cost in the price: 100 is at cost, 0 leaves it out, 1000 is ten times.
+            'token_pct' => (int) config('sofabuilt.token_pct', 100),
             // A buffer on the estimated time against estimating too low (owner, 2026-10-06: 20 %).
             'time_buffer_pct' => (int) config('sofabuilt.time_buffer_pct', 20),
         ];
@@ -44,11 +44,11 @@ class Settings
         'turns_per_day' => 'integer|min:0|max:20000',
         'care_trial_months' => 'integer|min:0|max:12',
         'care_edits_per_month' => 'integer|min:0|max:50',
-        'rate_wordpress' => 'integer|min:10|max:1000',
-        'rate_shopify' => 'integer|min:10|max:1000',
-        'rate_chrome' => 'integer|min:10|max:1000',
-        'rate_app' => 'integer|min:10|max:1000',
-        'token_pct' => 'integer|min:0|max:500',
+        'rate_wordpress' => 'integer|min:10|max:10000',
+        'rate_shopify' => 'integer|min:10|max:10000',
+        'rate_chrome' => 'integer|min:10|max:10000',
+        'rate_app' => 'integer|min:10|max:10000',
+        'token_pct' => 'integer|min:0|max:5000',
         'time_buffer_pct' => 'integer|min:0|max:200',
     ];
 

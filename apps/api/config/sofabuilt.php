@@ -12,14 +12,16 @@ return [
 
     /*
      * The price of a part (owner, 2026-10-06): the AI's estimated working time plus a buffer of
-     * time_buffer_pct against estimating too low, at the platform's hourly rate (apps 60, all other
-     * platforms 30), plus the AI's tokens. No other factor. The usual minutes are the AI's real
+     * time_buffer_pct against estimating too low, at the platform's hourly rate, plus the AI's
+     * tokens. The owner set apps at 60 an hour and everything else at 30, then ten times that for
+     * the whole system: apps 600, everything else 300, tokens at 1000 % of their list price. The usual minutes are the AI's real
      * working time from the builds so far (a whole plugin about 5 minutes, an app 15 to 35); the
      * desk agent estimates the minutes for the idea at hand. Admin settings rate_<platform>,
      * time_buffer_pct and token_pct; defaults here.
      */
-    'rate_eur_hour' => 30,
+    'rate_eur_hour' => 300,
     'time_buffer_pct' => 20,
+    'token_pct' => 1000,
 
     /*
      * The AI's token cost on top of the build time (owner, 2026-10-06). Each part's usual tokens
@@ -100,7 +102,7 @@ return [
             'transferAssist' => ['eur' => 49, 'en' => 'Help moving the app to your own store accounts', 'de' => 'Hilfe beim Umzug der App auf deine eigenen Store-Konten'],
         ],
         'care_monthly_eur' => 9,
-        'rate_eur_hour' => 60,
+        'rate_eur_hour' => 600,
         'max_build_eur' => 5000,
         'hosting_monthly_eur' => 19,
         'delivery_days' => [1, 2],
