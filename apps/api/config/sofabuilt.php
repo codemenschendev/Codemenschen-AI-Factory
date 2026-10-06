@@ -97,6 +97,10 @@ return [
             'transferAssist' => ['eur' => 49, 'en' => 'Help moving the app to your own store accounts', 'de' => 'Hilfe beim Umzug der App auf deine eigenen Store-Konten'],
         ],
         'care_monthly_eur' => 9,
+        // Apps sell at ten times build time plus tokens (owner, 2026-10-06): a todo app about 400 EUR.
+        'multiplier' => 10,
+        // At x10 a bigger app is a normal order, so apps have their own limit for one build.
+        'max_build_eur' => 5000,
         'hosting_monthly_eur' => 19,
         'delivery_days' => [1, 2],
     ],

@@ -17,7 +17,7 @@ class AppDeskTest extends TestCase
     {
         parent::setUp();
         // Prices here are build time only; the token cost has its own test (AppDeskTest).
-        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0, 'mult_app' => 1], 'test');
         config(['services.ai_image.base_url' => 'http://model.test', 'services.ai_image.token' => 't', 'services.turnstile.secret' => null]);
     }
 
@@ -109,5 +109,20 @@ class AppDeskTest extends TestCase
         // The admin can leave the token cost out.
         Settings::write(['token_pct' => 0], 'test');
         $this->getJson("/api/desk/$id")->assertJsonPath('price.build_eur', 35);
+    }
+
+    public function test_apps_sell_at_ten_times_time_and_tokens_and_plugins_do_not(): void
+    {
+        Settings::write(['token_pct' => 100, 'mult_app' => (int) config('sofabuilt.app.multiplier')], 'test');
+        $id = $this->chat([['key' => 'screen'], ['key' => 'local_save']]);
+
+        // 35 min and 2188k tokens (4.67 EUR) at x10.
+        $res = $this->getJson("/api/desk/$id")->assertJsonPath('price.multiplier', 10)->assertJsonPath('price.time_eur', 350);
+        $this->assertSame(170 + 170 + 57, $res->json('price.build_eur'));
+        $this->assertSame(1, \App\Domain\Sofabuilt\Platforms::multiplier('wordpress'));
+
+        // A salon app around 1,750 EUR is not "too big" for apps.
+        $id = $this->chat([['key' => 'screen', 'qty' => 2], ['key' => 'accounts'], ['key' => 'booking'], ['key' => 'sync'], ['key' => 'notifications'], ['key' => 'payments']]);
+        $this->getJson("/api/desk/$id")->assertJsonPath('price.too_big', false);
     }
 }

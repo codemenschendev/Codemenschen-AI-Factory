@@ -17,6 +17,10 @@ type Settings = {
   rate_chrome: number;
   rate_app: number;
   token_pct: number;
+  mult_wordpress: number;
+  mult_shopify: number;
+  mult_chrome: number;
+  mult_app: number;
 };
 type Stats = { chats_today: number; chats_7d: number; quotes_7d: number; paid_orders: number; paid_eur: number; test_orders: number; care_active: number };
 
@@ -42,6 +46,8 @@ const T = {
     rates: "Hourly rate per platform (EUR)",
     ratesHint: "A part costs its build minutes, estimated by the desk for each idea, times this rate. At 60 a minute is a euro.",
     rateApp: "Apps (Appmitki)",
+    mults: "Factor on build time plus tokens",
+    multsHint: "1 is the plain calculation. Apps sell at 10: a todo app is about 400 EUR.",
     tokens: "AI token cost in the price (%)",
     tokensHint: "The tokens the desk estimates per part, at the list price of Claude Sonnet 5.5 ($2 in, $10 out per million). 100 is at cost, 0 leaves it out.",
     save: "Save",
@@ -67,6 +73,8 @@ const T = {
     rates: "Stundensatz pro Plattform (EUR)",
     ratesHint: "Ein Teil kostet seine Bauminuten, vom Desk für jede Idee geschätzt, mal diesen Satz. Bei 60 ist eine Minute ein Euro.",
     rateApp: "Apps (Appmitki)",
+    mults: "Faktor auf Bauzeit plus Tokens",
+    multsHint: "1 ist die reine Rechnung. Apps verkaufen mit 10: eine To-do-App kostet etwa 400 EUR.",
     tokens: "KI-Tokenkosten im Preis (%)",
     tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Sonnet 5.5 (2 $ rein, 10 $ raus pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
     save: "Speichern",
@@ -166,6 +174,14 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
             {num("rate_app", t.rateApp, undefined, 10, 1000)}
           </div>
           <span className="small muted">{t.ratesHint}</span>
+        </div>
+        <div style={{ display: "grid", gap: 8 }}>
+          <b className="small">{t.mults}</b>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
+            {PLATFORMS.map((p) => num(`mult_${p}`, t.platforms[p], undefined, 1, 20))}
+            {num("mult_app", t.rateApp, undefined, 1, 20)}
+          </div>
+          <span className="small muted">{t.multsHint}</span>
         </div>
         {num("token_pct", t.tokens, t.tokensHint, 0, 500)}
         {num("price_pct", t.price, t.priceHint, 30, 200)}
