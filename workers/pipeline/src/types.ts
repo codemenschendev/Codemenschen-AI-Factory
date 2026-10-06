@@ -54,4 +54,7 @@ export interface StageResult {
   error?: string;
   tokens_in: number;
   tokens_out: number;
+  /** Tokens read from and written to the prompt cache; most of an agent's reading is here. */
+  tokens_cache_read?: number;
+  tokens_cache_write?: number;
 }

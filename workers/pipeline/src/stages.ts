@@ -165,7 +165,10 @@ async function gatewayStage(job: StageJob, dir: string): Promise<StageResult> {
   }
   await commitAll(dir, `${job.stage}: gateway pass ${job.attempt}`);
   const output = { ...(await collectStageOutput(job, dir)), ...extra };
-  return { status: "succeeded", output, tokens_in: res.tokens_in, tokens_out: res.tokens_out };
+  return {
+    status: "succeeded", output, tokens_in: res.tokens_in, tokens_out: res.tokens_out,
+    tokens_cache_read: res.tokens_cache_read ?? 0, tokens_cache_write: res.tokens_cache_write ?? 0,
+  };
 }
 
 /**
@@ -221,6 +224,8 @@ async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
   const prompt = `${STAGE_PROMPTS[job.stage]}\n\nProject context:\n${JSON.stringify(job.context, null, 2)}`;
   let tokensIn = 0;
   let tokensOut = 0;
+  let cacheRead = 0;
+  let cacheWrite = 0;
 
   for await (const msg of query({
     prompt,
@@ -233,15 +238,17 @@ async function agentStage(job: StageJob, dir: string): Promise<StageResult> {
     if (msg.type === "result") {
       tokensIn = msg.usage?.input_tokens ?? 0;
       tokensOut = msg.usage?.output_tokens ?? 0;
+      cacheRead = msg.usage?.cache_read_input_tokens ?? 0;
+      cacheWrite = msg.usage?.cache_creation_input_tokens ?? 0;
       if (msg.subtype !== "success") {
-        return { status: "failed", output: {}, error: `agent: ${msg.subtype}`, tokens_in: tokensIn, tokens_out: tokensOut };
+        return { status: "failed", output: {}, error: `agent: ${msg.subtype}`, tokens_in: tokensIn, tokens_out: tokensOut, tokens_cache_read: cacheRead, tokens_cache_write: cacheWrite };
       }
     }
   }
 
   await commitAll(dir, `${job.stage}: agent pass ${job.attempt}`);
   const output = await collectStageOutput(job, dir);
-  return { status: "succeeded", output, tokens_in: tokensIn, tokens_out: tokensOut };
+  return { status: "succeeded", output, tokens_in: tokensIn, tokens_out: tokensOut, tokens_cache_read: cacheRead, tokens_cache_write: cacheWrite };
 }
 
 /* ---------------- release (deterministic, shared by every mode) ---------------- */

@@ -24,6 +24,9 @@ type Settings = {
 };
 type Stats = { chats_today: number; chats_7d: number; quotes_7d: number; paid_orders: number; paid_eur: number; test_orders: number; care_active: number };
 
+type BuildRow = { name: string; stack: string; status: string; runs: number; real_minutes: number; estimated_minutes: number | null; real_tokens_k: number; estimated_tokens_k: number | null; real_token_eur: number; tokens_measured: boolean };
+type Builds = { rows: BuildRow[]; ratios: Record<string, number> };
+
 const PLATFORMS = ["wordpress", "shopify", "chrome"] as const;
 
 const T = {
@@ -50,6 +53,11 @@ const T = {
     multsHint: "1 is the plain calculation. Apps sell at 10: a todo app is about 400 EUR.",
     tokens: "AI token cost in the price (%)",
     tokensHint: "The tokens the desk estimates per part, at the list price of Claude Sonnet 5.5 ($2 in, $10 out per million). 100 is at cost, 0 leaves it out.",
+    builds: "Real builds against the estimate",
+    buildsHint: "The minutes the AI really worked in the build stages (spec, design, code, tests, fixes) and every token it used, cache included, at the list price. Tokens are counted in full from 6 October 2026; older builds show only part of them.",
+    cols: ["Project", "Stack", "Real min", "Estimated min", "Real tokens", "Estimated tokens", "Token cost"],
+    ratio: "Real time is {pct} of the estimate ({stack}, median)",
+    partial: "partly counted",
     save: "Save",
     saved: "Saved.",
     failed: "Not saved. Check the values.",
@@ -77,6 +85,11 @@ const T = {
     multsHint: "1 ist die reine Rechnung. Apps verkaufen mit 10: eine To-do-App kostet etwa 400 EUR.",
     tokens: "KI-Tokenkosten im Preis (%)",
     tokensHint: "Die Tokens, die der Desk pro Teil schätzt, zum Listenpreis von Claude Sonnet 5.5 (2 $ rein, 10 $ raus pro Million). 100 ist zum Selbstkostenpreis, 0 lässt sie weg.",
+    builds: "Echte Builds gegen die Schätzung",
+    buildsHint: "Die Minuten, die die KI in den Build-Schritten (Spezifikation, Design, Code, Tests, Korrekturen) wirklich gearbeitet hat, und alle Tokens samt Cache zum Listenpreis. Tokens werden ab 6. Oktober 2026 vollständig gezählt; ältere Builds zeigen nur einen Teil.",
+    cols: ["Projekt", "Stack", "Echt Min.", "Geschätzt Min.", "Echte Tokens", "Geschätzte Tokens", "Tokenkosten"],
+    ratio: "Echte Zeit ist {pct} der Schätzung ({stack}, Median)",
+    partial: "teilweise gezählt",
     save: "Speichern",
     saved: "Gespeichert.",
     failed: "Nicht gespeichert. Prüf die Werte.",
@@ -88,14 +101,16 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
   const t = T[locale === "de" ? "de" : "en"];
   const [s, setS] = useState<Settings | null>(null);
   const [stats, setStats] = useState<Stats | null>(null);
+  const [builds, setBuilds] = useState<Builds | null>(null);
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState<string | null>(null);
 
   useEffect(() => {
-    api<{ settings: Settings; stats: Stats }>("/admin/sofabuilt", { token })
+    api<{ settings: Settings; stats: Stats; builds?: Builds }>("/admin/sofabuilt", { token })
       .then((r) => {
         setS(r.settings);
         setStats(r.stats);
+        setBuilds(r.builds ?? null);
       })
       .catch(() => setNote(t.failed));
   }, [token, t.failed]);
@@ -137,6 +152,42 @@ export function SofabuiltPanel({ token, locale }: { token: string; locale: Local
               <strong style={{ fontSize: 22 }}>{k === "paid_eur" ? `€ ${stats[k].toLocaleString(locale === "de" ? "de-AT" : "en-GB")}` : stats[k]}</strong>
             </div>
           ))}
+        </div>
+      )}
+
+      {builds && builds.rows.length > 0 && (
+        <div className="card" style={{ gap: 10, marginBottom: 22, overflowX: "auto" }}>
+          <b>{t.builds}</b>
+          <span className="small muted">{t.buildsHint}</span>
+          {Object.entries(builds.ratios).map(([stack, r]) => (
+            <span key={stack} className="small">
+              {t.ratio.replace("{pct}", `${Math.round(r * 1000) / 10} %`).replace("{stack}", stack)}
+            </span>
+          ))}
+          <table className="small" style={{ borderCollapse: "collapse", minWidth: 640 }}>
+            <thead>
+              <tr>
+                {t.cols.map((c) => (
+                  <th key={c} style={{ textAlign: "left", padding: "4px 8px" }}>{c}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {builds.rows.map((r, i) => (
+                <tr key={i} style={{ borderTop: "1px solid var(--border)" }}>
+                  <td style={{ padding: "4px 8px" }}>{r.name}</td>
+                  <td style={{ padding: "4px 8px" }}>{r.stack}</td>
+                  <td style={{ padding: "4px 8px" }}>{r.real_minutes}</td>
+                  <td style={{ padding: "4px 8px" }}>{r.estimated_minutes ?? "–"}</td>
+                  <td style={{ padding: "4px 8px" }}>
+                    {r.real_tokens_k}k{r.tokens_measured ? "" : ` (${t.partial})`}
+                  </td>
+                  <td style={{ padding: "4px 8px" }}>{r.estimated_tokens_k ? `${r.estimated_tokens_k}k` : "–"}</td>
+                  <td style={{ padding: "4px 8px" }}>€ {r.real_token_eur.toFixed(2)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 

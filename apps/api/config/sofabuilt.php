@@ -27,7 +27,7 @@ return [
      */
     'tokens' => [
         'model' => 'Claude Sonnet 5.5',
-        'usd_per_mtok' => ['in' => 2.0, 'out' => 10.0],
+        'usd_per_mtok' => ['in' => 2.0, 'out' => 10.0, 'cache_read' => 0.2, 'cache_write' => 2.5],
         // About 60k tokens read and 2.5k written per minute of an agent writing code and tests.
         'per_minute_k' => 62.5,
         'out_share' => 0.04,
