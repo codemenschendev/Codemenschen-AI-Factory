@@ -38,7 +38,8 @@ class SofabuiltCheckoutTest extends TestCase
         $session = $this->readySession();
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         $this->assertSame(20 * (3 + 3 + 2), $res->json('price_eur'));
-        $this->assertSame(['salesPage' => 299, 'listing' => 79, 'sellReady' => 199, 'ads' => 129], $res->json('packages'));
+        // Launch options at 60 an hour, no buffer and no tokens here (setUp): a euro a minute.
+        $this->assertSame(['salesPage' => 45, 'listing' => 30, 'sellReady' => 45, 'ads' => 45], $res->json('packages'));
         $this->assertSame($res->json('quote_id'), $session->fresh()->quote_id);
 
         $this->postJson('/api/desk/'.$this->readySession(false)->id.'/quote')->assertStatus(409);
@@ -58,7 +59,7 @@ class SofabuiltCheckoutTest extends TestCase
         $order = Order::firstOrFail();
         $this->assertSame('sofabuilt', $order->brand);
         $this->assertSame(['listing' => true, 'sellReady' => true], $order->packages);
-        $this->assertSame(160 + 79 + 199, $order->total_one_time_eur);
+        $this->assertSame(160 + 30 + 45, $order->total_one_time_eur);
 
         $project = app(OrderFulfillment::class)->markPaid($order, 'pi', 609, []);
 
@@ -108,7 +109,7 @@ class SofabuiltCheckoutTest extends TestCase
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         // Chrome parts only: a WordPress key in the scope is not priced.
         $this->assertSame(20 * (4 + 3 + 1), $res->json('price_eur'));
-        $this->assertSame(['salesPage' => 299, 'listing' => 79, 'ads' => 129], $res->json('packages'));
+        $this->assertSame(['salesPage' => 45, 'listing' => 40, 'ads' => 45], $res->json('packages'));
 
         $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'ext@example.com', 'fagg_waiver' => true, 'terms' => true]);
         $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 520, []);
@@ -131,7 +132,7 @@ class SofabuiltCheckoutTest extends TestCase
         $res = $this->postJson("/api/desk/{$session->id}/quote")->assertCreated();
         // Shopify parts only: a WordPress key in the scope is not priced.
         $this->assertSame(20 * (6 + 2 + 2), $res->json('price_eur'));
-        $this->assertSame(['salesPage' => 299, 'listing' => 99, 'ads' => 129], $res->json('packages'));
+        $this->assertSame(['salesPage' => 45, 'listing' => 40, 'ads' => 45], $res->json('packages'));
 
         $this->postJson('/api/checkout', ['quote_id' => $res->json('quote_id'), 'email' => 'shop@example.com', 'fagg_waiver' => true, 'terms' => true]);
         $project = app(OrderFulfillment::class)->markPaid(Order::firstOrFail(), 'pi', 560, []);

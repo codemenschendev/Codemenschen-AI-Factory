@@ -45,10 +45,15 @@ class Platforms
         return self::get($platform, 'repeatable', []);
     }
 
-    /** @return array<string, array{eur: int, en: string, de: string}> */
+    /**
+     * The launch options with their price: the whole time (person and AI) plus the buffer at the
+     * launch rate, the AI's tokens and the pictures it renders (Pricing::launchEur).
+     *
+     * @return array<string, array{eur: int, minutes: int, ai_minutes: int, images: int, en: string, de: string}>
+     */
     public static function launch(string $platform): array
     {
-        return self::get($platform, 'launch', []);
+        return array_map(fn ($l) => $l + ['eur' => Pricing::launchEur($l)], self::get($platform, 'launch', []));
     }
 
     /** @return list<array<string, mixed>> */
