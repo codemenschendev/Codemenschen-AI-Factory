@@ -22,9 +22,12 @@ type Scope = {
   modules: { key: string; qty: number; why: string }[];
 };
 type Price = {
-  lines: { key: string; label: string; qty: number; minutes?: number; eur: number }[];
+  lines: { key: string; label: string; qty: number; minutes?: number; tokens_k?: number; eur: number }[];
   build_eur: number;
   build_minutes?: number;
+  build_tokens_k?: number;
+  time_eur?: number;
+  token_eur?: number;
   too_big: boolean;
   care_monthly_eur: number;
   care_trial_months?: number;
@@ -149,6 +152,8 @@ export function Desk({
   const eur = (n: number) => (de ? `${n.toLocaleString("de-AT")} €` : `€${n.toLocaleString("en-IE")}`);
   const num = (n: number) => n.toLocaleString(de ? "de-AT" : "en-IE");
   // Build time of a part: minutes under an hour, hours with one decimal above.
+  // Tokens the AI reads and writes: thousands as "k", millions with one decimal.
+  const tokens = (k: number) => (k < 1000 ? `${num(k)}k` : `${(Math.round(k / 100) / 10).toLocaleString(de ? "de-AT" : "en-IE")}M`);
   const time = (m: number) => (m < 60 ? fill(t.minutes, { n: m }) : fill(t.hours, { n: (Math.round(m / 6) / 10).toLocaleString(de ? "de-AT" : "en-IE") }));
   const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? ""));
 
@@ -502,7 +507,12 @@ export function Desk({
                   <span>
                     {l.label}
                     {l.qty > 1 ? ` × ${l.qty}` : ""}
-                    {l.minutes ? <small className="dk-part-time">{time(l.minutes)}</small> : null}
+                    {l.minutes ? (
+                      <small className="dk-part-time">
+                        {time(l.minutes)}
+                        {l.tokens_k ? ` · ${fill(t.tokens, { n: tokens(l.tokens_k) })}` : ""}
+                      </small>
+                    ) : null}
                   </span>
                   <b>{eur(l.eur)}</b>
                 </label>
@@ -528,6 +538,11 @@ export function Desk({
               </span>
               <b>{eur(price.build_eur)}</b>
             </div>
+            {price.token_eur ? (
+              <p className="dk-hint dk-split">
+                {fill(t.split, { time: eur(price.time_eur ?? 0), tokens: eur(Math.round(price.token_eur)), n: tokens(price.build_tokens_k ?? 0) })}
+              </p>
+            ) : null}
             <p className="dk-sub dk-sub-launch">
               <Ico name="rocket" className="dk-launch-ico" />
               {t.launchTitle}

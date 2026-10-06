@@ -75,7 +75,7 @@ class DeskAgent
     public function prompt(DeskSession $session): string
     {
         $texts = self::PLATFORM_TEXTS[$session->platform] ?? self::PLATFORM_TEXTS['wordpress'];
-        $modules = collect(Platforms::modules($session->platform))->map(fn ($m, $k) => "  - {$k}: {$m['en']} (usually {$m['minutes']} minutes)")->implode("\n");
+        $modules = collect(Platforms::modules($session->platform))->map(fn ($m, $k) => "  - {$k}: {$m['en']} (usually {$m['minutes']} minutes, about ".Pricing::usualTokensK((int) $m['minutes'])."k tokens)")->implode("\n");
         $catalog = collect(Platforms::catalog($session->platform))->map(function ($p) {
             $live = ($p['slug'] ?? null) ? $this->wporg->info($p['slug']) : null;
             $stats = $live ? sprintf(', free version on wordpress.org: %s installs, rating %d/100', number_format($live['installs']), $live['rating']) : '';
@@ -138,7 +138,8 @@ class DeskAgent
                 if (is_string($key) && isset($known[$key])) {
                     $minutes = is_array($m) && is_numeric($m['minutes'] ?? null) ? (int) $m['minutes'] : null;
                     $modules[] = ['key' => $key, 'qty' => max(1, (int) (is_array($m) ? ($m['qty'] ?? 1) : 1)), 'why' => $str(is_array($m) ? ($m['why'] ?? '') : '', 80)]
-                        + ($minutes !== null ? ['minutes' => $minutes] : []);
+                        + ($minutes !== null ? ['minutes' => $minutes] : [])
+                        + (is_array($m) && is_numeric($m['tokens_k'] ?? null) ? ['tokens_k' => (int) $m['tokens_k']] : []);
                 }
             }
             $req = is_array($s['requires'] ?? null) ? $s['requires'] : [];

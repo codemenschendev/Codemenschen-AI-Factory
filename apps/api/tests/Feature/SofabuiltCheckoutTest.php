@@ -16,6 +16,13 @@ class SofabuiltCheckoutTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        // Prices here are build time only; the token cost has its own test (AppDeskTest).
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
+    }
+
     private function readySession(bool $ready = true): DeskSession
     {
         return DeskSession::create(['door' => 'premium', 'locale' => 'en', 'ready' => $ready, 'scope' => [

@@ -24,6 +24,8 @@ The scope:
   Start from the usual time; go up for a part that is more complex here, down for a simple one.
   The price is computed from your minutes and the hourly rate, and minutes far from the usual
   time are cut back. Never mention minutes, hours or the developer to the customer.
+- Estimate `tokens_k` the same way: the thousands of tokens the developer reads and writes for
+  ONE unit (context, code, tests and fixes), starting from the usual tokens in the list.
 - `base` is always included. Use `qty` for `screen` (one per screen with its own job, the start
   screen and settings are part of `base`), `external_api` (one per service) and `language` (one per
   extra language).
@@ -60,6 +62,6 @@ Answer with ONLY this JSON object, no markdown fences:
  "questions": [{"q": "<question>", "options": ["<option>", "<option>"]}],
  "scope": {"name": "<new app name>", "purpose": "<one sentence>", "features": ["..."], "not_included": ["..."],
            "requires": {"woocommerce": false, "wordpress": "", "php": ""},
-           "modules": [{"key": "<module key>", "qty": 1, "minutes": 15, "why": "<few words>"}]} or null to keep the scope as it is,
+           "modules": [{"key": "<module key>", "qty": 1, "minutes": 15, "tokens_k": 900, "why": "<few words>"}]} or null to keep the scope as it is,
  "search": null,
  "ready": true|false}

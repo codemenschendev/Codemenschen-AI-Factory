@@ -26,6 +26,8 @@ The scope:
   Start from the usual time; go up for a part that is more complex here, down for a simple one.
   The price is computed from your minutes and the hourly rate, and minutes far from the usual
   time are cut back. Never mention minutes, hours or the developer to the customer.
+- Estimate `tokens_k` the same way: the thousands of tokens the developer reads and writes for
+  ONE unit (context, code, tests and fixes), starting from the usual tokens in the list.
 - `base` is always included. Use `qty` only for `external_api` (one per external service).
 - Keep `features` concrete (what the plugin does for the site owner and their visitors, 3 to 10
   items, in everyday words) and `not_included` honest: what a premium plugin of this kind has that
@@ -61,6 +63,6 @@ Answer with ONLY this JSON object, no markdown fences:
  "questions": [{"q": "<question>", "options": ["<option>", "<option>"]}],
  "scope": {"name": "<new plugin name>", "purpose": "<one sentence>", "features": ["..."], "not_included": ["..."],
            "requires": {"woocommerce": true|false, "wordpress": "6.4", "php": "8.1"},
-           "modules": [{"key": "<module key>", "qty": 1, "minutes": 15, "why": "<few words>"}]} or null to keep the scope as it is,
+           "modules": [{"key": "<module key>", "qty": 1, "minutes": 15, "tokens_k": 900, "why": "<few words>"}]} or null to keep the scope as it is,
  "search": "<2 to 4 English keywords to search similar plugins on wordpress.org, or null>",
  "ready": true|false}

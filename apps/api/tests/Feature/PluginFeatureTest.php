@@ -24,6 +24,8 @@ class PluginFeatureTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        // Prices here are build time only; the token cost has its own test (AppDeskTest).
+        \App\Domain\Sofabuilt\Settings::write(['token_pct' => 0], 'test');
         config(['services.stripe.secret' => null, 'services.worker.token' => 't', 'queue.default' => 'sync', 'services.change_chat.enabled' => false,
             'services.buzz.alert_dir' => null, 'services.openclaw.hook_url' => null]);
         Mail::fake();

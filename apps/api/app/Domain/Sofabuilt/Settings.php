@@ -27,6 +27,8 @@ class Settings
             'rate_shopify' => (int) config('sofabuilt.shopify.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
             'rate_chrome' => (int) config('sofabuilt.chrome.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
             'rate_app' => (int) config('sofabuilt.app.rate_eur_hour', config('sofabuilt.rate_eur_hour', 60)),
+            // The AI's token cost in the price: 100 is at cost, 0 leaves it out, 150 adds half.
+            'token_pct' => 100,
         ];
     }
 
@@ -44,6 +46,7 @@ class Settings
         'rate_shopify' => 'integer|min:10|max:1000',
         'rate_chrome' => 'integer|min:10|max:1000',
         'rate_app' => 'integer|min:10|max:1000',
+        'token_pct' => 'integer|min:0|max:500',
     ];
 
     public static function get(string $key): mixed
