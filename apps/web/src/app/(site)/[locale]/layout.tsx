@@ -15,6 +15,9 @@ import "../../globals.css";
 export const metadata: Metadata = {
   title: "Appmitki · Your app, built at a fixed price",
   description: "Describe your app idea and get a free, clickable preview in minutes. Fixed price, checked by our team.",
+  // Search Console ownership of https://appmitki.com/ (2026-10-07), verified through the Site
+  // Verification API by the cm-ops service account; codemenschenapp@gmail.com is a co-owner.
+  verification: { google: "49eQiN5hjZrlgv1Pb62bZrwbwB0dxlDYUCJOcQph2QA" },
 };
 
 // The offer switch decides the links; a page older than a minute is built again.
