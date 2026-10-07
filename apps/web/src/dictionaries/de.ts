@@ -95,11 +95,12 @@ export const de = {
     title: "Jeder Euro, nachvollziehbar.",
     note: "Es gibt keine weiteren Gebühren. Werbebudget ist immer von unseren Gebühren getrennt und fließt 1:1 in Anzeigen.",
     items: [
-      { h: "App-Entwicklung", fig: "149–1.500 €", p: "Fixpreis, sichtbar mit dem vollen Umfang vor dem Checkout." },
-      { h: "Store-Publishing", fig: "79 € einmalig", p: "Optional. Icon, Screenshots, Listing-Text und die Einreichung." },
-      { h: "Developer-Account", fig: "49 € einmalig", p: "Optional. Wir richten deine Apple- und Google-Accounts gemeinsam mit dir ein." },
-      { h: "App-Marketing", fig: "ab 129 €", p: "Optional. Kampagnen-Konzept, Anzeigentexte, Creatives und KI-Marketing für ChatGPT und Co." },
-      { h: "Hosting & Wartung", fig: "0 € oder monatlich", p: "Lokale Apps kosten nichts. Verbundene Apps tragen eine Monatsgebühr, sichtbar vor dem Checkout." },
+      { h: "App-Entwicklung", fig: "Preis pro Teil", p: "Jeder Teil deiner App hat seinen eigenen Preis, aus der Zeit, die er zum Bauen braucht. Die Summe siehst du im Desk, bevor du zahlst." },
+      { h: "Landingpage für die App", fig: "Optional", p: "Eine Seite, die deine App vorstellt, im Desk bepreist wie jeder andere Teil." },
+      { h: "Veröffentlichung im Store", fig: "Inklusive", p: "Jede App kommt in den App Store und zu Google Play. Icon, Screenshots und Store-Text gehören dazu." },
+      { h: "Eigene Store-Konten", fig: "Optional", p: "Wir ziehen die App mit dir auf deine Apple- und Google-Konten um, im Desk bepreist." },
+      { h: "App-Marketing", fig: "Optional", p: "Kampagnenkonzept, Anzeigentexte, Motive und KI-Marketing für ChatGPT und Co, im Desk bepreist." },
+      { h: "Hosting & Wartung", fig: "0 € oder monatlich", p: "Apps, die am Handy laufen, kosten nichts. Apps mit Login oder geteilten Daten haben eine Monatsgebühr, die du vor dem Zahlen siehst." },
     ],
   },
   about: {
@@ -237,9 +238,10 @@ export const de = {
       items: {
         proto: { h: "1. App-Prototyp", p: "Aus deinem Satz wird eine klickbare Vorschau. Du siehst deine App, bevor du einen Cent zahlst.", points: ["Kostenlos und unverbindlich", "Vier Bildschirme deiner App", "Eine Änderung inklusive"] },
         dev: { h: "2. App-Entwicklung", p: "Wir programmieren deine App mit KI, und unser Team prüft jedes bezahlte Projekt. Du musst nichts Technisches können.", points: ["Web, iPhone oder Android", "Fertig in {days} Werktagen", "Code und Rechte gehören dir"] },
-        mkt: { h: "3. App-Marketing", p: "Damit deine App Nutzer findet: Anzeigen für Google und Meta, auf Wunsch eine eigene Landingpage, und KI-Marketing, damit ChatGPT und andere KI-Assistenten deine App kennen.", points: ["Anzeigen mit fester Budgetgrenze", "Landingpage für 299 € dazu", "Auffindbar für ChatGPT und Co."] },
+        mkt: { h: "3. App-Marketing", p: "Damit deine App Nutzer findet: Anzeigen für Google und Meta, auf Wunsch eine eigene Landingpage, und KI-Marketing, damit ChatGPT und andere KI-Assistenten deine App kennen.", points: ["Anzeigen mit fester Budgetgrenze", "Auf Wunsch eine eigene Landingpage", "Auffindbar für ChatGPT und Co."] },
       },
       free: "Gratis",
+      priced: "Preis im Desk",
     },
     payback: {
       eyebrow: "Rechne es durch",
@@ -273,7 +275,14 @@ export const de = {
     prices: {
       title: "Preise für deine App",
       lede: "Du siehst jeden Betrag vor der Bezahlung. Das Werbebudget ist getrennt und fließt 1:1 in Anzeigen.",
-      landing: { h: "Landingpage für die App", fig: "{price} Festpreis", p: "Optional im Checkout. Hosting ist {months} Monate inklusive, danach {monthly} im Monat." },
+      items: [
+        { h: "App-Entwicklung", fig: "Preis pro Teil", p: "Jeder Teil deiner App hat seinen eigenen Preis, aus der Zeit, die er zum Bauen braucht. Die Summe siehst du im Desk, bevor du zahlst." },
+        { h: "Landingpage für die App", fig: "Optional", p: "Eine Seite, die deine App vorstellt, im Desk bepreist wie jeder andere Teil." },
+        { h: "Veröffentlichung im Store", fig: "Inklusive", p: "Jede App kommt in den App Store und zu Google Play. Icon, Screenshots und Store-Text gehören dazu." },
+        { h: "Eigene Store-Konten", fig: "Optional", p: "Wir ziehen die App mit dir auf deine Apple- und Google-Konten um, im Desk bepreist." },
+        { h: "App-Marketing", fig: "Optional", p: "Kampagnenkonzept, Anzeigentexte, Motive und KI-Marketing für ChatGPT und Co, im Desk bepreist." },
+        { h: "Hosting & Wartung", fig: "0 € oder monatlich", p: "Apps, die am Handy laufen, kosten nichts. Apps mit Login oder geteilten Daten haben eine Monatsgebühr, die du vor dem Zahlen siehst." },
+      ],
     },
     faqTitle: "Häufige Fragen",
     final: {

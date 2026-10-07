@@ -95,11 +95,12 @@ export const en = {
     title: "Every euro, accounted for.",
     note: "There are no other fees. Advertising budget is always separate from our fees and is spent 1:1 on ads.",
     items: [
-      { h: "App development", fig: "€149–1,500", p: "Fixed price, shown with the full scope before checkout." },
-      { h: "Store publishing", fig: "€79 one-time", p: "Optional. Icon, screenshots, listing text and the submission." },
-      { h: "Developer-account setup", fig: "€49 one-time", p: "Optional. We set up your Apple and Google accounts together with you." },
-      { h: "App marketing", fig: "from €129", p: "Optional. Campaign concept, ad copy, creatives and AI marketing for ChatGPT and co." },
-      { h: "Hosting & maintenance", fig: "€0 or monthly", p: "Local apps cost nothing. Connected apps carry a monthly fee, shown before checkout." },
+      { h: "App development", fig: "Priced part by part", p: "Every part of your app has its own price, from the time it takes to build. You see the total on the desk before you pay." },
+      { h: "Landing page for the app", fig: "Optional", p: "A page that presents your app, priced on the desk like every other part." },
+      { h: "Store release", fig: "Included", p: "Every app is released in the App Store and Google Play. Icon, screenshots and listing text are part of it." },
+      { h: "Your own store accounts", fig: "Optional", p: "We move the app to your Apple and Google accounts with you, priced on the desk." },
+      { h: "App marketing", fig: "Optional", p: "Campaign concept, ad copy, creatives and AI marketing for ChatGPT and co, priced on the desk." },
+      { h: "Hosting & maintenance", fig: "€0 or monthly", p: "Apps that run on the phone cost nothing. Apps with logins or shared data carry a monthly fee, shown before you pay." },
     ],
   },
   about: {
@@ -237,9 +238,10 @@ export const en = {
       items: {
         proto: { h: "1. App prototype", p: "Your sentence becomes a clickable preview. You see your app before you pay a cent.", points: ["Free and without obligation", "Four screens of your app", "One change included"] },
         dev: { h: "2. App development", p: "We code your app with AI, and our team checks every paid project. You need no technical skills.", points: ["Web, iPhone or Android", "Ready in {days} working days", "Code and rights are yours"] },
-        mkt: { h: "3. App marketing", p: "So your app finds users: ads for Google and Meta, its own landing page if you want one, and AI marketing so ChatGPT and other AI assistants know your app.", points: ["Ads with a fixed budget cap", "Landing page for €299 on top", "Findable for ChatGPT and co."] },
+        mkt: { h: "3. App marketing", p: "So your app finds users: ads for Google and Meta, its own landing page if you want one, and AI marketing so ChatGPT and other AI assistants know your app.", points: ["Ads with a fixed budget cap", "Its own landing page if you want one", "Findable for ChatGPT and co."] },
       },
       free: "Free",
+      priced: "Priced on the desk",
     },
     payback: {
       eyebrow: "Do the maths",
@@ -273,7 +275,14 @@ export const en = {
     prices: {
       title: "Prices for your app",
       lede: "You see every amount before you pay. The ad budget is separate and goes 1:1 into ads.",
-      landing: { h: "Landing page for the app", fig: "{price} fixed price", p: "Optional at checkout. Hosting is included for {months} months, then {monthly} a month." },
+      items: [
+        { h: "App development", fig: "Priced part by part", p: "Every part of your app has its own price, from the time it takes to build. You see the total on the desk before you pay." },
+        { h: "Landing page for the app", fig: "Optional", p: "A page that presents your app, priced on the desk like every other part." },
+        { h: "Store release", fig: "Included", p: "Every app is released in the App Store and Google Play. Icon, screenshots and listing text are part of it." },
+        { h: "Your own store accounts", fig: "Optional", p: "We move the app to your Apple and Google accounts with you, priced on the desk." },
+        { h: "App marketing", fig: "Optional", p: "Campaign concept, ad copy, creatives and AI marketing for ChatGPT and co, priced on the desk." },
+        { h: "Hosting & maintenance", fig: "€0 or monthly", p: "Apps that run on the phone cost nothing. Apps with logins or shared data carry a monthly fee, shown before you pay." },
+      ],
     },
     faqTitle: "Common questions",
     final: {
