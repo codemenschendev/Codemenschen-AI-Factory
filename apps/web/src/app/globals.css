@@ -357,6 +357,13 @@ footer.site .logo-by { color: #94a3b8; }
   .consent-actions { display: grid; grid-template-columns: 1fr 1fr; }
   .consent-save { order: 1; grid-column: 1 / -1; padding: 2px; }
 }
+.consent-more { display: none; padding: 2px; background: none; border: 0; font: 600 0.84rem var(--font-body); color: var(--accent); cursor: pointer; }
+@media (max-width: 640px) {
+  .consent:not(.is-more) .consent-opts, .consent:not(.is-more) .consent-save { display: none; }
+  .consent:not(.is-more) .consent-more { display: block; order: 1; grid-column: 1 / -1; }
+  .consent:not(.is-more) .consent-title { display: inline; margin-right: 4px; font-size: 0.9rem; }
+  .consent:not(.is-more) .consent-text { display: inline; font-size: 0.8rem; }
+}
 .consent-reopen { background: none; border: 0; padding: 0; color: #b8becd; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
 .consent-reopen:hover { color: var(--paper); }
 

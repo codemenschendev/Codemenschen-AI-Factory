@@ -81,7 +81,10 @@ export default async function AppLanding({
                 <br />
                 {x.titleC}
               </h1>
-              <p className="lede reveal">{x.lede}</p>
+              <p className="lede reveal">
+                <span className="lede-long">{x.lede}</span>
+                <span className="lede-short">{x.ledeShort}</span>
+              </p>
               <div className="hero-ctas reveal">
                 <Link className="btn btn-primary" href={start}>
                   {x.cta} <Icon name="arrow" className="btn-ico" />
@@ -90,6 +93,7 @@ export default async function AppLanding({
                   {x.cta2}
                 </a>
               </div>
+              <p className="hero-note reveal">{fill(x.ctaNote, { price: eur(PRICE_MIN, locale) })}</p>
             </div>
 
             <div className="hero-photo" aria-hidden="true">

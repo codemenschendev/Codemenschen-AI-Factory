@@ -221,8 +221,11 @@ export const de = {
     titleB: "Wir machen den Rest.",
     titleC: "Zum Festpreis.",
     lede: "Du brauchst keine Technikkenntnisse. Beschreib deine Idee in einem Satz, und Appmitki zeigt dir kostenlos eine klickbare Vorschau. Danach programmieren wir deine App mit KI und bringen sie zu deinen Kunden. Du lehnst dich zurück.",
+    // On a phone the long lede pushed the button below the first screen (2026-10-07, ad visitors left within 2 s).
+    ledeShort: "Beschreib deine Idee in einem Satz. Du siehst kostenlos eine klickbare Vorschau und den Festpreis, bevor du zahlst.",
     cta: "Kostenlose App-Vorschau",
     cta2: "Rechne es durch",
+    ctaNote: "Vorschau kostenlos, ohne Kreditkarte. Festpreis ab {price}.",
     stackLabel: "Dein Weg zur App",
     stack: ["App-Prototyp", "App-Entwicklung", "App-Marketing"],
     trust: [
@@ -1887,6 +1890,7 @@ export const de = {
     allowAll: "Alle erlauben",
     saveChoice: "Auswahl speichern",
     declineAll: "Alle ablehnen",
+    settings: "Einstellungen",
     link: "Cookies und Messung",
   },
   signin: {
