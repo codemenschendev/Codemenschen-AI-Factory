@@ -126,6 +126,7 @@ export function Desk({
   startPlatform,
   only,
   onPreview,
+  initialText,
 }: {
   t: SbDict["desk"];
   doors: SbDict["hero"]["doors"];
@@ -134,6 +135,8 @@ export function Desk({
   startPlatform: Platform;
   only?: Platform;
   onPreview?: (scope: Scope) => void;
+  /** An idea to start from, for example a sample app's description (the visitor still sends it). */
+  initialText?: string;
 }) {
   const [session, setSession] = useState<Session | null>(null);
   const [platform, setPlatform] = useState<Platform>(only ?? startPlatform);
@@ -141,7 +144,7 @@ export function Desk({
   const [catalog, setCatalog] = useState<CatalogItem[]>([]);
   const [offered, setOffered] = useState<Platform[]>(only ? [only] : OFFERED);
   const store = only ? `${STORE}.${only}` : STORE;
-  const [text, setText] = useState("");
+  const [text, setText] = useState(initialText?.slice(0, MAX) ?? "");
   const [picked, setPicked] = useState<Record<number, string>>({});
   const [launch, setLaunch] = useState<Record<string, boolean>>({});
   const [more, setMore] = useState(false);

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/LegalPage";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import { seo } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -11,7 +12,7 @@ export async function generateMetadata({
   const { locale: raw } = await params;
   const d = getDict(isLocale(raw) ? (raw as Locale) : "de");
 
-  return { title: d.legal.withdrawal.title };
+  return { title: d.legal.withdrawal.title, ...seo(raw, "/withdrawal") };
 }
 
 export default async function WithdrawalPage({ params }: { params: Promise<{ locale: string }> }) {

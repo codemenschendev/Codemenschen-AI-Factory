@@ -11,6 +11,7 @@ import {
   SITE_PRICE_EUR,
 } from "@ai-factory/pricing";
 import { eur, getDict, isLocale, type Locale } from "@/lib/i18n";
+import { seo } from "@/lib/seo";
 import { AppIdeas } from "@/components/AppIdeas";
 import { BudgetMeter } from "@/components/BudgetMeter";
 import { LandingMotion } from "@/components/LandingMotion";
@@ -32,7 +33,7 @@ export async function generateMetadata({
   return {
     title: a.metaTitle,
     description: a.metaDesc,
-    alternates: { languages: { de: "/de/app", en: "/en/app" } },
+    ...seo(locale, "/app"),
   };
 }
 

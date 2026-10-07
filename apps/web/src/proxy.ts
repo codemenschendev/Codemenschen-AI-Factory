@@ -42,6 +42,9 @@ export function proxy(req: NextRequest) {
   const locale = cookie && isLocale(cookie) ? cookie : sofabuilt ? SOFABUILT_DEFAULT_LOCALE : DEFAULT_LOCALE;
   const url = req.nextUrl.clone();
   url.pathname = `/${locale}${pathname === "/" ? "" : pathname}`;
+  // The home page is served at "/" in the visitor's language, not redirected (2026-10-07: search
+  // engines treat the 302 as temporary). Its canonical names /de or /en, so nothing is indexed twice.
+  if (pathname === "/" && !sofabuilt) return NextResponse.rewrite(url);
   return NextResponse.redirect(url, 302);
 }
 

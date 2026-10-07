@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/LegalPage";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import { seo } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -11,7 +12,7 @@ export async function generateMetadata({
   const { locale: raw } = await params;
   const d = getDict(isLocale(raw) ? (raw as Locale) : "de");
 
-  return { title: d.legal.terms.title };
+  return { title: d.legal.terms.title, ...seo(raw, "/terms") };
 }
 
 export default async function TermsPage({ params }: { params: Promise<{ locale: string }> }) {

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SecurityPage } from "@/components/SecurityPage";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
+import { seo } from "@/lib/seo";
 
 export async function generateMetadata({
   params,
@@ -11,7 +12,7 @@ export async function generateMetadata({
   const { locale: raw } = await params;
   const d = getDict(isLocale(raw) ? (raw as Locale) : "de");
 
-  return { title: d.security.title, description: d.security.lede };
+  return { title: d.security.title, description: d.security.lede, ...seo(raw, "/security") };
 }
 
 export default async function Security({ params }: { params: Promise<{ locale: string }> }) {

@@ -7,10 +7,13 @@ import { PrototypeHistory } from "@/components/PrototypeHistory";
 import { appDesk } from "@/dictionaries/appDesk";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { appsOnly, offeredKinds } from "@/lib/offer";
+import { seo } from "@/lib/seo";
 import "../../../prototype.css";
 import "../../../sofabuilt.css";
 
-export const metadata: Metadata = { title: "Prototype" };
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  return { title: "Prototype", ...seo((await params).locale, "/prototype") };
+}
 
 // The offer switch is read from the API; a page older than a minute is built again.
 export const revalidate = 60;
@@ -20,10 +23,10 @@ export default async function PrototypePage({
   searchParams,
 }: {
   params: Promise<{ locale: string }>;
-  searchParams: Promise<{ kind?: string; form?: string }>;
+  searchParams: Promise<{ kind?: string; form?: string; idea?: string }>;
 }) {
   const { locale: raw } = await params;
-  const { kind, form } = await searchParams;
+  const { kind, form, idea } = await searchParams;
   // Only what is on offer; an old link to a hidden kind opens on the first one that is.
   const kinds: ProtoKind[] = await offeredKinds();
   const initialKind = kinds.find((k) => k === kind) ?? kinds[0];
@@ -42,7 +45,7 @@ export default async function PrototypePage({
     return (
       <main className="sb-desk-page sb-vars">
         <div className="wrap">
-          <AppDesk t={a.desk} doors={a.doors} locale={locale} />
+          <AppDesk t={a.desk} doors={a.doors} locale={locale} idea={idea?.slice(0, 500)} />
         </div>
       </main>
     );
