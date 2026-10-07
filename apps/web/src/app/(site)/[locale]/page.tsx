@@ -8,6 +8,7 @@ import {
   SITE_PRICE_EUR,
 } from "@ai-factory/pricing";
 import { eur, getDict, isLocale, type Locale } from "@/lib/i18n";
+import { seo } from "@/lib/seo";
 import { AppIdeas } from "@/components/AppIdeas";
 import { BudgetMeter } from "@/components/BudgetMeter";
 import { LandingMotion } from "@/components/LandingMotion";
@@ -21,9 +22,10 @@ export const revalidate = 60;
 
 /** With apps only on offer, the home page is the app landing page, and says so to search engines. */
 export async function generateMetadata(props: { params: Promise<{ locale: string }> }) {
-  if (!appsOnly(await offeredKinds())) return {};
-  // The app page's words, but this address: its hreflang links point at /app, not at the home page.
-  return { ...(await appMetadata(props)), alternates: { languages: { de: "/de", en: "/en" } } };
+  const { locale } = await props.params;
+  if (!appsOnly(await offeredKinds())) return seo(locale, "");
+  // The app page's words, but this address: its canonical and hreflang links are the home page's.
+  return { ...(await appMetadata(props)), ...seo(locale, "") };
 }
 
 const fill = (s: string, v: Record<string, string>) =>

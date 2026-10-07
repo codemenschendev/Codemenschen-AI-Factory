@@ -13,7 +13,7 @@ const MAX_PROMPT = 4000;
  * and prices the app part by part. The free preview stays: it opens the prototype form with the
  * agreed scope written in, so the preview shows what the customer would order.
  */
-export function AppDesk({ t, doors, locale }: { t: SbDict["desk"]; doors: SbDict["hero"]["doors"]; locale: string }) {
+export function AppDesk({ t, doors, locale, idea }: { t: SbDict["desk"]; doors: SbDict["hero"]["doors"]; locale: string; idea?: string }) {
   const router = useRouter();
 
   return (
@@ -24,6 +24,7 @@ export function AppDesk({ t, doors, locale }: { t: SbDict["desk"]; doors: SbDict
       start="idea"
       startPlatform="app"
       only="app"
+      initialText={idea}
       onPreview={(scope) => {
         const prompt = [`${scope.name}: ${scope.purpose}`, ...scope.features.map((f) => `- ${f}`)].join("\n").slice(0, MAX_PROMPT);
         try {

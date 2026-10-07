@@ -3,7 +3,7 @@ import { headers } from "next/headers";
 import { brandFromHost } from "@/lib/brand";
 import { SITE } from "@/lib/site";
 
-// Previews, accounts, the console and one-time sign-in pages are private; they also say noindex.
+// Previews, accounts, the console and one-time sign-in pages are private: they say noindex.
 export default async function robots(): Promise<MetadataRoute.Robots> {
   // Sofabuilt stays out of search until it launches (docs/specs/sofabuilt.md, phase 2).
   if (brandFromHost((await headers()).get("host")) === "sofabuilt") {
@@ -13,7 +13,10 @@ export default async function robots(): Promise<MetadataRoute.Robots> {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/api/", "/de/p/", "/en/p/", "/de/signin/", "/en/signin/", "/de/account", "/en/account", "/de/admin", "/en/admin", "/de/checkout", "/en/checkout"],
+      // Previews, sign-in, accounts and checkout are NOT blocked here: they carry noindex, and Google
+      // only drops a page from results when it may read that tag (2026-10-07: sign-in and checkout
+      // were listed). The admin and the API stay blocked.
+      disallow: ["/api/", "/de/admin", "/en/admin"],
     },
     sitemap: `${SITE}/sitemap.xml`,
   };

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { CATALOG, getEntry } from "@/lib/catalog";
@@ -5,6 +6,7 @@ import { DELIVERY_DAYS_HI, DELIVERY_DAYS_LO, HOSTING_MONTHLY } from "@ai-factory
 import { LOCALES, eur, getDict, isLocale, t, type Locale } from "@/lib/i18n";
 import { IDEA_ICONS } from "@/components/AppIdeas";
 import { Icon } from "@/components/LineIcon";
+import { seo } from "@/lib/seo";
 import "../../../../prototype.css";
 import "../../../../detail.css";
 
@@ -15,6 +17,12 @@ export function generateStaticParams() {
       slug: e.slug,
     })),
   );
+}
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string; slug: string }> }): Promise<Metadata> {
+  const { locale, slug } = await params;
+  const app = getEntry(slug);
+  return { title: app ? `${app.name} · Appmitki` : "Appmitki", ...seo(locale, `/apps/${slug}`) };
 }
 
 export default async function AppDetail({
@@ -109,10 +117,6 @@ export default async function AppDetail({
           {/* eslint-disable-next-line @next/next/no-img-element -- the home page's fixed idea pictures */}
           <img src={`/home/idea-${app.slug}.webp`} alt="" width={360} height={200} />
           <div className="ad-price-body">
-            <div className="ad-price-fig">
-              <span>{d.detail.price}</span>
-              <strong>{eur(app.price!, locale)}</strong>
-            </div>
             <div className="ad-row">
               <span>{d.detail.delivery}</span>
               <strong>
@@ -128,7 +132,8 @@ export default async function AppDetail({
             <div className="ad-row">
               <span className="badge badge-type">{typeLabel}</span>
             </div>
-            <Link className="btn btn-primary ad-cta" href={`/${locale}/checkout?app=${app.slug}`}>
+            {/* No fixed price for a sample (owner, 2026-10-07): the desk prices this app part by part. */}
+            <Link className="btn btn-primary ad-cta" href={`/${locale}/prototype?idea=${encodeURIComponent(`${app.name}: ${t(app.lede ?? app.cardDesc, locale)}`)}`}>
               {d.detail.cta}
               <Icon name="arrow" className="pp-btn-ico" />
             </Link>

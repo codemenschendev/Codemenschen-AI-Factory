@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { CATALOG } from "@/lib/catalog";
-import { eur, t, type Dict, type Locale } from "@/lib/i18n";
+import { t, type Dict, type Locale } from "@/lib/i18n";
 import { Icon } from "@/components/LineIcon";
 
 /** One icon per app idea, matching what the app does. */
@@ -39,9 +39,7 @@ export function AppIdeas({ locale, d }: { locale: Locale; d: Dict }) {
                     {d.ideas.built}
                   </p>
                 ) : (
-                  <p className="idea-price">
-                    {app.price ? eur(app.price, locale) : d.detail.sample}
-                  </p>
+                  <p className="idea-price">{d.detail.sample}</p>
                 )}
                 <p className="idea-desc">{t(app.cardDesc, locale)}</p>
                 <ul className="idea-points">
