@@ -1,15 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  DELIVERY_DAYS_HI,
-  DELIVERY_DAYS_LO,
-  PACKAGE_PRICES,
-  PRICE_MIN,
-  SITE_HOSTING_FREE_MONTHS,
-  SITE_HOSTING_MONTHLY_EUR,
-  SITE_PRICE_EUR,
-} from "@ai-factory/pricing";
+import { DELIVERY_DAYS_HI, DELIVERY_DAYS_LO } from "@ai-factory/pricing";
 import { eur, getDict, isLocale, type Locale } from "@/lib/i18n";
 import { seo } from "@/lib/seo";
 import { AppIdeas } from "@/components/AppIdeas";
@@ -61,25 +53,14 @@ export default async function AppLanding({
     price: number;
   }[] = [
     { kind: "proto", icon: "preview", pic: "step-preview", href: start, price: 0 },
-    { kind: "dev", icon: "app", pic: "svc-app", href: `/${locale}/create`, price: PRICE_MIN },
-    { kind: "mkt", icon: "ads", pic: "svc-ads", href: "#prices", price: PACKAGE_PRICES.marketingLaunch },
+    { kind: "dev", icon: "app", pic: "svc-app", href: start, price: 1 },
+    { kind: "mkt", icon: "ads", pic: "svc-ads", href: "#prices", price: 1 },
   ];
   const trustIcons = ["preview", "euro", "shield", "team"];
   const stepPics = ["step-describe", "step-preview", "step-approve", "step-launch"];
   const priceIcons = ["app", "site", "store", "user", "ads", "server"];
-  const [appItem, ...extras] = d.pricing.items;
-  const prices = [
-    appItem,
-    {
-      h: x.prices.landing.h,
-      fig: fill(x.prices.landing.fig, { price: eur(SITE_PRICE_EUR, locale) }),
-      p: fill(x.prices.landing.p, {
-        months: String(SITE_HOSTING_FREE_MONTHS),
-        monthly: eur(SITE_HOSTING_MONTHLY_EUR, locale),
-      }),
-    },
-    ...extras,
-  ];
+  // No fixed prices on the page (owner, 2026-10-07): the desk prices every app part by part.
+  const prices = x.prices.items;
 
   return (
     <main className="lp">
@@ -204,14 +185,7 @@ export default async function AppLanding({
                   </ul>
                   <div className="svc-foot">
                     <div>
-                      {s.price === 0 ? (
-                        <b>{x.one.free}</b>
-                      ) : (
-                        <>
-                          <small>{d.home.services.from}</small>
-                          <b>{eur(s.price, locale)}</b>
-                        </>
-                      )}
+                      <b>{s.price === 0 ? x.one.free : x.one.priced}</b>
                     </div>
                     <span className="svc-go">
                       <Icon name="arrow" />
@@ -234,7 +208,7 @@ export default async function AppLanding({
               <p className="section-lede reveal">{x.payback.lede}</p>
             </div>
           </div>
-          <PaybackCalc t={x.payback} locale={locale} devMin={PRICE_MIN} devDefault={790} />
+          <PaybackCalc t={x.payback} locale={locale} devMin={50} devDefault={180} />
         </div>
       </section>
 
