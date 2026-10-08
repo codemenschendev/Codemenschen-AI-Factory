@@ -79,4 +79,17 @@ class AdminSignInTest extends TestCase
         $this->assertStringNotContainsString('to=admin', $urls['kunde@example.com']);
         $this->assertArrayNotHasKey('nobody@example.com', $urls);
     }
+
+    public function test_with_the_customer_console_set_up_the_admin_still_gets_a_path_of_this_site(): void
+    {
+        // 2026-10-08: with CONSOLE_URL set, the sign-in page got https://appmitki.com/de/admin and
+        // refused it, so no admin could sign in. Only the customer console is another origin.
+        config(['services.frontend_url' => 'https://appwerk.test', 'console.url' => 'https://console.appwerk.test']);
+        $admin = Customer::create(['email' => 'chef@example.com', 'locale' => 'de', 'is_admin' => true]);
+        $customer = Customer::create(['email' => 'kunde@example.com', 'locale' => 'de']);
+
+        $this->postJson($this->linkFor($admin, ['to' => 'admin']))->assertOk()->assertJsonPath('to', '/de/admin');
+        $this->app['auth']->forgetGuards();
+        $this->postJson($this->linkFor($customer))->assertOk()->assertJsonPath('to', 'https://console.appwerk.test/de/account');
+    }
 }

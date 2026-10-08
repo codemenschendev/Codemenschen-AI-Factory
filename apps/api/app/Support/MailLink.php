@@ -60,7 +60,12 @@ class MailLink
     {
         if ($request->isMethod('post')) {
             // The console is another origin: the sign-in page then hands the token over by address.
-            return response()->json(['to' => str_starts_with(self::portal($path), 'http') && config('console.url') ? self::portal($path) : $path, 'token' => $token]);
+            // Everything else stays a path on this site; the page refuses any other full URL
+            // (2026-10-08: the admin got https://appmitki.com/en/admin and the sign-in failed).
+            $url = self::portal($path);
+            $console = rtrim((string) config('console.url'), '/');
+
+            return response()->json(['to' => $console !== '' && str_starts_with($url, $console.'/') ? $url : $path, 'token' => $token]);
         }
 
         return redirect()->away(self::portal($path).'#token='.$token);
