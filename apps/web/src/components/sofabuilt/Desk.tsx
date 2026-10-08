@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ApiError, api } from "@/lib/api";
+import { track, trackOnce } from "@/lib/analytics";
 import { Icon } from "@/components/LineIcon";
 import type { SbDict } from "@/dictionaries/sofabuilt";
 import { SbCheckout } from "./SbCheckout";
@@ -224,8 +225,14 @@ export function Desk({
       setPicked({});
       const next = await api<Session>(`/desk/${s.id}/messages`, { method: "POST", body: JSON.stringify({ text: body }) });
       setSession(next);
+      trackOnce(`desk-turn-${s.id}-${next.messages.length}`, "wizard_step", { step: "desk_turn", n: next.messages.length });
+      // The funnel's key moment: a priced scope on screen. A visitor who leaves here left at the price (2026-10-08).
+      if (next.scope && next.price) {
+        trackOnce(`desk-scope-${s.id}`, "wizard_step", { step: "desk_scope", platform, parts: next.scope.features.length, build_eur: next.price.build_eur });
+      }
     } catch (e) {
       const err = e instanceof ApiError ? (e.body as { error?: string } | null)?.error : null;
+      track("form_error", { form: "desk", code: err ?? (e instanceof ApiError ? String(e.status) : "network") });
       setError(err === "limit" ? t.limit : err === "turnstile" ? t.bot : t.unavailable);
       if (e instanceof ApiError && (e.body as Session | null)?.messages) setSession(e.body as Session);
     } finally {

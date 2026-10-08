@@ -28,6 +28,8 @@ class Analytics
         'page_view', 'cta_click', 'wizard_step', 'prototype_view',
         // What a visitor did on a page (components/PageViews.tsx), once per page each.
         'scroll_depth', 'section_view', 'ui_click', 'faq_open', 'tool_use', 'page_leave',
+        // A form that refused the visitor (PrototypeForm): the code says which wall they hit.
+        'form_error',
     ];
 
     /** Events only the API records. */

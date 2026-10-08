@@ -93,6 +93,7 @@ class AnalyticsTest extends TestCase
         $this->beacon(['name' => 'faq_open', 'props' => ['q' => 'Wem gehört der Code?', 'section' => 'faq']] + $ad);
         $this->beacon(['name' => 'ui_click', 'props' => ['label' => 'Kostenlose Vorschau starten', 'href' => '/de/create', 'section' => 'hero']] + $ad);
         $this->beacon(['name' => 'page_leave', 'props' => ['seconds' => 42, 'max_scroll' => 55, 'sections' => 1]] + $ad);
+        $this->beacon(['name' => 'form_error', 'props' => ['form' => 'prototype', 'code' => 'used'], 'path' => '/de/prototype'] + $ad);
         // Someone else, not from the ad.
         $this->beacon(['name' => 'page_view', 'path' => '/de'], 'Mozilla/5.0 (Macintosh) Firefox/130.0');
         $this->beacon(['name' => 'ui_click', 'path' => '/de', 'props' => ['label' => 'Preise', 'section' => 'nav']], 'Mozilla/5.0 (Macintosh) Firefox/130.0');
@@ -114,7 +115,7 @@ class AnalyticsTest extends TestCase
         $this->assertSame('meta', $j[0]['source']);
         $this->assertSame('appwerk-6', $j[0]['campaign']);
         $this->assertSame(['mobile', 42, 50, 1], [$j[0]['device'], $j[0]['seconds'], $j[0]['max_scroll'], $j[0]['sections']]);
-        $this->assertSame(['view /de', 'faq "Wem gehört der Code?"', 'click "Kostenlose Vorschau starten"'], $j[0]['steps']);
+        $this->assertSame(['view /de', 'faq "Wem gehört der Code?"', 'click "Kostenlose Vorschau starten"', 'error prototype used'], $j[0]['steps']);
 
         $this->assertNull(app(AnalyticsReport::class)->summary(1, 'tiktok')['source'], 'an unknown source means all traffic');
     }
