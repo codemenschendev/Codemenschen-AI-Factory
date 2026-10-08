@@ -93,7 +93,7 @@ export default async function AppLanding({
                   {x.cta2}
                 </a>
               </div>
-              <p className="hero-note reveal">{fill(x.ctaNote, { price: eur(PRICE_MIN, locale) })}</p>
+              <p className="hero-note reveal">{x.ctaNote}</p>
             </div>
 
             <div className="hero-photo" aria-hidden="true">

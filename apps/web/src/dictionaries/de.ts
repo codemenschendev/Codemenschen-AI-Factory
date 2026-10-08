@@ -225,7 +225,7 @@ export const de = {
     ledeShort: "Beschreib deine Idee in einem Satz. Du siehst kostenlos eine klickbare Vorschau und den Festpreis, bevor du zahlst.",
     cta: "Kostenlose App-Vorschau",
     cta2: "Rechne es durch",
-    ctaNote: "Vorschau kostenlos, ohne Kreditkarte. Festpreis ab {price}.",
+    ctaNote: "Vorschau kostenlos, ohne Kreditkarte.",
     stackLabel: "Dein Weg zur App",
     stack: ["App-Prototyp", "App-Entwicklung", "App-Marketing"],
     trust: [

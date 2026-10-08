@@ -224,7 +224,7 @@ export const en = {
     ledeShort: "Describe your idea in one sentence. You get a free clickable preview and the fixed price before you pay.",
     cta: "Free app preview",
     cta2: "Do the maths",
-    ctaNote: "Free preview, no credit card. Fixed price from {price}.",
+    ctaNote: "Free preview, no credit card.",
     stackLabel: "Your path to the app",
     stack: ["App prototype", "App development", "App marketing"],
     trust: [
