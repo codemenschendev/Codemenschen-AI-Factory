@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
+import { track, trackOnce } from "@/lib/analytics";
 import { remember } from "@/lib/history";
 import { getToken, useToken } from "@/lib/token";
 import type { Dict, Locale } from "@/lib/i18n";
@@ -117,6 +118,8 @@ export function PrototypeForm({
   function failed(err: unknown) {
     const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
     const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string; error?: string } | null }).body : null;
+    // Which wall a visitor hit, so the funnel shows it instead of a silent stop (2026-10-08).
+    track("form_error", { form: "prototype", code: body?.code ?? body?.error ?? String(status || "network") });
     setError(status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
       : body?.code === "kind_off" ? p.kindOff
       : body?.error === "turnstile" ? p.bot
@@ -130,6 +133,10 @@ export function PrototypeForm({
     if (prompt.trim().length < 12) return;
     setError(null);
     setStep("asking");
+    // Kept in this browser until the build starts: a visitor who leaves at the questions finds the idea again.
+    try {
+      localStorage.setItem(DRAFT, JSON.stringify({ prompt, kind }));
+    } catch {}
     try {
       const r = await api<{ questions: Question[] }>("/prototypes/questions", {
         method: "POST",
@@ -137,6 +144,7 @@ export function PrototypeForm({
         body: JSON.stringify({ prompt, kind, locale }),
       });
       if (r.questions.length > 0) {
+        trackOnce("proto-questions", "wizard_step", { step: "proto_questions", n: r.questions.length });
         setQuestions(r.questions);
         setPicked({});
         setOwn({});
@@ -152,6 +160,7 @@ export function PrototypeForm({
   }
 
   async function build(qs: Question[]) {
+    track("wizard_step", { step: qs.length ? "proto_build" : "proto_skip", answered: Object.values(picked).filter(Boolean).length + Object.values(own).filter((v) => v.trim()).length });
     setBusy(true);
     setError(null);
     const details = qs
@@ -176,6 +185,9 @@ export function PrototypeForm({
       // Written before the redirect, so a visitor who never comes back to this tab still finds
       // the prototype in the list next time. The title is filled in by the share page.
       remember({ id: r.id, kind, prompt: prompt.trim() });
+      try {
+        localStorage.removeItem(DRAFT);
+      } catch {}
       router.push(`/${locale}/p/${r.id}`);
     } catch (err) {
       failed(err);
@@ -185,7 +197,7 @@ export function PrototypeForm({
   if (step === "answer") {
     const q = p.questions;
     return (
-      <div className="pp-form">
+      <div className="pp-form pp-answer">
         <div>
           <h2 className="pp-form-title">{q.title}</h2>
           <p className="pp-note">{q.lead}</p>

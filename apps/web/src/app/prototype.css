@@ -117,4 +117,6 @@ legend.pp-label { margin-bottom: 10px; }
   .pp-submit { width: 100%; }
   .pp-aside { grid-template-columns: 1fr; }
   .pp-history li { gap: 10px; padding: 10px 12px; }
+  /* The build button stays in reach while the questions scroll: a Meta visitor answered all three and never found it (2026-10-08). */
+  .pp-answer .pp-actions { position: sticky; bottom: 0; z-index: 5; margin: 0 -18px -22px; padding: 12px 18px calc(14px + env(safe-area-inset-bottom)); background: #fff; border-radius: 0 0 18px 18px; box-shadow: 0 -10px 24px rgba(15, 23, 42, 0.08); }
 }

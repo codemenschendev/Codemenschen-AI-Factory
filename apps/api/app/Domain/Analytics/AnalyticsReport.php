@@ -135,8 +135,9 @@ class AnalyticsReport
             'ui_click' => 'click "'.($e->props['label'] ?? '').'"',
             'faq_open' => 'faq "'.($e->props['q'] ?? '').'"',
             'tool_use' => 'tool '.($e->props['section'] ?? ''),
-            'wizard_step' => 'wizard '.($e->props['step'] ?? ''),
+            'wizard_step' => 'wizard '.($e->props['step'] ?? '').(isset($e->props['build_eur']) ? ' ('.$e->props['build_eur'].' EUR)' : ''),
             'cta_click' => 'cta '.($e->props['cta'] ?? ''),
+            'form_error' => 'error '.($e->props['form'] ?? '').' '.($e->props['code'] ?? ''),
             'scroll_depth', 'section_view', 'page_leave' => null,
             default => $e->name,
         };
