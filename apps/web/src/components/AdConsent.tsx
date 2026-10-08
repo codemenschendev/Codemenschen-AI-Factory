@@ -23,6 +23,8 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
   const pathname = usePathname();
   const firstPath = useRef(true);
   const [pick, setPick] = useState<Consent>({ stats: false, ads: false });
+  // On a phone the switches wait behind "Settings", so the question takes a thin strip, not a third of the first screen.
+  const [more, setMore] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -47,6 +49,7 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
     })();
     const show = () => {
       setPick(consent() ?? { stats: false, ads: false });
+      setMore(true);
       setOpen(true);
     };
     window.addEventListener(OPEN_EVENT, show);
@@ -87,7 +90,7 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
 
   // A bar along the bottom, one row on a wide screen: the big card covered half the page (2026-10-01).
   return (
-    <div role="dialog" aria-label={c.title} className="consent">
+    <div role="dialog" aria-label={c.title} className={more ? "consent is-more" : "consent"}>
       <div className="consent-copy">
         <strong className="consent-title">{c.title}</strong>
         <p className="consent-text">
@@ -104,6 +107,7 @@ export function AdConsentBanner({ d, locale }: { d: Dict; locale: Locale }) {
         <button className="consent-btn" onClick={() => save({ stats: false, ads: false })}>{c.declineAll}</button>
         <button className="consent-btn" onClick={() => save({ stats: Boolean(gtmId), ads: true })}>{c.allowAll}</button>
         <button className="consent-save" onClick={() => save(pick)}>{c.saveChoice}</button>
+        <button className="consent-more" onClick={() => setMore(true)} aria-expanded={more}>{c.settings}</button>
       </div>
     </div>
   );

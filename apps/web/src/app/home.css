@@ -40,6 +40,8 @@
 .lp .hero-frame { position: relative; overflow: hidden; border-radius: 24px; height: clamp(480px, 42vw, 520px); display: flex; align-items: center; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.12); }
 .lp .hero-copy { position: relative; z-index: 2; max-width: 540px; padding: 40px 0 40px 48px; }
 .lp .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+.lp .hero-note { margin: 14px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
+.lp .lede-short { display: none; }
 .lp .hero-photo { position: absolute; inset: 0; }
 .lp .hero-photo img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: right center; }
 .lp .hero-photo::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(255, 255, 255, 0.97) 0, rgba(255, 255, 255, 0.9) 30%, rgba(255, 255, 255, 0.5) 44%, rgba(255, 255, 255, 0) 56%); pointer-events: none; }
@@ -211,6 +213,9 @@
 /* ---------- Reveal motion (engineered, not decorative) ---------- */
 .lp .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
 .lp .reveal.in { opacity: 1; transform: none; }
+/* The hero never waits for JavaScript: hidden until hydration, a phone in the Facebook app showed a
+   blank first screen for seconds, and ad visitors left within 2 s (2026-10-07). */
+.lp .hero .reveal { opacity: 1; transform: none; transition: none; }
 @media (prefers-reduced-motion: reduce) {
   .lp .reveal { opacity: 1; transform: none; transition: none; }
 }
@@ -252,6 +257,14 @@
 @media (max-width: 640px) {
   .lp .section { padding: 56px 0; }
   .lp .hero-ctas .btn { width: 100%; }
+  /* The first phone screen holds the promise, the button and the price: ad visitors left before scrolling (2026-10-07). */
+  .lp .hero .pill { margin-bottom: 0.9rem; }
+  .lp .hero .lede { margin: 1rem 0 1.25rem; font-size: 1.02rem; }
+  .lp .lede-long { display: none; }
+  .lp .lede-short { display: inline; }
+  .lp .hero-ctas { gap: 4px; }
+  .lp .hero-ctas .btn.btn-ghost { border-color: transparent; background: none; padding-block: 8px; }
+  .lp .hero-note { margin-top: 6px; text-align: center; font-size: 0.85rem; }
   .lp .trust-grid, .lp .price-grid { grid-template-columns: 1fr; }
   .lp .steps { grid-template-columns: 1fr; row-gap: 22px; }
   .lp .idea-grid { grid-template-columns: 1fr; }

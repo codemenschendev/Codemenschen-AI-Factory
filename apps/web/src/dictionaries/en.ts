@@ -221,8 +221,10 @@ export const en = {
     titleB: "We do the rest.",
     titleC: "At a fixed price.",
     lede: "You need no technical skills. Describe your idea in one sentence, and Appmitki shows you a free clickable preview. Then we code your app with AI and bring it to your customers. You lean back.",
+    ledeShort: "Describe your idea in one sentence. You get a free clickable preview and the fixed price before you pay.",
     cta: "Free app preview",
     cta2: "Do the maths",
+    ctaNote: "Free preview, no credit card.",
     stackLabel: "Your path to the app",
     stack: ["App prototype", "App development", "App marketing"],
     trust: [
@@ -1885,6 +1887,7 @@ export const en = {
     allowAll: "Allow all",
     saveChoice: "Save choice",
     declineAll: "Decline all",
+    settings: "Settings",
     link: "Cookies and measurement",
   },
   signin: {
