@@ -84,19 +84,22 @@ export function AnalyticsPanel({ token, locale, d }: { token: string; locale: Lo
 
   return (
     <div style={{ display: "grid", gap: 20 }}>
-      <div className="tabs" role="tablist" aria-label={t.range}>
-        {RANGES.map((r) => (
-          <button key={r} className="tab" role="tab" aria-selected={days === r} onClick={() => setDays(r)}>
-            {r === 1 ? t.day1 : t.days.replace("{n}", String(r))}
-          </button>
-        ))}
-      </div>
-      <div className="tabs" role="tablist" aria-label={t.source}>
-        {SOURCES.map((s) => (
-          <button key={s || "all"} className="tab" role="tab" aria-selected={source === s} onClick={() => setSource(s)}>
-            {s === "" ? t.sourceAll : s === "meta" ? t.sourceMeta : t.sourceGoogle}
-          </button>
-        ))}
+      {/* The console hides the storefront's tab strip, so the switches use its own filter row (2026-10-08). */}
+      <div className="ops-toolbar">
+        <div className="ops-seg" role="group" aria-label={t.range}>
+          {RANGES.map((r) => (
+            <button key={r} type="button" aria-pressed={days === r} onClick={() => setDays(r)}>
+              {r === 1 ? t.day1 : t.days.replace("{n}", String(r))}
+            </button>
+          ))}
+        </div>
+        <div className="ops-seg" role="group" aria-label={t.source}>
+          {SOURCES.map((s) => (
+            <button key={s || "all"} type="button" aria-pressed={source === s} onClick={() => setSource(s)}>
+              {s === "" ? t.sourceAll : s === "meta" ? t.sourceMeta : t.sourceGoogle}
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="grid">
