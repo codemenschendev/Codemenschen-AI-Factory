@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { DELIVERY_DAYS_HI, DELIVERY_DAYS_LO } from "@ai-factory/pricing";
 import { eur, getDict, isLocale, type Locale } from "@/lib/i18n";
+import { appsOnly, offeredKinds } from "@/lib/offer";
 import { seo } from "@/lib/seo";
 import { AppIdeas } from "@/components/AppIdeas";
 import { BudgetMeter } from "@/components/BudgetMeter";
@@ -25,7 +26,9 @@ export async function generateMetadata({
   return {
     title: a.metaTitle,
     description: a.metaDesc,
-    ...seo(locale, "/app"),
+    // While only apps are on offer the home page shows this same page, and Google kept only one
+    // of the two (2026-10-12: /de/app "crawled, currently not indexed"): the home page is canonical.
+    ...seo(locale, appsOnly(await offeredKinds()) ? "" : "/app"),
   };
 }
 
