@@ -40,6 +40,8 @@
 .lp .hero-frame { position: relative; overflow: hidden; border-radius: 24px; height: clamp(480px, 42vw, 520px); display: flex; align-items: center; box-shadow: 0 30px 70px rgba(15, 23, 42, 0.12); }
 .lp .hero-copy { position: relative; z-index: 2; max-width: 540px; padding: 40px 0 40px 48px; }
 .lp .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+.lp .price-cta { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; margin-top: 22px; }
+.lp .price-cta p { margin: 0; flex: 1 1 260px; color: var(--ink-soft); font-size: 0.95rem; }
 .lp .hero-note { margin: 14px 0 0; font-size: 0.9rem; color: var(--ink-soft); }
 .lp .lede-short { display: none; }
 .lp .hero-photo { position: absolute; inset: 0; }

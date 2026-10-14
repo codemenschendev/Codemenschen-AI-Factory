@@ -277,6 +277,8 @@ export const en = {
     prices: {
       title: "Prices for your app",
       lede: "You see every amount before you pay. The ad budget is separate and goes 1:1 into ads.",
+      cta: "Work out the price of your idea",
+      ctaNote: "Describe your app in one sentence. You see the price part by part, in about a minute. Free and without obligation.",
       items: [
         { h: "App development", fig: "Priced part by part", p: "Every part of your app has its own price, from the time it takes to build. You see the total on the desk before you pay." },
         { h: "Landing page for the app", fig: "Optional", p: "A page that presents your app, priced on the desk like every other part." },

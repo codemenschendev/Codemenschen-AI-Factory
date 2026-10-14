@@ -278,6 +278,8 @@ export const de = {
     prices: {
       title: "Preise für deine App",
       lede: "Du siehst jeden Betrag vor der Bezahlung. Das Werbebudget ist getrennt und fließt 1:1 in Anzeigen.",
+      cta: "Preis für deine Idee ausrechnen",
+      ctaNote: "Beschreib deine App in einem Satz. Du siehst den Preis Teil für Teil, in etwa einer Minute. Kostenlos und unverbindlich.",
       items: [
         { h: "App-Entwicklung", fig: "Preis pro Teil", p: "Jeder Teil deiner App hat seinen eigenen Preis, aus der Zeit, die er zum Bauen braucht. Die Summe siehst du im Desk, bevor du zahlst." },
         { h: "Landingpage für die App", fig: "Optional", p: "Eine Seite, die deine App vorstellt, im Desk bepreist wie jeder andere Teil." },
