@@ -284,6 +284,13 @@ export default async function AppLanding({
             <Icon name="shield" className="price-note-ico" />
             {d.pricing.note}
           </p>
+          {/* Ad visitors who stay open the menu and go to Preise (2026-10-14): give them their own price, from the desk. */}
+          <div className="price-cta reveal">
+            <Link className="btn btn-primary" href={start}>
+              {x.prices.cta} <Icon name="arrow" className="btn-ico" />
+            </Link>
+            <p>{x.prices.ctaNote}</p>
+          </div>
         </div>
       </section>
 
