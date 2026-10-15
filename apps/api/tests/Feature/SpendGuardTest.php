@@ -68,6 +68,11 @@ class SpendGuardTest extends TestCase
         app(SpendGuard::class)->watch();
         $this->assertSame('active', $c->fresh()->platform_status);
 
+        // Meta may spend 75 percent over a day budget on one day: 50 of 30 is still a normal day.
+        $today = 50;
+        app(SpendGuard::class)->watch();
+        $this->assertSame('active', $c->fresh()->platform_status);
+
         $today = 70;
         app(SpendGuard::class)->watch();
         $this->assertSame('day_overspent', $c->fresh()->stopped_reason);

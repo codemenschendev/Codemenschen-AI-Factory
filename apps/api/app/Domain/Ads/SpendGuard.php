@@ -35,8 +35,11 @@ class SpendGuard
 
     public const DEFAULT_MAX_DAILY_TOTAL = 100;
 
-    /** A day may run over its share by this much before the watch stops it: platforms pace unevenly. */
-    private const DAY_SLACK = 1.5;
+    /**
+     * A day may run over its share by this much before the watch stops it: platforms pace unevenly.
+     * Meta may spend up to 75 percent over a day budget on one day, so anything below that is normal.
+     */
+    private const DAY_SLACK = 1.75;
 
     /** Failed looks in a row before the operators hear about it. */
     private const FAILS_BEFORE_ALERT = 3;
