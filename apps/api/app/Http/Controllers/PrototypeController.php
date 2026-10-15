@@ -13,6 +13,7 @@ use App\Jobs\BuildPrototype;
 use App\Jobs\RevisePrototype;
 use App\Models\Customer;
 use App\Models\Prototype;
+use App\Models\Setting;
 use App\Support\MailLink;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -41,6 +42,21 @@ class PrototypeController extends Controller
      * count, and neither do a campaign's parts or the free change. Admins are not counted.
      */
     public const FREE_PER_ACCOUNT = 1;
+
+    /** A visitor without an account or e-mail, while the switch is on: one build per address and day. */
+    private const ANON_PER_IP_PER_DAY = 1;
+
+    /** All builds without an account in one day: what the open door may cost at most. */
+    private const ANON_PER_DAY = 100;
+
+    /**
+     * Whether a visitor may build a prototype with no account and no e-mail (owner, 2026-10-15: "during the
+     * ads, let people in"). The admin switches it in the overview; off, every build needs an address again.
+     */
+    public static function anonymousOpen(): bool
+    {
+        return (bool) Setting::read('prototype.anonymous', true);
+    }
 
     /**
      * How many free prototypes this address has used or is waiting for, other than $except. With
@@ -126,9 +142,20 @@ class PrototypeController extends Controller
             return $off;
         }
         $user = $request->user('sanctum');
-        if ($user === null && empty($data['email'])) {
+        // Without an account and without an e-mail the build starts at once while the switch is on,
+        // within its own small limits; otherwise the address is needed as before.
+        $anonymous = $user === null && empty($data['email']);
+        if ($anonymous && ! self::anonymousOpen()) {
             return response()->json(['error' => 'Give your e-mail: the build starts when you open the link we send.',
                 'code' => 'email'], 422);
+        }
+        if ($anonymous) {
+            $anon = fn () => Prototype::whereNull('customer_id')->whereNull('parent_id')->where('created_at', '>=', now()->startOfDay())
+                ->where(fn ($q) => $q->whereNull('qa')->orWhereNull('qa->pending_email'));
+            if ($anon()->where('ip', $ip)->count() >= self::ANON_PER_IP_PER_DAY || $anon()->count() >= self::ANON_PER_DAY) {
+                return response()->json(['error' => 'The free preview without an account is used for today. Give your e-mail to get another one.',
+                    'code' => 'anon_limit'], 429);
+            }
         }
 
         // The cap is there to stop an anonymous visitor spending our money on generations. An
@@ -145,7 +172,7 @@ class PrototypeController extends Controller
 
         // One free prototype per account: checked before a mail goes out, and again when the link
         // is opened, for two requests sent before either was confirmed.
-        if (self::freeUsed($user?->email ?? (string) $data['email']) >= self::FREE_PER_ACCOUNT) {
+        if (! $anonymous && self::freeUsed($user?->email ?? (string) $data['email']) >= self::FREE_PER_ACCOUNT) {
             return response()->json(['error' => 'You have used your free prototype.', 'code' => 'used'], 403);
         }
 
@@ -160,12 +187,12 @@ class PrototypeController extends Controller
         // starts at once; anybody else's waits for the link in the e-mail, which signs them in and
         // starts it. Nothing is spent on an address that is never opened.
         $proto = Prototype::create([
-            'status' => $user === null ? 'waiting' : 'queued',
+            'status' => $user === null && ! $anonymous ? 'waiting' : 'queued',
             'kind' => $kind,
             'prompt' => $prompt,
             'ip' => $ip,
             'customer_id' => $user?->id,
-            'qa' => $user === null ? ['pending_email' => strtolower($data['email'])] : null,
+            'qa' => $user === null && ! $anonymous ? ['pending_email' => strtolower($data['email'])] : null,
             'expires_at' => now()->addDays(self::LIVE_DAYS),
         ]);
 
@@ -186,11 +213,11 @@ class PrototypeController extends Controller
         }
 
         app(Analytics::class)->record('prototype_requested', $request, [], ['kind' => $kind, 'prototype' => $proto->id,
-            'uploads' => count($files), 'details' => trim($data['details'] ?? '') !== '', 'waiting' => $user === null]);
+            'uploads' => count($files), 'details' => trim($data['details'] ?? '') !== '', 'waiting' => $user === null && ! $anonymous, 'anonymous' => $anonymous]);
         if (($click = AdClick::fromRequest($request)) !== null) {
             app(Conversions::class)->lead($click, $request, prototype: $proto, email: $user?->email ?? ($data['email'] ?? null));
         }
-        if ($user === null) {
+        if ($user === null && ! $anonymous) {
             self::sendBuildLink($proto, strtolower($data['email']), $data['locale'] ?? 'de');
 
             return response()->json(['id' => $proto->id, 'status' => 'waiting'], 202);

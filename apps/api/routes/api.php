@@ -158,6 +158,7 @@ Route::middleware(['auth:sanctum', 'admin', 'admin.2fa', 'audit'])->prefix('admi
     Route::post('/layouts', [AdminController::class, 'layoutsSettings']);
     Route::post('/ads-mode', [AdminController::class, 'adsMode']);
     Route::post('/prototype-writer', [AdminController::class, 'prototypeWriter']);
+    Route::post('/prototype-anonymous', [AdminController::class, 'prototypeAnonymous']);
     Route::post('/offer-kinds', [AdminController::class, 'offerKinds']);
     Route::get('/sofabuilt', [AdminController::class, 'sofabuilt']);
     Route::post('/sofabuilt', [AdminController::class, 'sofabuiltSettings']);

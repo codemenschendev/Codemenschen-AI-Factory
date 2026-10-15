@@ -77,6 +77,7 @@ class AdminController extends Controller
             // Who makes the ad prototype: hybrid (Claude page, Codex scenes), claude, or codex alone.
             'ads_mode' => PrototypeWriter::adsMode(),
             'prototype_writer' => PrototypeWriter::writer(),
+            'prototype_anonymous' => PrototypeController::anonymousOpen(),
             // What the storefront offers; the rest stays built but hidden.
             'offer_kinds' => PrototypeWriter::offered(),
             // The spend guard: kill switch, limits, and what runs now.
@@ -287,6 +288,17 @@ class AdminController extends Controller
         $notify->system("prototype writer set to {$writer} by {$by}");
 
         return response()->json(['prototype_writer' => $writer]);
+    }
+
+    /** A free preview without an account or e-mail, on during the ads (owner, 2026-10-15). */
+    public function prototypeAnonymous(Request $request, Notify $notify): JsonResponse
+    {
+        $open = (bool) $request->validate(['open' => 'required|boolean'])['open'];
+        $by = (string) $request->user()->email;
+        Setting::write('prototype.anonymous', $open, $by);
+        $notify->system('free preview without an account '.($open ? 'opened' : 'closed')." by {$by}");
+
+        return response()->json(['prototype_anonymous' => $open]);
     }
 
     /** Which kinds of prototype the storefront offers (owner's switch, 2026-09-29). */

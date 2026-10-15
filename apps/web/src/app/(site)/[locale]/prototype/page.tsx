@@ -6,7 +6,7 @@ import { PrototypeForm, type ProtoKind } from "@/components/PrototypeForm";
 import { PrototypeHistory } from "@/components/PrototypeHistory";
 import { appDesk } from "@/dictionaries/appDesk";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
-import { appsOnly, offeredKinds } from "@/lib/offer";
+import { anonymousPreview, appsOnly, offeredKinds } from "@/lib/offer";
 import { seo } from "@/lib/seo";
 import "../../../prototype.css";
 import "../../../sofabuilt.css";
@@ -63,7 +63,7 @@ export default async function PrototypePage({
 
       <div className="wrap pp-grid">
         <div className="pp-main">
-          <PrototypeForm locale={locale} d={d} initialKind={initialKind} kinds={kinds} />
+          <PrototypeForm locale={locale} d={d} initialKind={initialKind} kinds={kinds} anonymous={await anonymousPreview()} />
           <PrototypeHistory locale={locale} d={d} />
         </div>
 

@@ -61,6 +61,7 @@ export function PrototypeForm({
   d,
   initialKind = "site",
   kinds = KINDS,
+  anonymous = false,
 }: {
   locale: Locale;
   d: Dict;
@@ -68,6 +69,8 @@ export function PrototypeForm({
   initialKind?: ProtoKind;
   /** What the storefront offers right now (owner's switch); one kind needs no choice. */
   kinds?: ProtoKind[];
+  /** The admin lets visitors build without an account or e-mail (during the ads, 2026-10-15). */
+  anonymous?: boolean;
 }) {
   const p = d.proto;
   const router = useRouter();
@@ -79,7 +82,9 @@ export function PrototypeForm({
   // types it here; the build starts when they open the link we send, which also signs them in.
   const token = useToken();
   const [email, setEmail] = useState("");
-  const needsEmail = token === null;
+  // While the door is open the e-mail is only asked once the free preview of the day is used.
+  const [askEmail, setAskEmail] = useState(false);
+  const needsEmail = token === null && (!anonymous || askEmail);
   const emailOk = !needsEmail || /.+@.+\..+/.test(email.trim());
   // Between the sentence and the build: a few questions the model thinks would change the
   // result most, each answered with a tap or in the visitor's own words, all of it optional.
@@ -120,7 +125,8 @@ export function PrototypeForm({
     const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string; error?: string } | null }).body : null;
     // Which wall a visitor hit, so the funnel shows it instead of a silent stop (2026-10-08).
     track("form_error", { form: "prototype", code: body?.code ?? body?.error ?? String(status || "network") });
-    setError(status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
+    if (body?.code === "anon_limit" || body?.code === "email") setAskEmail(true);
+    setError(body?.code === "anon_limit" ? p.anonLimit : status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
       : body?.code === "kind_off" ? p.kindOff
       : body?.error === "turnstile" ? p.bot
       : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);

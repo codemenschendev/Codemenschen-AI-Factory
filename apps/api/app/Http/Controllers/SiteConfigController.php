@@ -20,6 +20,8 @@ class SiteConfigController extends Controller
         return response()->json([
             'gtm_id' => preg_match('~^GTM-[A-Z0-9]{4,12}$~', $gtm) === 1 ? $gtm : null,
             'kinds' => PrototypeWriter::offered(),
+            // A free preview without an account or e-mail (the admin's switch).
+            'prototype_anonymous' => PrototypeController::anonymousOpen(),
             // The Meta Pixel the banner loads after a yes to ad measurement (lib/metaPixel.ts).
             'meta_pixel_id' => preg_match('~^\d{6,20}$~', (string) config('services.ads.meta.pixel_id')) === 1 ? (string) config('services.ads.meta.pixel_id') : null,
         ])

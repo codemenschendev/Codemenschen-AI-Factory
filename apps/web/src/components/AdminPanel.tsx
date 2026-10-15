@@ -43,6 +43,7 @@ interface Overview {
   ads_mode: "hybrid" | "claude" | "codex";
   /** Who writes the site, app and e-mail prototypes. */
   prototype_writer: "claude" | "codex";
+  prototype_anonymous: boolean;
   /** What the storefront offers (owner's switch, 2026-09-29: apps only for now). */
   offer_kinds: string[];
   /** The spend guard: the kill switch, its two limits, and what runs now. */
@@ -340,6 +341,11 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
   async function saveAdsMode(mode: Overview["ads_mode"]) {
     const r = await call<{ ads_mode: Overview["ads_mode"] }>("/admin/ads-mode", { method: "POST", body: JSON.stringify({ mode }) });
     if (r) setOverview((o) => (o ? { ...o, ads_mode: r.ads_mode } : o));
+  }
+
+  async function saveAnonymous(open: boolean) {
+    const r = await call<{ prototype_anonymous: boolean }>("/admin/prototype-anonymous", { method: "POST", body: JSON.stringify({ open }) });
+    if (r) setOverview((o) => (o ? { ...o, prototype_anonymous: r.prototype_anonymous } : o));
   }
 
   async function saveWriter(writer: Overview["prototype_writer"]) {
@@ -904,6 +910,16 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                 );
               })}
             </div>
+          </div>
+
+          <div className="card" style={{ marginBottom: 26 }}>
+            <span className="cat">{a.anonTile}</span>
+            <strong style={{ fontSize: 22 }}>{overview.prototype_anonymous ? a.anonOn : a.anonOff}</strong>
+            <p className="small muted" style={{ margin: "4px 0 10px" }}>{a.anonHint}</p>
+            <button className={overview.prototype_anonymous ? "btn btn-ghost btn-sm" : "btn btn-primary btn-sm"} disabled={busy}
+              onClick={() => void saveAnonymous(!overview.prototype_anonymous)}>
+              {overview.prototype_anonymous ? a.anonClose : a.anonOpen}
+            </button>
           </div>
 
           <div className="card" style={{ marginBottom: 26 }}>
