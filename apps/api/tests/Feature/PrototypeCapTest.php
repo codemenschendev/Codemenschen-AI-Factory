@@ -48,6 +48,8 @@ class PrototypeCapTest extends TestCase
 
     public function test_a_visitor_who_is_not_signed_in_gives_an_e_mail_and_nothing_is_built_yet(): void
     {
+        // With the free preview without an account switched off, the address is needed again.
+        \App\Models\Setting::write('prototype.anonymous', false, 'test');
         $before = Customer::count();
         $this->postJson('/api/prototypes', ['prompt' => 'Eine App für ein Friseurstudio in Wien', 'kind' => 'app'])
             ->assertStatus(422)->assertJson(['code' => 'email']);
@@ -168,5 +170,26 @@ class PrototypeCapTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors(['prompt']);
         $this->assertSame(1, Prototype::count());
+    }
+
+    public function test_while_the_door_is_open_a_visitor_builds_at_once_without_an_account_or_e_mail(): void
+    {
+        $prompt = ['prompt' => 'Eine App für ein Friseurstudio in Wien mit Terminbuchung', 'kind' => 'app'];
+        $this->postJson('/api/prototypes', $prompt)->assertStatus(202)->assertJson(['status' => 'queued']);
+        Queue::assertPushed(\App\Jobs\BuildPrototype::class, 1);
+        $this->assertNull(Prototype::sole()->customer_id);
+        $this->getJson('/api/site-config')->assertJsonPath('prototype_anonymous', true);
+
+        // One a day per address; with an e-mail the visitor still gets the usual way.
+        $this->postJson('/api/prototypes', $prompt)->assertStatus(429)->assertJson(['code' => 'anon_limit']);
+        $this->build()->assertStatus(202)->assertJson(['status' => 'waiting']);
+    }
+
+    public function test_the_admin_closes_and_opens_the_door(): void
+    {
+        $admin = Customer::create(['email' => 'chef@example.com', 'locale' => 'de', 'is_admin' => true]);
+        $this->withToken($admin->createToken('ops')->plainTextToken)
+            ->postJson('/api/admin/prototype-anonymous', ['open' => false])->assertOk()->assertJsonPath('prototype_anonymous', false);
+        $this->assertFalse(\App\Http\Controllers\PrototypeController::anonymousOpen());
     }
 }
