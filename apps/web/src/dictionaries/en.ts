@@ -152,7 +152,7 @@ export const en = {
       budgetStop: "Stops automatically at {cap}.",
     },
     trust: [
-      { h: "1 free prototype per account", p: "See your website, app or campaign before you pay." },
+      { h: "Free prototype", p: "See your website, app or campaign before you pay." },
       { h: "Fixed price, shown before you pay", p: "Scope and price are clear up front." },
       { h: "AI builds, our team reviews", p: "A person checks every paid project." },
       { h: "Money back if we cannot deliver the scope", p: "You get the development price back." },
@@ -210,7 +210,7 @@ export const en = {
       eyebrow: "Get started",
       title: "Have an idea? See it for free first.",
       lede: "One sentence is enough. The preview is ready in a few minutes.",
-      checks: ["1 free prototype per account", "Fixed price before you pay", "Money back if we cannot deliver"],
+      checks: ["Free prototype", "Fixed price before you pay", "Money back if we cannot deliver"],
     },
   },
   appDev: {
@@ -228,7 +228,7 @@ export const en = {
     stackLabel: "Your path to the app",
     stack: ["App prototype", "App development", "App marketing"],
     trust: [
-      { h: "1 free prototype per account", p: "You see your app before you pay." },
+      { h: "Free prototype", p: "You see your app before you pay." },
       { h: "Fixed price", p: "Scope and price are set before checkout." },
       { h: "You own the app", p: "Code, repository and store listing go to you." },
       { h: "Team in Gössendorf", p: "Real people, reachable by e-mail and phone." },
@@ -1484,9 +1484,9 @@ export const en = {
     oneDayLeft: "1 day left",
     forget: "Remove",
     page: {
-      pill: "1 free prototype per account · no credit card",
+      pill: "Free prototype · no credit card",
       asideTitle: "What happens next",
-      free: "1 free prototype per account, no strings attached. You only pay when you start a project.",
+      free: "A free prototype, no strings attached. You only pay when you start a project.",
       drop: "Drag pictures here or choose them",
     },
     stages: {

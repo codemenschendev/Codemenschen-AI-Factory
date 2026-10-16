@@ -40,9 +40,8 @@ export function PageViews() {
     };
     const seen = new Set<string>();
     let maxScroll = 0;
-    let visibleMs = 0;
     let visibleSince = document.visibilityState === "visible" ? Date.now() : 0;
-    let left = false;
+    let reported = false;
 
     const onScroll = () => {
       const doc = document.documentElement;
@@ -54,7 +53,8 @@ export function PageViews() {
     const onClick = (e: MouseEvent) => {
       const el = (e.target as Element | null)?.closest?.("a, button");
       if (!el) return;
-      let label = (el.getAttribute("data-cta") ?? el.textContent ?? el.getAttribute("aria-label") ?? "").replace(/\s+/g, " ").trim().slice(0, 60);
+      // An icon button (the phone menu) has empty text: its aria-label names it ("" would hide it).
+      let label = (el.getAttribute("data-cta") || el.textContent?.trim() || el.getAttribute("aria-label") || "").replace(/\s+/g, " ").trim().slice(0, 60);
       // A signed-in visitor's menu may show their e-mail address: never send it.
       if (label.includes("@")) label = "(account)";
       const href = (el.getAttribute("href") ?? "").split("#token")[0].slice(0, 100);
@@ -91,18 +91,22 @@ export function PageViews() {
         : null;
     document.querySelectorAll("section").forEach((s) => io?.observe(s));
 
+    // Each time the page goes out of view, the seconds it was in view since the last time; the
+    // reports add up per visitor. Sending only the first leave cut real visits to 0 s: the Facebook
+    // in-app browser hides the page once while it opens (2026-10-16, a visitor who scrolled 2.5 min read 0 s).
     const leave = () => {
-      if (left) return;
-      left = true;
       onScroll(); // where they were when they left, also when no scroll event came
-      if (visibleSince) visibleMs += Date.now() - visibleSince;
-      track("page_leave", { seconds: Math.round(visibleMs / 1000), max_scroll: maxScroll, sections: seen.size }, path);
+      const ms = visibleSince ? Date.now() - visibleSince : 0;
+      visibleSince = 0;
+      if (reported && ms < 1000) return;
+      reported = true;
+      track("page_leave", { seconds: Math.round(ms / 1000), max_scroll: maxScroll, sections: seen.size }, path);
     };
     // A phone browser (and the Facebook and Instagram in-app browser) often never fires pagehide:
     // the page going to the background is the last thing we hear.
     const onVisibility = () => {
       if (document.visibilityState === "hidden") leave();
-      else if (!visibleSince) visibleSince = Date.now(); // opened in a background tab
+      else if (!visibleSince) visibleSince = Date.now(); // back in view, or opened in a background tab
     };
 
     onScroll();
