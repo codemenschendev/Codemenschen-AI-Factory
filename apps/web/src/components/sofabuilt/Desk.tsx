@@ -552,6 +552,13 @@ export function Desk({
               <span>{t.total}</span>
               <b>{eur(total)}</b>
             </div>
+            {/* Visitors from the ads left at the price (2026-10-07, 2026-10-15): say the preview is free before they decide. */}
+            {onPreview && (
+              <p className="dk-free">
+                <Ico name="spark" className="dk-meta-ico" />
+                {t.previewFree}
+              </p>
+            )}
             {(price.hosting_monthly_eur ?? 0) > 0 && (
               <p className="dk-hint dk-hosting">{fill(t.hosting, { price: eur(price.hosting_monthly_eur ?? 0) })}</p>
             )}
