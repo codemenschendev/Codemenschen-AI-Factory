@@ -218,6 +218,8 @@ body.sb .svc-foot b.svc-go-label { font-size: 16px; font-weight: 600; color: var
 
 /* Appmitki's app desk: the free preview next to the order, and the server fee line. */
 .dk-hosting { margin: 10px 0 0; }
+.dk-free { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; padding: 10px 12px; border-radius: 10px; background: #ecf8f1; color: #166534; font-size: 14px; font-weight: 600; }
+.dk-free .dk-meta-ico { flex: none; margin-top: 2px; color: #16a34a; }
 .dk-preview { display: grid; gap: 6px; margin: 4px 0 14px; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
 .dk-preview-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px 16px; border-radius: var(--radius); border: 1px solid var(--accent); background: #fff; color: var(--accent); font: inherit; font-weight: 600; cursor: pointer; }
 .dk-preview-btn:hover { background: var(--accent-soft); }

@@ -138,7 +138,8 @@ const en = {
     placeholderAppMore: "Answer above or tell us what else the app should do (optional)",
     hosting: "Logins, shared data and payments need our server: {price} a month, starting when the app is live.",
     previewFirst: "See a free preview first",
-    previewHint: "Clickable screens of this app in a few minutes. One free preview per account.",
+    previewHint: "Clickable screens of this app in a few minutes. Free, you pay nothing for it.",
+    previewFree: "Before you pay anything, you see a free preview of your app. You only pay when you order.",
     mail: "Or write to",
     checkout: {
       title: "Order",
@@ -331,7 +332,8 @@ const de: typeof en = {
     placeholderAppMore: "Antworte oben oder sag uns, was die App noch können soll (optional)",
     hosting: "Logins, geteilte Daten und Zahlungen brauchen unseren Server: {price} im Monat, ab dem Tag, an dem die App live ist.",
     previewFirst: "Zuerst eine kostenlose Vorschau ansehen",
-    previewHint: "Klickbare Bildschirme dieser App in wenigen Minuten. Eine kostenlose Vorschau pro Konto.",
+    previewHint: "Klickbare Bildschirme dieser App in wenigen Minuten. Kostenlos, du zahlst nichts dafür.",
+    previewFree: "Bevor du etwas zahlst, siehst du eine kostenlose Vorschau deiner App. Bezahlt wird erst, wenn du bestellst.",
     mail: "Oder schreib an",
     checkout: {
       title: "Bestellen",
