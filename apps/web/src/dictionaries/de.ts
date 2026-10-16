@@ -152,7 +152,7 @@ export const de = {
       budgetStop: "Stoppt automatisch bei {cap}.",
     },
     trust: [
-      { h: "1 kostenloser Prototyp pro Konto", p: "Sieh deine Website, App oder Kampagne, bevor du zahlst." },
+      { h: "Kostenloser Prototyp", p: "Sieh deine Website, App oder Kampagne, bevor du zahlst." },
       { h: "Festpreis, bevor du zahlst", p: "Umfang und Preis stehen vorher fest." },
       { h: "AI baut, unser Team prüft", p: "Ein Mensch prüft jedes bezahlte Projekt." },
       { h: "Geld zurück, wenn wir den Umfang nicht liefern", p: "Du bekommst den Entwicklungspreis zurück." },
@@ -210,7 +210,7 @@ export const de = {
       eyebrow: "Jetzt starten",
       title: "Du hast eine Idee? Sieh sie dir zuerst kostenlos an.",
       lede: "Ein Satz reicht. Die Vorschau ist in wenigen Minuten fertig.",
-      checks: ["1 kostenloser Prototyp pro Konto", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
+      checks: ["Kostenloser Prototyp", "Festpreis vor der Bezahlung", "Geld zurück, wenn wir nicht liefern"],
     },
   },
   appDev: {
@@ -229,7 +229,7 @@ export const de = {
     stackLabel: "Dein Weg zur App",
     stack: ["App-Prototyp", "App-Entwicklung", "App-Marketing"],
     trust: [
-      { h: "1 kostenloser Prototyp pro Konto", p: "Du siehst deine App, bevor du zahlst." },
+      { h: "Kostenloser Prototyp", p: "Du siehst deine App, bevor du zahlst." },
       { h: "Festpreis", p: "Umfang und Preis stehen vor dem Checkout fest." },
       { h: "Die App gehört dir", p: "Code, Repository und Store-Eintrag gehen an dich." },
       { h: "Team in Gössendorf", p: "Echte Menschen, per E-Mail und Telefon erreichbar." },
@@ -1487,9 +1487,9 @@ export const de = {
     oneDayLeft: "noch 1 Tag",
     forget: "Entfernen",
     page: {
-      pill: "1 kostenloser Prototyp pro Konto · ohne Kreditkarte",
+      pill: "Kostenloser Prototyp · ohne Kreditkarte",
       asideTitle: "So geht es weiter",
-      free: "1 kostenloser Prototyp pro Konto, unverbindlich. Du zahlst erst, wenn du ein Projekt startest.",
+      free: "Kostenloser Prototyp, unverbindlich. Du zahlst erst, wenn du ein Projekt startest.",
       drop: "Bilder hierher ziehen oder auswählen",
     },
     stages: {
