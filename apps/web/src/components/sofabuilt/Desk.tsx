@@ -576,21 +576,28 @@ export function Desk({
           </div>
         )}
 
-        {session?.ready && price && !price.too_big && (
+        {/* The free preview shows as soon as there is a priced scope, before the desk's questions are done:
+            ad visitors left at the price with questions still open and never saw it (2026-10-07, 2026-10-16).
+            Ordering still waits until the scope is ready. */}
+        {session?.scope && price && !price.too_big && (session.ready || onPreview) && (
           <div className="dk-card dk-order">
-            <p className="dk-ready">
-              <Ico name="done" className="dk-feat-ico" />
-              {t.ready}
-            </p>
-            {onPreview && session.scope && (
-              <div className="dk-preview">
+            {session.ready && (
+              <p className="dk-ready">
+                <Ico name="done" className="dk-feat-ico" />
+                {t.ready}
+              </p>
+            )}
+            {onPreview && (
+              <div className={`dk-preview${session.ready ? "" : " is-alone"}`}>
                 <button type="button" className="dk-preview-btn" onClick={() => onPreview(session.scope!)}>
                   <Ico name="spark" /> {t.previewFirst}
                 </button>
                 <small>{t.previewHint}</small>
               </div>
             )}
-            <SbCheckout sessionId={session.id} total={total} picked={launch} care={{ monthly: price.care_monthly_eur, trialMonths: price.care_trial_months ?? 3 }} t={t.checkout} locale={locale} />
+            {session.ready && (
+              <SbCheckout sessionId={session.id} total={total} picked={launch} care={{ monthly: price.care_monthly_eur, trialMonths: price.care_trial_months ?? 3 }} t={t.checkout} locale={locale} />
+            )}
           </div>
         )}
 
