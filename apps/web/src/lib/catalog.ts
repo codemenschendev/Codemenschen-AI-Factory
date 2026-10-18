@@ -126,8 +126,8 @@ export const CATALOG: CatalogEntry[] = [
       { en: "Based on your ingredients", de: "Nach deinen Zutaten" },
     ],
     lede: {
-      en: "Mealgrid builds a weekly meal plan from what's already in your fridge: enter what you have, get a plan and a minimal shopping list. Runs fully on the device: no accounts, no monthly fee.",
-      de: "Mealgrid erstellt einen Wochen-Essensplan aus dem, was ohnehin im Kühlschrank ist: eingeben, was da ist, Plan und minimale Einkaufsliste erhalten. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
+      en: "Mealgrid builds a weekly meal plan from what's already in your fridge: enter what you have, get a plan and a minimal shopping list. Runs fully on the device: no accounts, no server needed.",
+      de: "Mealgrid erstellt einen Wochen-Essensplan aus dem, was ohnehin im Kühlschrank ist: eingeben, was da ist, Plan und minimale Einkaufsliste erhalten. Läuft vollständig am Gerät: keine Accounts, kein Server nötig.",
     },
     aud: [
       { i: "🏠", en: "Busy working households", de: "Berufstätige Haushalte" },
@@ -204,8 +204,8 @@ export const CATALOG: CatalogEntry[] = [
       { en: "Simple and fast", de: "Einfach und schnell" },
     ],
     lede: {
-      en: "Countbee turns a phone into a stocktake scanner for small retail: scan barcodes, count stock, export a clean sheet for the accountant. Runs fully on the device: no accounts, no monthly fee.",
-      de: "Countbee macht aus dem Handy einen Inventur-Scanner für kleine Läden: Barcodes scannen, Bestand zählen, saubere Tabelle für die Buchhaltung exportieren. Läuft vollständig am Gerät: keine Accounts, keine Monatsgebühr.",
+      en: "Countbee turns a phone into a stocktake scanner for small retail: scan barcodes, count stock, export a clean sheet for the accountant. Runs fully on the device: no accounts, no server needed.",
+      de: "Countbee macht aus dem Handy einen Inventur-Scanner für kleine Läden: Barcodes scannen, Bestand zählen, saubere Tabelle für die Buchhaltung exportieren. Läuft vollständig am Gerät: keine Accounts, kein Server nötig.",
     },
     aud: [
       { i: "🏪", en: "Independent small shops", de: "Unabhängige kleine Läden" },
@@ -230,8 +230,8 @@ export const CATALOG: CatalogEntry[] = [
       {
         h: { en: "The smallest possible commitment.", de: "Das kleinstmögliche Engagement." },
         p: {
-          en: "€300 fixed price and no monthly fee: the smallest way to own a finished, focused tool.",
-          de: "300 € Fixpreis und keine Monatsgebühr: der kleinste Weg zu einem fertigen, fokussierten Tool.",
+          en: "No server and no accounts: the smallest way to own a finished, focused tool.",
+          de: "Ohne Server und ohne Konten: der kleinste Weg zu einem fertigen, fokussierten Tool.",
         },
       },
     ],
