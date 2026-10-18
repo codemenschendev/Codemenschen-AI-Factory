@@ -62,6 +62,8 @@ class PrototypeCapTest extends TestCase
 
     public function test_the_link_in_the_e_mail_signs_in_and_starts_the_build_once(): void
     {
+        // The link is the way while the build-at-once switch is off.
+        \App\Models\Setting::write('prototype.anonymous', false, 'test');
         $this->build()->assertStatus(202);
         $proto = Prototype::sole();
         $url = \Illuminate\Support\Facades\URL::temporarySignedRoute('prototypes.confirm', now()->addDay(), ['prototype' => $proto->id, 'locale' => 'de']);
@@ -172,17 +174,22 @@ class PrototypeCapTest extends TestCase
         $this->assertSame(1, Prototype::count());
     }
 
-    public function test_while_the_door_is_open_a_visitor_builds_at_once_without_an_account_or_e_mail(): void
+    public function test_while_the_door_is_open_a_visitor_gives_an_e_mail_first_and_builds_at_once(): void
     {
         $prompt = ['prompt' => 'Eine App für ein Friseurstudio in Wien mit Terminbuchung', 'kind' => 'app'];
-        $this->postJson('/api/prototypes', $prompt)->assertStatus(202)->assertJson(['status' => 'queued']);
+        // The e-mail comes first, also without an account (owner, 2026-10-18).
+        $this->postJson('/api/prototypes', $prompt)->assertStatus(422)->assertJson(['code' => 'email']);
+
+        $this->postJson('/api/prototypes', $prompt + ['email' => 'Besucher@Example.com'])->assertStatus(202)->assertJson(['status' => 'queued']);
         Queue::assertPushed(\App\Jobs\BuildPrototype::class, 1);
-        $this->assertNull(Prototype::sole()->customer_id);
+        $proto = Prototype::sole();
+        $this->assertNull($proto->customer_id, 'no account is created');
+        $this->assertSame('besucher@example.com', $proto->qa['contact_email']);
         $this->getJson('/api/site-config')->assertJsonPath('prototype_anonymous', true);
 
-        // One a day per address; with an e-mail the visitor still gets the usual way.
-        $this->postJson('/api/prototypes', $prompt)->assertStatus(429)->assertJson(['code' => 'anon_limit']);
-        $this->build()->assertStatus(202)->assertJson(['status' => 'waiting']);
+        // One at once a day per address; another visitor from it gets the link as before.
+        $this->postJson('/api/prototypes', $prompt + ['email' => 'zweite@example.com'])->assertStatus(202)->assertJson(['status' => 'waiting']);
+        Queue::assertPushed(\App\Jobs\BuildPrototype::class, 1);
     }
 
     public function test_the_admin_closes_and_opens_the_door(): void

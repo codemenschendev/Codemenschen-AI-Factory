@@ -82,9 +82,9 @@ export function PrototypeForm({
   // types it here; the build starts when they open the link we send, which also signs them in.
   const token = useToken();
   const [email, setEmail] = useState("");
-  // While the door is open the e-mail is only asked once the free preview of the day is used.
-  const [askEmail, setAskEmail] = useState(false);
-  const needsEmail = token === null && (!anonymous || askEmail);
+  // Every visitor who is not signed in gives the e-mail first (owner, 2026-10-18). While the door is
+  // open the build then starts at once; otherwise it waits for the link in the e-mail.
+  const needsEmail = token === null;
   const emailOk = !needsEmail || /.+@.+\..+/.test(email.trim());
   // Between the sentence and the build: a few questions the model thinks would change the
   // result most, each answered with a tap or in the visitor's own words, all of it optional.
@@ -125,8 +125,7 @@ export function PrototypeForm({
     const body = err && typeof err === "object" && "body" in err ? (err as { body: { code?: string; error?: string } | null }).body : null;
     // Which wall a visitor hit, so the funnel shows it instead of a silent stop (2026-10-08).
     track("form_error", { form: "prototype", code: body?.code ?? body?.error ?? String(status || "network") });
-    if (body?.code === "anon_limit" || body?.code === "email") setAskEmail(true);
-    setError(body?.code === "anon_limit" ? p.anonLimit : status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
+    setError(status === 429 ? p.limit : body?.code === "used" ? p.used : body?.code === "email" ? p.email.needed
       : body?.code === "kind_off" ? p.kindOff
       : body?.error === "turnstile" ? p.bot
       : status === 422 ? p.tooLong.replace("{max}", String(MAX_PROMPT)) : p.failed);
@@ -251,12 +250,30 @@ export function PrototypeForm({
   }
 
   const waiting = busy || step === "asking";
+  // The steps count from the e-mail when it is asked.
+  const n0 = needsEmail ? 1 : 0;
   return (
     <form onSubmit={next} className="pp-form">
       {/* The choice comes before the sentence on purpose: what gets drawn changes what is worth
           writing, and a visitor who picks "app" describes screens rather than a company. */}
+      {/* The e-mail comes first: the free preview starts only with an address to reach the visitor. */}
+      {needsEmail && (
+        <label className="pp-field">
+          <span className="pp-label"><span className="pp-step">1</span>{p.email.label}</span>
+          <input
+            type="email"
+            className="pp-input pp-email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder={p.signIn.email}
+            autoComplete="email"
+            required
+          />
+          <span className="pp-note">{anonymous ? p.email.hintNow : p.email.hint}</span>
+        </label>
+      )}
       <fieldset className="pp-field">
-        <legend className="pp-label"><span className="pp-step">1</span>{p.kindLabel}</legend>
+        <legend className="pp-label"><span className="pp-step">{n0 + 1}</span>{p.kindLabel}</legend>
         {kinds.length > 1 && <div className="pp-kinds">
           {kinds.map((k) => (
             <button
@@ -279,7 +296,7 @@ export function PrototypeForm({
       </fieldset>
 
       <label className="pp-field">
-        <span className="pp-label"><span className="pp-step">2</span>{p.label}</span>
+        <span className="pp-label"><span className="pp-step">{n0 + 2}</span>{p.label}</span>
         <textarea
           className="pp-textarea"
           value={prompt}
@@ -297,7 +314,7 @@ export function PrototypeForm({
         </p>
       )}
       <div className="pp-field">
-        <span className="pp-label"><span className="pp-step">3</span>{p.uploads.label}</span>
+        <span className="pp-label"><span className="pp-step">{n0 + 3}</span>{p.uploads.label}</span>
         <div className="pp-uploads">
           {previews.map((src, i) => (
             <div key={src} className="pp-thumb">
@@ -345,20 +362,6 @@ export function PrototypeForm({
           )}
         </div>
       </div>
-      {needsEmail && (
-        <label className="pp-field">
-          <span className="pp-label"><span className="pp-step">4</span>{p.email.label}</span>
-          <input
-            type="email"
-            className="pp-input pp-email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder={p.signIn.email}
-            autoComplete="email"
-          />
-          <span className="pp-note">{p.email.hint}</span>
-        </label>
-      )}
       {error && <p className="pp-error">{error}</p>}
       <div className="pp-actions">
         <button

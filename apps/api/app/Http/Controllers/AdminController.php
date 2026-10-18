@@ -478,7 +478,8 @@ class AdminController extends Controller
         $data = $request->validate(['status' => 'nullable|in:queued,building,ready,failed']);
 
         $list = Prototype::query()
-            ->select(['id', 'kind', 'status', 'stage', 'title', 'prompt', 'error', 'ip', 'qa', 'project_id', 'expires_at', 'created_at', 'updated_at'])
+            ->select(['id', 'kind', 'status', 'stage', 'title', 'prompt', 'error', 'ip', 'qa', 'project_id', 'customer_id', 'expires_at', 'created_at', 'updated_at'])
+            ->with('customer:id,email')
             ->when($data['status'] ?? null, fn ($q, $s) => $q->where('status', $s))
             ->latest()->limit(200)->get()
             ->map(fn (Prototype $p) => [
@@ -490,6 +491,8 @@ class AdminController extends Controller
                 'prompt' => $p->prompt,
                 'error' => $p->error,
                 'ip' => $p->ip,
+                // Who to reach: the account, or the address a visitor gave before the free preview.
+                'email' => $p->customer?->email ?? $p->qa['contact_email'] ?? $p->qa['pending_email'] ?? null,
                 'project_id' => $p->project_id,
                 'qa_ok' => $p->qa['ok'] ?? null,
                 'repairs' => (int) ($p->qa['repairs'] ?? 0),

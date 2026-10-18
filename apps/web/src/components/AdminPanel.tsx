@@ -146,6 +146,7 @@ interface PrototypeRow {
   prompt: string;
   error: string | null;
   ip: string | null;
+  email: string | null;
   project_id: string | null;
   qa_ok: boolean | null;
   repairs: number;
@@ -1381,6 +1382,7 @@ export function AdminPanel({ locale, d }: { locale: Locale; d: Dict }) {
                   <tr key={p.id}>
                     <td style={{ whiteSpace: "nowrap" }}>
                       {dt(p.created_at, locale)}
+                      {p.email && <span className="small" style={{ display: "block" }}>{p.email}</span>}
                       {p.ip && (
                         <span className="small muted" style={{ display: "block" }}>{p.ip}</span>
                       )}

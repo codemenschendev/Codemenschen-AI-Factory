@@ -26,6 +26,12 @@ class Prototype extends Model
         return $this->belongsTo(Project::class);
     }
 
+    /** The account it was built for, when the visitor was signed in. */
+    public function customer(): BelongsTo
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function isLive(): bool
     {
         // A bought page has no expiry.
