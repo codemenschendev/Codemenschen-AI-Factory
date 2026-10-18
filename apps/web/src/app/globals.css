@@ -364,6 +364,17 @@ footer.site .logo-by { color: #94a3b8; }
   .consent:not(.is-more) .consent-title { display: inline; margin-right: 4px; font-size: 0.9rem; }
   .consent:not(.is-more) .consent-text { display: inline; font-size: 0.8rem; }
 }
+/* Phone, before any choice: a slim bar (2026-10-18). The card took a third of the first screen and
+   covered the button ad visitors came for. Both answers stay the same size, side by side. */
+@media (max-width: 640px) {
+  .consent:not(.is-more) { gap: 6px; padding: 8px 10px; bottom: 6px; left: 6px; right: 6px; }
+  .consent:not(.is-more) .consent-copy { line-height: 1.3; }
+  .consent:not(.is-more) .consent-title { font-size: 0.82rem; }
+  .consent:not(.is-more) .consent-text { font-size: 0.74rem; line-height: 1.35; }
+  .consent:not(.is-more) .consent-actions { grid-template-columns: 1fr 1fr auto; gap: 6px; }
+  .consent:not(.is-more) .consent-btn { padding: 7px 8px; font-size: 0.8rem; }
+  .consent:not(.is-more) .consent-more { grid-column: auto; font-size: 0.78rem; }
+}
 .consent-reopen { background: none; border: 0; padding: 0; color: #b8becd; font-size: 0.88rem; cursor: pointer; font-family: inherit; }
 .consent-reopen:hover { color: var(--paper); }
 

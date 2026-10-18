@@ -31,6 +31,14 @@ export function proxy(req: NextRequest) {
   if (pathname === SOFABUILT_PREFIX || pathname.startsWith(`${SOFABUILT_PREFIX}/`)) {
     return sofabuilt ? NextResponse.next() : NextResponse.redirect(new URL("/", req.url), 302);
   }
+  // Visitors from the Meta ads land on one focused screen (2026-10-18). The ads link to
+  // /de?utm_source=meta…, so this keeps their link as it is; the address bar does not change.
+  const fromMeta = req.nextUrl.searchParams.get("utm_source") === "meta" || req.nextUrl.searchParams.has("fbclid");
+  if (!sofabuilt && fromMeta && LOCALES.some((l) => pathname === `/${l}`)) {
+    const url = req.nextUrl.clone();
+    url.pathname = `${pathname}/start`;
+    return NextResponse.rewrite(url);
+  }
   if (LOCALES.some((l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`))) {
     if (!sofabuilt) return NextResponse.next();
     const url = req.nextUrl.clone();

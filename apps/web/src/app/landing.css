@@ -1,0 +1,41 @@
+/* The landing for visitors from the Meta ads ([locale]/start, 2026-10-18).
+   Phone first: picture, headline, e-mail, idea and button inside the first screen of the
+   Facebook in-app browser (about 390 x 660), above the cookie bar. Builds on prototype.css. */
+.al { background: linear-gradient(180deg, #f3f2ff 0%, #fff 70%); }
+.al-hero { padding: 10px 0 28px; }
+.al-grid { display: grid; gap: 10px; }
+.al-pic { position: relative; margin: 0; border-radius: 16px; overflow: hidden; box-shadow: 0 14px 36px rgba(15, 23, 42, 0.14); }
+.al-pic img { display: block; width: 100%; height: 122px; object-fit: cover; object-position: 30% 35%; }
+.al-badge { position: absolute; top: 10px; right: 10px; padding: 6px 12px; border-radius: 99px; background: #fff; color: var(--ink); font: 800 0.85rem var(--font-display); box-shadow: 0 6px 18px rgba(15, 23, 42, 0.18); }
+.al-copy h1 { margin: 0; font-family: var(--font-display); font-size: 1.7rem; line-height: 1.12; letter-spacing: -0.02em; }
+.al-accent { background: linear-gradient(90deg, var(--accent), var(--violet)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.al-lede { margin: 6px 0 12px; color: var(--ink-soft); font-size: 0.95rem; line-height: 1.45; }
+
+/* The form, small: two fields and a full-width button, no card padding to spare. */
+.al .pp-form-compact { gap: 10px; padding: 14px; border-radius: 16px; box-shadow: 0 16px 40px rgba(15, 23, 42, 0.1); }
+.al .pp-form-compact .pp-input { padding: 11px 13px; }
+.al .pp-textarea-compact { min-height: 64px; padding: 11px 13px; font-size: 0.95rem; line-height: 1.45; }
+.al .pp-form-compact .pp-actions { display: grid; gap: 6px; padding-top: 0; }
+.al .pp-form-compact .pp-submit { width: 100%; padding: 13px 18px; }
+.al .pp-form-compact .pp-actions .pp-note { font-size: 0.78rem; text-align: center; margin: 0; }
+
+.al-more { padding: 8px 0 48px; }
+.al-checks { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.al-checks li { display: inline-flex; align-items: center; gap: 8px; padding: 8px 12px; border-radius: 10px; background: #fff; border: 1px solid var(--border); font-weight: 600; font-size: 0.9rem; }
+.al-tick { width: 18px; height: 18px; color: var(--valid); }
+.al-ex-title { font-family: var(--font-display); font-size: 1.15rem; margin: 0 0 12px; }
+.al-examples { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.al-examples img { width: 100%; height: auto; border-radius: 12px; }
+.al-more-link { margin: 18px 0 0; }
+.al-more-link a { color: var(--accent); font-weight: 600; }
+
+/* Wider: text and form on the left, the ad picture on the right. */
+@media (min-width: 900px) {
+  .al-hero { padding: 48px 0 56px; }
+  .al-grid { grid-template-columns: 1fr 1fr; gap: 48px; align-items: center; }
+  .al-pic { order: 2; }
+  .al-pic img { height: auto; aspect-ratio: 900 / 433; }
+  .al-copy h1 { font-size: 3rem; }
+  .al-lede { font-size: 1.1rem; margin: 12px 0 20px; }
+  .al-examples { grid-template-columns: repeat(3, 200px); }
+}
