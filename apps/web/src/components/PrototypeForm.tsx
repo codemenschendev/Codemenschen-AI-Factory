@@ -62,6 +62,10 @@ export function PrototypeForm({
   initialKind = "site",
   kinds = KINDS,
   anonymous = false,
+  compact = false,
+  submitLabel,
+  note,
+  ideaPlaceholder,
 }: {
   locale: Locale;
   d: Dict;
@@ -71,6 +75,14 @@ export function PrototypeForm({
   kinds?: ProtoKind[];
   /** The admin lets visitors build without an account or e-mail (during the ads, 2026-10-15). */
   anonymous?: boolean;
+  /** One screen for visitors from an ad (2026-10-18): e-mail and idea only, no labels, no pictures, no kind choice. */
+  compact?: boolean;
+  /** The button's words, when the page around the form has its own (the ad's "Gratis Vorschau starten"). */
+  submitLabel?: string;
+  /** The line under the button instead of the general one. */
+  note?: string;
+  /** A shorter example in the idea field, for the small one. */
+  ideaPlaceholder?: string;
 }) {
   const p = d.proto;
   const router = useRouter();
@@ -253,26 +265,27 @@ export function PrototypeForm({
   // The steps count from the e-mail when it is asked.
   const n0 = needsEmail ? 1 : 0;
   return (
-    <form onSubmit={next} className="pp-form">
+    <form onSubmit={next} className={compact ? "pp-form pp-form-compact" : "pp-form"}>
       {/* The choice comes before the sentence on purpose: what gets drawn changes what is worth
           writing, and a visitor who picks "app" describes screens rather than a company. */}
       {/* The e-mail comes first: the free preview starts only with an address to reach the visitor. */}
       {needsEmail && (
         <label className="pp-field">
-          <span className="pp-label"><span className="pp-step">1</span>{p.email.label}</span>
+          {!compact && <span className="pp-label"><span className="pp-step">1</span>{p.email.label}</span>}
           <input
             type="email"
             className="pp-input pp-email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder={p.signIn.email}
+            placeholder={compact ? p.email.label : p.signIn.email}
+            aria-label={p.email.label}
             autoComplete="email"
             required
           />
-          <span className="pp-note">{anonymous ? p.email.hintNow : p.email.hint}</span>
+          {!compact && <span className="pp-note">{anonymous ? p.email.hintNow : p.email.hint}</span>}
         </label>
       )}
-      <fieldset className="pp-field">
+      {!compact && <fieldset className="pp-field">
         <legend className="pp-label"><span className="pp-step">{n0 + 1}</span>{p.kindLabel}</legend>
         {kinds.length > 1 && <div className="pp-kinds">
           {kinds.map((k) => (
@@ -293,17 +306,18 @@ export function PrototypeForm({
           <img src={`/home/svc-${kind}.webp`} alt="" width={348} height={178} />
           <p>{p.kindHints[kind]}</p>
         </div>
-      </fieldset>
+      </fieldset>}
 
       <label className="pp-field">
-        <span className="pp-label"><span className="pp-step">{n0 + 2}</span>{p.label}</span>
+        {!compact && <span className="pp-label"><span className="pp-step">{n0 + 2}</span>{p.label}</span>}
         <textarea
-          className="pp-textarea"
+          className={compact ? "pp-textarea pp-textarea-compact" : "pp-textarea"}
           value={prompt}
           onChange={(e) => setPrompt(e.target.value.slice(0, MAX_PROMPT))}
-          rows={prompt.length > 400 ? 10 : 5}
+          rows={compact ? 2 : prompt.length > 400 ? 10 : 5}
           maxLength={MAX_PROMPT}
-          placeholder={p.hints[kind]}
+          placeholder={ideaPlaceholder ?? p.hints[kind]}
+          aria-label={p.label}
         />
       </label>
       {/* The count only appears once there is something to count against: a visitor typing one
@@ -313,7 +327,7 @@ export function PrototypeForm({
           {prompt.length} / {MAX_PROMPT}
         </p>
       )}
-      <div className="pp-field">
+      {!compact && <div className="pp-field">
         <span className="pp-label"><span className="pp-step">{n0 + 3}</span>{p.uploads.label}</span>
         <div className="pp-uploads">
           {previews.map((src, i) => (
@@ -361,7 +375,7 @@ export function PrototypeForm({
             </label>
           )}
         </div>
-      </div>
+      </div>}
       {error && <p className="pp-error">{error}</p>}
       <div className="pp-actions">
         <button
@@ -369,10 +383,10 @@ export function PrototypeForm({
           className="btn btn-primary pp-submit"
           disabled={waiting || prompt.trim().length < 12 || !emailOk}
         >
-          {busy ? p.building : step === "asking" ? p.asking : p.next}
+          {busy ? p.building : step === "asking" ? p.asking : (submitLabel ?? p.next)}
           {!waiting && <Icon name="arrow" className="pp-btn-ico" />}
         </button>
-        <p className="pp-note">{p.page.free}</p>
+        <p className="pp-note">{note ?? p.page.free}</p>
       </div>
     </form>
   );

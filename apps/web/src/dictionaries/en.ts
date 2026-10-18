@@ -1385,6 +1385,20 @@ export const en = {
     stFailed: "failed",
     problems: "To fix",
   },
+  // One screen for visitors from the Meta ads (2026-10-18): the ad picture's words, the form right there.
+  adLanding: {
+    badge: "Preview 0 € free",
+    h1a: "Your app.",
+    h1b: "At a fixed price.",
+    lede: "Describe your idea in one sentence. In a few minutes you see your app as a clickable preview.",
+    cta: "Start the free preview",
+    idea: "Your app idea, for example: bookings for my salon",
+    note: "Free and without an account. We only use your e-mail for your preview.",
+    picAlt: "A hairdresser shows her salon's app on her phone",
+    checks: ["Free app preview", "Price fixed up front", "The code is yours"],
+    examplesTitle: "Examples of app ideas",
+    more: "More about Appmitki",
+  },
   proto: {
     navLink: "Try a prototype",
     title: "A prototype in a few minutes",
