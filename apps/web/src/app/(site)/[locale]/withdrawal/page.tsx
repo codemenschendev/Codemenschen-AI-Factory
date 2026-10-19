@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/LegalPage";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { seo } from "@/lib/seo";
+import { JsonLd, breadcrumbs } from "@/lib/jsonld";
 
 export async function generateMetadata({
   params,
@@ -19,5 +20,11 @@ export default async function WithdrawalPage({ params }: { params: Promise<{ loc
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
 
-  return <LegalPage locale={raw as Locale} d={getDict(raw as Locale)} doc="withdrawal" />;
+  const d = getDict(raw as Locale);
+  return (
+    <>
+      <JsonLd data={breadcrumbs(raw, [[d.legal.withdrawal.title, "/withdrawal"]])} />
+      <LegalPage locale={raw as Locale} d={d} doc="withdrawal" />
+    </>
+  );
 }

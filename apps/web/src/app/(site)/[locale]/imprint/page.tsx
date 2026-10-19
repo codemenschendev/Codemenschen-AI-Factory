@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { LegalPage } from "@/components/LegalPage";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { seo } from "@/lib/seo";
+import { JsonLd, breadcrumbs } from "@/lib/jsonld";
 
 export async function generateMetadata({
   params,
@@ -19,5 +20,11 @@ export default async function ImprintPage({ params }: { params: Promise<{ locale
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
 
-  return <LegalPage locale={raw as Locale} d={getDict(raw as Locale)} doc="imprint" />;
+  const d = getDict(raw as Locale);
+  return (
+    <>
+      <JsonLd data={breadcrumbs(raw, [[d.legal.imprint.title, "/imprint"]])} />
+      <LegalPage locale={raw as Locale} d={d} doc="imprint" />
+    </>
+  );
 }

@@ -11,6 +11,7 @@ import { PageViews } from "@/components/PageViews";
 import { AdConsentBanner, AdConsentLink } from "@/components/AdConsent";
 import { appsOnly, offeredKinds } from "@/lib/offer";
 import "../../globals.css";
+import { JsonLd, organization, website } from "@/lib/jsonld";
 
 export const metadata: Metadata = {
   title: "Appmitki · Your app, built at a fixed price",
@@ -71,6 +72,7 @@ export default async function LocaleLayout({
             </div>
           </div>
         </header>
+        <JsonLd data={[organization(), website(locale)]} />
         {children}
         <footer className="site">
           <div className="wrap footer-inner">

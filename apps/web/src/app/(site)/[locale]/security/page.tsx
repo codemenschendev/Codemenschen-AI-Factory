@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { SecurityPage } from "@/components/SecurityPage";
 import { getDict, isLocale, type Locale } from "@/lib/i18n";
 import { seo } from "@/lib/seo";
+import { JsonLd, breadcrumbs } from "@/lib/jsonld";
 
 export async function generateMetadata({
   params,
@@ -19,5 +20,11 @@ export default async function Security({ params }: { params: Promise<{ locale: s
   const { locale: raw } = await params;
   if (!isLocale(raw)) notFound();
 
-  return <SecurityPage locale={raw as Locale} d={getDict(raw as Locale)} />;
+  const d = getDict(raw as Locale);
+  return (
+    <>
+      <JsonLd data={breadcrumbs(raw, [[d.security.title, "/security"]])} />
+      <SecurityPage locale={raw as Locale} d={d} />
+    </>
+  );
 }
