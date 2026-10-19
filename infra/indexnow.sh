@@ -7,7 +7,7 @@
 set -euo pipefail
 HOST=appmitki.com
 KEY=ea451b64fc07ea5806cbf3218a217e88
-if [ $# -gt 0 ]; then URLS=$(printf 'https://%s%s\n' "$HOST" "$@" | sed "s#^https://$HOST#&#")
+if [ $# -gt 0 ]; then URLS=$(for p in "$@"; do echo "https://$HOST$p"; done)
 else URLS=$(curl -fsS "https://$HOST/sitemap.xml" | grep -o '<loc>[^<]*</loc>' | sed 's#</*loc>##g'); fi
 BODY=$(python3 -c "import json,sys; print(json.dumps({'host': '$HOST', 'key': '$KEY', 'keyLocation': 'https://$HOST/$KEY.txt', 'urlList': sys.stdin.read().split()}))" <<<"$URLS")
 curl -sS -o /dev/null -w "IndexNow: HTTP %{http_code} for $(wc -l <<<"$URLS" | tr -d ' ') URLs\n" -X POST https://api.indexnow.org/indexnow \
