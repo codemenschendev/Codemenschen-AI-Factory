@@ -11,6 +11,7 @@ import { LandingMotion } from "@/components/LandingMotion";
 import { PaybackCalc } from "@/components/PaybackCalc";
 import { Icon } from "@/components/LineIcon";
 import "../../../home.css";
+import { JsonLd, faqPage, service } from "@/lib/jsonld";
 
 const fill = (s: string, v: Record<string, string>) =>
   s.replace(/\{(\w+)\}/g, (_, k) => v[k] ?? "");
@@ -67,6 +68,7 @@ export default async function AppLanding({
 
   return (
     <main className="lp">
+      <JsonLd data={[service(locale), faqPage(d.faq.items, locale)]} />
       <noscript>
         <style>{`.lp .reveal { opacity: 1; transform: none; }`}</style>
       </noscript>

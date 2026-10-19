@@ -9,6 +9,7 @@ import { Icon } from "@/components/LineIcon";
 import { seo } from "@/lib/seo";
 import "../../../../prototype.css";
 import "../../../../detail.css";
+import { JsonLd, breadcrumbs } from "@/lib/jsonld";
 
 export function generateStaticParams() {
   return LOCALES.flatMap((locale) =>
@@ -42,6 +43,7 @@ export default async function AppDetail({
 
   return (
     <main className="ad">
+      <JsonLd data={breadcrumbs(locale, [[app.name, `/apps/${app.slug}`]])} />
       <div className="pp-band ad-band">
         <div className="wrap">
           <Link href={`/${locale}#apps`} className="ad-back">

@@ -10,6 +10,7 @@ import { anonymousPreview, appsOnly, offeredKinds } from "@/lib/offer";
 import { seo } from "@/lib/seo";
 import "../../../prototype.css";
 import "../../../sofabuilt.css";
+import { JsonLd, breadcrumbs } from "@/lib/jsonld";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   return { title: "Prototype", ...seo((await params).locale, "/prototype") };
@@ -44,6 +45,7 @@ export default async function PrototypePage({
     const a = appDesk(locale);
     return (
       <main className="sb-desk-page sb-vars">
+        <JsonLd data={breadcrumbs(locale, [[d.proto.title, "/prototype"]])} />
         <div className="wrap">
           <AppDesk t={a.desk} doors={a.doors} locale={locale} idea={idea?.slice(0, 500)} />
         </div>
@@ -53,6 +55,7 @@ export default async function PrototypePage({
 
   return (
     <main className="pp">
+      <JsonLd data={breadcrumbs(locale, [[d.proto.title, "/prototype"]])} />
       <div className="pp-band">
         <div className="wrap pp-head">
           <span className="pp-pill">{d.proto.page.pill}</span>
