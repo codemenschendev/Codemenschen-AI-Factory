@@ -19,7 +19,8 @@ export const metadata: Metadata = {
   description: "Describe your app idea and get a free, clickable preview in minutes. Fixed price, checked by our team.",
   // Search Console ownership of https://appmitki.com/ (2026-10-07), verified through the Site
   // Verification API by the cm-ops service account; codemenschenapp@gmail.com is a co-owner.
-  verification: { google: "49eQiN5hjZrlgv1Pb62bZrwbwB0dxlDYUCJOcQph2QA" },
+  // Bing Webmaster Tools (codemenschengmbh@gmail.com) reads msvalidate.01; keep it after verification.
+  verification: { google: "49eQiN5hjZrlgv1Pb62bZrwbwB0dxlDYUCJOcQph2QA", other: { "msvalidate.01": "9C2BFA16E09E4BF8B420507CD2D64FA9" } },
 };
 
 // The offer switch decides the links; a page older than a minute is built again.
