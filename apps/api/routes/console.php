@@ -57,3 +57,6 @@ Schedule::command('factory:validation-reports')->dailyAt('08:30')->timezone('Eur
 
 // The audit log is kept 12 months (see the security page).
 Schedule::call(fn () => AuditLog::where('created_at', '<', now()->subMonths(12))->delete())->dailyAt('03:42');
+
+// Werk (Codemenschen's support app): the hourly werk-connect ping, and the beacon key it answers.
+Schedule::command('factory:werk-ping')->hourly()->withoutOverlapping();
