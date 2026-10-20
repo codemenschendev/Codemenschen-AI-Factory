@@ -119,6 +119,13 @@ export const en = {
     title: "The questions you should be asking.",
     cta: "Questions answered? See the ideas →",
     items: [
+      { q: "What does an app cost at Appmitki?", a: "A simple app costs from about 180 EUR. Every part of the app has its own price. You see the exact total on the desk before you pay." },
+      { q: "How long does development take?", a: "The free preview is ready in a few minutes. The app itself is ready 1 to 2 working days after development starts." },
+      { q: "When do I pay?", a: "Only when you order. You see the preview, the scope and the price first, free and without an account." },
+      { q: "How do you build apps with AI?", a: "An AI writes the code to the agreed scope. Our team in Gössendorf near Graz checks and tests the app before you get it." },
+      { q: "Which devices is the app for?", a: "For iPhone and Android. Publishing in the App Store and Google Play is included in the price." },
+      { q: "What if something does not work?", a: "We fix faults within the agreed scope free of charge for 24 months. You report them in the chat of your project." },
+      { q: "Who is behind Appmitki?", a: "Codemenschen GmbH, a software team from Gössendorf near Graz in Austria. You can reach us by e-mail and phone." },
       { q: "Do I really own the app?", a: "Yes. You commission the development; the finished app, its code and its store listing belong to you." },
       { q: "What if I don't like the result?", a: "You review a preview build before release and can request fixes within the agreed scope. If we cannot deliver the scope, you get a refund." },
       { q: "Can you also market the app?", a: "Yes. With the launch-marketing package we write the campaigns and the AI marketing, and after your approval we set up the ads. They run on your own ad account, and you pay the budget to Google or Meta directly." },
@@ -214,6 +221,7 @@ export const en = {
     },
   },
   appDev: {
+    answer: { q: "Have an app built with AI: cost and time", a: "Appmitki builds your app for iPhone and Android with AI, and our team in Gössendorf near Graz checks it. The clickable preview is free, an app costs from about 180 EUR and is ready 1 to 2 working days after the start. You see the exact price part by part first, and you only pay when you order." },
     metaTitle: "Have your app built at a fixed price · Appmitki",
     metaDesc: "We code your app, build its landing page and advertise it on Google and Meta. Free preview, fixed price, team in Gössendorf near Graz.",
     eyebrow: "From idea to app",

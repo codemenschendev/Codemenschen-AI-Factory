@@ -14,8 +14,8 @@ export function appDesk(locale: string): { desk: SbDict["desk"]; doors: SbDict["
       eyebrow: de ? "App-Desk" : "App desk",
       title: de ? "Erzähl uns deine App-Idee" : "Tell us your app idea",
       lede: de
-        ? "Beschreib deine App. Rechts siehst du sofort, was sie kann und was jeder Teil kostet."
-        : "Describe your app. On the right you see at once what it does and what each part costs.",
+        ? "Beschreib deine App. Rechts siehst du sofort, was sie kann und was jeder Teil kostet. Die Vorschau ist kostenlos, eine App kostet ab rund 180 €, und du zahlst erst bei der Bestellung."
+        : "Describe your app. On the right you see at once what it does and what each part costs. The preview is free, an app costs from about 180 EUR, and you only pay when you order.",
       priceEmpty: de
         ? "Dein Preis erscheint hier nach deiner ersten Nachricht, Teil für Teil."
         : "Your price appears here after your first message, part by part.",

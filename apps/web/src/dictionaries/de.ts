@@ -119,6 +119,13 @@ export const de = {
     title: "Die Fragen, die du stellen solltest.",
     cta: "Fragen geklärt? Zu den Ideen →",
     items: [
+      { q: "Was kostet eine App bei Appmitki?", a: "Eine einfache App kostet ab rund 180 €. Jeder Teil der App hat seinen eigenen Preis. Den genauen Gesamtpreis siehst du im Desk, bevor du zahlst." },
+      { q: "Wie lange dauert die Entwicklung?", a: "Die kostenlose Vorschau ist in wenigen Minuten fertig. Die App selbst ist 1 bis 2 Werktage nach dem Start der Entwicklung fertig." },
+      { q: "Wann muss ich zahlen?", a: "Erst wenn du bestellst. Vorschau, Umfang und Preis siehst du vorher kostenlos und ohne Konto." },
+      { q: "Wie entwickelt ihr Apps mit KI?", a: "Eine KI schreibt den Code nach dem vereinbarten Umfang. Unser Team in Gössendorf bei Graz prüft und testet die App, bevor du sie bekommst." },
+      { q: "Für welche Geräte ist die App?", a: "Für iPhone und Android. Die Veröffentlichung im App Store und bei Google Play ist im Preis enthalten." },
+      { q: "Was passiert, wenn etwas nicht funktioniert?", a: "Fehler im vereinbarten Umfang beheben wir 24 Monate lang kostenlos. Du meldest sie im Chat deines Projekts." },
+      { q: "Wer steckt hinter Appmitki?", a: "Die Codemenschen GmbH, ein Software-Team aus Gössendorf bei Graz in Österreich. Du erreichst uns per E-Mail und Telefon." },
       { q: "Gehört mir die App wirklich?", a: "Ja. Du beauftragst die Entwicklung; die fertige App, ihr Code und ihr Store-Eintrag gehören dir." },
       { q: "Was, wenn mir das Ergebnis nicht gefällt?", a: "Du prüfst einen Preview-Build vor dem Release und kannst Korrekturen im vereinbarten Umfang anfordern. Können wir den Umfang nicht liefern, gibt es eine Erstattung." },
       { q: "Könnt ihr die App auch vermarkten?", a: "Ja. Mit dem Launch-Marketing-Paket schreiben wir die Kampagnen und das KI-Marketing, nach deiner Freigabe richten wir die Anzeigen ein. Sie laufen auf deinem eigenen Werbekonto, das Budget zahlst du direkt an Google oder Meta." },
@@ -214,6 +221,7 @@ export const de = {
     },
   },
   appDev: {
+    answer: { q: "App mit KI entwickeln lassen: Kosten und Dauer", a: "Appmitki baut deine App für iPhone und Android mit KI, unser Team in Gössendorf bei Graz prüft sie. Die klickbare Vorschau ist kostenlos, eine App kostet ab rund 180 € und ist 1 bis 2 Werktage nach dem Start fertig. Den genauen Preis siehst du Teil für Teil vorher, du zahlst erst bei der Bestellung." },
     metaTitle: "App entwickeln lassen zum Festpreis · Appmitki",
     metaDesc: "Wir programmieren deine App, bauen die Landingpage dazu und bewerben sie auf Google und Meta. Kostenlose Vorschau, Festpreis, Team in Gössendorf bei Graz.",
     eyebrow: "Von der Idee zur App",
