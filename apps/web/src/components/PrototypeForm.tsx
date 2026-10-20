@@ -131,6 +131,15 @@ export function PrototypeForm({
     setFiles(all.slice(0, MAX_UPLOADS));
   }
 
+  /**
+   * The first keystroke in the form, once per page: the early signal between "saw the form" and "sent it"
+   * (2026-10-20, Patrick asked how soon a test can be judged; with ~12 ad visitors a day a sent form is rare).
+   * Only which field, never what was typed.
+   */
+  function started(field: "email" | "idea") {
+    trackOnce("proto-form-start", "wizard_step", { step: "form_start", field, compact: compact ? 1 : 0 });
+  }
+
   /** 429 cap, 403 free prototype used, 422 no e-mail or too long: each says something the visitor can act on. */
   function failed(err: unknown) {
     const status = err && typeof err === "object" && "status" in err ? (err as { status: number }).status : 0;
@@ -276,7 +285,10 @@ export function PrototypeForm({
             type="email"
             className="pp-input pp-email"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => {
+              setEmail(e.target.value);
+              started("email");
+            }}
             placeholder={compact ? p.email.label : p.signIn.email}
             aria-label={p.email.label}
             autoComplete="email"
@@ -313,7 +325,10 @@ export function PrototypeForm({
         <textarea
           className={compact ? "pp-textarea pp-textarea-compact" : "pp-textarea"}
           value={prompt}
-          onChange={(e) => setPrompt(e.target.value.slice(0, MAX_PROMPT))}
+          onChange={(e) => {
+            setPrompt(e.target.value.slice(0, MAX_PROMPT));
+            started("idea");
+          }}
           rows={compact ? 2 : prompt.length > 400 ? 10 : 5}
           maxLength={MAX_PROMPT}
           placeholder={ideaPlaceholder ?? p.hints[kind]}
