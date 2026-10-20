@@ -37,3 +37,20 @@ export async function anonymousPreview(): Promise<boolean> {
     return false;
   }
 }
+
+/**
+ * Werk's beacon for the public pages (components/WerkBeacon): its key and script, or null when the
+ * API has none (no Werk token, no ping yet, analytics switched off in Werk) or cannot be reached.
+ */
+export async function werkAnalytics(): Promise<{ key: string; script: string } | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/site-config`, { next: { revalidate: 60 } });
+    if (!res.ok) return null;
+    const w = ((await res.json()) as { werk_analytics?: { key?: unknown; script?: unknown } | null }).werk_analytics;
+    if (typeof w?.key !== "string" || typeof w?.script !== "string") return null;
+    if (!/^[A-Za-z0-9_-]{6,128}$/.test(w.key) || !/^https:\/\/([a-z0-9-]+\.)*codemenschen\.at\//.test(w.script)) return null;
+    return { key: w.key, script: w.script };
+  } catch {
+    return null;
+  }
+}
