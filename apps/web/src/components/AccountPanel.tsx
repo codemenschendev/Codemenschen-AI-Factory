@@ -7,6 +7,8 @@ import { api } from "@/lib/api";
 import { AdAccountsPanel } from "@/components/AdAccountsPanel";
 import { eur, type Dict, type Locale } from "@/lib/i18n";
 import { Icon } from "./LineIcon";
+import { isConsoleHost } from "@/lib/brand";
+import { SITE } from "@/lib/site";
 
 interface ProjectRow {
   id: string;
@@ -47,6 +49,12 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
   const [email, setEmail] = useState("");
   const [sent, setSent] = useState(false);
   const [me, setMe] = useState<{ email: string; admin?: boolean; projects: ProjectRow[] } | null>(null);
+  // On console.appmitki.com only the account pages exist: links to the storefront (new prototype, a
+  // prototype, prices, the admin) go to its own address, or the console sends them back here (2026-10-20).
+  const [onConsole, setOnConsole] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- the host is only known in the browser
+  useEffect(() => setOnConsole(isConsoleHost(window.location.host)), []);
+  const front = (path: string) => (onConsole ? `${SITE}${path}` : path);
   const [protos, setProtos] = useState<ProtoRow[] | null>(null);
 
   // Pick up the token handed over by the signed verify redirect (#token=…).
@@ -144,7 +152,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
             <span>{me.email}</span>
             {/* The operator's own entrance. Shown to an admin only, and the page behind it asks the
                 server again: this link hides nothing, it just saves typing the URL. */}
-            {me.admin && <Link href={`/${locale}/admin`}>{d.admin.title}</Link>}
+            {me.admin && <Link href={front(`/${locale}/admin`)}>{d.admin.title}</Link>}
             <button
               type="button"
               className="pp-link"
@@ -157,7 +165,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
             </button>
           </p>
         </div>
-        <Link className="btn btn-primary" href={`/${locale}/prototype`}>
+        <Link className="btn btn-primary" href={front(`/${locale}/prototype`)}>
           {a.protoNew}
         </Link>
       </header>
@@ -170,7 +178,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
         {me.projects.length === 0 ? (
           <div className="acc-empty">
             <p>{a.projectsEmpty}</p>
-            <Link href={`/${locale}#prices`}>{a.seePrices}</Link>
+            <Link href={front(`/${locale}#prices`)}>{a.seePrices}</Link>
           </div>
         ) : (
           <div className="acc-grid">
@@ -233,7 +241,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
         {protos !== null && protos.length === 0 && (
           <div className="acc-empty">
             <p>{a.protosEmpty}</p>
-            <Link href={`/${locale}/prototype`}>{a.protoNew}</Link>
+            <Link href={front(`/${locale}/prototype`)}>{a.protoNew}</Link>
           </div>
         )}
         {protos !== null && protos.length > 0 && (
@@ -262,7 +270,7 @@ export function AccountPanel({ locale, d }: { locale: Locale; d: Dict }) {
               );
 
               return open ? (
-                <Link className="acc-card acc-proto" key={p.id} href={`/${locale}/p/${p.id}`}>
+                <Link className="acc-card acc-proto" key={p.id} href={front(`/${locale}/p/${p.id}`)}>
                   {inner}
                 </Link>
               ) : (
