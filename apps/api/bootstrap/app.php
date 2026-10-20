@@ -4,6 +4,7 @@ use App\Http\Middleware\AuditAdmin;
 use App\Http\Middleware\EnsureAdmin;
 use App\Http\Middleware\RequireTwoFactor;
 use App\Http\Middleware\VerifyTurnstile;
+use App\Http\Middleware\WerkToken;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -25,7 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
          * directly and forge the header.
          */
         $middleware->trustProxies(at: ['127.0.0.1', '10.0.0.0/8', '172.16.0.0/12', '192.168.0.0/16']);
-        $middleware->alias(['admin' => EnsureAdmin::class, 'admin.2fa' => RequireTwoFactor::class, 'audit' => AuditAdmin::class, 'turnstile' => VerifyTurnstile::class]);
+        $middleware->alias(['admin' => EnsureAdmin::class, 'admin.2fa' => RequireTwoFactor::class, 'audit' => AuditAdmin::class, 'turnstile' => VerifyTurnstile::class, 'werk' => WerkToken::class]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

@@ -9,7 +9,8 @@ import { MobileNav } from "@/components/MobileNav";
 import { NavLinks } from "@/components/NavLinks";
 import { PageViews } from "@/components/PageViews";
 import { AdConsentBanner, AdConsentLink } from "@/components/AdConsent";
-import { appsOnly, offeredKinds } from "@/lib/offer";
+import { WerkBeacon } from "@/components/WerkBeacon";
+import { appsOnly, offeredKinds, werkAnalytics } from "@/lib/offer";
 import "../../globals.css";
 import { JsonLd, organization, website } from "@/lib/jsonld";
 
@@ -42,6 +43,7 @@ export default async function LocaleLayout({
   // start button's, not a fifth link: two ways to the same page only made the bar longer.
   // With apps only, the home page is the app page: its link would lead to the same page twice.
   const apps = appsOnly(await offeredKinds());
+  const werk = await werkAnalytics();
   const navLinks = [
     { href: `/${locale}#services`, label: dict.nav.services },
     { href: `/${locale}#how`, label: dict.nav.how },
@@ -54,6 +56,7 @@ export default async function LocaleLayout({
     <html lang={locale}>
       <body>
         <PageViews />
+        {werk && <WerkBeacon src={werk.script} siteKey={werk.key} />}
         {/* Sticky header, ported from the appwerk prototype (site/index.html:14-30) */}
         <header className="nav" id="top">
           <div className="wrap nav-inner">

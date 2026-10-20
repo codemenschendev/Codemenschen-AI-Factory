@@ -57,5 +57,6 @@ export function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|fonts|favicon.ico|.*\\..*).*)"],
+  // /_werk is werk-connect (app/%5Fwerk): no locale, no redirect, the token decides.
+  matcher: ["/((?!_next|_werk|api|fonts|favicon.ico|.*\\..*).*)"],
 };

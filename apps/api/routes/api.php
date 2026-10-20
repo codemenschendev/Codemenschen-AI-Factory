@@ -28,6 +28,7 @@ use App\Http\Controllers\QuoteRefineController;
 use App\Http\Controllers\SiteConfigController;
 use App\Http\Controllers\StripeWebhookController;
 use App\Http\Controllers\ValidationController;
+use App\Http\Controllers\WerkController;
 use Illuminate\Support\Facades\Route;
 
 // First-party analytics beacon from the portal (App\Domain\Analytics\Analytics). No cookies.
@@ -48,6 +49,15 @@ Route::get('/landing/signups/{signup}/confirm', [LandingController::class, 'conf
 Route::get('/landing/signups/{signup}/remove', [LandingController::class, 'remove'])->name('landing.remove')->middleware('throttle:30,1,landing-link');
 
 Route::get('/site-config', [SiteConfigController::class, 'show']);
+
+// werk-connect (Werk docs/API.md 7.10): Werk and werk.ai read appmitki.com with the site's probe
+// token. Public at https://appmitki.com/_werk/v1/*, handed on by the storefront (app/%5Fwerk).
+Route::prefix('werk/v1')->middleware(['throttle:60,1,werk', 'werk'])->group(function () {
+    Route::get('/probe', [WerkController::class, 'probe']);
+    Route::get('/overview', [WerkController::class, 'overview']);
+    Route::get('/ads', [WerkController::class, 'ads']);
+    Route::get('/business', [WerkController::class, 'business']);
+});
 // Sofabuilt's desk (docs/specs/sofabuilt.md): idea in, priced scope out. Each turn is a model call.
 Route::get('/desk/catalog', [DeskController::class, 'catalog'])->middleware('throttle:60,1,desk-catalog');
 Route::get('/desk/config', [DeskController::class, 'config'])->middleware('throttle:60,1,desk-config');

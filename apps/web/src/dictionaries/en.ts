@@ -1721,6 +1721,7 @@ export const en = {
           p: [
             "We count ourselves which pages are visited and how far visitors get, for example from a quote to an order. For this we build a checksum from the IP address, browser details and a random value that is replaced every day. The IP address and browser details themselves are not stored, and on the next day nobody can be recognised.",
             "We store the page, the language, the website you came from (its domain only), campaign details from the link (utm) and whether you came from an ad. There are no cookies, no third-party services and nothing is passed on. The data is deleted after 13 months. The legal basis is our legitimate interest in improving the service (Art. 6(1)(f) GDPR).",
+            "Page views are also counted by Werk, the support system of Codemenschen GmbH (werk.codemenschen.at). The same rules apply: no cookies, nothing is stored in the browser, the checksum changes every day, and the data is deleted after 13 months. It stays with us.",
           ],
         },
         {

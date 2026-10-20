@@ -252,6 +252,48 @@ class MetaAdsPublisher implements Publisher
         return $res->json() ?? [];
     }
 
+    /** The results Appwerk reports to Meta (Conversions): a lead and a purchase. */
+    private const RESULTS = [['lead', 'offsite_conversion.fb_pixel_lead'], ['purchase', 'offsite_conversion.fb_pixel_purchase']];
+
+    /**
+     * One published campaign's numbers per day, from..to (Y-m-d, both included). Read only.
+     * `conversions` are its leads and purchases; Meta's total and its pixel count of the same
+     * result overlap, so the larger of the two is taken, never their sum.
+     *
+     * @return list<array{date:string, spend:float, impressions:int, clicks:int, conversions:float}>
+     */
+    public function daily(MarketingCampaign $campaign, string $from, string $to): array
+    {
+        $this->assertConfigured();
+        $id = $campaign->platform_ref['campaign_id'] ?? null;
+        if (! $id) {
+            throw new RuntimeException('Meta: campaign has not been published.');
+        }
+        $res = $this->base()->get("{$id}/insights", [
+            'fields' => 'spend,impressions,inline_link_clicks,actions',
+            'time_range' => json_encode(['since' => $from, 'until' => $to]),
+            'time_increment' => 1,
+            'limit' => 500,
+            'access_token' => $this->cfg('token'),
+        ]);
+        if (! $res->successful()) {
+            throw new RuntimeException(self::error($res->json() ?? [], (string) $res->body()));
+        }
+
+        return array_map(function (array $r) {
+            $actions = collect($r['actions'] ?? [])->mapWithKeys(fn ($a) => [(string) ($a['action_type'] ?? '') => (float) ($a['value'] ?? 0)]);
+            $conversions = array_sum(array_map(fn (array $types) => max(array_map(fn ($t) => (float) ($actions[$t] ?? 0), $types)), self::RESULTS));
+
+            return [
+                'date' => (string) ($r['date_start'] ?? ''),
+                'spend' => (float) ($r['spend'] ?? 0),
+                'impressions' => (int) ($r['impressions'] ?? 0),
+                'clicks' => (int) ($r['inline_link_clicks'] ?? 0),
+                'conversions' => $conversions,
+            ];
+        }, $res->json('data') ?? []);
+    }
+
     private function name(MarketingCampaign $campaign): string
     {
         // Codemenschen's own campaigns advertise more than Appmitki (plugins, the agency): they go

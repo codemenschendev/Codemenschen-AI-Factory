@@ -213,4 +213,13 @@ return [
         'alert_dir' => env('BUZZ_ALERT_DIR'),
     ],
 
+    // Werk, Codemenschen's support app, reads appmitki.com through the werk-connect contract
+    // (App\Domain\Werk). The probe token comes from Werk (POST /sites/{id}/probe-token); without
+    // it every /_werk/v1 route answers 403 and the hourly ping stays silent.
+    'werk' => [
+        'token' => env('WERK_TOKEN'),
+        'api_url' => env('WERK_API_URL', 'https://api.werk.codemenschen.at/v1'),
+        'site_url' => env('WERK_SITE_URL', 'https://appmitki.com'),
+    ],
+
 ];

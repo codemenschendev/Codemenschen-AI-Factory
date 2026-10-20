@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Ads\AdSettings;
 use App\Domain\Ai\PrototypeWriter;
+use App\Domain\Werk\Probe;
 use Illuminate\Http\JsonResponse;
 
 /**
@@ -24,6 +25,9 @@ class SiteConfigController extends Controller
             'prototype_anonymous' => PrototypeController::anonymousOpen(),
             // The Meta Pixel the banner loads after a yes to ad measurement (lib/metaPixel.ts).
             'meta_pixel_id' => preg_match('~^\d{6,20}$~', (string) config('services.ads.meta.pixel_id')) === 1 ? (string) config('services.ads.meta.pixel_id') : null,
+            // Werk's cookieless beacon (Werk docs/API.md 7.6), with the key the hourly ping brought
+            // back. Null without WERK_TOKEN, before the first ping, or when Werk switched it off.
+            'werk_analytics' => Probe::analytics(),
         ])
             ->header('Cache-Control', 'public, max-age=60');
     }

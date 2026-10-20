@@ -1724,6 +1724,7 @@ export const de = {
           p: [
             "Wir zählen selbst, welche Seiten besucht werden und wie weit Besucher kommen, zum Beispiel vom Angebot bis zur Bestellung. Dafür bilden wir aus IP-Adresse, Browserangabe und einem Zufallswert, der jeden Tag neu erzeugt wird, eine Prüfsumme. Die IP-Adresse und die Browserangabe selbst speichern wir dabei nicht, und am nächsten Tag lässt sich niemand mehr wiedererkennen.",
             "Gespeichert werden die aufgerufene Seite, die Sprache, die Website, von der du kommst (nur deren Domain), Kampagnenangaben aus dem Link (utm) und ob du über eine Anzeige kamst. Es gibt keine Cookies, keine Dienste Dritter und keine Weitergabe. Die Daten werden nach 13 Monaten gelöscht. Rechtsgrundlage ist unser berechtigtes Interesse, das Angebot zu verbessern (Art. 6 Abs. 1 lit. f DSGVO).",
+            "Die Seitenaufrufe zählt zusätzlich Werk, das Betreuungssystem der Codemenschen GmbH (werk.codemenschen.at). Es gelten dieselben Regeln: keine Cookies, nichts wird im Browser gespeichert, die Prüfsumme wechselt jeden Tag, und die Daten werden nach 13 Monaten gelöscht. Sie bleiben bei uns.",
           ],
         },
         {
