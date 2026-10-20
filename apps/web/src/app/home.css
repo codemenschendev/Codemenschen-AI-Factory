@@ -434,3 +434,8 @@
 .lp .pb-note { margin: 8px 0 0; font-size: 0.8rem; color: var(--ink-soft); }
 @media (max-width: 900px) { .lp .pb { grid-template-columns: 1fr; padding: 18px; } }
 @media (max-width: 560px) { .lp .pb-kpis { grid-template-columns: 1fr; } }
+
+/* The page's main question answered right under the hero (GEO, 2026-10-19). */
+.lp .answer { padding: 26px 0 6px; }
+.lp .answer h2 { font-size: 1.2rem; margin: 0 0 8px; letter-spacing: -0.01em; }
+.lp .answer p { margin: 0; max-width: 780px; color: var(--ink-soft); line-height: 1.65; }

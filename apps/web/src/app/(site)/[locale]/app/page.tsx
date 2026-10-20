@@ -136,6 +136,14 @@ export default async function AppLanding({
         </div>
       </section>
 
+      {/* The page's question answered in three plain sentences, for people and AI assistants (2026-10-19). */}
+      <section className="answer">
+        <div className="wrap">
+          <h2>{x.answer.q}</h2>
+          <p>{x.answer.a}</p>
+        </div>
+      </section>
+
       <section className="trustbar">
         <div className="wrap">
           <div className="trust-grid">

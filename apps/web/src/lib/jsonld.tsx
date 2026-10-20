@@ -33,7 +33,7 @@ export function website(locale: string) {
   return { "@context": "https://schema.org", "@type": "WebSite", "@id": `${SITE}/#website`, name: "Appmitki", url: `${SITE}/${locale}`, inLanguage: locale, publisher: { "@id": ORG_ID } };
 }
 
-/** App development with AI: the free preview and the price range of the desk's examples (llms.txt). */
+/** App development with AI: the free preview, and apps from about 180 EUR (owner, 2026-10-20: only the lower bound). */
 export function service(locale: string) {
   const de = locale === "de";
   return {
@@ -50,7 +50,7 @@ export function service(locale: string) {
     url: `${SITE}/${locale}`,
     offers: [
       { "@type": "Offer", name: de ? "Kostenlose klickbare Vorschau" : "Free clickable preview", price: "0", priceCurrency: "EUR", url: `${SITE}/${locale}/prototype` },
-      { "@type": "AggregateOffer", name: de ? "App-Entwicklung, Preis pro Teil" : "App development, priced per part", lowPrice: "180", highPrice: "600", priceCurrency: "EUR", url: `${SITE}/${locale}/prototype` },
+      { "@type": "AggregateOffer", name: de ? "App-Entwicklung, Preis pro Teil" : "App development, priced per part", lowPrice: "180", priceCurrency: "EUR", url: `${SITE}/${locale}/prototype` },
     ],
   };
 }

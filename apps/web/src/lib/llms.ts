@@ -21,11 +21,10 @@ Appmitki richtet sich an Selbstständige, kleine Firmen und Vereine in Österrei
 
 ## Was kostet eine App?
 
-Der Preis wird pro Teil der App berechnet: aus der geschätzten Bauzeit und den KI-Kosten, mit 20 % Sicherheitspuffer. Du siehst jeden Teil und den Gesamtpreis, bevor du zahlst. Beispiele (Stand Oktober 2026):
+Der Preis wird pro Teil der App berechnet: aus der geschätzten Bauzeit und den KI-Kosten, mit 20 % Sicherheitspuffer. Du siehst jeden Teil und den Gesamtpreis, bevor du zahlst. Stand Oktober 2026:
 
-- Einfache To-do-App (Liste zum Abhaken, Daten am Handy): rund 180 € einmalig.
-- Termin-App mit Login, Kalender, Erinnerungen und Online-Zahlung: rund 500 bis 600 € einmalig, dazu 19 € im Monat für den Server.
-- Apps, die nur am Handy laufen, haben keine Monatsgebühr. Apps mit Login oder geteilten Daten brauchen einen Server für 19 € im Monat.
+- Eine einfache App kostet ab rund 180 € einmalig, zum Beispiel eine To-do-App mit einer Liste zum Abhaken.
+- Mehr Teile kosten mehr, zum Beispiel Login, Kalender oder Online-Zahlung. Apps mit Login oder geteilten Daten brauchen dazu einen Server mit Monatsgebühr.
 - Die Veröffentlichung im App Store und bei Google Play ist im Preis enthalten.
 
 ## So läuft es ab
@@ -46,7 +45,7 @@ Der Preis wird pro Teil der App berechnet: aus der geschätzten Bauzeit und den 
 
 ## Häufige Fragen
 
-- Was kostet eine App bei Appmitki? Eine einfache App rund 180 €, eine App mit Login und Zahlung rund 500 bis 600 €. Der genaue Preis steht vor der Zahlung fest.
+- Was kostet eine App bei Appmitki? Eine einfache App ab rund 180 €. Den genauen Preis siehst du Teil für Teil, bevor du zahlst.
 - Wie lange dauert es? 1 bis 2 Werktage nach der Bestellung.
 - Kann ich die App vorher sehen? Ja, die klickbare Vorschau ist kostenlos und braucht kein Konto.
 - Gehört mir die App? Ja. Die App, der Quellcode und der Store-Eintrag gehören dir.
@@ -78,11 +77,10 @@ Appmitki is for freelancers, small businesses and clubs in Austria and Germany w
 
 ## What does an app cost?
 
-The price is calculated per part of the app: from the estimated build time and the AI cost, with a 20 % safety margin. You see every part and the total before you pay. Examples (October 2026):
+The price is calculated per part of the app: from the estimated build time and the AI cost, with a 20 % safety margin. You see every part and the total before you pay. As of October 2026:
 
-- A simple to-do app (a list to tick off, data on the phone): about 180 EUR, one-time.
-- A booking app with login, calendar, reminders and online payment: about 500 to 600 EUR one-time, plus 19 EUR a month for the server.
-- Apps that run on the phone only have no monthly fee. Apps with login or shared data need a server for 19 EUR a month.
+- A simple app costs from about 180 EUR one-time, for example a to-do app with a list to tick off.
+- More parts cost more, for example login, a calendar or online payment. Apps with login or shared data also need a server with a monthly fee.
 - Publishing in the App Store and Google Play is included.
 
 ## How it works
@@ -103,7 +101,7 @@ The price is calculated per part of the app: from the estimated build time and t
 
 ## FAQ
 
-- What does an app cost at Appmitki? A simple app about 180 EUR, an app with login and payment about 500 to 600 EUR. The exact price is fixed before you pay.
+- What does an app cost at Appmitki? A simple app from about 180 EUR. You see the exact price part by part before you pay.
 - How long does it take? 1 to 2 working days after the order.
 - Can I see the app first? Yes, the clickable preview is free and needs no account.
 - Do I own the app? Yes. The app, the source code and the store listing belong to you.
