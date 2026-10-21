@@ -13,6 +13,7 @@ import { WerkBeacon } from "@/components/WerkBeacon";
 import { appsOnly, offeredKinds, werkAnalytics } from "@/lib/offer";
 import "../../globals.css";
 import { JsonLd, organization, website } from "@/lib/jsonld";
+import { costDict } from "@/dictionaries/cost";
 
 export const metadata: Metadata = {
   title: "Appmitki · Your app, built at a fixed price",
@@ -88,6 +89,7 @@ export default async function LocaleLayout({
               <p className="footer-small">{dict.footer.copyright.replace("{year}", String(new Date().getFullYear()))}</p>
             </div>
             <div className="footer-links">
+              <Link href={`/${locale}/app-kosten`}>{costDict(locale).crumb}</Link>
               <Link href={`/${locale}/imprint`}>{dict.footer.imprint}</Link>
               <Link href={`/${locale}/security`}>{dict.security.title}</Link>
               <Link href={`/${locale}/privacy`}>{dict.legal.privacy.title}</Link>

@@ -7,7 +7,7 @@ import { appsOnly, offeredKinds } from "@/lib/offer";
 import { SITE } from "@/lib/site";
 
 /** The public pages in both languages, each with its other-language twin. */
-const PAGES = ["", "/app", "/prototype", "/imprint", "/privacy", "/security", "/terms", "/withdrawal"];
+const PAGES = ["", "/app", "/app-kosten", "/prototype", "/imprint", "/privacy", "/security", "/terms", "/withdrawal"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   if (brandFromHost((await headers()).get("host")) === "sofabuilt") return [];

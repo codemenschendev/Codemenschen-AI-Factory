@@ -41,6 +41,7 @@ Der Preis wird pro Teil der App berechnet: aus der geschätzten Bauzeit und den 
 - [Beispiel-Apps](${SITE}/de/apps/praxo): Musterideen mit Umfang
 - [Bedingungen](${SITE}/de/terms): Vertrag, Zahlung, Abnahme
 - [Widerrufsbelehrung](${SITE}/de/withdrawal)
+- [Was kostet eine App?](${SITE}/de/app-kosten): Agenturpreise in Österreich im Vergleich, was den Preis bestimmt, laufende Kosten
 - [Sicherheit](${SITE}/de/security): wo die Daten liegen und wie die App geprüft wird
 
 ## Häufige Fragen
@@ -97,6 +98,7 @@ The price is calculated per part of the app: from the estimated build time and t
 - [Sample apps](${SITE}/en/apps/praxo): sample ideas with their scope
 - [Terms](${SITE}/en/terms): contract, payment, acceptance
 - [Withdrawal](${SITE}/en/withdrawal)
+- [What does an app cost?](${SITE}/en/app-kosten): agency prices in Austria compared, what sets the price, running costs
 - [Security](${SITE}/en/security): where data is stored and how the app is checked
 
 ## FAQ
