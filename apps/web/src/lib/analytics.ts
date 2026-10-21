@@ -20,7 +20,11 @@ function landingSource(): Source {
     const q = new URLSearchParams(window.location.search);
     source.utm_source = q.get("utm_source") ?? undefined;
     source.utm_medium = q.get("utm_medium") ?? undefined;
-    source.utm_campaign = q.get("utm_campaign") ?? undefined;
+    // The ad within a campaign rides along as "campaign/content" (2026-10-21, banner test v3-salon,
+    // v3-lokal, v3-laden), so the funnel can tell the banners apart without a new column.
+    const campaign = q.get("utm_campaign") ?? undefined;
+    const content = q.get("utm_content");
+    source.utm_campaign = campaign && content ? `${campaign}/${content}`.slice(0, 120) : campaign;
     source.click_id = ["gclid", "fbclid", "msclkid"].find((k) => q.has(k));
     source.referrer = document.referrer || undefined;
   } catch {
