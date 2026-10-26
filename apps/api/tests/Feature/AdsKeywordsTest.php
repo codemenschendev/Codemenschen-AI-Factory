@@ -79,6 +79,29 @@ class AdsKeywordsTest extends TestCase
         $this->assertTrue(CampaignKeyword::where('text', 'dachdecker job')->first()->negative);
     }
 
+    public function test_our_own_ads_sell_the_app_and_never_buy_website_searches(): void
+    {
+        // Patrick, 2026-10-26: the ads sell the app, never a website or a landing page.
+        $this->google();
+        Http::fake(['ai.test/*' => Http::response(['choices' => [['message' => ['content' => json_encode([
+            'keywords' => [
+                ['text' => 'app entwickeln lassen', 'match' => 'phrase'],
+                ['text' => 'website erstellen lassen', 'match' => 'phrase'],
+                ['text' => 'homepage für firma erstellen', 'match' => 'phrase'],
+            ],
+            'negatives' => ['app entwickeln lernen'],
+        ])]]]])]);
+        $campaign = $this->campaign(['strategy' => ['audience' => 'Kleine Betriebe ohne eigene IT']]);
+
+        $this->actingAs($this->admin(), 'sanctum')->postJson("/api/admin/marketing/{$campaign->id}/keywords/suggest")->assertOk();
+
+        $this->assertFalse(CampaignKeyword::where('text', 'app entwickeln lassen')->first()->negative);
+        $this->assertTrue(CampaignKeyword::where('text', 'website erstellen lassen')->first()->negative);
+        $this->assertTrue(CampaignKeyword::where('text', 'homepage für firma erstellen')->first()->negative);
+        // The agent is told what is on sale, not only who the audience is.
+        Http::assertSent(fn ($r) => str_contains($r->body(), 'does NOT sell websites'));
+    }
+
     public function test_a_second_suggestion_leaves_a_decision_alone(): void
     {
         $this->google();

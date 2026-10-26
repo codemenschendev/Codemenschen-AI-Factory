@@ -24,14 +24,15 @@ class SearchAdWriter
      */
     public function write(array $brief, string $language = 'de'): array
     {
-        $lines = [];
+        // Only our own campaigns use this writer: what we sell comes first (2026-10-26).
+        $lines = [\App\Domain\Ads\OwnOffer::brief()];
         foreach (['message', 'audience', 'offer', 'landing_url'] as $key) {
             $value = trim((string) ($brief[$key] ?? ''));
             if ($value !== '') {
                 $lines[] = ucfirst($key).': '.$value;
             }
         }
-        if ($lines === []) {
+        if (count($lines) === 1) {
             throw new RuntimeException('Write what the campaign is about first.');
         }
 
