@@ -2,6 +2,7 @@
 
 namespace App\Domain\Ai;
 
+use App\Domain\Ads\OwnOffer;
 use App\Models\MarketingCampaign;
 use RuntimeException;
 
@@ -31,6 +32,9 @@ class KeywordWriter
         $ask = "The campaign, in its own words:\n{$brief}\n\nWrite the keywords in this language: {$language}.";
         foreach ([1, 2] as $round) {
             $out = self::parse($this->ask(Prompts::get('ads/keywords'), $ask));
+            if (self::own($campaign)) {
+                $out = self::onlyTheOffer($out);
+            }
             if ($out['keywords'] !== []) {
                 return $out;
             }
@@ -43,7 +47,8 @@ class KeywordWriter
     /** Everything the campaign already says about itself, which is what the keywords come from. */
     private static function brief(MarketingCampaign $campaign): string
     {
-        $lines = [];
+        // Our own ads: what we sell comes first, whatever the admin typed (2026-10-26).
+        $lines = self::own($campaign) ? [OwnOffer::brief()] : [];
         foreach (['audience', 'angle', 'promise', 'offer', 'message', 'landing_url'] as $key) {
             $value = $campaign->strategy[$key] ?? null;
             if (is_string($value) && trim($value) !== '') {
@@ -63,6 +68,34 @@ class KeywordWriter
         }
 
         return implode("\n", $lines);
+    }
+
+    /** Codemenschen advertising itself: no customer project and no prototype test behind it. */
+    private static function own(MarketingCampaign $campaign): bool
+    {
+        return $campaign->project_id === null && $campaign->prototype_id === null;
+    }
+
+    /**
+     * A search about something not on offer is never bought: it becomes a negative instead.
+     *
+     * @param  array{keywords:list<array{text:string,match:string}>,negatives:list<string>}  $out
+     * @return array{keywords:list<array{text:string,match:string}>,negatives:list<string>}
+     */
+    private static function onlyTheOffer(array $out): array
+    {
+        $keep = [];
+        foreach ($out['keywords'] as $row) {
+            if (OwnOffer::offTopic($row['text'])) {
+                $out['negatives'][] = $row['text'];
+            } else {
+                $keep[] = $row;
+            }
+        }
+        $out['keywords'] = $keep;
+        $out['negatives'] = array_values(array_unique($out['negatives']));
+
+        return $out;
     }
 
     /**
