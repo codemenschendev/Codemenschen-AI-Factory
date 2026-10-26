@@ -34,6 +34,44 @@ class Conversions
         $this->record('lead', $click, self::match($email, $request->ip(), $request->userAgent()), $quote, $prototype, null);
     }
 
+    /**
+     * The steps between a page view and a lead, for Meta only (2026-10-26, Patrick asked whether the
+     * landing page's events reach Facebook). The browser sends the same step to the pixel with the same
+     * event id, so Meta keeps one of the two. Only called for a visitor who allowed ad measurement.
+     */
+    public const FUNNEL = ['ViewContent', 'InitiateCheckout', 'ChatOpen', 'ChatMessage', 'CTAClick', 'Scroll75'];
+
+    /** @param array{fbclid?:?string,clicked_at?:?int,fbp?:?string,fbc?:?string,url?:?string,value?:?float} $data */
+    public function funnel(string $event, string $eventId, Request $request, array $data): ?AdConversion
+    {
+        if (! in_array($event, self::FUNNEL, true)) {
+            return null;
+        }
+        $fbclid = preg_match('~^[A-Za-z0-9_\-]{8,500}$~', (string) ($data['fbclid'] ?? '')) === 1 ? $data['fbclid'] : null;
+        $fbp = preg_match('~^fb\.\d\.\d{10,16}\.\d{1,25}$~', (string) ($data['fbp'] ?? '')) === 1 ? $data['fbp'] : null;
+        $fbc = preg_match('~^fb\.\d\.\d{10,16}\.[A-Za-z0-9_\-]{8,500}$~', (string) ($data['fbc'] ?? '')) === 1 ? $data['fbc'] : null;
+        // Nothing to match the event to a person on Meta's side: not worth a call.
+        if ($fbclid === null && $fbp === null && $fbc === null) {
+            return null;
+        }
+        $ms = (int) ($data['clicked_at'] ?? 0);
+        $row = AdConversion::firstOrCreate(['event_id' => $eventId], [
+            'platform' => 'meta',
+            'event' => $event,
+            'click_id' => $fbclid,
+            'clicked_at' => $fbclid && $ms > 0 ? date(DATE_ATOM, min(time(), (int) floor($ms / 1000))) : null,
+            'happened_at' => now(),
+            'value_eur' => isset($data['value']) && is_numeric($data['value']) ? round(min((float) $data['value'], 100000), 2) : null,
+            'match' => array_filter(self::match(null, $request->ip(), $request->userAgent()) + ['fbp' => $fbp, 'fbc' => $fbc]),
+            'source_url' => str_starts_with((string) ($data['url'] ?? ''), 'https://') ? mb_substr((string) $data['url'], 0, 500) : null,
+        ]);
+        if ($row->wasRecentlyCreated) {
+            SendAdConversion::dispatch($row->id);
+        }
+
+        return $row;
+    }
+
     /** An order was paid. The click comes from its quote, kept there when the quote was made. */
     public function purchase(Quote $quote, float $valueEur, ?string $email): void
     {
@@ -142,14 +180,15 @@ class Conversions
     {
         $match = $row->match ?? [];
         $event = array_filter([
-            'event_name' => $row->event === 'purchase' ? 'Purchase' : 'Lead',
+            'event_name' => match ($row->event) { 'purchase' => 'Purchase', 'lead' => 'Lead', default => $row->event },
             'event_time' => $row->happened_at->getTimestamp(),
             'event_id' => $row->event_id,
             'action_source' => 'website',
             'event_source_url' => $row->source_url ?: 'https://appmitki.com',
             'user_data' => array_filter([
                 // Meta's click cookie format, built from the fbclid the visitor arrived with.
-                'fbc' => 'fb.1.'.($row->clicked_at ?? $row->happened_at)->getTimestampMs().'.'.$row->click_id,
+                'fbc' => $row->click_id ? 'fb.1.'.($row->clicked_at ?? $row->happened_at)->getTimestampMs().'.'.$row->click_id : ($match['fbc'] ?? null),
+                'fbp' => $match['fbp'] ?? null,
                 'em' => isset($match['em']) ? [$match['em']] : null,
                 'client_ip_address' => $match['ip'] ?? null,
                 'client_user_agent' => $match['ua'] ?? null,

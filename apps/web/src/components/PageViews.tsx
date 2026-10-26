@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { track } from "@/lib/analytics";
+import { metaEvent } from "@/lib/metaPixel";
 
 const DEPTHS = [25, 50, 75, 100];
 
@@ -48,6 +49,7 @@ export function PageViews() {
       const pct = Math.min(100, Math.round(((window.scrollY + window.innerHeight) / Math.max(1, doc.scrollHeight)) * 100));
       maxScroll = Math.max(maxScroll, pct);
       for (const d of DEPTHS) if (pct >= d - 2) once(`scroll-${d}`, "scroll_depth", { pct: d });
+      if (pct >= 73) metaEvent("Scroll75");
     };
 
     const onClick = (e: MouseEvent) => {
@@ -59,6 +61,8 @@ export function PageViews() {
       if (label.includes("@")) label = "(account)";
       const href = (el.getAttribute("href") ?? "").split("#token")[0].slice(0, 100);
       once(`click-${label}-${href}`, "ui_click", { label, href, section: sectionOf(el) });
+      // The main call to action: anything that starts the free preview or the desk.
+      if (/\/prototype(\?|$)/.test(href) || el.matches(".pp-submit, .dk-preview-btn, [data-cta]")) metaEvent("CTAClick", { content_name: label.slice(0, 40) });
     };
 
     const onToggle = (e: Event) => {
@@ -83,6 +87,7 @@ export function PageViews() {
                 if (en.isIntersecting && !seen.has(id)) {
                   seen.add(id);
                   once(`section-${id}`, "section_view", { section: id });
+                  if (id === "prices") metaEvent("ViewContent", { content_name: "prices" });
                 }
               }
             },
