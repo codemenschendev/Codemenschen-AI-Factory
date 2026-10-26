@@ -15,7 +15,7 @@ use App\Domain\Ai\PrototypeWriter;
 class OwnOffer
 {
     /** Searches that are about something else than an app, while only apps are on offer. */
-    private const OFF_TOPIC = '~(website|webseite|web seite|homepage|webdesign|web design|landing ?page|landingpage|\bseo\b|online ?shop|webshop|grafik|logo|baukasten|wordpress)~iu';
+    private const OFF_TOPIC = '~(website|webseite|web seite|homepage|webdesign|web design|landing ?page|landingpage|\bseo\b|online ?shop|webshop|grafik|logo|baukasten|wordpress|werbeanzeig|werbeagentur|anzeigen erstellen)~iu';
 
     public static function appsOnly(): bool
     {

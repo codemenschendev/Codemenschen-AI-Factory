@@ -88,6 +88,7 @@ class AdsKeywordsTest extends TestCase
                 ['text' => 'app entwickeln lassen', 'match' => 'phrase'],
                 ['text' => 'website erstellen lassen', 'match' => 'phrase'],
                 ['text' => 'homepage für firma erstellen', 'match' => 'phrase'],
+                ['text' => 'werbeanzeigen erstellen lassen', 'match' => 'phrase'],
             ],
             'negatives' => ['app entwickeln lernen'],
         ])]]]])]);
@@ -98,6 +99,7 @@ class AdsKeywordsTest extends TestCase
         $this->assertFalse(CampaignKeyword::where('text', 'app entwickeln lassen')->first()->negative);
         $this->assertTrue(CampaignKeyword::where('text', 'website erstellen lassen')->first()->negative);
         $this->assertTrue(CampaignKeyword::where('text', 'homepage für firma erstellen')->first()->negative);
+        $this->assertTrue(CampaignKeyword::where('text', 'werbeanzeigen erstellen lassen')->first()->negative);
         // The agent is told what is on sale, not only who the audience is.
         Http::assertSent(fn ($r) => str_contains($r->body(), 'does NOT sell websites'));
     }
