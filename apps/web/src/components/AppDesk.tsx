@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { metaEvent } from "@/lib/metaPixel";
 import { Desk } from "@/components/sofabuilt/Desk";
 import type { SbDict } from "@/dictionaries/sofabuilt";
 
@@ -15,6 +17,8 @@ const MAX_PROMPT = 4000;
  */
 export function AppDesk({ t, doors, locale, idea }: { t: SbDict["desk"]; doors: SbDict["hero"]["doors"]; locale: string; idea?: string }) {
   const router = useRouter();
+  // The chat is open: a funnel step for Meta (2026-10-26), after consent only.
+  useEffect(() => metaEvent("ChatOpen"), []);
 
   return (
     <Desk

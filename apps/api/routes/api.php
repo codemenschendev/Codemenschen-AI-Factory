@@ -33,6 +33,8 @@ use Illuminate\Support\Facades\Route;
 
 // First-party analytics beacon from the portal (App\Domain\Analytics\Analytics). No cookies.
 Route::post('/t', [AnalyticsController::class, 'store'])->middleware('throttle:120,1,t');
+// Funnel steps for Meta's Conversions API, after consent (2026-10-26): the twin of the pixel's event.
+Route::post('/meta-event', [\App\Http\Controllers\MetaEventController::class, 'store'])->middleware('throttle:40,1,meta-event');
 
 // Public prompt-to-prototype (lead magnet): no auth. Throttle on top of the per-IP daily cap.
 Route::post('/prototypes', [PrototypeController::class, 'store'])->middleware(['throttle:8,60,prototypes', 'turnstile']);

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { metaEvent } from "@/lib/metaPixel";
 import { api } from "@/lib/api";
 import type { SbDict } from "@/dictionaries/sofabuilt";
 
@@ -42,6 +43,7 @@ export function SbCheckout({
     if (!terms || busy) return;
     setBusy(true);
     setError(null);
+    metaEvent("InitiateCheckout", { value: total, currency: "EUR" });
     try {
       const q = await api<{ quote_id: string }>(`/desk/${sessionId}/quote`, { method: "POST", body: "{}" });
       const r = await api<{ checkout_url?: string }>("/checkout", {

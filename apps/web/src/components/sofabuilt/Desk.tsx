@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { metaEvent } from "@/lib/metaPixel";
 import { ApiError, api } from "@/lib/api";
 import { track, trackOnce } from "@/lib/analytics";
 import { Icon } from "@/components/LineIcon";
@@ -225,10 +226,13 @@ export function Desk({
       setPicked({});
       const next = await api<Session>(`/desk/${s.id}/messages`, { method: "POST", body: JSON.stringify({ text: body }) });
       setSession(next);
+      // Funnel steps for Meta, after consent only: the first message, and the first priced scope.
+      if (!s.messages.some((m) => m.role === "customer")) metaEvent("ChatMessage");
       trackOnce(`desk-turn-${s.id}-${next.messages.length}`, "wizard_step", { step: "desk_turn", n: next.messages.length });
       // The funnel's key moment: a priced scope on screen. A visitor who leaves here left at the price (2026-10-08).
       if (next.scope && next.price) {
         trackOnce(`desk-scope-${s.id}`, "wizard_step", { step: "desk_scope", platform, parts: next.scope.features.length, build_eur: next.price.build_eur });
+        metaEvent("ViewContent", { content_name: "app_price", value: next.price.build_eur, currency: "EUR" });
       }
     } catch (e) {
       const err = e instanceof ApiError ? (e.body as { error?: string } | null)?.error : null;
