@@ -30,7 +30,7 @@ export default async function AdLanding({ params }: { params: Promise<{ locale: 
   const t = d.adLanding;
 
   return (
-    <main className="al">
+    <main className="al" data-ab-variant="landing">
       <section id="ad-landing" className="al-hero">
         <div className="wrap al-grid">
           <figure className="al-pic">
