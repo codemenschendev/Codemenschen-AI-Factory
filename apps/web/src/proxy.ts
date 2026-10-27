@@ -36,7 +36,7 @@ export function proxy(req: NextRequest) {
   const fromMeta = req.nextUrl.searchParams.get("utm_source") === "meta" || req.nextUrl.searchParams.has("fbclid");
   if (!sofabuilt && fromMeta && LOCALES.some((l) => pathname === `/${l}`)) {
     const url = req.nextUrl.clone();
-    url.pathname = `${pathname}/start`;
+    url.pathname = `${pathname}/start${landingVariant(req) === "desk" ? "/desk" : ""}`;
     return NextResponse.rewrite(url);
   }
   if (LOCALES.some((l) => pathname === `/${l}` || pathname.startsWith(`/${l}/`))) {
@@ -54,6 +54,24 @@ export function proxy(req: NextRequest) {
   // engines treat the 302 as temporary). Its canonical names /de or /en, so nothing is indexed twice.
   if (pathname === "/" && !sofabuilt) return NextResponse.rewrite(url);
   return NextResponse.redirect(url, 302);
+}
+
+/**
+ * A/B test of the ad landing (2026-10-27): half of the Meta visitors get the landing (A), half the app
+ * desk (B). The split hashes the address and the browser, so the same person keeps their variant
+ * without a cookie or any storage, and no consent is needed for it. ?lp=desk or ?lp=landing forces one.
+ */
+function landingVariant(req: NextRequest): "landing" | "desk" {
+  const forced = req.nextUrl.searchParams.get("lp");
+  if (forced === "desk" || forced === "landing") return forced;
+  const ip = (req.headers.get("x-forwarded-for") ?? "").split(",")[0].trim() || req.headers.get("x-real-ip") || "";
+  const key = `${ip}|${req.headers.get("user-agent") ?? ""}`;
+  let h = 2166136261; // FNV-1a, 32 bit
+  for (let i = 0; i < key.length; i++) {
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return (h >>> 0) % 2 === 0 ? "landing" : "desk";
 }
 
 export const config = {

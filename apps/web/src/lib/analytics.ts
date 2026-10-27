@@ -23,7 +23,10 @@ function landingSource(): Source {
     // The ad within a campaign rides along as "campaign/content" (2026-10-21, banner test v3-salon,
     // v3-lokal, v3-laden), so the funnel can tell the banners apart without a new column.
     const campaign = q.get("utm_campaign") ?? undefined;
-    const content = q.get("utm_content");
+    // The landing A/B test (2026-10-27): the page says which variant it is, and it rides along in the
+    // content part, for example "appwerk-6/v3-lokal.lp-desk".
+    const variant = document.querySelector("[data-ab-variant]")?.getAttribute("data-ab-variant");
+    const content = [q.get("utm_content"), variant ? `lp-${variant}` : null].filter(Boolean).join(".");
     source.utm_campaign = campaign && content ? `${campaign}/${content}`.slice(0, 120) : campaign;
     source.click_id = ["gclid", "fbclid", "msclkid"].find((k) => q.has(k));
     source.referrer = document.referrer || undefined;
